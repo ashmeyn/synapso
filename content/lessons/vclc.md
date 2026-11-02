@@ -146,6 +146,12 @@ final class ReadingController: UIViewController {
 - Почему вычисление frame в viewDidLoad может устареть?
 - Почему viewDidDisappear не гарантирует deinit и weak-захват не заменяет invalidate?
 
+## Ответы к «Проверь себя»
+
+- `viewDidLoad` вызывается один раз за загрузку view, а возвращение на экран view заново не загружает. Источник мог сменить название, пока экран был скрыт, поэтому чтение ставишь в `viewWillAppear`: `super.viewWillAppear(animated)`, затем `titleLabel.text = loadChapter()`. В `viewDidLoad` остаётся только создание: `view.addSubview(titleLabel)`, иначе каждый показ добавлял бы копию.
+- В `viewDidLoad` размер корня ещё не окончательный: в уроке `loadView` даёт `.zero`, и полоса навсегда получает ширину 0. Этот код больше не выполнится, поэтому после смены размера корня frame никто не пересчитает. Расчёт переносишь в `viewDidLayoutSubviews`: `progressBar.frame = CGRect(x: 0, y: 0, width: view.bounds.width / 2, height: 4)` — он повторяется после каждого layout и даёт 160 на 320 и 100 на 200.
+- Уход с экрана не равен освобождению: navigation stack, родитель или другая ссылка могут держать контроллер, а `deinit` придёт только когда сильного владения не останется. `[weak self]` лишь не даёт замыканию держать контроллер, но повторяющийся `Timer` продолжит тикать, пока его не отключат. Поэтому `stopTimer()` с `timer?.invalidate(); timer = nil` вызываешь после исчезновения, перед start отключаешь старый таймер и дублируешь `invalidate` в `deinit`.
+
 # ГЛУБЖЕ
 
 ## Ручной журнал без настоящего UI

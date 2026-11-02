@@ -25,7 +25,13 @@
   "title": "Ступень 4. Результат вернули слишком рано",
   "prompt": "Исправь previewTitle: вместо раннего возврата обновляй модель PreviewScreen через callback. Прогнозируй обе фазы.",
   "code": "final class PreviewQueue {\n    private var pending: ((String) -> Void)?\n    func request(_ completion: @escaping (String) -> Void) {\n        pending = completion\n    }\n    func finish(_ text: String) {\n        let completion = pending\n        pending = nil\n        completion?(text)\n    }\n    func cancel() { pending = nil }\n}\nfunc previewTitle(queue: PreviewQueue) -> String {\n    var title = \"Ожидание\"\n    queue.request { title = $0 }\n    return title\n}\nlet queue = PreviewQueue()\nlet title = previewTitle(queue: queue)\nqueue.finish(\"Тёплый свет\")\nprint(title)",
-  "key": "final class PreviewQueue {\n    private var pending: ((String) -> Void)?\n    func request(_ completion: @escaping (String) -> Void) {\n        pending = completion\n    }\n    func finish(_ text: String) {\n        let completion = pending\n        pending = nil\n        completion?(text)\n    }\n    func cancel() { pending = nil }\n}\nfinal class PreviewScreen {\n    private(set) var title = \"Ожидание\"\n    func start(queue: PreviewQueue) {\n        queue.request { [weak self] text in self?.title = text }\n    }\n}\nlet queue = PreviewQueue()\nlet screen = PreviewScreen()\nscreen.start(queue: queue)\nprint(screen.title)\nqueue.finish(\"Тёплый свет\")\nprint(screen.title)\nqueue.finish(\"Лишний ответ\")\nprint(screen.title)\n\nДо правки печаталось «Ожидание». После неё экран меняется только в callback; повторный finish не меняет подпись."
+  "key": "final class PreviewQueue {\n    private var pending: ((String) -> Void)?\n    func request(_ completion: @escaping (String) -> Void) {\n        pending = completion\n    }\n    func finish(_ text: String) {\n        let completion = pending\n        pending = nil\n        completion?(text)\n    }\n    func cancel() { pending = nil }\n}\nfinal class PreviewScreen {\n    private(set) var title = \"Ожидание\"\n    func start(queue: PreviewQueue) {\n        queue.request { [weak self] text in self?.title = text }\n    }\n}\nlet queue = PreviewQueue()\nlet screen = PreviewScreen()\nscreen.start(queue: queue)\nprint(screen.title)\nqueue.finish(\"Тёплый свет\")\nprint(screen.title)\nqueue.finish(\"Лишний ответ\")\nprint(screen.title)\n\nДо правки печаталось «Ожидание». После неё экран меняется только в callback; повторный finish не меняет подпись.",
+  "points": [
+   "Ранний `return title` убран: подпись больше не отдаётся обычным возвратом до `finish`.",
+   "`PreviewScreen` хранит `private(set) var title = \"Ожидание\"`, а `start(queue:)` отдаёт обработчик в `queue.request`.",
+   "В обработчике `[weak self] text in self?.title = text` — подпись меняется только в момент `finish`.",
+   "Вывод: «Ожидание», «Тёплый свет», «Тёплый свет» — второй `finish` не срабатывает, `pending` уже `nil`."
+  ]
  },
  {
   "id": "s5",
@@ -46,6 +52,13 @@
   "title": "Проверка по памяти",
   "prompt": "Без подсказок и без урока. Верно — отметь тему.",
   "code": "По памяти восстанови SizeQueue с одним обработчиком (Int) -> Void и SizeScreen с size = 0. start сохраняет callback со слабым экраном; finish отдаёт 640 один раз, второй finish с 900 игнорируется. Покажи size до результата и после обоих finish. Добавь cancel.",
-  "key": "final class SizeQueue {\n    private var pending: ((Int) -> Void)?\n    func request(_ completion: @escaping (Int) -> Void) { pending = completion }\n    func finish(_ size: Int) {\n        let completion = pending\n        pending = nil\n        completion?(size)\n    }\n    func cancel() { pending = nil }\n}\nfinal class SizeScreen {\n    private(set) var size = 0\n    func start(queue: SizeQueue) {\n        queue.request { [weak self] size in self?.size = size }\n    }\n}\nlet queue = SizeQueue()\nlet screen = SizeScreen()\nscreen.start(queue: queue)\nprint(screen.size)\nqueue.finish(640)\nprint(screen.size)\nqueue.finish(900)\nprint(screen.size)\n\nВывод 0, 640, 640. Переносим тот же контракт на числовой размер превью, не возвращаем будущий результат обычным return."
+  "key": "final class SizeQueue {\n    private var pending: ((Int) -> Void)?\n    func request(_ completion: @escaping (Int) -> Void) { pending = completion }\n    func finish(_ size: Int) {\n        let completion = pending\n        pending = nil\n        completion?(size)\n    }\n    func cancel() { pending = nil }\n}\nfinal class SizeScreen {\n    private(set) var size = 0\n    func start(queue: SizeQueue) {\n        queue.request { [weak self] size in self?.size = size }\n    }\n}\nlet queue = SizeQueue()\nlet screen = SizeScreen()\nscreen.start(queue: queue)\nprint(screen.size)\nqueue.finish(640)\nprint(screen.size)\nqueue.finish(900)\nprint(screen.size)\n\nВывод 0, 640, 640. Переносим тот же контракт на числовой размер превью, не возвращаем будущий результат обычным return.",
+  "points": [
+   "`private var pending: ((Int) -> Void)?` и `request(_ completion: @escaping (Int) -> Void)`.",
+   "`finish`: `let completion = pending`, затем `pending = nil`, и только потом `completion?(size)`.",
+   "`cancel()` делает `pending = nil`.",
+   "`SizeScreen.start`: `queue.request { [weak self] size in self?.size = size }`.",
+   "Вывод: 0, 640, 640 — `finish(900)` игнорируется."
+  ]
  }
 ]

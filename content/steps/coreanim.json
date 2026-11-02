@@ -18,7 +18,13 @@
   "title": "Ступень 3. Подготовь правильный fade",
   "prompt": "Напиши prepareFade: сохрани start, без implicit actions запиши target в модель, подготовь CABasicAnimation для opacity с from/to и duration=0.25. На старте 0.3, цели 0.9 проверь модель и оба значения анимации. Не вызывай add.",
   "code": "import QuartzCore\nimport CoreGraphics\n// TODO: prepareFade и проверки",
-  "key": "import QuartzCore\nimport CoreGraphics\nfunc prepareFade(layer: CALayer, to target: Float) -> CABasicAnimation {\n    let start = layer.opacity\n    CATransaction.begin()\n    CATransaction.setDisableActions(true)\n    layer.opacity = target\n    CATransaction.commit()\n    let animation = CABasicAnimation(keyPath: \"opacity\")\n    animation.fromValue = start\n    animation.toValue = target\n    animation.duration = 0.25\n    return animation\n}\nlet layer = CALayer()\nCATransaction.begin()\nCATransaction.setDisableActions(true)\nlayer.opacity = 0.3\nCATransaction.commit()\nlet animation = prepareFade(layer: layer, to: 0.9)\nassert(layer.opacity == 0.9)\nassert(animation.keyPath == \"opacity\")\nassert((animation.fromValue as? NSNumber)?.floatValue == 0.3)\nassert((animation.toValue as? NSNumber)?.floatValue == 0.9)\n\nМодель уже 0.9; параметры анимации описывают 0.3 → 0.9. Подготовка не является запуском."
+  "key": "import QuartzCore\nimport CoreGraphics\nfunc prepareFade(layer: CALayer, to target: Float) -> CABasicAnimation {\n    let start = layer.opacity\n    CATransaction.begin()\n    CATransaction.setDisableActions(true)\n    layer.opacity = target\n    CATransaction.commit()\n    let animation = CABasicAnimation(keyPath: \"opacity\")\n    animation.fromValue = start\n    animation.toValue = target\n    animation.duration = 0.25\n    return animation\n}\nlet layer = CALayer()\nCATransaction.begin()\nCATransaction.setDisableActions(true)\nlayer.opacity = 0.3\nCATransaction.commit()\nlet animation = prepareFade(layer: layer, to: 0.9)\nassert(layer.opacity == 0.9)\nassert(animation.keyPath == \"opacity\")\nassert((animation.fromValue as? NSNumber)?.floatValue == 0.3)\nassert((animation.toValue as? NSNumber)?.floatValue == 0.9)\n\nМодель уже 0.9; параметры анимации описывают 0.3 → 0.9. Подготовка не является запуском.",
+  "points": [
+   "`let start = layer.opacity` — до записи цели.",
+   "Запись `layer.opacity = target` внутри `CATransaction.begin()` / `setDisableActions(true)` / `commit()`.",
+   "`CABasicAnimation(keyPath: \"opacity\")`: `fromValue = start`, `toValue = target`, `duration = 0.25`; `add` не вызывается.",
+   "Проверки: `layer.opacity == 0.9`, `fromValue` 0.3 и `toValue` 0.9 через `NSNumber.floatValue`."
+  ]
  },
  {
   "id": "s4",

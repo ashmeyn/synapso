@@ -11,7 +11,12 @@
   "title": "Ступень 2. Свяжи Map с состоянием",
   "prompt": "Заполни Binding выбора и tag метки. Модель и весь экран даны.",
   "code": "import SwiftUI\nimport MapKit\nstruct Fountain: Identifiable {\n    let id: Int\n    let title: String\n    let coordinate: CLLocationCoordinate2D\n}\nstruct RefillMap: View {\n    let points: [Fountain]\n    @State private var selectedID: Int?\n    private var chosenPoint: Fountain? {\n        points.first { $0.id == selectedID }\n    }\n    var body: some View {\n        VStack {\n            Map(selection: /* Binding */) {\n                ForEach(points) { point in\n                    Marker(point.title, coordinate: point.coordinate)\n                        .tag(/* id */)\n                }\n            }\n            Text(chosenPoint?.title ?? \"Выбери точку\")\n        }\n    }\n}",
-  "key": "import SwiftUI\nimport MapKit\nstruct Fountain: Identifiable {\n    let id: Int\n    let title: String\n    let coordinate: CLLocationCoordinate2D\n}\nstruct RefillMap: View {\n    let points: [Fountain]\n    @State private var selectedID: Int?\n    private var chosenPoint: Fountain? {\n        points.first { $0.id == selectedID }\n    }\n    var body: some View {\n        VStack {\n            Map(selection: $selectedID) {\n                ForEach(points) { point in\n                    Marker(point.title, coordinate: point.coordinate)\n                        .tag(point.id)\n                }\n            }\n            Text(chosenPoint?.title ?? \"Выбери точку\")\n        }\n    }\n}\n\nВыбранный tag записывается в selectedID. Текст вычисляется из соответствующей модели."
+  "key": "import SwiftUI\nimport MapKit\nstruct Fountain: Identifiable {\n    let id: Int\n    let title: String\n    let coordinate: CLLocationCoordinate2D\n}\nstruct RefillMap: View {\n    let points: [Fountain]\n    @State private var selectedID: Int?\n    private var chosenPoint: Fountain? {\n        points.first { $0.id == selectedID }\n    }\n    var body: some View {\n        VStack {\n            Map(selection: $selectedID) {\n                ForEach(points) { point in\n                    Marker(point.title, coordinate: point.coordinate)\n                        .tag(point.id)\n                }\n            }\n            Text(chosenPoint?.title ?? \"Выбери точку\")\n        }\n    }\n}\n\nВыбранный tag записывается в selectedID. Текст вычисляется из соответствующей модели.",
+  "points": [
+   "`Map(selection: $selectedID)` — Binding через `$` к `@State private var selectedID: Int?`, а не само значение `selectedID`.",
+   "`.tag(point.id)` у каждого `Marker`: тип `Int` совпадает с `Int?` состояния.",
+   "Tag — id, а не `point.title` и не индекс: при двух «У входа» выбор 52 записывает именно 52, и подпись берётся из точки 52."
+  ]
  },
  {
   "id": "s3",
@@ -46,6 +51,13 @@
   "title": "Проверка по памяти",
   "prompt": "Без подсказок и без урока. Верно — отметь тему.",
   "code": "По памяти создай Bench (id, title, coordinate) и BenchMap. Map показывает Marker для каждой скамейки и связывает выбор Int? с tag id. Под картой title выбранной скамейки или «Выбери точку». Две скамейки могут называться одинаково; отсутствующий id не должен падать.",
-  "key": "import SwiftUI\nimport MapKit\nstruct Bench: Identifiable {\n    let id: Int\n    let title: String\n    let coordinate: CLLocationCoordinate2D\n}\nstruct BenchMap: View {\n    let points: [Bench]\n    @State private var selectedID: Int?\n    private var chosenPoint: Bench? {\n        points.first { $0.id == selectedID }\n    }\n    var body: some View {\n        VStack {\n            Map(selection: $selectedID) {\n                ForEach(points) { point in\n                    Marker(point.title, coordinate: point.coordinate)\n                        .tag(point.id)\n                }\n            }\n            Text(chosenPoint?.title ?? \"Выбери точку\")\n        }\n    }\n}\n\nТот же путь перенесён на скамейки: выбор по id, текст из модели, запасное значение при отсутствии."
+  "key": "import SwiftUI\nimport MapKit\nstruct Bench: Identifiable {\n    let id: Int\n    let title: String\n    let coordinate: CLLocationCoordinate2D\n}\nstruct BenchMap: View {\n    let points: [Bench]\n    @State private var selectedID: Int?\n    private var chosenPoint: Bench? {\n        points.first { $0.id == selectedID }\n    }\n    var body: some View {\n        VStack {\n            Map(selection: $selectedID) {\n                ForEach(points) { point in\n                    Marker(point.title, coordinate: point.coordinate)\n                        .tag(point.id)\n                }\n            }\n            Text(chosenPoint?.title ?? \"Выбери точку\")\n        }\n    }\n}\n\nТот же путь перенесён на скамейки: выбор по id, текст из модели, запасное значение при отсутствии.",
+  "points": [
+   "`struct Bench: Identifiable` с `id: Int`, `title: String`, `coordinate: CLLocationCoordinate2D`.",
+   "`@State private var selectedID: Int?` и `Map(selection: $selectedID)`.",
+   "`ForEach(points)` → `Marker(point.title, coordinate: point.coordinate).tag(point.id)`.",
+   "`chosenPoint` ищет модель по id: `points.first { $0.id == selectedID }` — результат Optional.",
+   "`Text(chosenPoint?.title ?? \"Выбери точку\")` — отсутствующий id не падает."
+  ]
  }
 ]

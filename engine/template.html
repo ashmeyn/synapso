@@ -619,6 +619,11 @@ html, html *{cursor:none!important}
 .textbtn[hidden]{display:none}
 .s7note{margin:0 0 12px;font-family:var(--f-mono);font-size:var(--fs-label);letter-spacing:.04em;color:var(--cyan);display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px}
 .s7note .textbtn{min-height:28px;color:var(--cyan)}
+.kpoints{margin:0 0 14px;max-width:68ch}
+.kp-h{font-family:var(--f-mono);font-size:var(--fs-label);letter-spacing:.04em;color:var(--cyan);margin-bottom:8px}
+.kpoints ol{margin:0;padding-left:2.2em;font-size:var(--fs-ui);line-height:1.6;color:var(--ink-2)}
+.kpoints li{margin:0 0 6px}
+.kpoints code{font-family:var(--f-code);color:var(--type);font-variant-ligatures:none;overflow-wrap:anywhere}
 .prevans{margin:6px 0 4px}
 .prevans .textbtn{min-height:32px}
 .out{display:flex;flex-direction:column;gap:18px;max-width:68ch}
@@ -627,7 +632,7 @@ html, html *{cursor:none!important}
 .out-h .textbtn{min-height:32px}
 .out-tip{margin:0;font-family:var(--f-read);font-size:var(--fs-label);line-height:1.55;color:var(--dim)}
 .out-q{margin:0;font-family:var(--f-read);font-weight:600;font-size:var(--fs-read);line-height:1.6;color:var(--ink);text-transform:none;letter-spacing:0}
-.out-q code,.out-a code{font-family:var(--f-code);color:var(--cyan);font-variant-ligatures:none}
+.out-q code,.out-a code{font-family:var(--f-code);color:var(--cyan);font-variant-ligatures:none;overflow-wrap:anywhere}
 .out .answer textarea{min-height:120px}
 .out .row-actions[hidden]{display:none}
 .out-a{font-family:var(--f-read);font-size:var(--fs-read);line-height:1.6;color:#D5DADE;border-left:1px solid var(--cyan);padding:4px 0 4px 16px}
@@ -3254,17 +3259,19 @@ function renderPractice(){
     if(blind) store.set(ansKey, "");   /* the key has been seen: the next review starts empty again */
     const pc=document.querySelector("#pane-practice .p-code"), wide=pc && pc.querySelector(".term") && $("winBody").classList.contains("fit") && !narrow();
     let keyTerm;
+    /* long keys (> 25 lines) carry 3–5 required points: the learner grades against them, the full code stays below */
+    const pts = s.points && s.points.length ? `<div class="kpoints"><div class="kp-h">СВЕРЬ ПО ПУНКТАМ · ВСЕ ОБЯЗАТЕЛЬНЫ</div><ol>${s.points.map(p=>`<li>${p}</li>`).join("")}</ol></div>` : "";
     if(wide){
       const task=pc.querySelector(".term"); task.dataset.v="task";
       task.querySelector(".term-h span:last-child").insertAdjacentHTML("beforeend", ` <button type="button" class="kswap" data-to="key">ключ →</button>`);
       pc.insertAdjacentHTML("beforeend", terminal(s.key, "Ключ", `сверь со своим ответом <button type="button" class="kswap" data-to="task">← задача</button>`, {plain:true, key:true}));
       keyTerm=pc.lastElementChild; keyTerm.dataset.v="key"; task.style.display="none";
       pc.addEventListener("click",e=>{ const bt=e.target.closest(".kswap"); if(!bt) return; pc.querySelectorAll(".term").forEach(x=>x.style.display = x.dataset.v===bt.dataset.to ? "" : "none"); requestAnimationFrame(fitCode); sfx.hover && sfx.hover(1,1); });
-      $("keyBox").innerHTML = "";
-    } else { $("keyBox").innerHTML = terminal(s.key, "Ключ", "сверь со своим ответом", {plain:true, key:true}); keyTerm=$("keyBox").querySelector(".term"); }
+      $("keyBox").innerHTML = pts;
+    } else { $("keyBox").innerHTML = pts + terminal(s.key, "Ключ", pts?"полный код":"сверь со своим ответом", {plain:true, key:true}); keyTerm=$("keyBox").querySelector(".term"); }
     $("keyBox").insertAdjacentHTML("beforeend", (prevAns.trim() ? `<div class="prevans"><button type="button" class="textbtn" id="prevBtn">ПОКАЗАТЬ ПРОШЛЫЙ ОТВЕТ</button><div id="prevBox"></div></div>` : "") + (dunno
       ? `<div class="assess"><span class="q">Записано: «пока нет». Разбери ключ${!inBank&&s.id==="s7"?" — ступень 7 вернётся на повторе":""}.</span><button type="button" class="cta" id="nextBtn">${inBank?"ДРУГАЯ ЗАДАЧА ▸":stepIdx<steps.length-1?"СЛЕДУЮЩАЯ СТУПЕНЬ ▸":"ГОТОВО"}</button></div>`
-      : `<div class="assess"><span class="q">Сверь с ключом: насколько ты вспомнил это сам?</span>
+      : `<div class="assess"><span class="q">${pts?"Сверь по пунктам":"Сверь с ключом"}: насколько ты вспомнил это сам?</span>
         <button type="button" class="cta" id="okBtn">ВСПОМНИЛ</button>
         <button type="button" class="ghostbtn" id="partBtn">ЧАСТИЧНО</button>
         <button type="button" class="ghostbtn" id="noBtn">НЕТ</button></div>`));

@@ -133,7 +133,7 @@ async function suite(name, ctxOpts, hash, openTopicUi) {
     await s.check('answer opens after a real answer', await page.isEnabled('#outShow'));
     await page.click('#outShow'); await page.waitForTimeout(150);
     const miss = await page.evaluate(() => document.getElementById('outKey').innerText);
-    await s.check('no answer yet → cheat sheet with «ответ ещё не написан»', /ОТВЕТ ЕЩЁ НЕ НАПИСАН/i.test(miss) && miss.length > 60, miss.slice(0, 120));
+    await s.check('written answer shown (not the cheat-sheet fallback)', !/ОТВЕТ ЕЩЁ НЕ НАПИСАН/i.test(miss) && /String\?/.test(miss), miss.slice(0, 120));
     await page.click('#outKey [data-g="ok"]'); await page.waitForTimeout(150);
     await page.click('#outSilent'); await page.waitForTimeout(150);
     await page.click('#outKey [data-g="ok"]'); await page.waitForTimeout(150);
