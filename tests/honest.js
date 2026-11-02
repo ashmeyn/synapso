@@ -81,6 +81,21 @@ async function suite(name, ctxOpts, hash, openTopicUi) {
     await s.check('review recorded in pm.recall', after.opt.recall && after.opt.recall.v === 'ok' && after.opt.recall.pass > 0, after.opt.recall);
     await s.check('new answer replaces the old one after the review', await page.evaluate(() => JSON.parse(localStorage.getItem('pm.ans.opt.s7')).includes('Hi ')));
 
+    // blind review, then «не знаю — покажи»: the good old answer survives, the blind draft is gone
+    await seed(page, oldProgress(now));
+    await openTopicUi.ready(page);
+    await openTopicUi.open(page, 'opt');
+    await tap('#tab-practice'); await page.waitForTimeout(400);
+    await page.fill('#ans', 'x');
+    await page.locator('#ans').blur();
+    await page.click('#dunno'); await page.waitForTimeout(300);
+    const kept = await page.evaluate(() => ({ prev: localStorage.getItem('pm.ans.opt.s7'), draft: localStorage.getItem('pm.rans.opt'),
+      srs: JSON.parse(localStorage.getItem('pm.srs.opt')), keyBtn: document.getElementById('showKey').hidden }));
+    await s.check('failed review keeps the previous answer', /OLD ANSWER/.test(kept.prev || ''), kept);
+    await s.check('blind draft cleared once the key is seen', !kept.draft || kept.draft === '""', kept);
+    await s.check('«не знаю» on a review resets SRS to tomorrow', kept.srs && kept.srs.stage === 0 && kept.srs.due > now + DAY / 2, kept.srs);
+    await s.check('«Показать ключ» hidden once the key is open', kept.keyBtn, kept);
+
     // ---------- 3. a fresh topic: 7 steps «вспомнил» alone do not make it done ----------
     await seed(page, {});
     await openTopicUi.ready(page);
@@ -129,6 +144,10 @@ async function suite(name, ctxOpts, hash, openTopicUi) {
     done = await openTopicUi.isDone(page, 'opt');
     await s.check('failed «Выгрузка» → still not done', !done);
 
+    await tap('#outAgain'); await page.waitForTimeout(200);
+    for (const g of ['ok', 'part', 'ok']) { await page.click('#outSilent'); await page.waitForTimeout(100); await page.click(`#outKey [data-g="${g}"]`); await page.waitForTimeout(150); }
+    o = (await status(page, ['opt'])).opt;
+    await s.check('«частично» in «Выгрузка» → not passed', o.out && o.out.v === 'part' && !o.out.pass, o.out);
     await tap('#outAgain'); await page.waitForTimeout(200);
     for (let k = 0; k < 3; k++) { await page.click('#outSilent'); await page.waitForTimeout(100); await page.click('#outKey [data-g="ok"]'); await page.waitForTimeout(150); }
     o = (await status(page, ['opt'])).opt;
