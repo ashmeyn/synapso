@@ -1,0 +1,51 @@
+# История
+
+Новые записи добавляются сверху раздела «Журнал». Формат: дата, что сделано, что заметили.
+
+## Журнал
+
+### 02.11.2026 — перенос в GitHub
+
+Synapso перенесён из проекта claude.ai в этот репозиторий. Первый коммит — состояние лаборатории v57 от 01.11, тег `v1.0-lab57`. Движок взят из лаборатории, а не из `site-template.html` проекта: тот файл устарел (без дизайн-прохода и телефонного режима). Данные сборки `scripts/build.py` сверены с данными лаборатории — совпадают полностью (75 тем, 75 уроков, 259 задач банка). Добавлены Playwright-тесты, CI и деплой на GitHub Pages. Доки проекта claude.ai (`claude/synapso/*`) теперь архив на момент переноса. Промпты партий 12–24 для ChatGPT остались там, в `claude/synapso/chat-prompts.md`.
+
+### 01.11.2026 — телефонный режим чтения (лаборатория v57)
+
+На телефоне (`(pointer: coarse)` и ширина < 980 → `html.phone`) сайт стал лёгким режимом чтения: без интро, список тем вместо 3D-карты, без WebGL, циклов rAF, печатной машинки и декоративных анимаций. rAF в покое упал с ~180 в секунду (на теории) до 0. Десктоп не изменился. Принудительное переключение — `#phone` / `#desktop`. Это заменяет прежнее решение «Только десктоп».
+
+### 20.10.2026 — сверка
+
+Опубликованная лаборатория совпала с локальной сборкой; исходники проекта, пересобранные restore.py → build_lab.py, дали те же данные (75 тем, 75 уроков, 259 задач банка). Основной сайт: 61 тема, 47 задач банка, шаблон без дизайн-прохода. В лаборатории есть всё, что есть на основном, ключи прогресса `pm.*` и функции движка совпадают. check.js по всем 75 темам: каждая открывается целиком (урок без запертых разделов, 7 ступеней, банк), переполнения кода нет.
+
+Правки линтера по всем темам: «s1…s7» в прозе → «ступень N» (urls, mapkit, realtime, valref, cow, weak, eq, dead, group, gcdmore, threadbug, layout); регистр кода в начале предложений (enter()/leave(), notify, wait, read, publish, hitTest, start, stop, weak, source, container, where, associatedtype, target, high, async let, nonisolated, @escaping, private).
+
+Замечания без правок:
+
+1. Строки кода 81–107 символов в hof, err, bigo, state, obs, mvvm, proto, di, combine, urls, store. Прокрутки нет, движок ужимает шрифт.
+2. Ступень 4 часто чинит код ступени 1 (obs, nav, esc, valref, disp, fp, objc, arch, uitest, coredata) — это схема «предскажи → почини», а не копия.
+3. realtime (28) требует async (41), который на карте позже.
+4. У ветки КАРКАС нет своего банка v2 — см. backlog, партия 26.
+
+### 11–20.10.2026 — партии уроков 5–25 (ChatGPT → Claude)
+
+Карта закрыта: 75 тем из 75 имеют уроки формата v2. Готово: Каркас (opt, coll, func, enum, flow, hof, err, skel, bigo, setdict), SWIFTUI (state, obs, flowui, mvvm, nav, proto, di, clos, access, combine), СЕТЬ (rest, codable, urls, esc, store, mapkit, cache, realtime), ПАМЯТЬ (valref, cow, arc, weak, eq, leaks, arpool), ПОТОКИ (queues, race, dead, group, gcdmore, async, actor, locks, runloop, threadbug), ЯЗЫК (gen, assoc, disp, pw, fp, objc), UIKIT (vclc, frame, layout, table, hit, coord, collection, coreanim, render), ФИНАЛ (solid, arch, patt, tests, git, debug, spm, uitest, review, tca, sysd, coredata, ptr, live, feature).
+
+Правки при встраивании партий 5–11: mvvm — `findStatus(for:)`, s4 с багом `guard … else { return }`; access — новая s3 «Открой модель другому модулю»; esc — новая s6 «Где нужен @escaping», esc-b2 → SearchQueue; realtime s7 — `value` вместо `quote`; arc — убраны зачины «Смотри,/Окей,»; cow-b2 — лишнее «не меняй JSON»; nav — опечатка в s6; длинные строки разбиты, ручные переносы в прозе склеены; шпаргалки приведены к урокам (combine, mapkit, cache, realtime — заново). Замены банка access-b3, codable-b2, urls-b2, esc-b3, store-b3 встроены; в combine пятый раздел ГЛУБЖЕ (store(in:) и @Published).
+
+1. Партия 12: arpool s4 — внешний пул вокруг for вместо копии s1; race — опечатка «RLOST»; queues-b3 — «getter» → readTitle(); шпаргалки queues, race, arpool.
+2. Партия 13: dead s2 — опечатка; dead-b2 заменён своим «Каталог размеров обуви» вместо копии s6; шпаргалки dead, group, gcdmore.
+3. Партия 14: регистр идентификаторов (и в gcdmore); пятые разделы ГЛУБЖЕ — withThrowingTaskGroup (async) и OSAllocatedUnfairLock (locks); шпаргалки async, actor, locks (старый v1-урок locks заменён).
+4. Партия 15: runloop — опечатка «несcheduled»; threadbug-b3 заменён своим «Слот печати фотокниги»; шпаргалки runloop, threadbug, gen (убраны any P и «специализация → быстро»).
+5. Партия 16: убраны пустые строки в коде (assoc-b1/b2, disp s3), disp-b2 — ключ без SIL, disp-b3 — регистр prefix; шпаргалки assoc, disp, pw (старые обещали скорость от final/direct).
+6. Партия 17: mission заглавными; objc-b3 заменён своим (строковый KVC-ключ → Swift key path); шпаргалки fp, objc, vclc (viewIsAppearing, loadView).
+7. Партия 18 (layout, table; frame не пришёл): mission перенумерованы по карте — layout 54, table 55; prereqs layout → frame, table → layout, proto, async; layout s2 больше не называет ответ; table s6 — отступ в ключе; table-b3 стал «Допиши» (во входе была заглушка); шпаргалки layout, table.
+8. Партия 19 (frame 53, hit 56, coord 57): регистр идентификаторов, «в s3/s6» → «в ступени 3/6»; шпаргалки переписаны. Замечание: в coord ступени 1, 3, 4 на одном коде.
+9. Партия 20 (collection 58, coreanim 59, render 60): регистр в банке; render-b3 — print вместо assert; шпаргалки написаны впервые.
+10. Партия 21 (solid 61, arch 62, patt 63): ГЛУБЖЕ solid и arch повторяли основу — заменены своими разделами (LSP, ISP, MVVM на @Observable, разгрузка Massive VC); в arch добавлена аналогия; шпаргалки обновлены.
+11. Партия 22 (tests 64, git 65, debug 66): найдено, что `prereqs: []` ломает парсер; git — revert --no-edit; tests-b2 — пустая строка в конце кода; шпаргалки обновлены.
+12. Партия 23 (spm 67, uitest 68, review 69): без правок содержания; шпаргалка spm без «модульность ускоряет сборку», uitest и review написаны.
+13. Партия 24 (tca 70, sysd 71, coredata 72): регистр predicate; coredata-b3 — import из середины ключа убран; шпаргалки. Замечания: в tca ступени 1–3 на одном reduce; в coredata каждая ступень повторяет ~60 строк стека.
+14. Партия 25 (ptr 73, live 74, feature 75), последняя: live — 20 задач встроены в банк темы первыми (live-t01…t20), затем live-b1…b3; отдельного каталога нет, банк выдаёт их по одной, начиная с наименее решённых; feature — каркас FeatureSupport.swift и ControlledSupplyRemote.swift вставлены в урок целиком, s3 без @main. Замечание: пять задач live почти копируют ptr (t07, t09, t10, t11, t12).
+
+### 11.10.2026 — дизайн-проход «минимализм», пункты 1–3
+
+Сделаны в лаборатории: 3 семейства шрифтов вместо 5, размеры 11/13/15/30 через `--fs-*`, шапка темы до окна 91px вместо 202px, мини-карта 140px, подписи обычными словами. Вошли в лабораторию v57 и в этот репозиторий.
