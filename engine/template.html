@@ -2200,7 +2200,7 @@ function srsOf(id){
   return r;
 }
 function isDue(id){
-  if(statusOf(id)!=="done"){ const r=store.get("pm.srs."+id,null); const o=outOf(id); return !!r && r.due<=Date.now() && !!o && !o.pass; } /* «нет» in Выгрузка before the topic is done: come back tomorrow */
+  if(statusOf(id)!=="done"){ const r=store.get("pm.srs."+id,null); const o=outOf(id); return !!r && r.due<=Date.now() && !!o && o.v!=="ok"; } /* «нет» in Выгрузка before the topic is done: come back tomorrow */
   const r=srsOf(id); return !!r && r.due<=Date.now(); }
 function srsHold(id){ const r=srsOf(id)||{stage:0,lapses:0}; r.due=Date.now()+DAY; store.set("pm.srs."+id, r); }
 /* one self-grade into the existing SRS: recalled → next rung, partly → same rung tomorrow, no → reset, tomorrow */
