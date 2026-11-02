@@ -1,0 +1,35 @@
+[
+ {
+  "id": "git-b1",
+  "topics": [
+   "git"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Иконка каталога",
+  "prompt": "В отдельном репозитории каталога HEAD содержит icon.txt=cyan, индекс=pink, рабочий файл=red. Команды ниже используют icon.txt вместо theme.txt. Назови файл и оба столбца status после каждого restore.",
+  "code": "# HEAD: cyan; индекс: pink; рабочий файл: red.\ngit restore icon.txt\ngit status --short\ngit restore --staged icon.txt\ngit status --short",
+  "key": "M  icon.txt\n M icon.txt\n\nПервый restore берёт pink из индекса; HEAD остаётся cyan. restore --staged возвращает индекс к cyan, оставляет рабочий файл pink. Красная незакоммиченная версия уже уничтожена первым restore."
+ },
+ {
+  "id": "git-b2",
+  "topics": [
+   "git"
+  ],
+  "type": "Допиши",
+  "title": "Черновик страницы путешествия",
+  "prompt": "stash создан с изменённым tracked route.txt, уже добавленным в индекс, и изменённым tracked price.txt без add. Оба были чистыми до черновика; теперь дерево чистое и исходные коммиты те же. Верни не только содержимое, но и staging, проверь status, затем после проверки удали stash.",
+  "code": "git stash list\n# Единственная запись содержит route.txt staged и price.txt unstaged.",
+  "key": "git stash apply --index\ngit status --short\n# После проверки staged и unstaged изменений:\ngit stash drop\n\nroute.txt будет «M  route.txt», price.txt — « M price.txt». --index пытается восстановить подготовку; в данном бесконфликтном входе она восстановлена."
+ },
+ {
+  "id": "git-b3",
+  "topics": [
+   "git"
+  ],
+  "type": "Перепиши",
+  "title": "Отказ от переноса меню настроек",
+  "prompt": "Личная menu начиналась A→B, main=A→C. Во время rebase main возник конфликт одного файла; незакоммиченных правок до начала не было. Требование изменилось: сейчас нельзя переносить работу. Отмени начатый rebase, сохрани исходный B и состояние main.",
+  "code": "git status --short\n# UU menu.txt\n# rebase остановлен на конфликте, ветка menu.",
+  "key": "git rebase --abort\ngit log --oneline --all\ngit status --short\n\nmenu снова указывает на исходный B с родителем A; main на C. Индекс и рабочее дерево чистые, конфликтные маркеры убраны восстановлением исходного состояния."
+ }
+]

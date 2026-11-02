@@ -1,0 +1,38 @@
+[
+ {
+  "id": "feature-b1",
+  "topics": [
+   "feature"
+  ],
+  "type": "Допиши",
+  "title": "JSON валиден, данные нет",
+  "prompt": "Каркас и Repository из урока. Две записи с одинаковым id в cache декодируются, но недопустимы. Напиши async XCTest, ожидающий invalidData от cached; не тестируй только JSONDecoder.",
+  "code": "import XCTest\n// FeatureSupport.swift и слои из урока.",
+  "key": "import XCTest\n// Каркас FeatureSupport.swift; validatedSupplies и SupplyRepository из урока.\nfinal class InvalidCacheTests: XCTestCase {\n    func testDuplicateCacheRejected() async {\n        let cache = MemorySupplyCache(items: [\n            Supply(id: 11, title: \"Чай\", count: 1),\n            Supply(id: 11, title: \"Чай\", count: 2)\n        ])\n        let repository = SupplyRepository(\n            cache: cache, remote: FixedSupplyRemote(items: [])\n        )\n        do {\n            _ = try await repository.cached()\n            XCTFail(\"Ожидался отказ повреждённого смысла данных\")\n        } catch { XCTAssertEqual(error as? SupplyError, .invalidData) }\n    }\n}\n\nСинтаксически корректное хранение не доказывает доменный контракт. Ошибка появляется на границе Repository до показа в UI.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "feature-b2",
+  "topics": [
+   "feature"
+  ],
+  "type": "Допиши",
+  "title": "Remote готов, запись отказала",
+  "prompt": "Слои из урока. Подмена cache отдаёт старую запись и бросает writeFailed на save. Напиши XCTest: refresh не выдаёт успех, повторное cached остаётся старым. Не повторяй внешний запрос бесконечно.",
+  "code": "import XCTest\n// FeatureSupport.swift, validatedSupplies и SupplyRepository.",
+  "key": "import XCTest\n// Каркас FeatureSupport.swift; слои SupplyRepository из урока.\nfinal class WriteFailCache: SupplyCache {\n    let old = [Supply(id: 11, title: \"Чай\", count: 2)]\n    func load() throws -> [Supply] { old }\n    func save(_ values: [Supply]) throws { throw SupplyError.writeFailed }\n}\nfinal class CommitTests: XCTestCase {\n    func testNoSuccessAfterWriteFailure() async throws {\n        let cache = WriteFailCache()\n        let repository = SupplyRepository(cache: cache,\n            remote: FixedSupplyRemote(items: [\n                Supply(id: 11, title: \"Чай\", count: 3)\n            ]))\n        do {\n            _ = try await repository.refresh()\n            XCTFail(\"Запись обязана подтвердиться\")\n        } catch { XCTAssertEqual(error as? SupplyError, .writeFailed) }\n        let saved = try await repository.cached()\n        XCTAssertEqual(saved, cache.old)\n    }\n}\n\nПодтверждение обновления связано с записью. Новый remote не становится ложным устойчивым успехом при отказе cache.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "feature-b3",
+  "topics": [
+   "feature"
+  ],
+  "type": "Допиши",
+  "title": "Старый ответ пришёл последним",
+  "prompt": "Используй ControlledSupplyRemote.swift из общего тестового каркаса. Запусти два refresh, дождись двух запросов, заверши второй count=3, затем первый count=1. Докажи, что UI и cache сохраняют count=3. Не используй sleep и не копируй классы фичи.",
+  "code": "import XCTest\n// FeatureSupport.swift, ControlledSupplyRemote.swift и слои из урока.",
+  "key": "import XCTest\n// FeatureSupport.swift, ControlledSupplyRemote.swift и слои из урока.\nfinal class LatestTests: XCTestCase {\n    @MainActor func testLatestResponseWins() async throws {\n        let cache = MemorySupplyCache()\n        let remote = ControlledSupplyRemote()\n        let model = SupplyModel(repository: SupplyRepository(\n            cache: cache, remote: remote\n        ))\n        let first = Task { await model.refresh() }\n        await remote.waitForRequests(1)\n        let second = Task { await model.refresh() }\n        await remote.waitForRequests(2)\n        let latest = [Supply(id: 11, title: \"Чай\", count: 3)]\n        await remote.finish(1, items: latest)\n        await second.value\n        await remote.finish(0, items: [Supply(id: 11, title: \"Чай\", count: 1)])\n        await first.value\n        XCTAssertEqual(model.state.items, latest)\n        XCTAssertEqual(cache.items, latest)\n        XCTAssertFalse(model.state.isLoading)\n        XCTAssertNil(model.state.error)\n    }\n}\n\nДетерминированная проверка разделяет очередность завершения и актуальность. Старый запрос не меняет ни сохранённую копию, ни состояние интерфейса.",
+  "added": "2026-10-20"
+ }
+]

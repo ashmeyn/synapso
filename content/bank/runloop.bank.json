@@ -1,0 +1,35 @@
+[
+ {
+  "id": "runloop-b1",
+  "topics": [
+   "runloop"
+  ],
+  "type": "Найди ошибку",
+  "title": "Пауза шахматного обратного отсчёта",
+  "prompt": "Сброс timer = nil не удаляет обслуживаемый таймер. Исправь stopCountdown(inout Timer?) так, чтобы старый handle был невалиден; остановка на главном потоке.",
+  "code": "import Foundation\nfunc stopCountdown(_ timer: inout Timer?) {\n    precondition(Thread.isMainThread)\n    timer = nil\n}",
+  "key": "import Foundation\nfunc stopCountdown(_ timer: inout Timer?) {\n    precondition(Thread.isMainThread)\n    timer?.invalidate()\n    timer = nil\n}\n\nПосле вызова свойство nil, сохранённый ранее handle имеет isValid == false."
+ },
+ {
+  "id": "runloop-b2",
+  "topics": [
+   "runloop"
+  ],
+  "type": "Допиши",
+  "title": "Срок парковочного талона",
+  "prompt": "Не считай остаток по числу событий. Напиши remaining(deadline:now:): округляй положительный остаток вверх, после срока возвращай 0. now передаётся явно, реального ожидания нет.",
+  "code": "import Foundation\n// Напиши remaining(deadline:now:)",
+  "key": "import Foundation\nfunc remaining(deadline: Date, now: Date) -> Int {\n    max(0, Int(ceil(deadline.timeIntervalSince(now))))\n}\nlet end = Date(timeIntervalSince1970: 100)\nprint(remaining(deadline: end, now: Date(timeIntervalSince1970: 97)))\nprint(remaining(deadline: end, now: Date(timeIntervalSince1970: 101)))\n\nДля deadline 100 и now 97 получаем 3, для now 101 — 0."
+ },
+ {
+  "id": "runloop-b3",
+  "topics": [
+   "runloop"
+  ],
+  "type": "Допиши",
+  "title": "Индикатор записи диктофона",
+  "prompt": "Используй target/selector: RecordingBadge наследует NSObject, tick помечен @objc. Добавь stop с invalidate и очисткой timer. Пример target намеренно в .default: задача здесь про teardown, а не common.",
+  "code": "import Foundation\nfinal class RecordingBadge: NSObject {\n    private(set) var ticks = 0\n    private(set) var timer: Timer?\n    func start() {\n        precondition(Thread.isMainThread)\n        stop()\n        timer = Timer.scheduledTimer(\n            timeInterval: 3600, target: self,\n            selector: #selector(tick), userInfo: nil, repeats: true\n        )\n    }\n    @objc private func tick() { ticks += 1 }\n    func stop() {\n        precondition(Thread.isMainThread)\n        // Освободи target остановкой\n    }\n}",
+  "key": "import Foundation\nfinal class RecordingBadge: NSObject {\n    private(set) var ticks = 0\n    private(set) var timer: Timer?\n    func start() {\n        precondition(Thread.isMainThread)\n        stop()\n        timer = Timer.scheduledTimer(\n            timeInterval: 3600, target: self,\n            selector: #selector(tick), userInfo: nil, repeats: true\n        )\n    }\n    @objc private func tick() { ticks += 1 }\n    func stop() {\n        precondition(Thread.isMainThread)\n        timer?.invalidate(); timer = nil\n    }\n}\n\nПока Timer валиден, он держит target. Явный stop разрывает удержание; deinit не является способом войти в stop при цикле."
+ }
+]

@@ -1,0 +1,35 @@
+[
+ {
+  "id": "obs-b1",
+  "topics": [
+   "obs"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Настройки уведомлений",
+  "prompt": "Включили Toggle. Назови значение в модели и верхний текст, не консольный вывод.",
+  "code": "import SwiftUI\nimport Observation\n@Observable final class SettingsModel {\n    let id = 5\n    var notifications = false\n}\nstruct SettingsScreen: View {\n    @State private var settings = SettingsModel()\n    var body: some View {\n        VStack {\n            Text(\"Включены: \\(settings.notifications)\")\n            SettingsEditor(settings: settings)\n        }\n    }\n}\nstruct SettingsEditor: View {\n    @Bindable var settings: SettingsModel\n    var body: some View {\n        Toggle(\"Уведомления\", isOn: $settings.notifications)\n    }\n}",
+  "key": "В модели notifications == true, надпись «Включены: true», Toggle включён. @Bindable пишет в единственный SettingsModel, который владелец хранит через @State."
+ },
+ {
+  "id": "obs-b2",
+  "topics": [
+   "obs"
+  ],
+  "type": "Найди ошибку",
+  "title": "Счётчик цели",
+  "prompt": "Увеличили Stepper с 2 до 3. Верхняя цель осталась 2. Исправь обе стороны передачи.",
+  "code": "import SwiftUI\nfinal class CounterModel: ObservableObject {\n    let id = 9\n    @Published var count = 2\n}\nstruct CounterScreen: View {\n    @StateObject private var counter = CounterModel()\n    var body: some View {\n        VStack {\n            Text(\"Цель: \\(counter.count)\")\n            CounterEditor()\n        }\n    }\n}\nstruct CounterEditor: View {\n    @StateObject private var counter = CounterModel()\n    var body: some View {\n        Stepper(\"Цель: \\(counter.count)\", value: $counter.count, in: 0...5)\n    }\n}",
+  "key": "import SwiftUI\nfinal class CounterModel: ObservableObject {\n    let id = 9\n    @Published var count = 2\n}\nstruct CounterScreen: View {\n    @StateObject private var counter = CounterModel()\n    var body: some View {\n        VStack {\n            Text(\"Цель: \\(counter.count)\")\n            CounterEditor(counter: counter)\n        }\n    }\n}\nstruct CounterEditor: View {\n    @ObservedObject var counter: CounterModel\n    var body: some View {\n        Stepper(\"Цель: \\(counter.count)\", value: $counter.count, in: 0...5)\n    }\n}\n\nРебёнок создавал второй CounterModel. После передачи родительского объекта через @ObservedObject Stepper и надпись читают одну цель."
+ },
+ {
+  "id": "obs-b3",
+  "topics": [
+   "obs"
+  ],
+  "type": "Допиши",
+  "title": "Редактирование профиля",
+  "prompt": "Вставь обёртку свойства ProfileEditor. Поле должно менять имя в родительском Text. Объясни, какое свойство хватило бы для сводки без поля.",
+  "code": "import SwiftUI\nimport Observation\n@Observable final class Profile {\n    let id = 8\n    var name = \"Анна\"\n}\nstruct ProfileScreen: View {\n    @State private var profile = Profile()\n    var body: some View {\n        VStack {\n            Text(profile.name)\n            ProfileEditor(profile: profile)\n        }\n    }\n}\nstruct ProfileEditor: View {\n    /* обёртка */ var profile: Profile\n    var body: some View {\n        TextField(\"Имя\", text: $profile.name)\n    }\n}",
+  "key": "import SwiftUI\nimport Observation\n@Observable final class Profile {\n    let id = 8\n    var name = \"Анна\"\n}\nstruct ProfileScreen: View {\n    @State private var profile = Profile()\n    var body: some View {\n        VStack {\n            Text(profile.name)\n            ProfileEditor(profile: profile)\n        }\n    }\n}\nstruct ProfileEditor: View {\n    @Bindable var profile: Profile\n    var body: some View {\n        TextField(\"Имя\", text: $profile.name)\n    }\n}\n\nРедактору нужен @Bindable для $profile.name. Сводке, читающей profile.name в body без редактирования, достаточно let profile: Profile."
+ }
+]

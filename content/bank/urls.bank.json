@@ -1,0 +1,35 @@
+[
+ {
+  "id": "urls-b1",
+  "topics": [
+   "urls"
+  ],
+  "type": "Допиши",
+  "title": "Велостанция",
+  "prompt": "Заполни сетевой шаг и проверку ответа. GET станции 12 при 200 возвращает {\"id\":12,\"available\":3}; 503 нельзя декодировать как успех.",
+  "code": "import Foundation\nstruct BikeStation: Decodable { let id: Int; let available: Int }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeBikeStation(\n    data: Data, response: URLResponse\n) throws -> BikeStation {\n    guard let http = response as? HTTPURLResponse else { throw LoadError.notHTTP }\n    guard /* успешный статус */ else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(BikeStation.self, from: data)\n}\nfunc loadBikeStation(\n    id: Int, session: URLSession = .shared\n) async throws -> BikeStation {\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/bike-stations/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    var request = URLRequest(url: url)\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    let (data, response) = /* запрос */\n    return try decodeBikeStation(data: data, response: response)\n}",
+  "key": "import Foundation\nstruct BikeStation: Decodable { let id: Int; let available: Int }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeBikeStation(\n    data: Data, response: URLResponse\n) throws -> BikeStation {\n    guard let http = response as? HTTPURLResponse else { throw LoadError.notHTTP }\n    guard http.statusCode == 200 else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(BikeStation.self, from: data)\n}\nfunc loadBikeStation(\n    id: Int, session: URLSession = .shared\n) async throws -> BikeStation {\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/bike-stations/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    var request = URLRequest(url: url)\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    let (data, response) = try await session.data(for: request)\n    return try decodeBikeStation(data: data, response: response)\n}\n\nЛокальный ответ 200 даёт available 3. Статус проверяется до данных."
+ },
+ {
+  "id": "urls-b2",
+  "topics": [
+   "urls"
+  ],
+  "type": "Найди ошибку",
+  "title": "Быстрый выбор главы аудиокниги",
+  "prompt": "Экран уже выбрал 13. Сначала пришёл ответ 13, потом 12. Исправь применение по актуальному selectedID, не меняя порядок ответов. UI и сеть здесь не запускаются.",
+  "code": "struct Chapter { let id: Int; let title: String }\nstruct ChapterScreen {\n    var selectedID = 13\n    private(set) var title = \"Загрузка\"\n    mutating func apply(_ chapter: Chapter) {\n        title = chapter.title\n    }\n}\nvar screen = ChapterScreen()\nscreen.apply(Chapter(id: 13, title: \"Глава 13\"))\nscreen.apply(Chapter(id: 12, title: \"Глава 12\"))\nprint(screen.title)",
+  "key": "struct Chapter { let id: Int; let title: String }\nstruct ChapterScreen {\n    var selectedID = 13\n    private(set) var title = \"Загрузка\"\n    mutating func apply(_ chapter: Chapter) {\n        guard chapter.id == selectedID else { return }\n        title = chapter.title\n    }\n}\nvar screen = ChapterScreen()\nscreen.apply(Chapter(id: 13, title: \"Глава 13\"))\nscreen.apply(Chapter(id: 12, title: \"Глава 12\"))\nprint(screen.title)\n\nДо правки «Глава 12», после — «Глава 13». Сверяем текущий выбор при применении, а не только захваченный id запроса. Повторы запросов того же id потребуют дополнительного номера запроса."
+ },
+ {
+  "id": "urls-b3",
+  "topics": [
+   "urls"
+  ],
+  "type": "Допиши",
+  "title": "Свободные стиральные машины",
+  "prompt": "Восстанови проверку HTTP и именно 200 до decode. GET комнаты 12 отдаёт {\"id\":12,\"available\":2}. Для 204 контракт запрещает декодирование.",
+  "code": "import Foundation\nstruct LaundryRoom: Decodable { let id: Int; let available: Int }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeLaundryRoom(\n    data: Data, response: URLResponse\n) throws -> LaundryRoom {\n    // Проверь тип ответа и статус\n    return try JSONDecoder().decode(LaundryRoom.self, from: data)\n}\nfunc loadLaundryRoom(\n    id: Int, session: URLSession = .shared\n) async throws -> LaundryRoom {\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/laundry-rooms/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    var request = URLRequest(url: url)\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    let (data, response) = try await session.data(for: request)\n    return try decodeLaundryRoom(data: data, response: response)\n}",
+  "key": "import Foundation\nstruct LaundryRoom: Decodable { let id: Int; let available: Int }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeLaundryRoom(\n    data: Data, response: URLResponse\n) throws -> LaundryRoom {\n    guard let http = response as? HTTPURLResponse else { throw LoadError.notHTTP }\n    guard http.statusCode == 200 else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(LaundryRoom.self, from: data)\n}\nfunc loadLaundryRoom(\n    id: Int, session: URLSession = .shared\n) async throws -> LaundryRoom {\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/laundry-rooms/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    var request = URLRequest(url: url)\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    let (data, response) = try await session.data(for: request)\n    return try decodeLaundryRoom(data: data, response: response)\n}\n\navailable равен 2 только после успешного HTTP и декодирования. Для 204 получим LoadError.status(204)."
+ }
+]

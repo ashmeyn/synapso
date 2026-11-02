@@ -1,0 +1,35 @@
+[
+ {
+  "id": "objc-b1",
+  "topics": [
+   "objc"
+  ],
+  "type": "Допиши",
+  "title": "Единицы на экране измерения",
+  "prompt": "Для UnitSettings с экспортированным title() -> NSString получи селектор. Вызови его только если responds(to:) вернул true; распечатай объектную строку. Не вводи неизвестные селекторы и ручной objc_msgSend.",
+  "code": "import Foundation\nfinal class UnitSettings: NSObject {\n    @objc dynamic func title() -> NSString { \"Сантиметры\" }\n}\nlet state = UnitSettings()\n// TODO: проверка возможности и объектный вызов",
+  "key": "import Foundation\nfinal class UnitSettings: NSObject {\n    @objc dynamic func title() -> NSString { \"Сантиметры\" }\n}\nlet state = UnitSettings()\nlet selector = #selector(UnitSettings.title)\nif state.responds(to: selector) {\n    let value = state.perform(selector)?.takeUnretainedValue()\n    print(value as? NSString ?? \"Нет единицы\")\n}\n\nВывод: Сантиметры. Проверка наличия дополняет известную совместимую сигнатуру, но не заменяет её."
+ },
+ {
+  "id": "objc-b2",
+  "topics": [
+   "objc"
+  ],
+  "type": "Найди ошибку",
+  "title": "Экран термостата удерживает себя",
+  "prompt": "Ожидаем после освобождения экрана true, но weak-наблюдатель остаётся непустым. Исправь захват self. Сохрани start с отключением старого токена и stop для явного завершения; после температуры 22 подпись должна быть 22.",
+  "code": "import Foundation\nfinal class Thermostat: NSObject {\n    @objc dynamic var temperature = 18\n}\nfinal class TemperatureScreen {\n    let model = Thermostat()\n    var token: NSKeyValueObservation?\n    var text = \"18\"\n    func start() {\n        token?.invalidate()\n        token = model.observe(\\.temperature, options: [.new]) {\n            _, change in\n            self.text = String(change.newValue ?? 0)\n        }\n    }\n    func stop() { token?.invalidate(); token = nil }\n}\nvar screen: TemperatureScreen? = TemperatureScreen()\nweak var observedScreen = screen\nscreen?.start()\nscreen?.model.temperature = 22\nprint(screen?.text ?? \"Нет экрана\")\nscreen = nil\nprint(observedScreen == nil)",
+  "key": "import Foundation\nfinal class Thermostat: NSObject {\n    @objc dynamic var temperature = 18\n}\nfinal class TemperatureScreen {\n    let model = Thermostat()\n    var token: NSKeyValueObservation?\n    var text = \"18\"\n    func start() {\n        token?.invalidate()\n        token = model.observe(\\.temperature, options: [.new]) {\n            [weak self] _, change in\n            self?.text = String(change.newValue ?? 0)\n        }\n    }\n    func stop() { token?.invalidate(); token = nil }\n}\nvar screen: TemperatureScreen? = TemperatureScreen()\nweak var observedScreen = screen\nscreen?.start()\nscreen?.model.temperature = 22\nprint(screen?.text ?? \"Нет экрана\")\nscreen = nil\nprint(observedScreen == nil)\n\nВывод: 22, true. Экран удерживает токен, токен удерживает callback, поэтому сильный self создавал цикл. weak-захват освобождает экран без принудительного stop."
+ },
+ {
+  "id": "objc-b3",
+  "topics": [
+   "objc"
+  ],
+  "type": "Перепиши",
+  "title": "Толщина линии в редакторе схем",
+  "prompt": "В строковом ключе опечатка: \"strokeWidht\". Компилятор её не видит, а во время работы KVC бросит Objective-C исключение, которое Swift catch не поймает. Не запускай исходник. Перепиши запись и чтение через типизированный Swift key path \\StrokeSettings.strokeWidth и subscript [keyPath:]: опечатку тогда поймает компилятор, а приведение к Int станет не нужно.",
+  "code": "import Foundation\nfinal class StrokeSettings: NSObject {\n    @objc dynamic var strokeWidth = 14\n}\nlet settings = StrokeSettings()\nsettings.setValue(18, forKey: \"strokeWidht\")\nprint(settings.value(forKey: \"strokeWidht\") as? Int ?? -1)",
+  "key": "import Foundation\nfinal class StrokeSettings: NSObject {\n    @objc dynamic var strokeWidth = 14\n}\nlet settings = StrokeSettings()\nlet path = \\StrokeSettings.strokeWidth\nsettings[keyPath: path] = 18\nprint(settings[keyPath: path])\n\nВывод: 18. Swift key path проверяется компилятором и сохраняет тип Int; KVC по строке нужен только там, где API действительно принимает строковый ключ. Для известного свойства #keyPath тоже убрал бы опечатку, но результат value(forKey:) остался бы нетипизированным."
+ }
+]

@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Предскажи сводку",
+  "prompt": "Что будет в counts и names? Почему порядок берётся не из Set?",
+  "code": "let authors = [\"Анна\", \"Илья\", \"Анна\"]\nvar counts: [String: Int] = [:]\nvar seen: Set<String> = []\nvar names: [String] = []\nfor author in authors {\n    counts[author, default: 0] += 1\n    if seen.insert(author).inserted { names.append(author) }\n}\nprint(counts[\"Анна\"] ?? 0, names)",
+  "key": "Будет 2 и [\"Анна\", \"Илья\"]. Словарь считает сообщения, Set отмечает первое появление, а порядок сохраняет массив names; Set порядок обхода не обещает."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Собери счётчик",
+  "prompt": "Заполни функцию частот авторов через Dictionary и default: 0.",
+  "code": "func counts(for authors: [String]) -> [String: Int] {\n    var result: [String: Int] = [:]\n    // Один проход, увеличивай счётчик.\n    return result\n}",
+  "key": "func counts(for authors: [String]) -> [String: Int] {\n    var result: [String: Int] = [:]\n    for author in authors { result[author, default: 0] += 1 }\n    return result\n}\n\ndefault: 0 создаёт начальное значение при отсутствующем ключе. Поиск и вставка в Dictionary в среднем O(1)."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Сохрани порядок",
+  "prompt": "Допиши orderedNames: каждое имя только один раз, в порядке первого появления.",
+  "code": "func orderedNames(_ authors: [String]) -> [String] {\n    var seen: Set<String> = []\n    var result: [String] = []\n    // Проверяй insert(...).inserted.\n    return result\n}",
+  "key": "func orderedNames(_ authors: [String]) -> [String] {\n    var seen: Set<String> = []\n    var result: [String] = []\n    for author in authors {\n        if seen.insert(author).inserted { result.append(author) }\n    }\n    return result\n}\n\nSet даёт проверку повторов, Array хранит порядок. Их обновляют вместе в одном проходе."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Найди ошибку",
+  "prompt": "Почему экран может показать авторов в произвольном порядке? Исправь источник порядка.",
+  "code": "let names = Array(Set([\"Анна\", \"Илья\", \"Анна\"]))\nprint(names)",
+  "key": "let authors = [\"Анна\", \"Илья\", \"Анна\"]\nvar seen: Set<String> = []\nlet names = authors.filter { seen.insert($0).inserted }\n\nSet не обещает порядок обхода, поэтому Array(Set(...)) не годится для UI-порядка. Фильтрация исходного массива сохраняет порядок первого появления."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни напарнику (устно)",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Сводка сообщений авторов.\n1. Как считать частоты?\n2. Как проверять первое появление?\n3. Где хранить порядок и сколько памяти нужно?",
+  "key": "Dictionary хранит автора → количество через default: 0. Set.insert(...).inserted показывает первое появление. Массив хранит порядок; дополнительные структуры занимают O(k) памяти для k разных имён."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Two-sum тем же приёмом",
+  "prompt": "Для массива чисел найди индексы двух разных элементов с суммой target за один проход. Используй словарь значение → индекс.",
+  "code": "func twoSum(_ values: [Int], target: Int) -> (Int, Int)? {\n    var seen: [Int: Int] = [:]\n    // Сначала ищи дополнение, потом сохраняй текущее.\n}",
+  "key": "func twoSum(_ values: [Int], target: Int) -> (Int, Int)? {\n    var seen: [Int: Int] = [:]\n    for (index, value) in values.enumerated() {\n        if let first = seen[target - value] { return (first, index) }\n        seen[value] = index\n    }\n    return nil\n}\n\nСловарь отвечает «видели ли нужное дополнение?». Поиск до вставки не даёт использовать один элемент дважды; среднее время O(n)."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "По массиву авторов верни словарь частот и уникальные имена в исходном порядке. Объясни цену по времени и памяти.",
+  "key": "func summarize(_ authors: [String]) -> ([String: Int], [String]) {\n    var counts: [String: Int] = [:]\n    var seen: Set<String> = []\n    var names: [String] = []\n    for author in authors {\n        counts[author, default: 0] += 1\n        if seen.insert(author).inserted { names.append(author) }\n    }\n    return (counts, names)\n}\n\nВ среднем время O(n), дополнительная память O(k) для k разных авторов. Проверь пустой список и повторы в Swift Playground."
+ }
+]

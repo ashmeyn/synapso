@@ -1,0 +1,3256 @@
+{
+ "cheat": {
+  "opt": [
+   "Optional = enum .some/.none: значение или nil",
+   "Развернуть: if let, guard let, ??, ?., ! (падает на nil)",
+   "guard let — значение живёт после проверки; if let — только в блоке",
+   "! допустим, только когда nil = ошибка программиста",
+   "map оборачивает, flatMap сплющивает двойной Optional"
+  ],
+  "coll": [
+   "Array — порядок, индекс O(1), contains O(n)",
+   "Dictionary/Set — доступ O(1) в среднем (нужен Hashable)",
+   "dict[key, default: 0] += 1 — идиома подсчёта",
+   "Set — уникальность и «уже видел» за O(1)",
+   "dict[key] возвращает Optional"
+  ],
+  "func": [
+   "Внешнее имя — метка при вызове, внутреннее — в теле",
+   "_ убирает метку параметра",
+   "inout меняет исходную переменную; вызов с &, только var",
+   "Параметры по умолчанию — константы (let)",
+   "Int... — вариативный (в теле массив); функции — первоклассные"
+  ],
+  "enum": [
+   "Конечный набор случаев; switch исчерпывающий",
+   "associated value — данные в случае (.ready(table: 5))",
+   "raw value — фикс. значение (case a = 1)",
+   "if case let — достать associated value без switch",
+   "indirect — рекурсивные enum"
+  ],
+  "access": [
+   "private < fileprivate < internal (по умолчанию) < package < public < open",
+   "private — объявление и его extensions в том же файле; fileprivate — весь файл",
+   "public/open — из других модулей; open — единственный, кто разрешает наследование и override снаружи",
+   "private(set) — закрыта запись; чтение на уровне свойства (по умолчанию internal)",
+   "public-класс не открывает init и свойства — их помечают public отдельно",
+   "final — запрет наследования/override; ускорение возможно, но не гарантировано"
+  ],
+  "flow": [
+   "guard — early return; значение доступно после проверки",
+   "else у guard обязан выйти (return/throw/…)",
+   "switch исчерпывающий; проваливания нет (есть fallthrough)",
+   "switch: диапазоны, кортежи, where, привязка let",
+   "for-in where фильтрует; break/continue — управление"
+  ],
+  "hof": [
+   "map — преобразовать каждый (размер тот же)",
+   "filter — оставить подходящие; reduce — свернуть в одно",
+   "compactMap = map + выброс nil",
+   "flatMap — расплющить вложенность на уровень",
+   "reduce(into:) эффективнее для аккумулятора-коллекции"
+  ],
+  "err": [
+   "throws/try/do-catch; ошибки обычно enum: Error",
+   "try? → Optional (ошибка = nil); try! → крэш",
+   "throws — обработать/пробросить; Result — исход как значение",
+   "rethrows — бросает, только если бросает переданное замыкание",
+   "async throws — современная замена completion"
+  ],
+  "pw": [
+   "@propertyWrapper + обязательный wrappedValue",
+   "init(wrappedValue:) — для @W var x = 150; ограничивай и здесь",
+   "@W var x → скрытое private _x: W; x читает/пишет _x.wrappedValue",
+   "$x = projectedValue; тип любой (Bool, Binding, publisher)",
+   "struct-wrapper: копия _x — отдельное значение, запись в неё теряется",
+   "custom init владельца: _x = W(wrappedValue: …)",
+   "@State/@Published — тоже обёртки, но их хранилище устроено иначе"
+  ],
+  "valref": [
+   "struct/enum — value (копия); class — reference (ссылка)",
+   "stack/heap — модель, не гарантия: struct может жить внутри класса или буфера",
+   "value-тип с полем-классом делит этот объект",
+   "let у struct запрещает менять её свойства (не объект по вложенной ссылке); у class — только ссылку",
+   "mutating нужен методу struct, классу — нет"
+  ],
+  "cow": [
+   "Copy-on-Write: копии делят буфер до первой мутации",
+   "Array/Dictionary/Set/String — CoW из stdlib",
+   "присваивание обычно дешёвое; первая запись в общий буфер — копия O(n)",
+   "isKnownUniquelyReferenced — основа ручного CoW",
+   "reserveCapacity убирает лишние реаллокации",
+   "свой CoW: проверка уникальности перед записью в каждом mutating-методе"
+  ],
+  "arc": [
+   "ARC считает сильные ссылки; 0 → deinit",
+   "retain/release вставляет компилятор (не GC)",
+   "только для классов (reference)",
+   "взаимные сильные ссылки → retain cycle",
+   "разрыв цикла — weak/unowned",
+   "вызов сохранённого замыкания не убирает его захват — очищай само замыкание"
+  ],
+  "weak": [
+   "weak — Optional var, сам обнуляется; unowned — обычно не Optional, не обнуляется",
+   "unowned после dealloc — крэш",
+   "delegate обычно weak (протокол: AnyObject)",
+   "[weak self] в @escaping/хранимом замыкании",
+   "Timer/NotificationCenter — частые циклы"
+  ],
+  "eq": [
+   "== — равенство значений (Equatable); === — идентичность (класс)",
+   "== синтезируется для struct/enum с Equatable-полями",
+   "у класса == не автосинтез; === без Equatable",
+   "Hashable строится на Equatable (Set/ключ Dict)",
+   "контракт: a == b ⇒ одинаковый hash",
+   "не меняй поля ключа у объекта, уже лежащего в Set"
+  ],
+  "leaks": [
+   "утечка = объект удержан, но не нужен (обычно цикл)",
+   "признак: не вызвался ожидаемый deinit — проверь всех владельцев, это ещё не доказательство",
+   "инструменты: Memory Graph, Instruments",
+   "частый источник — self в замыканиях",
+   "retain cycle ≠ растущий кэш (abandoned memory)"
+  ],
+  "proto": [
+   "протокол — контракт из требований; conform — выполнить",
+   "default implementation — в extension",
+   "метод из extension (не требование) — статич. диспетчеризация",
+   "protocol: AnyObject — только классы (weak/делегат)",
+   "под протокол подходят struct/enum/class"
+  ],
+  "di": [
+   "DI — зависимости снаружи, не создавать внутри",
+   "init injection — основной способ",
+   "инъектировать протокол, не класс → тесты",
+   "DI vs singleton: явная, заменяемая зависимость",
+   "composition root — где собираются реализации"
+  ],
+  "clos": [
+   "замыкание = функция + захваченное окружение",
+   "захват по ссылке (видит актуальное значение)",
+   "[x] — снимок значения на момент создания (для класса — ссылка, не копия объекта)",
+   "[weak self] когда замыкание хранимое и захватывает self",
+   "trailing closure — последний аргумент за скобками"
+  ],
+  "esc": [
+   "non-escaping (деф.) — вызов до возврата функции",
+   "@escaping — сохраняется/вызывается позже",
+   "в @escaping self виден явно (self. / [weak self]) — напоминание о цикле",
+   "Optional и хранимые замыкания — escaping",
+   "map/filter — non-escaping; completion — escaping"
+  ],
+  "gen": [
+   "<T> связывает тип входа и выхода: [T] → T?, без Any и as?",
+   "тип выбирается при вызове; Shelf<Int> принимает только Int",
+   "операции — только по ограничениям: T: Equatable даёт ==",
+   "extension Shelf where Item: Equatable — способность только сравнимым",
+   "несколько требований: where T: Named, T: Equatable",
+   "один T — один тип для всех аргументов; разные — <A, B>",
+   "специализация — возможная оптимизация, не гарантия и не источник типобезопасности"
+  ],
+  "assoc": [
+   "associatedtype — имя типа в протоколе; выбирает реализация (typealias или вывод)",
+   "some P на возврате — один скрытый конкретный тип, выбирает функция",
+   "some не переключает тип по веткам: все return — один тип",
+   "any P — коробка: разные реализации в одном [any P], выбирает caller",
+   "[any Feed] в Swift 5.7+ можно, но связь с конкретным Item теряется",
+   "нужна связь типов — generic: where F.Item == Int",
+   "primary associated type: any Collection<Int>",
+   "цена any — упаковка и косвенность; без обещаний цифр"
+  ],
+  "disp": [
+   "dispatch — как выбирается реализация метода для вызова",
+   "static: struct, final, private, метод только в extension протокола",
+   "vtable — class-методы с override; witness table — требования протокола",
+   "ловушка: метод только в extension, не в протоколе → через any P вызовется версия extension",
+   "лечение: объяви метод требованием в протоколе",
+   "private helper базы не переопределяется одноимённым методом подкласса",
+   "@objc dynamic — message dispatch (Objective-C runtime)",
+   "final запрещает override; ускорение не гарантировано, оптимизатор может девиртуализировать"
+  ],
+  "queues": [
+   "serial — не перекрывает свои работы; concurrent — допускает перекрытие",
+   "sync — ждёт и может вернуть значение; async — возвращает сразу",
+   "оси независимы: async ≠ новый поток, concurrent ≠ порядок завершения",
+   "sync на текущую serial-очередь → deadlock (или краш Dispatch)",
+   "зависимость фаз — внутри одной работы, не надежда на порядок",
+   "main — serial, UI; тяжёлое — вне main"
+  ],
+  "race": [
+   "data race — разные потоки, одна память, ≥1 запись, без синхронизации",
+   "+= не атомарно: чтение → расчёт → запись, обновление теряется",
+   "одна private serial-очередь владеет состоянием: и запись, и чтение через неё",
+   "проверка и изменение — в одном sync (claim, consume, nextID)",
+   "read() + store() под очередью — всё равно логическая гонка",
+   "наружу — снимок значения, не изменяемая ссылка",
+   "TSan ловит настоящие доступы; нет отчёта ≠ нет гонок"
+  ],
+  "dead": [
+   "deadlock — замкнутое ожидание: A ждёт B, B ждёт A",
+   "рисуй граф ожиданий: кто держит, кто ждёт",
+   "две очереди с встречными sync → цикл; лечение — async + callback",
+   "main.sync с главного потока → ждёт сам себя",
+   "скрытый цикл: публичный метод с sync, вызванный изнутри той же очереди",
+   "два lock — всегда один порядок захвата, unlock в обратном",
+   "timeout ограничивает ожидание, но не чинит архитектуру"
+  ],
+  "group": [
+   "DispatchGroup считает незавершённые работы, результатов не собирает",
+   "enter — до отправки работы; leave — ровно один на каждом пути",
+   "defer { group.leave() } в начале блока, до guard",
+   "вложенный async → leave в его настоящем completion",
+   "notify — продолжение без блокировки; wait — блокирует поток",
+   "wait на main — нельзя; .timedOut не отменяет работу",
+   "лишний leave — краш; не хватает leave — notify не придёт",
+   "общий массив результатов всё равно защищает отдельный владелец"
+  ],
+  "gcdmore": [
+   "barrier — эксклюзивная запись на своей private concurrent-очереди",
+   "readers-writers: read через sync, set через sync(flags: .barrier)",
+   "barrier на global() не работает как владелец",
+   "semaphore(value: N) — не больше N внутри; wait может блокировать поток",
+   "signal только после успешного wait; .timedOut — permit не получен",
+   "Operation: addDependency ждёт finished, а не успеха",
+   "cancel — запрос: работа сама проверяет isCancelled между шагами",
+   "отмена prepare не отменяет зависимый publish"
+  ],
+  "async": [
+   "async — функция может приостановиться; throws — может бросить ошибку",
+   "try await — ошибка и возможная пауза; поток не блокируется",
+   "подряд await — последовательно; async let — независимые дочерние задачи",
+   "массив запросов — withThrowingTaskGroup; результаты в порядке завершения, собирай по id",
+   "Task { } — вход в async из синхронного кода; handle можно cancel()",
+   "отмена кооперативна: checkCancellation / isCancelled",
+   "CancellationError ловим отдельно, не путаем с ошибкой данных",
+   "UI-модель — @MainActor; после await проверь, актуален ли запрос",
+   "completion → async: withCheckedThrowingContinuation, resume ровно один раз"
+  ],
+  "actor": [
+   "actor — владелец изменяемого состояния; изолированный код не перекрывается",
+   "снаружи — await counter.read(); внутри актора — без await",
+   "метод без await внутри выполняется одним сегментом",
+   "reentrancy: между await другой код актора может изменить состояние",
+   "проверка и изменение — после последнего await, без паузы между ними",
+   "несколько внешних await ≠ транзакция; пара — одним методом-снимком",
+   "nonisolated — без await, но без доступа к изменяемому состоянию"
+  ],
+  "skel": [
+   "скелет: аккумулятор → проход → шаг → return",
+   "сначала сигнатура и крайние случаи, потом код",
+   "крайние: пустой, один элемент, дубликаты",
+   "a.first/a.last вместо a[0] без проверки",
+   "каркас выбирают под нужную сложность"
+  ],
+  "bigo": [
+   "рост в худшем случае, без констант",
+   "проход O(n), вложенный цикл O(n²)",
+   "Set/Dict поиск O(1); массив O(n)",
+   "contains в цикле — скрытый O(n²)",
+   "append амортизированно O(1); бинпоиск O(log n)"
+  ],
+  "setdict": [
+   "Dictionary — подсчёт частот; Set — «уже видел»",
+   "dict[k, default: 0] += 1; seen.insert(x).inserted",
+   "two-sum: словарь значение→индекс, O(n)",
+   "«уже видел» — Set, не массив",
+   "анаграммы — сравнение частот / ключ по sorted"
+  ],
+  "ptr": [
+   "Сначала контракт: регистр, пробелы, пустая строка, что считать символом",
+   "Character — графемный кластер; text[0] недопустим, String.Index не Int",
+   "Array(text) даёт индексы за O(n) памяти; без массива — String.Index и index(after:/before:)",
+   "Встречные указатели: while left < right; инвариант — внешние пары уже проверены",
+   "Пара в отсортированном массиве: сумма мала → left += 1, велика → right -= 1; без сортировки доказательство рушится",
+   "read/write: write — длина принятого префикса, сравнивай с values[write - 1]",
+   "Игнорировать ровно пробел U+0020 — фильтр \" \", а не isWhitespace",
+   "Окно (две границы вперёд) — другой шаблон, не путай со встречным"
+  ],
+  "live": [
+   "До кода: вход отсортирован? повторы? пустой случай? что вернуть, если ответа нет (Optional)",
+   "Начальное значение — допустимая база, а не 0 (maximum: первый элемент, пустое → nil)",
+   "Назови инвариант: что хранит счётчик/окно/указатель после каждого шага",
+   "Не теряй порядок: Array(Set(x)) ≠ стабильные уникальные — нужны seen и result",
+   "Ошибку не прячь: compactMap скрывает невалидный ввод, throw сохраняет его",
+   "Проверки: обычный, пустой, один элемент, край контракта; тест должен опровергать, а не подтверждать",
+   "Сложность выводи из своего кода: сколько раз движется каждая граница, какая память добавлена",
+   "Внешний вызов — через протокол и шпион: проверь аргумент и число вызовов"
+  ],
+  "state": [
+   "@State — локальное состояние value-типа, переживает пересоздание",
+   "@Binding — ссылка на чужой @State (без владения)",
+   "$value — Binding из @State",
+   "@State private; менять снаружи нельзя",
+   "для class — @Observable/@StateObject"
+  ],
+  "obs": [
+   "@Observable (iOS17) — наблюдаемый класс, хранить через @State",
+   "@StateObject — владелец, создаёт один раз",
+   "@ObservedObject — не владеет; локально → сброс",
+   "@Bindable — биндинги к @Observable ($vm.field)",
+   "@Observable — точечные перерисовки"
+  ],
+  "flowui": [
+   "данные вниз, события вверх",
+   "модификаторы возвращают новый вью; порядок важен",
+   "padding().background() ≠ background().padding()",
+   "@Environment — сквозные данные без prop drilling",
+   "единый источник истины наверху"
+  ],
+  "mvvm": [
+   "Model — данные, View — верстка, VM — состояние/логика",
+   "VM не знает про конкретные View",
+   "логика/форматирование → VM; верстка → View",
+   "VM тестируется с mock-зависимостями",
+   "на простых экранах MVVM бывает избыточен"
+  ],
+  "nav": [
+   "NavigationStack (iOS16+); NavigationView устарел",
+   "NavigationLink(value:) + .navigationDestination(for:)",
+   "path — состояние стека (@State/VM)",
+   "pop-to-root = очистить path",
+   "NavigationPath — разнородный стек, deep link"
+  ],
+  "vclc": [
+   "loadView → viewDidLoad → viewWillAppear → viewIsAppearing → viewDidAppear",
+   "уход: viewWillDisappear → viewDidDisappear; возврат — без viewDidLoad",
+   "viewDidLoad — создать и добавить элементы (раз за загрузку view)",
+   "viewWillAppear — обновить данные при каждом показе",
+   "viewIsAppearing (SDK 17, iOS 13+) — геометрия и traits уже актуальны",
+   "размеры — в viewDidLayoutSubviews, может вызываться много раз",
+   "loadView без super: создать view и присвоить self.view",
+   "уход ≠ deinit: замыкания и таймеры — [weak self], invalidate в viewDidDisappear"
+  ],
+  "frame": [
+   "frame — место и размер у superview (только при единичном transform)",
+   "bounds — своя система; bounds.origin сдвигает видимую область и детей, frame не меняется",
+   "Прокрутка = сдвиг bounds.origin (UIScrollView через contentOffset)",
+   "Сложение frame.origin ≠ перевод: convert(_:to:) / convert(_:from:)",
+   "При transform frame не определён: меняй bounds и center, охват — convert(bounds, to:)",
+   "Перенос между родителями: convert до removeFromSuperview"
+  ],
+  "layout": [
+   "Дочерней view под якорями: translatesAutoresizingMaskIntoConstraints = false",
+   "NSLayoutConstraint.activate([...]) — весь набор разом; trailing и bottom с минусом",
+   "По каждой оси нужны положение и размер; часть даёт пара краёв или intrinsicContentSize",
+   "Неоднозначность — решений несколько; конфликт — обязательные (1000) несовместимы",
+   "Hugging — против растягивания, compression resistance — против сжатия; выше приоритет — держит свой размер",
+   "Режимы: держи ссылку на constraint — меняй constant или isActive, не добавляй вторую обязательную",
+   "Проверка: view с заданным frame → layoutIfNeeded() → frame и hasAmbiguousLayout"
+  ],
+  "table": [
+   "register(Cell.self, forCellReuseIdentifier:) до первого dequeue; identifier — тип строки, не id модели",
+   "cellForRowAt: dequeueReusableCell(withIdentifier:for:) и полная настройка — обе ветки, картинка nil",
+   "prepareForReuse: super и сброс временного (representedID, запрос); контент всё равно задаёт configure",
+   "Поздняя картинка: guard cell.representedID == id; weak и отмена актуальность не доказывают",
+   "Два запроса одного id — ещё и версия запроса",
+   "didSelectRowAt: сохраняй id модели, не indexPath — после сортировки строка другая",
+   "dataSource и delegate слабые: источник держит контроллер"
+  ],
+  "hit": [
+   "hitTest обходит subviews с последнего добавленного",
+   "Пропускает isHidden, isUserInteractionEnabled == false, alpha < 0.01 — вместе со всей веткой",
+   "Точка сначала проходит point(inside:) родителя; clipsToBounds=false этого не меняет",
+   "Большая зона касания: point(inside:) с bounds.insetBy(dx: -12, dy: -12), frame не трогаем",
+   "Проницаемый фон: super.hitTest, nil только если результат — self",
+   "UIImageView: взаимодействие по умолчанию выключено",
+   "Responder chain: next — superview → контроллер → … ; target nil ищет обработчик по цепочке"
+  ],
+  "coord": [
+   "Контроллер сообщает событие, coordinator решает, куда дальше; router делает push/pop",
+   "start() запускает flow; push за протоколом навигатора — тест на fake без UIWindow",
+   "Родитель сильно держит активные childCoordinators",
+   "По завершении удали именно этот child: removeAll { $0 === child }",
+   "Обратная связь слабая: [weak self] в callback или weak delegate: AnyObject",
+   "onFinish child: [weak self, weak child]",
+   "Удалить child ≠ сделать pop: владение и навигация — разные операции"
+  ],
+  "rest": [
+   "GET читать, POST создать, PUT заменить, PATCH менять, DELETE удалять",
+   "2xx успех, 4xx клиент, 5xx сервер",
+   "401 не аутентифицирован; 403 нет прав",
+   "проверять statusCode перед декодом",
+   "GET идемпотентен; повтор POST — с Idempotency-Key"
+  ],
+  "codable": [
+   "Codable = Encodable & Decodable (JSON ↔ тип)",
+   "синтез, если имена совпадают",
+   "CodingKeys или .convertFromSnakeCase",
+   "необязательное поле → Optional (иначе ошибка)",
+   "сложное — кастомный init(from:)"
+  ],
+  "urls": [
+   "try await URLSession.shared.data(for: request)",
+   "проверять HTTPURLResponse.statusCode по контракту endpoint до декодирования",
+   "UI — на главном (@MainActor)",
+   "URLError (сеть) ≠ 4xx/5xx (статус)",
+   "отменять Task при уходе с экрана",
+   "Task.checkCancellation() после await — не вернуть ненужный результат"
+  ],
+  "store": [
+   "UserDefaults — мелкие настройки",
+   "Keychain — секреты (токены), шифруется",
+   "файлы (FileManager) — крупное; БД — связанные наборы",
+   "токен в UserDefaults нельзя",
+   "Documents бэкапится; Caches система чистит",
+   "bool(forKey:) не отличает отсутствие от false → object(forKey:)",
+   "Keychain: SecItemAdd → errSecDuplicateItem → SecItemUpdate"
+  ],
+  "coredata": [
+   "Сущность (NSEntityDescription) — схема, NSManagedObject — одна запись",
+   "NSPersistentContainer собирает модель, координатор и store; для тестов — NSInMemoryStoreType",
+   "insert меняет только context; без save() в store ничего не попадает",
+   "NSFetchRequest + predicate + sortDescriptors; второй ключ сортировки делает порядок стабильным",
+   "Ошибка save → rollback() возвращает context к последнему сохранению",
+   "Context привязан к своей очереди: работа внутри perform / performAndWait",
+   "Между контекстами передаём objectID (постоянный после save), а не сам объект",
+   "Наружу из context — value-DTO, а не NSManagedObject",
+   "SwiftData: @Model, ModelContext, @Query — те же обязанности, другой API"
+  ],
+  "solid": [
+   "SRP — разные причины изменения в разные типы (не «один метод на класс»)",
+   "OCP — новый тариф новой реализацией протокола, клиент без switch по типу",
+   "LSP — наследник держит обещание базы; квадрат ≠ изменяемый прямоугольник",
+   "ISP — клиенту только нужная роль; пустой метод ради протокола — сигнал",
+   "DIP — сценарий зависит от своего протокола; DI доставляет реализацию",
+   "KISS — простота под требования; DRY — одно знание, а не похожий текст",
+   "преждевременный DRY: общий метод с role-флагом прячет разные правила"
+  ],
+  "arch": [
+   "MVC: controller связывает model и view; риск — Massive View Controller",
+   "MVP: presenter хранит состояние и командует пассивной view через протокол",
+   "MVVM: view model хранит готовое состояние, view наблюдает (onChange / @Observable)",
+   "проверка: presenter / view model тестируются без UIKit",
+   "ViewModel с UILabel — снова связка с UIKit",
+   "VIPER — роли View/Interactor/Presenter/Entity/Router, не пять пустых файлов",
+   "Clean — use case владеет протоколом репозитория, зависимости внутрь",
+   "пустой список ≠ ошибка; выбор — по сложности, команде, тестам"
+  ],
+  "patt": [
+   "delegate — один адресат: protocol: AnyObject + weak var delegate",
+   "observer — много слушателей: NotificationCenter, Combine, @Observable",
+   "block-API: храни токен, removeObserver; token = nil подписку не снимает",
+   "повторный start — сначала stop, иначе событие придёт дважды",
+   "object: sender в addObserver фильтрует по отправителю",
+   "factory method — creator переопределяет makeX, workflow не меняется",
+   "init со switch по kind — simple factory, не GoF Factory Method",
+   "singleton — глобальное изменяемое состояние; в тестах — протокол и DI"
+  ],
+  "tests": [
+   "arrange → act → assert: вход, действие, сравнение с контрактом",
+   "XCTAssertEqual; XCTAssertThrowsError + проверка конкретной ошибки",
+   "stub отвечает, spy записывает вызовы; mock задаёт ожидаемое взаимодействие",
+   "spy: сравнивай [71], а не contains(71) — ловит лишние вызовы",
+   "свежая фикстура в setUp, освобождение в tearDown; без static-состояния",
+   "async-тест: func test…() async throws + await, без sleep",
+   "время и сеть — зависимости через протокол",
+   "Swift Testing: @Test и #expect"
+  ],
+  "git": [
+   "рабочее дерево → add → индекс → commit; add берёт содержимое в момент вызова",
+   "ветка — указатель; HEAD — текущая ветка",
+   "merge сохраняет коммиты и даёт M с двумя родителями; rebase создаёт новые B′",
+   "конфликт: оставь нужное по требованиям, убери маркеры, add, commit / --continue",
+   "stash push -u → apply → проверка → drop; --index возвращает staging",
+   "restore — файл; restore --staged — индекс; reset --soft/--hard — ветка",
+   "опубликованное отменяй revert, не reset/force",
+   "rebase общей ветки — нельзя без договорённости"
+  ],
+  "debug": [
+   "сначала воспроизведи: вход и ожидаемый результат",
+   "breakpoint: условный (id == 99), с действием и auto-continue",
+   "LLDB: v / frame variable — locals; p, po выполняют код; bt — стек",
+   "Exception Breakpoint — ObjC-исключения; Swift Error Breakpoint — throw",
+   "View Hierarchy: frame, bounds, hidden, alpha, порядок соседей",
+   "Memory Graph: законный владелец или входящие сильные рёбра цикла",
+   "Logger: категории, уровни, privacy: .private для личных данных",
+   "найденный баг закрепи регрессионным тестом"
+  ],
+  "spm": [
+   "Package.swift: products — что отдаём, targets — модули, testTarget — тесты",
+   "продукт ≠ модуль: импортируют имя target, а не продукта",
+   "между модулями виден только public; public struct ≠ public init",
+   "зависимости — от feature к core; core не знает features, циклов нет",
+   "dependencies пакета (URL, версия) ≠ dependencies target (.product)",
+   "from: \"1.1.0\" — до 2.0.0; .upToNextMinor — до 1.2.0",
+   "Package.resolved фиксирует выбранные версии; руками не правят",
+   "@testable import — доступ к internal в тестах; package-доступ — Swift 5.9"
+  ],
+  "sysd": [
+   "Сначала рамки: что показываем офлайн, объём данных, свежесть, что делаем при ошибке",
+   "Пагинация курсором, а не номером страницы: вставки не сдвигают выдачу; nil-курсор — конец списка",
+   "Один запрос страницы за раз: пока идёт загрузка, повторный вызов игнорируется",
+   "Репозиторий сливает кэш и сеть по id и версии, а не заменяет кэш целиком",
+   "Локальное намерение (закладка офлайн) живёт в очереди до ack сервера и переживает обновление",
+   "Удаления приходят явно (tombstone), иначе пропавший пост не отличить от не загруженного",
+   "Realtime не гарантирует полноту — после переподключения догружаем пропущенное",
+   "Повторы ограничены: backoff и бюджет попыток; ответ на устаревший запрос отбрасываем"
+  ],
+  "feature": [
+   "Сначала контракт: Supply id > 0, title непуст после trim, count >= 0, id уникальны",
+   "Нет файла = [] (пустой первый запуск); ошибка чтения/decode — ошибка, не []",
+   "Слои: View → Model (@MainActor) → Repository (actor) → Cache / Remote",
+   "Remote-ответ — не успех: сначала validatedSupplies, потом cache.save, и только потом return",
+   "Запись .atomic — замена одного файла, не транзакция нескольких писателей",
+   "Кэш показываем первым с isStale = true; при ошибке remote items остаются на экране",
+   "Generation: Repository проверяет перед save, Model — перед каждым применением к UI",
+   "Отмена завершает spinner без ошибки; тесты управляют порядком ответов, без sleep"
+  ],
+  "combine": [
+   "publisher — источник, subscriber — получатель, sink — обработчик",
+   "sink возвращает AnyCancellable: не сохранил — подписка отменилась",
+   "PassthroughSubject — только новые события; CurrentValueSubject — хранит и сразу отдаёт последнее",
+   "filter/map — до sink; [weak self] в sink, если владелец хранит подписку",
+   "Failure == Never → sink с одной closure; .finished — нормальный конец потока",
+   "для UI: receive(on: DispatchQueue.main) перед sink",
+   "несколько подписок — Set<AnyCancellable> и store(in:); $prop — издатель @Published"
+  ],
+  "mapkit": [
+   "Map { ForEach(points) { Marker(title, coordinate:) } }",
+   "выбор: Map(selection: $selectedID) + .tag(point.id)",
+   "метку различай по id, не по title и не по индексу",
+   "название выбранной точки — вычисляй из points по id",
+   "после фильтра проверь, что выбранный id ещё виден, иначе nil",
+   "камера (MapCameraPosition) ≠ выбор; Annotation — своё содержимое метки"
+  ],
+  "cache": [
+   "hit — вернуть копию; miss — загрузить из источника и сохранить",
+   "NSCache<NSString, NSData>: ключ и значение — объекты",
+   "ключ = всё, что меняет результат: id + версия + размер",
+   "ошибку источника не кэшируем — до setObject не доходим",
+   "NSCache сам вытесняет; лимиты и порядок не гарантированы",
+   "cost байтов ≠ cost декодированных пикселей (bytesPerRow × height)"
+  ],
+  "realtime": [
+   "WebSocket — обмен в обе стороны; SSE — поток от сервера по HTTP",
+   "polling — периодический снимок; push — сигнал обновиться, не журнал событий",
+   "receive() даёт одно сообщение — получай в цикле до конца",
+   "сначала фильтр id, потом сравнение revision",
+   "полный снимок переживает пропуск; дельта требует восстановления",
+   "после переподключения — свежий снимок, старые сообщения отбрасывать"
+  ],
+  "arpool": [
+   "autoreleasepool { } опустошает локальный пул отложенных release при выходе",
+   "граница — внутри цикла, на одну запись или небольшую партию",
+   "результат возвращай из пула: сильные владельцы живут дальше",
+   "пул синхронный и rethrows: try autoreleasepool { try … }, без await",
+   "нужен для массовых Cocoa/Foundation-вызовов; чистым Swift-значениям не нужен",
+   "не лечит retain cycle и растущий массив; выигрыш — только по замеру"
+  ],
+  "locks": [
+   "Lock — в критическую секцию входит один поток",
+   "Всегда: lock(); defer { unlock() }",
+   "NSLock: повторный lock() в том же потоке — вечная блокировка",
+   "NSRecursiveLock: пускает тот же поток, unlock() столько же раз",
+   "OSAllocatedUnfairLock (iOS 16+): withLock { state in }, самый лёгкий",
+   "Замок не держат через await; async-код → actor"
+  ],
+  "runloop": [
+   "RunLoop = цикл событий потока: ждать → обработать → спать",
+   "Главный поток — RunLoop есть всегда; потоки GCD — нет",
+   "scheduledTimer → только .default; при скролле RunLoop в .tracking",
+   "Таймер при скролле: RunLoop.main.add(timer, forMode: .common)",
+   "Утечка: RunLoop → Timer → замыкание → self; лечить [weak self] + invalidate()",
+   "На фоне: DispatchSourceTimer или Task + Task.sleep"
+  ],
+  "threadbug": [
+   "deadlock — все ждут; livelock — все шагают, прогресса нет; starvation — один не получает слот",
+   "livelock: симметричное уступание → ломай симметрию единым порядком",
+   "retry — с бюджетом попыток и честным статусом, не бесконечный спин",
+   "priority inversion: low держит lock, high ждёт, medium вытесняет low",
+   "помогают: короткая секция, unfair lock/QoS-повышение владельца",
+   "unfair ≠ справедливость: не гарантирует порядок и отсутствие starvation",
+   "starvation лечится бюджетом: каждой непустой очереди — слот"
+  ],
+  "fp": [
+   "чистая функция: тот же вход → тот же выход, без побочных эффектов",
+   "побочный эффект — запись во внешнее состояние, файл, вывод, сеть",
+   "map/filter/reduce не делают код чистым: замыкание тоже не должно писать наружу",
+   "вместо мутации — новое значение: let + struct, вернуть копию",
+   "let на классе фиксирует ссылку, не свойства объекта",
+   "композиция: label(clamp(x)) — маленькие функции в конвейер",
+   "функция высшего порядка возвращает правило: makeCap(limit:) -> (Int) -> Int",
+   "время, случайность, ответы — параметром; эффекты — на границе приложения"
+  ],
+  "objc": [
+   "Objective-C runtime находит метод по классу получателя и селектору во время исполнения",
+   "NSObject недостаточно: метод для #selector должен быть @objc",
+   "@objc — видим Objective-C; dynamic — вызов из Swift через message dispatch",
+   "perform(selector) — только объектный результат; иначе вызывай метод напрямую",
+   "KVC: setValue/value(forKey:) по строке; неверный ключ — ObjC-исключение, не catch",
+   "лучше #keyPath или Swift key path \\Type.prop — проверит компилятор",
+   "KVO: observe(\\.volume, options: [.new]) на @objc dynamic; храни токен, invalidate()",
+   "callback KVO → [weak self]; swizzling меняет методы всего класса — опасно"
+  ],
+  "collection": [
+   "snapshot — секции и порядок id; содержимое — отдельно в store",
+   "id стабилен и уникален во всём snapshot, даже между секциями",
+   "appendSections → appendItems(toSection:) → dataSource.apply",
+   "CellRegistration создаётся заранее; provider получает id и dequeueConfiguredReusableCell",
+   "переименование: store + reconfigureItems (iOS 15+) + apply",
+   "перенос: deleteItems + appendItems в новую секцию, без дубля id",
+   "compositional: item → group → section; fractionalWidth — от контейнера",
+   "estimated — оценка для self-sizing, не готовая высота"
+  ],
+  "coreanim": [
+   "у UIView есть backing layer; CALayer рисует, но касания не получает",
+   "cornerRadius + masksToBounds обрезают и внешнюю тень",
+   "тень и обрезка вместе — два слоя: outer с тенью, content с маской",
+   "shadowPath задаёт контур тени; после смены bounds пересоздай",
+   "standalone CALayer анимирует свойства неявно; CATransaction.setDisableActions(true)",
+   "CABasicAnimation не меняет модель: сначала запиши target в layer, потом add",
+   "model — цель, presentation() — то, что видно сейчас (Optional)",
+   "fillMode .forwards + isRemovedOnCompletion=false — не лечение модели"
+  ],
+  "render": [
+   "цикл: события → layout → display → commit → render server → GPU",
+   "setNeedsLayout помечает, layoutIfNeeded выполняет сейчас",
+   "меняется геометрия детей — layout (layoutSubviews / layoutSublayers)",
+   "меняются свои пиксели в прежних bounds — setNeedsDisplay → draw позже",
+   "несколько setNeedsLayout подряд → один проход",
+   "commit ≠ кадр на экране",
+   "60 Гц ≈ 16.7 мс, 120 Гц ≈ 8.3 мс — на весь кадр, не на функцию",
+   "offscreen: маски, тень без shadowPath; не каждый cornerRadius"
+  ],
+  "uitest": [
+   "XCUIApplication: launchArguments до launch; приложение само читает аргументы",
+   "ищи по accessibilityIdentifier, не по тексту кнопки (локаль)",
+   "waitForExistence(timeout:) вместо sleep; Bool — проверяй",
+   "после tap жди новое состояние (predicate на label), не exists",
+   "Page Object: селекторы и действия в одном месте",
+   "exists ≠ isHittable",
+   "snapshot = эталон + сравнение пикселей при фиксированной среде",
+   "screenshot без сравнения — только вложение для диагностики"
+  ],
+  "review": [
+   "смотри: корректность (края), читаемость, тесты, связность PR",
+   "замечание: конкретный вход + последствие + предложение",
+   "помечай блокирующее и необязательное раздельно",
+   "self-review: прочитать diff, убрать лишнее, описать, как проверял",
+   "краш: от кадра Swift к первому кадру приложения, потом к причине",
+   "dSYM должен совпадать с бинарником по UUID",
+   "приоритет: пользователи и тяжесть, не число событий",
+   "non-fatal — пойманная восстановимая ошибка; без личных данных в логах"
+  ],
+  "tca": [
+   "State — всё, что экран знает; Action — всё, что может случиться (тап, ответ сервера)",
+   "Reducer — чистая функция (State, Action) → новый State + описание эффекта; без сети и таймеров",
+   "Store — единственный владелец: снаружи читаем, меняем только через send(action)",
+   "Эффект выполняется вне reducer и возвращает результат новым действием (saved / saveFailed)",
+   "Ответ, который уже не актуален, отбрасываем по id запроса; отмена ≠ актуальность",
+   "Дочерний экран — своя часть State и Action, родитель встраивает reducer, а не держит второй Store",
+   "Тест reducer — таблица переходов без сети; тест эффекта — фейковый источник",
+   "TCA — библиотека Point-Free на этой идее; в MVVM тот же порядок можно держать во ViewModel"
+  ]
+ },
+ "one": {
+  "opt": {
+   "q": "Что такое Optional и зачем?",
+   "a": "Тип-коробка «значение или nil»; заставляет обработать пустоту на компиляции, а не ловить краш в рантайме."
+  },
+  "coll": {
+   "q": "Сложность contains у массива и у Set?",
+   "a": "Массив O(n), Set O(1) в среднем — поэтому «уже видел» через Set."
+  },
+  "func": {
+   "q": "Что такое inout?",
+   "a": "Параметр «туда-обратно»: меняет исходную переменную; вызов с &, только var."
+  },
+  "enum": {
+   "q": "associated value vs raw value?",
+   "a": "Associated — данные в конкретном случае (.ready(5)); raw — фиксированное значение case (a = 1)."
+  },
+  "access": {
+   "q": "Чем public отличается от open?",
+   "a": "public виден из других модулей, но наследовать нельзя; open — можно наследовать и переопределять извне."
+  },
+  "flow": {
+   "q": "Чем guard отличается от if let?",
+   "a": "guard требует выход в else, а значение живёт после проверки; if let — только внутри блока."
+  },
+  "hof": {
+   "q": "compactMap vs flatMap?",
+   "a": "compactMap = map + выброс nil; flatMap разворачивает вложенность на уровень."
+  },
+  "err": {
+   "q": "try vs try? vs try!?",
+   "a": "try — обработать/пробросить; try? — ошибка становится nil; try! — краш при ошибке."
+  },
+  "pw": {
+   "q": "Что обязательно у property wrapper и что даёт $?",
+   "a": "Обязателен wrappedValue; $x — projectedValue, его тип выбирает обёртка (у @State это Binding)."
+  },
+  "valref": {
+   "q": "value vs reference type?",
+   "a": "value (struct/enum) копируется при присваивании, reference (class) делит один объект. Stack/heap — модель, а не гарантия размещения."
+  },
+  "cow": {
+   "q": "Что такое copy-on-write?",
+   "a": "Копии делят буфер, копия при первой мутации — value-семантика без лишних затрат."
+  },
+  "arc": {
+   "q": "Как работает ARC?",
+   "a": "Считает сильные ссылки; счётчик 0 → deinit. Компилятор вставляет retain/release, это не GC."
+  },
+  "weak": {
+   "q": "weak vs unowned?",
+   "a": "Оба не владеют. weak — Optional, сам станет nil; unowned не обнуляется — доступ после освобождения роняет приложение. Выбор — по гарантии времени жизни."
+  },
+  "eq": {
+   "q": "== vs ===?",
+   "a": "== равенство значений (Equatable); === один ли это объект (только классы)."
+  },
+  "leaks": {
+   "q": "Как заподозрить утечку без инструментов?",
+   "a": "deinit-лог и weak-наблюдатель: объект не освободился после удаления известных владельцев — ищи, кто ещё держит."
+  },
+  "proto": {
+   "q": "В чём ловушка метода из extension протокола?",
+   "a": "Он выбирается статически по типу переменной; «переопределение» может не сработать. Требование в теле протокола — динамически."
+  },
+  "di": {
+   "q": "Почему инъектируют протокол, а не класс?",
+   "a": "Чтобы в тестах подставить mock; зависимость от абстракции — это Dependency Inversion."
+  },
+  "clos": {
+   "q": "По ссылке или по значению замыкание захватывает?",
+   "a": "По умолчанию по ссылке (видит актуальное значение); [x] в capture list фиксирует копию."
+  },
+  "esc": {
+   "q": "Что такое @escaping?",
+   "a": "Замыкание, которое переживает вызов (сохраняется/вызывается позже); внутри требует явного self."
+  },
+  "gen": {
+   "q": "Чем generic лучше Any?",
+   "a": "Generic сохраняет конкретный тип: компилятор проверяет вход и выход, приведение as? не нужно."
+  },
+  "assoc": {
+   "q": "some vs any?",
+   "a": "some — один конкретный тип, скрытый функцией; any — коробка, в которую caller кладёт разные реализации."
+  },
+  "disp": {
+   "q": "Назови виды диспетчеризации.",
+   "a": "static (struct, final, private, extension-only), vtable (class override), witness table (требования протокола), message (@objc dynamic)."
+  },
+  "queues": {
+   "q": "serial/concurrent и sync/async — в чём разница?",
+   "a": "serial/concurrent — могут ли работы очереди перекрываться; sync/async — ждёт ли вызывающий код. Оси независимы."
+  },
+  "race": {
+   "q": "Почему counter += 1 небезопасен из потоков?",
+   "a": "Не атомарно (чтение-инкремент-запись): потоки перекрываются и теряют инкременты."
+  },
+  "dead": {
+   "q": "Почему main.sync с главного потока зависает?",
+   "a": "Главная очередь занята текущим блоком; sync ждёт новый блок, а он не начнётся, пока текущий не закончится."
+  },
+  "group": {
+   "q": "notify или wait у DispatchGroup?",
+   "a": "notify ставит продолжение на очередь и никого не блокирует; wait держит поток до нуля или timeout — не на main."
+  },
+  "gcdmore": {
+   "q": "Что делает barrier?",
+   "a": "На своей concurrent-очереди ждёт предыдущие работы, выполняется один и задерживает следующие — эксклюзивная запись среди чтений."
+  },
+  "async": {
+   "q": "Как сделать два запроса параллельными в async/await?",
+   "a": "async let для независимых запросов и один try await на пару; подряд идущие await — последовательны."
+  },
+  "actor": {
+   "q": "Что такое actor и почему доступ через await?",
+   "a": "Владелец состояния: его изолированный код не исполняется одновременно, поэтому вызов снаружи может подождать — через await."
+  },
+  "skel": {
+   "q": "Из каких шагов твой скелет решения?",
+   "a": "Аккумулятор → способ прохода → шаг для элемента → return; крайние случаи проговорить до кода."
+  },
+  "bigo": {
+   "q": "Сложность прохода, вложенного цикла, поиска в Set?",
+   "a": "O(n), O(n²), O(1) в среднем."
+  },
+  "setdict": {
+   "q": "Как two-sum за O(n)?",
+   "a": "Словарь «значение→индекс»: для каждого n за O(1) ищем target − n."
+  },
+  "ptr": {
+   "q": "Когда применять два указателя?",
+   "a": "Когда решение следует из порядка или инварианта: встречные границы для палиндрома и пары в отсортированном массиве, read/write для перезаписи на месте. Каждый сдвиг нужно уметь доказать."
+  },
+  "live": {
+   "q": "Как решать live-coding задачу?",
+   "a": "Уточнить контракт, на маленьком примере назвать инвариант, написать понятный код, проверить края и назвать сложность по своему решению; при нехватке времени оставить корректный вариант и назвать улучшение."
+  },
+  "state": {
+   "q": "Зачем @State, если есть свойство View?",
+   "a": "View — struct и пересоздаётся; @State хранится вне неё и вызывает перерисовку."
+  },
+  "obs": {
+   "q": "@StateObject vs @ObservedObject?",
+   "a": "@StateObject владеет и создаёт один раз; @ObservedObject не владеет — созданный локально теряет состояние."
+  },
+  "flowui": {
+   "q": "Почему порядок модификаторов важен?",
+   "a": "Каждый возвращает новый вью-обёртку; padding().background() ≠ background().padding()."
+  },
+  "mvvm": {
+   "q": "Почему ViewModel не знает про View?",
+   "a": "Иначе привязан к UI и не тестируется; общение через наблюдаемые свойства."
+  },
+  "nav": {
+   "q": "NavigationStack vs NavigationView?",
+   "a": "Stack (iOS 16+) управляется программно через path; View устарел."
+  },
+  "vclc": {
+   "q": "viewDidLoad vs viewWillAppear?",
+   "a": "viewDidLoad — один раз после загрузки; viewWillAppear — каждый показ (там актуализируют данные)."
+  },
+  "frame": {
+   "q": "frame vs bounds?",
+   "a": "frame — где view у родителя, bounds — её собственная система координат; сдвиг bounds.origin двигает содержимое, а не саму view."
+  },
+  "layout": {
+   "q": "Чем неоднозначность отличается от конфликта?",
+   "a": "Неоднозначность — у системы несколько решений, не хватает связи. Конфликт — обязательные ограничения несовместимы: UIKit нарушит одно и напишет в лог, какое — не обещано."
+  },
+  "table": {
+   "q": "Почему в ячейке появляются чужие данные?",
+   "a": "Ячейка переиспользуется со старым состоянием: configure задаёт всё, включая пустую картинку, а поздний async-ответ сверяет id ячейки перед записью."
+  },
+  "hit": {
+   "q": "Как UIKit находит view под касанием?",
+   "a": "hitTest с корня: отбрасывает скрытые, неинтерактивные и почти прозрачные ветки, проверяет point(inside:) и обходит детей с последнего; находит самую глубокую подходящую view."
+  },
+  "coord": {
+   "q": "Зачем Coordinator?",
+   "a": "Вынести переходы и последовательность экранов из контроллеров: контроллер только сообщает событие, координатор решает, что показать дальше, и владеет дочерними flow."
+  },
+  "rest": {
+   "q": "Чем 401 отличается от 403?",
+   "a": "401 — не аутентифицирован (нет/просрочен токен); 403 — аутентифицирован, но нет прав."
+  },
+  "codable": {
+   "q": "Что если обязательное поле отсутствует в JSON?",
+   "a": "keyNotFound. Optional ставь, только если контракт допускает отсутствие; иначе ловим ошибку в do/catch, а не маскируем."
+  },
+  "urls": {
+   "q": "Как вернуть результат сети в UI?",
+   "a": "На главном потоке — через @MainActor (не DispatchQueue.main в async-коде)."
+  },
+  "store": {
+   "q": "Почему токен нельзя в UserDefaults?",
+   "a": "UserDefaults не шифруется и попадает в бэкап; секреты — в Keychain."
+  },
+  "coredata": {
+   "q": "Как устроен стек Core Data?",
+   "a": "Модель описывает сущности, координатор связывает её со store, context — черновик изменений; save() фиксирует черновик, fetch читает по predicate и сортировке, а между потоками передаётся objectID."
+  },
+  "solid": {
+   "q": "Dependency Inversion на практике?",
+   "a": "Зависеть от протокола, а не от класса; в Swift — инъекция протокола через init."
+  },
+  "arch": {
+   "q": "К чему склонен MVC и как лечат?",
+   "a": "К Massive View Controller; логику выносят в Presenter/ViewModel/UseCase."
+  },
+  "patt": {
+   "q": "Когда delegate, а когда observer?",
+   "a": "delegate — один ответственный (один-к-одному); observer — уведомить многих."
+  },
+  "tests": {
+   "q": "Что стоит мокать, а что нет?",
+   "a": "Мокают границы/недетерминированное (сеть, время); чистую логику тестируют напрямую."
+  },
+  "git": {
+   "q": "Золотое правило rebase?",
+   "a": "Не rebase'ить опубликованную/общую историю — только свои непубличные коммиты."
+  },
+  "debug": {
+   "q": "Кнопка видна, но не нажимается — чем смотреть?",
+   "a": "Debug View Hierarchy: искать прозрачный верхний view, крадущий тапы, или нулевой frame."
+  },
+  "spm": {
+   "q": "Куда идут зависимости между модулями?",
+   "a": "От фич к ядру/абстракциям; ядро не зависит от фич, циклов нет."
+  },
+  "sysd": {
+   "q": "Как спроектировать офлайн-ленту?",
+   "a": "Курсорная пагинация, локальный кэш как источник для UI, репозиторий сливает сетевые версии по id, офлайн-действия копятся в очереди до подтверждения, удаления приходят явно, повторы ограничены."
+  },
+  "feature": {
+   "q": "Как собрать фичу с кэшем и remote?",
+   "a": "Разделить слои: адаптер файла, repository проверяет и коммитит, модель на MainActor ведёт состояние. Ошибка не становится пустотой, remote не успех до записи, старый ответ отбрасывается по generation."
+  },
+  "combine": {
+   "q": "Зачем хранить AnyCancellable?",
+   "a": "Это объект отмены: пока он жив, подписка работает; освободился — подписка отменена."
+  },
+  "mapkit": {
+   "q": "Как связать выбор метки на карте с состоянием?",
+   "a": "Map(selection: $selectedID) и .tag(point.id) у Marker; модель находим по id."
+  },
+  "cache": {
+   "q": "Чем NSCache отличается от Dictionary?",
+   "a": "Потокобезопасен, сам освобождает память при нехватке, не копирует ключи; содержимое может исчезнуть в любой момент."
+  },
+  "realtime": {
+   "q": "WebSocket или SSE?",
+   "a": "WebSocket — двусторонний канал; SSE — односторонний поток от сервера по HTTP, команды отдельными запросами."
+  },
+  "arpool": {
+   "q": "Зачем autoreleasepool в Swift-цикле?",
+   "a": "Чтобы временные autoreleased-объекты Cocoa/Foundation освобождались после каждой итерации, а не в конце всей партии."
+  },
+  "locks": {
+   "q": "Зачем нужен lock?",
+   "a": "Чтобы общее изменяемое состояние менял только один поток за раз — защита от гонки данных."
+  },
+  "runloop": {
+   "q": "Что такое RunLoop?",
+   "a": "Цикл событий потока: ждёт события, обрабатывает их и засыпает; у main запущен системой, у фоновых потоков — нет."
+  },
+  "threadbug": {
+   "q": "Что такое priority inversion?",
+   "a": "Высокоприоритетная работа ждёт lock у низкоприоритетной, а ту вытесняет средняя — high фактически исполняется с приоритетом low."
+  },
+  "fp": {
+   "q": "Что такое чистая функция?",
+   "a": "Результат зависит только от входов, наблюдаемого побочного эффекта нет — поэтому её можно вызывать повторно и легко тестировать."
+  },
+  "objc": {
+   "q": "Что нужно, чтобы Swift-свойство работало с KVO?",
+   "a": "Класс от NSObject, свойство @objc dynamic, сохранённый токен observe и [weak self] в callback."
+  },
+  "collection": {
+   "q": "Чем diffable data source лучше reloadData?",
+   "a": "Ты отдаёшь снимок id, а он сам считает разницу и анимирует вставки/удаления; индексы руками не сводишь."
+  },
+  "coreanim": {
+   "q": "Почему после анимации слой «отпрыгивает» назад?",
+   "a": "CABasicAnimation меняет только показ; если не записать конечное значение в model layer, после удаления анимации вернётся старое."
+  },
+  "render": {
+   "q": "setNeedsLayout vs layoutIfNeeded?",
+   "a": "setNeedsLayout помечает раскладку на ближайший проход; layoutIfNeeded выполняет её сейчас, если что-то помечено."
+  },
+  "uitest": {
+   "q": "Почему UI-тест ищет кнопку по identifier, а не по тексту?",
+   "a": "Текст меняется с локалью и копирайтом, accessibilityIdentifier — стабильный контракт приложения и теста."
+  },
+  "review": {
+   "q": "Как написать хорошее замечание в code review?",
+   "a": "Привязать к строке, назвать вход и последствие, предложить решение и явно сказать, блокирует ли оно merge."
+  },
+  "tca": {
+   "q": "В чём идея однонаправленного потока (TCA/Redux)?",
+   "a": "Состояние меняется только одним путём: действие → reducer → новое состояние; побочные эффекты вынесены и возвращаются новыми действиями, поэтому любой переход воспроизводится и тестируется без сети."
+  }
+ },
+ "follow": {
+  "opt": [
+   [
+    "Что вернёт a?.b?.c, если b == nil, и какого типа?",
+    "nil, тип Optional — цепочка обрывается на первом nil."
+   ],
+   [
+    "if let vs guard let по области видимости?",
+    "if let — значение только в блоке; guard let — после проверки, else обязан выйти."
+   ]
+  ],
+  "coll": [
+   [
+    "Почему ключи Dictionary и элементы Set — Hashable?",
+    "Хеш нужен, чтобы за O(1) находить корзину; без него быстрый поиск невозможен."
+   ],
+   [
+    "Почему append амортизированно O(1)?",
+    "Обычно O(1); при переполнении буфер удваивается с копированием O(n), но редко."
+   ]
+  ],
+  "func": [
+   [
+    "Почему параметр по умолчанию нельзя менять в теле?",
+    "Это let (константа); нужна мутация — var-копия или inout."
+   ],
+   [
+    "Что такое тип функции и связь с замыканиями?",
+    "Функции — значения типа (In)->Out; замыкание — безымянная функция того же типа."
+   ]
+  ],
+  "enum": [
+   [
+    "Зачем нужен indirect enum?",
+    "Для рекурсивных enum (случай ссылается на сам тип), напр. дерево выражений."
+   ],
+   [
+    "Почему enum надёжнее набора Bool-флагов?",
+    "Взаимоисключающие случаи делают невалидные комбинации непредставимыми."
+   ]
+  ],
+  "access": [
+   [
+    "Что ещё нужно public-типу?",
+    "public init — синтезированный init не становится public, без него снаружи модуля объект не создать."
+   ],
+   [
+    "final даёт только защиту?",
+    "Главное — запрет наследования и override. Компилятор может использовать это для прямого вызова, но ускорение не гарантировано."
+   ]
+  ],
+  "flow": [
+   [
+    "Что обязан сделать else у guard?",
+    "Выйти из области: return, throw, break или continue."
+   ],
+   [
+    "Есть ли в switch проваливание, как в C?",
+    "Нет, по умолчанию один case; провалиться явно — fallthrough."
+   ]
+  ],
+  "hof": [
+   [
+    "Чем reduce(into:) лучше для словаря?",
+    "Мутирует аккумулятор на месте (inout), без копии на каждом шаге."
+   ],
+   [
+    "Меняют ли map/filter исходную коллекцию?",
+    "Нет, возвращают новую; исходная неизменна."
+   ]
+  ],
+  "err": [
+   [
+    "Когда throws, а когда Result?",
+    "throws — обработать тут же; Result — сохранить/передать исход (колбэк)."
+   ],
+   [
+    "Что такое rethrows?",
+    "Функция бросает, только если бросает переданное ей замыкание."
+   ]
+  ],
+  "pw": [
+   [
+    "Во что превращается @W var x?",
+    "В скрытое свойство _x типа W; x → wrappedValue, $x → projectedValue."
+   ],
+   [
+    "Примеры property wrappers из SwiftUI?",
+    "@State, @Binding, @Environment, @StateObject/@ObservedObject, @Published."
+   ],
+   [
+    "Где хранится состояние обёртки?",
+    "В самой обёртке (_x), а не в свойстве x."
+   ]
+  ],
+  "valref": [
+   [
+    "Почему методу struct нужен mutating, а классу нет?",
+    "struct — value, self по умолчанию неизменяем; у класса меняется объект по ссылке."
+   ],
+   [
+    "Копия struct с полем-классом — что делят?",
+    "Сам объект-класс: копируется ссылка, а не объект."
+   ]
+  ],
+  "cow": [
+   [
+    "На какой функции строится ручной CoW?",
+    "isKnownUniquelyReferenced(&ref): не уникален — копируем, потом пишем."
+   ],
+   [
+    "Почему copy = array в функции делает append дорогим?",
+    "Буфер стал общим → первый append копирует весь массив O(n)."
+   ]
+  ],
+  "arc": [
+   [
+    "Работает ли ARC для структур?",
+    "Саму структуру не считают, но ссылки на классы внутри неё ARC учитывает."
+   ],
+   [
+    "Самый частый источник цикла на практике?",
+    "Замыкание, сильно захватывающее self; лечится [weak self]."
+   ]
+  ],
+  "weak": [
+   [
+    "Почему weak всегда Optional и var?",
+    "Объект может исчезнуть в любой момент — ссылка должна уметь стать nil."
+   ],
+   [
+    "Почему протокол делегата — AnyObject?",
+    "weak применим только к классам (reference-типам)."
+   ]
+  ],
+  "eq": [
+   [
+    "Когда == синтезируется автоматически?",
+    "Для struct/enum со всеми Equatable-полями, если объявлено соответствие."
+   ],
+   [
+    "Контракт Equatable/Hashable?",
+    "Если a == b, хэши обязаны совпасть; обратное не нужно. Нарушишь — Set и Dictionary ведут себя непредсказуемо."
+   ]
+  ],
+  "leaks": [
+   [
+    "retain cycle vs растущий кэш?",
+    "Cycle — объект нельзя освободить; кэш — достижимая память, которую не чистят (не leak)."
+   ],
+   [
+    "Что показывает Memory Graph?",
+    "Граф сильных ссылок и циклы — видно, кто держит объект."
+   ]
+  ],
+  "proto": [
+   [
+    "Как заставить вызов через тип протокола выбрать реализацию типа?",
+    "Объявить метод требованием протокола (в теле) → witness table."
+   ],
+   [
+    "Что даёт default implementation?",
+    "Общее поведение в extension; тип может переопределить."
+   ]
+  ],
+  "di": [
+   [
+    "Чем DI лучше синглтона?",
+    "Зависимость явная и заменяемая; синглтон — скрытая глобальная, тяжело мокать."
+   ],
+   [
+    "Что такое composition root?",
+    "Место у старта, где собираются реализации и прокидываются вниз."
+   ]
+  ],
+  "clos": [
+   [
+    "Что делает [x] в capture list?",
+    "Фиксирует копию значения на момент создания замыкания."
+   ],
+   [
+    "Когда [weak self] реально нужен?",
+    "Когда замыкание хранимое/@escaping И захватывает self."
+   ]
+  ],
+  "esc": [
+   [
+    "Почему в @escaping self обычно пишут явно?",
+    "Замыкание живёт дольше вызова и может удержать self — явный self или [weak self] делают этот риск видимым."
+   ],
+   [
+    "Optional-замыкание — escaping?",
+    "Да, хранимые и опциональные замыкания по природе escaping."
+   ]
+  ],
+  "gen": [
+   [
+    "Зачем constraints, на примере оператора ==?",
+    "== доступен не любому T; нужен T: Equatable."
+   ],
+   [
+    "Что значит специализация дженерика?",
+    "Компилятор может сгенерировать версию под конкретный тип; это оптимизация, а не гарантия."
+   ]
+  ],
+  "assoc": [
+   [
+    "Можно ли протокол с associatedtype положить в массив?",
+    "С Swift 5.7 — да, [any Feed], но конкретный Item теряется; для связи типов нужен generic."
+   ],
+   [
+    "Почему body: some View, а не any View?",
+    "Тип body один и фиксирован реализацией; some сохраняет его для компилятора без коробки."
+   ],
+   [
+    "Что даёт any Collection<Int>?",
+    "Коробку над любой коллекцией, у которой известно Element == Int."
+   ]
+  ],
+  "disp": [
+   [
+    "Почему метод из extension протокола — ловушка?",
+    "Без требования в протоколе он выбирается статически по типу выражения: через any P — версия extension."
+   ],
+   [
+    "Как final связан со скоростью?",
+    "Запрещает override и может упростить вызов, но выигрыш не гарантирован: оптимизатор девиртуализирует и сам."
+   ]
+  ],
+  "queues": [
+   [
+    "Почему UI только на главном потоке?",
+    "UIKit/SwiftUI не потокобезопасны; main serial синхронизирует доступ."
+   ],
+   [
+    "Что такое QoS?",
+    "Приоритет очереди/задачи (userInteractive…background)."
+   ],
+   [
+    "Почему queue.sync внутри той же serial-очереди зависает?",
+    "Внешний блок ждёт внутренний, а внутренний не начнётся, пока внешний не закончится."
+   ]
+  ],
+  "race": [
+   [
+    "Как защитить общее состояние?",
+    "Одна serial-очередь-владелец (дальше — lock, actor); все доступы через неё."
+   ],
+   [
+    "Чем ловить гонки?",
+    "Thread Sanitizer (TSan) в схеме Xcode, на симуляторе или macOS."
+   ],
+   [
+    "Data race vs race condition?",
+    "Data race — несинхронизированный доступ к памяти; race condition — результат зависит от чередования даже при защищённых доступах."
+   ]
+  ],
+  "dead": [
+   [
+    "Опасен ли sync сам по себе?",
+    "Нет; опасно замкнутое ожидание — sync на очередь, которая (прямо или через цепочку) ждёт тебя."
+   ],
+   [
+    "Как два замка дают deadlock и как чинить?",
+    "Захват в разном порядке; чинить единым порядком захвата на всех путях."
+   ],
+   [
+    "Как найти deadlock в приложении?",
+    "Пауза в Xcode, стеки ожидающих потоков: где sync/lock/wait и кто должен их отпустить."
+   ]
+  ],
+  "group": [
+   [
+    "Что при несбалансированных enter/leave?",
+    "Меньше leave — notify не вызовется; лишний — краш. Помогает defer."
+   ],
+   [
+    "enter/leave vs async(group:)?",
+    "async(group:) учитывает только время синхронного блока; enter/leave — когда работа заканчивается в колбэке."
+   ],
+   [
+    "Гарантирует ли группа порядок?",
+    "Нет, только факт «все завершились»; порядок и результаты — отдельный контракт."
+   ]
+  ],
+  "gcdmore": [
+   [
+    "Чем опасен semaphore.wait() на главном потоке?",
+    "Блокирует UI до сигнала; при зависании — фриз."
+   ],
+   [
+    "Что даёт Operation сверх GCD?",
+    "Зависимости, отмену, maxConcurrentOperationCount."
+   ],
+   [
+    "Отменили операцию — зависимая тоже отменится?",
+    "Нет: она дождётся finished и выполнится; результат нужно проверить самому."
+   ]
+  ],
+  "async": [
+   [
+    "Что происходит в точке await?",
+    "Задача может приостановиться, поток не держится ради ожидания и может взять другую работу."
+   ],
+   [
+    "Как гарантировать UI на главном потоке?",
+    "@MainActor на модели или методе."
+   ],
+   [
+    "Task.cancel() останавливает задачу?",
+    "Нет, ставит флаг; код сам проверяет checkCancellation/isCancelled."
+   ]
+  ],
+  "actor": [
+   [
+    "Что такое reentrancy актора?",
+    "На await актор впускает другую задачу; условие после await надо перепроверить."
+   ],
+   [
+    "Что такое Sendable?",
+    "Тип, безопасный для передачи между изоляциями; проверяет компилятор."
+   ],
+   [
+    "Что можно в nonisolated-методе?",
+    "Не трогать изменяемое состояние актора: только константы и чистые расчёты."
+   ]
+  ],
+  "skel": [
+   [
+    "Как безопасно взять первый/последний элемент?",
+    "a.first / a.last (Optional), не a[0] без проверки границ."
+   ],
+   [
+    "Как проверить решение без компилятора?",
+    "Dry run на маленьком примере и крайних случаях; инвариант."
+   ]
+  ],
+  "bigo": [
+   [
+    "Что значит амортизированно O(1) у append?",
+    "Обычно O(1); редкий O(n) с копированием при переполнении размазывается."
+   ],
+   [
+    "Почему бинарный поиск O(log n)?",
+    "Каждый шаг отбрасывает половину диапазона."
+   ]
+  ],
+  "setdict": [
+   [
+    "Как за один шаг проверить и добавить в Set?",
+    "seen.insert(x).inserted — false значит «уже было»."
+   ],
+   [
+    "Как проверить анаграммы за O(n)?",
+    "Сравнить частоты символов (словарём) или ключ по sorted."
+   ]
+  ],
+  "ptr": [
+   [
+    "Почему в строке нельзя взять text[0]?",
+    "У String нет индекса по Int: Character имеет переменный размер, позиции — String.Index; поэтому берут Array(text) или двигают String.Index."
+   ],
+   [
+    "Почему в паре чисел двигается left при малой сумме?",
+    "Массив отсортирован: с текущим left уменьшение right только уменьшит сумму, значит нужно увеличить левое значение."
+   ],
+   [
+    "Чем read/write отличается от встречных указателей?",
+    "Оба идут вперёд: read читает исходные данные, write отмечает конец принятого результата; хвост после write не часть ответа."
+   ]
+  ],
+  "live": [
+   [
+    "Что делать, если не знаешь оптимальное решение?",
+    "Написать корректный базовый вариант, проверить его и сказать вслух, какой шаг ускорил бы решение и при каком размере входа это нужно."
+   ],
+   [
+    "Почему happy path не доказывает решение?",
+    "Он совпадает с ожиданием кандидата; ошибки видны на пустом входе, отрицательных числах, нуле, повторах — на границах контракта."
+   ],
+   [
+    "Как говорить о сложности?",
+    "Назвать единицу размера и посчитать, сколько раз каждая граница проходит данные; учесть sorted() и дополнительную память."
+   ]
+  ],
+  "state": [
+   [
+    "Почему @State обычно private?",
+    "Это внутреннее состояние одного вью; снаружи не задают."
+   ],
+   [
+    "Что означает $ перед свойством?",
+    "projectedValue: $value даёт Binding, чтобы передать вниз."
+   ]
+  ],
+  "obs": [
+   [
+    "Почему нельзя создавать @ObservedObject локально?",
+    "При перерисовке вью пересоздаётся, объект не удерживается — теряет состояние."
+   ],
+   [
+    "Чем @Observable выгоднее ObservableObject?",
+    "Точечные перерисовки: обновляется только вью, читающее изменившееся свойство."
+   ]
+  ],
+  "flowui": [
+   [
+    "Куда текут данные и события?",
+    "Данные вниз (свойства/Binding/Environment), события вверх (замыкания)."
+   ],
+   [
+    "Когда @Environment, когда @Binding?",
+    "@Environment — сквозные данные многим; @Binding — точечная двусторонняя связь."
+   ]
+  ],
+  "mvvm": [
+   [
+    "Как тестируют ViewModel?",
+    "Без UI: mock-зависимости, вызов методов, проверка состояния."
+   ],
+   [
+    "Когда MVVM в SwiftUI избыточен?",
+    "На простых экранах: @State уже играет роль VM."
+   ]
+  ],
+  "nav": [
+   [
+    "Как вернуться в корень из любого экрана?",
+    "Очистить path (removeAll / = [])."
+   ],
+   [
+    "Что взять для стека из разных типов экранов?",
+    "NavigationPath — тип-стёртый контейнер для любых Hashable."
+   ]
+  ],
+  "vclc": [
+   [
+    "Почему нельзя читать размеры в viewDidLoad?",
+    "Раскладка не прошла; frame/bounds не финальные — viewDidLayoutSubviews."
+   ],
+   [
+    "Почему при возврате назад не зовётся viewDidLoad?",
+    "View уже загружена; поэтому обновление — в viewWillAppear."
+   ],
+   [
+    "Что такое viewIsAppearing?",
+    "Вызывается при появлении между willAppear и didAppear, когда размеры и traits уже актуальны; доступен с iOS 13."
+   ]
+  ],
+  "frame": [
+   [
+    "Что с frame при transform?",
+    "При неединичном transform frame не определён: не пиши в него, меняй bounds и center, охватывающий прямоугольник бери через convert."
+   ],
+   [
+    "Что меняется при прокрутке scrollView?",
+    "bounds.origin (contentOffset): видимая область сдвигается, frame scroll view остаётся прежним."
+   ],
+   [
+    "Почему нельзя сложить frame.origin родителя и ребёнка?",
+    "Сложение не учитывает bounds.origin и transform родителей; convert проходит всё дерево."
+   ]
+  ],
+  "layout": [
+   [
+    "Зачем translatesAutoresizingMaskIntoConstraints = false?",
+    "Иначе autoresizing mask view тоже превращается в ограничения — второй набор правил, который конфликтует с твоими якорями."
+   ],
+   [
+    "Почему UILabel не нужны width и height?",
+    "У него есть intrinsicContentSize от текста и шрифта; размер дают его собственные приоритетные ограничения (hugging и compression resistance), нужно только положение."
+   ],
+   [
+    "Hugging или compression resistance?",
+    "Hugging решает, кто отдаст лишнее место (кому не растягиваться), compression resistance — кто первым сожмётся при нехватке. Две подписи в строке: у названия выше оба."
+   ],
+   [
+    "setNeedsLayout или layoutIfNeeded?",
+    "setNeedsLayout помечает view на следующий проход раскладки; layoutIfNeeded выполняет отложенную раскладку сейчас — так проверяют frame и анимируют constraints."
+   ]
+  ],
+  "table": [
+   [
+    "Зачем prepareForReuse, если configure задаёт всё?",
+    "Для временных ресурсов: отменить запрос, сбросить representedID, остановить анимацию. Основной контент всё равно задаёт configure."
+   ],
+   [
+    "Почему для поздней картинки мало weak-захвата?",
+    "weak лишь не удерживает ячейку. Живая ячейка уже показывает другую модель — нужна проверка representedID (а для повторов одного id — версии запроса)."
+   ],
+   [
+    "Почему выбор хранят по id, а не по indexPath?",
+    "Индекс — положение строки; после сортировки или удаления он указывает на другую модель. id сохраняет смысл."
+   ],
+   [
+    "Что даёт diffable data source?",
+    "Snapshot с идентификаторами секций и элементов: таблица сама считает вставки и удаления. Настройку ячейки и проверку async-ответа он не отменяет."
+   ]
+  ],
+  "hit": [
+   [
+    "Как увеличить зону нажатия маленькой кнопки?",
+    "Переопределить point(inside:with:) и расширить bounds; родитель тоже должен принять точку."
+   ],
+   [
+    "Как пропустить касания сквозь view, но оставить кнопки внутри?",
+    "В hitTest вызвать super и вернуть nil, только если найден сам overlay."
+   ],
+   [
+    "Чем hitTest отличается от responder chain?",
+    "hitTest ищет view под точкой, responder chain через next передаёт событие или action дальше, если обработчика нет."
+   ]
+  ],
+  "coord": [
+   [
+    "Где утечка в паттерне Coordinator?",
+    "Координатор держит контроллер, контроллер — callback с сильным self; плюс завершённые children, которые родитель не удалил из массива."
+   ],
+   [
+    "Зачем childCoordinators, если callback слабый?",
+    "Кто-то должен сильно держать child во время работы, иначе он исчезнет сразу после start."
+   ],
+   [
+    "Router и Coordinator — одно и то же?",
+    "Router выполняет переходы, coordinator организует flow и владение; в маленьком приложении роли могут совпадать."
+   ]
+  ],
+  "rest": [
+   [
+    "Что значит идемпотентный метод?",
+    "Повтор даёт тот же результат без новых эффектов (GET/PUT/DELETE)."
+   ],
+   [
+    "Почему повтор POST опаснее GET?",
+    "POST меняет состояние; слепой повтор — дубль, нужен Idempotency-Key."
+   ]
+  ],
+  "codable": [
+   [
+    "Зачем CodingKeys?",
+    "Связать свойства с другими именами ключей JSON."
+   ],
+   [
+    "Как разобрать поле то числом, то строкой?",
+    "Кастомный init(from:), пробуя оба типа через decode."
+   ]
+  ],
+  "urls": [
+   [
+    "URLError vs 4xx/5xx?",
+    "URLError — транспорт (нет сети, таймаут); 4xx/5xx — статус ошибочный."
+   ],
+   [
+    "Как и зачем отменять сетевой Task?",
+    "task.cancel() при уходе с экрана; иначе трогает мёртвый UI."
+   ]
+  ],
+  "store": [
+   [
+    "Documents vs Caches?",
+    "Documents бэкапится и не удаляется; Caches система может очистить."
+   ],
+   [
+    "Когда база, а не файл?",
+    "Когда данных много и связаны: запросы, сортировка, отношения, миграции."
+   ]
+  ],
+  "coredata": [
+   [
+    "Почему нельзя передать NSManagedObject в другой поток?",
+    "Объект принадлежит очереди своего context; в другом контексте его нужно получить заново по objectID."
+   ],
+   [
+    "Чем временный objectID отличается от постоянного?",
+    "До save у нового объекта временный ID, другой контекст по нему запись не найдёт; после save он становится постоянным."
+   ],
+   [
+    "Core Data или SwiftData?",
+    "SwiftData проще и интегрирован с SwiftUI (@Query), но требует iOS 17; под капотом те же идеи context и store."
+   ]
+  ],
+  "solid": [
+   [
+    "Как OCP связан с полиморфизмом?",
+    "Новое поведение — новым типом, а не правкой switch."
+   ],
+   [
+    "DRY — всегда хорошо?",
+    "Нет: устраняют дублирование ЗНАНИЯ; похожие куски бывают разными."
+   ],
+   [
+    "Пример нарушения LSP?",
+    "Square наследует изменяемый Rectangle: клиент ставит 4×5, ждёт 20, получает 25."
+   ]
+  ],
+  "arch": [
+   [
+    "Из чего состоит VIPER?",
+    "View, Interactor, Presenter, Entity, Router."
+   ],
+   [
+    "Правило зависимостей в Clean?",
+    "Внутрь: внешние слои зависят от Use Cases/Entities, не наоборот."
+   ]
+  ],
+  "patt": [
+   [
+    "Почему delegate обычно weak?",
+    "Делегатом владеет создатель; weak предотвращает retain cycle."
+   ],
+   [
+    "Чем опасен singleton?",
+    "Скрытая глобальная зависимость и общее состояние — тяжело тестировать."
+   ]
+  ],
+  "tests": [
+   [
+    "Что делает тест флейки и как избежать?",
+    "Недетерминизм; ждать явно, инъектировать время, независимость тестов."
+   ],
+   [
+    "stub vs mock/spy?",
+    "stub возвращает данные; mock/spy фиксирует факт и аргументы вызовов."
+   ]
+  ],
+  "git": [
+   [
+    "Как разрешить конфликт?",
+    "Убрать маркеры, оставить нужный код, git add, продолжить."
+   ],
+   [
+    "Зачем feature-ветки и PR?",
+    "Изоляция, ревью и CI до вливания, защита main."
+   ]
+  ],
+  "debug": [
+   [
+    "po, p, expression в LLDB?",
+    "po печатает объект; p/expression вычисляют; expression может менять значение."
+   ],
+   [
+    "Инструмент под тормоза прокрутки?",
+    "Time Profiler — искать тяжёлое на главном потоке."
+   ],
+   [
+    "Почему не стоит вызывать методы через po?",
+    "po и p выполняют код и могут изменить состояние программы; для чтения есть frame variable."
+   ]
+  ],
+  "spm": [
+   [
+    "Почему тип из другого модуля не виден без public?",
+    "По умолчанию internal — виден только в своём модуле; init структуры тоже надо открыть."
+   ],
+   [
+    "Ускоряет ли модульность сборку?",
+    "Может помочь инкрементальной сборке, но число targets само по себе ускорения не обещает."
+   ]
+  ],
+  "sysd": [
+   [
+    "Почему курсор, а не номер страницы?",
+    "Если сверху появились новые посты, offset сдвигается и даёт дубли или пропуски; курсор указывает на конкретную позицию."
+   ],
+   [
+    "Как не потерять закладку, сделанную офлайн?",
+    "Хранить её как намерение в очереди и не перетирать при слиянии с сервером, пока не пришёл ack."
+   ],
+   [
+    "Что делать с бесконечными ретраями?",
+    "Экспоненциальная задержка, лимит попыток и разделение ошибок: на 4xx не повторяем."
+   ]
+  ],
+  "feature": [
+   [
+    "Почему повреждённый файл не должен давать []?",
+    "Экран покажет «нет запасов» вместо ошибки, пользователь потеряет данные незаметно; [] допустим только при отсутствии файла."
+   ],
+   [
+    "Как защититься от старого ответа?",
+    "Generation: каждый refresh получает номер, Repository сравнивает перед save, Model — перед обновлением state; отмена сама порядок не гарантирует."
+   ],
+   [
+    "Что проверяет fake, а что нет?",
+    "Подмена проверяет логику слоёв и порядок ответов; реальный файл — отдельный тест во временном каталоге; сеть и UI-взаимодействия остаются непроверенными."
+   ]
+  ],
+  "combine": [
+   [
+    "PassthroughSubject или CurrentValueSubject?",
+    "Passthrough не хранит значение и шлёт только новые события; CurrentValue хранит последнее и сразу отдаёт его новому подписчику."
+   ],
+   [
+    "Зачем [weak self] в sink?",
+    "Объект хранит AnyCancellable, подписка хранит closure; сильный self замкнёт кольцо."
+   ],
+   [
+    "receive(on:) или subscribe(on:)?",
+    "receive(on:) — где получать значения ниже по цепочке (UI → main); subscribe(on:) — где выполнять подписку и работу выше по цепочке."
+   ]
+  ],
+  "mapkit": [
+   [
+    "Почему не искать выбранную точку по названию?",
+    "Названия повторяются; id обозначает конкретный объект."
+   ],
+   [
+    "Чем Marker отличается от Annotation?",
+    "Marker — стандартная метка; Annotation показывает своё SwiftUI-содержимое на координате."
+   ]
+  ],
+  "cache": [
+   [
+    "Что будет, если два запроса одновременно получат miss?",
+    "Оба загрузят; NSCache не объединяет «проверил → загрузил → сохранил», нужен учёт идущих задач по ключу."
+   ],
+   [
+    "Почему ключ только из id опасен?",
+    "Разные размеры и версии одной обложки получат один адрес в кэше."
+   ]
+  ],
+  "realtime": [
+   [
+    "Почему запоздавшее сообщение не должно откатить цену?",
+    "Применяем только более новую revision того же id."
+   ],
+   [
+    "Можно ли строить real-time на push?",
+    "Push — сигнал обновиться; доставка не гарантирована, данные всё равно запрашиваем."
+   ]
+  ],
+  "arpool": [
+   [
+    "Освободит ли пул объект, который ты вернул?",
+    "Нет: его держит сильная ссылка снаружи, пул опустошает только отложенные release."
+   ],
+   [
+    "Нужен ли пул для сложения Int в цикле?",
+    "Нет: обычные Swift-значения не создают autoreleased-объектов."
+   ]
+  ],
+  "locks": [
+   [
+    "Чем NSLock отличается от NSRecursiveLock?",
+    "Повторный захват в том же потоке: NSLock блокирует себя навсегда, recursive пускает и считает захваты."
+   ],
+   [
+    "Что значит unfair?",
+    "Нет очереди — захватывает кто успел; быстрее, и владелец известен, поэтому система лечит priority inversion."
+   ],
+   [
+    "Lock, serial queue или actor?",
+    "Короткая синхронная секция — lock; старый GCD-код — serial queue; async-код — actor."
+   ]
+  ],
+  "runloop": [
+   [
+    "Почему Timer замирает при скролле?",
+    "scheduledTimer ставит его в .default, а скролл переключает RunLoop в .tracking. Решение — .common."
+   ],
+   [
+    "Почему deinit не вызывается у экрана с таймером?",
+    "RunLoop держит таймер, таймер — замыкание, замыкание — self. invalidate() из deinit не наступит никогда."
+   ],
+   [
+    "Как RunLoop связан с отрисовкой?",
+    "Перед засыпанием на каждом обороте Core Animation коммитит изменения слоёв — поэтому долгая работа на main фризит UI."
+   ]
+  ],
+  "threadbug": [
+   [
+    "Livelock vs deadlock?",
+    "Deadlock — потоки стоят в замкнутом ожидании; livelock — потоки работают, но только уступают друг другу."
+   ],
+   [
+    "Как система борется с inversion?",
+    "Видит владельца unfair lock или sync-зависимость и временно повышает ему приоритет."
+   ]
+  ],
+  "fp": [
+   [
+    "Чистая ли функция с локальной var внутри?",
+    "Да, если мутацию нельзя наблюдать снаружи и результат зависит только от входов."
+   ],
+   [
+    "Что такое каррирование?",
+    "Функция нескольких аргументов как цепочка функций с одним: adding(5)(10)."
+   ]
+  ],
+  "objc": [
+   [
+    "Что такое method swizzling и почему опасно?",
+    "Обмен реализаций методов класса в runtime: влияет на все экземпляры, ломается при наследовании и чужих swizzle."
+   ],
+   [
+    "Зачем dynamic, если уже есть @objc?",
+    "@objc лишь экспортирует; dynamic заставляет Swift вызывать через Objective-C runtime — нужно для KVO и swizzling."
+   ]
+  ],
+  "collection": [
+   [
+    "Почему модель с изменяемым title плохой идентификатор?",
+    "Синтезированный Hashable учтёт title: после переименования это будет «новый» элемент."
+   ],
+   [
+    "Как сделать разное число колонок на iPad?",
+    "Section provider и environment.container.effectiveContentSize.width."
+   ]
+  ],
+  "coreanim": [
+   [
+    "Model vs presentation layer?",
+    "Model хранит целевые значения, presentation — текущие промежуточные на экране; при прерывании старт берут из presentation."
+   ],
+   [
+    "Почему тень пропадает при скруглении?",
+    "masksToBounds обрезает всё за границей слоя, включая тень; разносим на два слоя."
+   ]
+  ],
+  "render": [
+   [
+    "Почему лагает скролл?",
+    "Главный поток не успевает к дедлайну кадра: тяжёлая работа, лишний layout или дорогая композиция; подтверждают Instruments."
+   ],
+   [
+    "Что такое offscreen rendering?",
+    "Промежуточный render target для эффекта (маска, тень без пути) перед композицией."
+   ]
+  ],
+  "uitest": [
+   [
+    "Чем плох sleep в UI-тесте?",
+    "Либо слишком долго, либо мало; ждут условие — waitForExistence или predicate expectation."
+   ],
+   [
+    "Почему snapshot-тесты нестабильны?",
+    "Шрифты, OS, устройство, локаль, Dynamic Type и анимации меняют пиксели; среду фиксируют."
+   ]
+  ],
+  "review": [
+   [
+    "Что такое символикация?",
+    "Перевод адресов краш-лога в имена функций и строки по dSYM той же сборки."
+   ],
+   [
+    "Какой краш чинить первым?",
+    "Тот, что затрагивает больше пользователей и ломает основной путь, а не просто чаще повторяется."
+   ]
+  ],
+  "tca": [
+   [
+    "Почему reducer должен быть чистым?",
+    "Тогда переход — функция от состояния и действия: его можно проверить таблицей входов и выходов и повторить без сети и времени."
+   ],
+   [
+    "Где выполняется сетевой запрос?",
+    "В эффекте, который вернул reducer; Store запускает его и отправляет результат отдельным действием."
+   ],
+   [
+    "Чем TCA отличается от MVVM?",
+    "MVVM не диктует, как меняется состояние; TCA требует единый путь через действия и reducer. Цена — больше шаблонного кода и зависимость от библиотеки."
+   ]
+  ]
+ },
+ "links": {
+  "opt": [
+   [
+    "Optionals, документация Swift (глава The Basics)",
+    "https://docs.swift.org/swift-book/documentation/the-swift-programming-language/thebasics/"
+   ],
+   [
+    "ExpressibleByNilLiteral (senior, по желанию)",
+    "https://www.avanderlee.com/swift/expressible-literals/"
+   ]
+  ],
+  "coll": [
+   [
+    "Collection Types, документация Swift",
+    "https://docs.swift.org/swift-book/documentation/the-swift-programming-language/collectiontypes/"
+   ],
+   [
+    "Array и его сложность",
+    "https://developer.apple.com/documentation/swift/array"
+   ],
+   [
+    "Set и Hashable",
+    "https://developer.apple.com/documentation/swift/set"
+   ],
+   [
+    "Big-O cheat sheet",
+    "https://www.bigocheatsheet.com"
+   ]
+  ],
+  "func": [
+   [
+    "Functions, документация Swift",
+    "https://docs.swift.org/swift-book/documentation/the-swift-programming-language/functions/"
+   ],
+   [
+    "inout параметры",
+    "https://www.hackingwithswift.com/example-code/language/what-are-inout-parameters"
+   ]
+  ],
+  "enum": [
+   [
+    "Enumerations, документация Swift",
+    "https://docs.swift.org/swift-book/documentation/the-swift-programming-language/enumerations/"
+   ],
+   [
+    "if case let",
+    "https://fuckingifcaseletsyntax.com"
+   ],
+   [
+    "RawRepresentable",
+    "https://nshipster.com/rawrepresentable/"
+   ]
+  ],
+  "access": [
+   [
+    "Access control",
+    "https://sparrowcode.io/ru/tutorials/access-control"
+   ],
+   [
+    "Access Control, документация Swift",
+    "https://docs.swift.org/swift-book/documentation/the-swift-programming-language/accesscontrol/"
+   ]
+  ],
+  "flow": [
+   [
+    "Control Flow, документация Swift",
+    "https://docs.swift.org/swift-book/documentation/the-swift-programming-language/controlflow/"
+   ],
+   [
+    "guard, полное руководство",
+    "https://www.hackingwithswift.com/new-syntax-swift-2-guard"
+   ]
+  ],
+  "hof": [
+   [
+    "map, filter, reduce (Hacking with Swift)",
+    "https://www.hackingwithswift.com/articles/162/how-to-use-map-filter-and-reduce-in-swift"
+   ],
+   [
+    "reduce на примерах",
+    "https://www.avanderlee.com/swift/reduce/"
+   ],
+   [
+    "compactMap vs flatMap",
+    "https://www.avanderlee.com/swift/flatmap-compactmap/"
+   ]
+  ],
+  "err": [
+   [
+    "Error handling, документация Swift",
+    "https://docs.swift.org/swift-book/documentation/the-swift-programming-language/errorhandling/"
+   ],
+   [
+    "Result type",
+    "https://www.hackingwithswift.com/articles/161/how-to-use-result-in-swift"
+   ],
+   [
+    "throws vs Result vs async",
+    "https://www.swiftbysundell.com/articles/the-power-of-result-types-in-swift/"
+   ]
+  ],
+  "pw": [
+   [
+    "Property wrappers",
+    "https://www.avanderlee.com/swift/property-wrappers/"
+   ],
+   [
+    "@propertyWrapper, документация (глава Properties)",
+    "https://docs.swift.org/swift-book/documentation/the-swift-programming-language/properties/"
+   ]
+  ],
+  "valref": [
+   [
+    "Heap vs Stack",
+    "https://t.me/ios_mobile_developer/83"
+   ],
+   [
+    "Value and Reference Types (Apple)",
+    "https://developer.apple.com/swift/blog/?id=10"
+   ],
+   [
+    "Understanding Swift Performance (видео, WWDC16)",
+    "https://developer.apple.com/videos/play/wwdc2016/416/"
+   ]
+  ],
+  "cow": [
+   [
+    "Copy-on-Write",
+    "https://habr.com/ru/articles/673372/"
+   ],
+   [
+    "Реализуем CoW сами",
+    "https://www.hackingwithswift.com/articles/232/how-to-use-copy-on-write-optimization-in-swift"
+   ],
+   [
+    "Building Better Apps with Value Types (видео, WWDC15)",
+    "https://developer.apple.com/videos/play/wwdc2015/414/"
+   ]
+  ],
+  "arc": [
+   [
+    "ARC, документация Swift",
+    "https://docs.swift.org/swift-book/documentation/the-swift-programming-language/automaticreferencecounting/"
+   ],
+   [
+    "Управление памятью",
+    "https://habr.com/ru/companies/otus/articles/649329/"
+   ],
+   [
+    "Понять ARC (Kodeco)",
+    "https://www.kodeco.com/966538-arc-and-memory-management-in-swift"
+   ]
+  ],
+  "weak": [
+   [
+    "Side table",
+    "https://habr.com/ru/companies/hh/articles/546856/"
+   ],
+   [
+    "weak vs unowned (avanderlee)",
+    "https://www.avanderlee.com/swift/weak-self/"
+   ],
+   [
+    "Timer и retain cycle",
+    "https://medium.com/macoclock/swift-timer-with-retain-cycle-afa5584d3a59"
+   ],
+   [
+    "Timer",
+    "https://habr.com/ru/articles/450172/"
+   ]
+  ],
+  "eq": [
+   [
+    "Equatable и Hashable (Kodeco)",
+    "https://www.kodeco.com/6379689-equatable-and-comparable-protocols-in-swift"
+   ],
+   [
+    "== vs === (Hacking with Swift)",
+    "https://www.hackingwithswift.com/example-code/language/what-is-the-difference-between-and"
+   ]
+  ],
+  "leaks": [
+   [
+    "Поиск утечек",
+    "https://medium.com/bitso-engineering/finding-memory-leaks-in-ios-like-a-pro-83a0212309b6"
+   ],
+   [
+    "Memory Graph",
+    "https://www.donnywals.com/using-xcodes-memory-graph-to-find-memory-leaks/"
+   ],
+   [
+    "Instruments: Leaks (видео, WWDC18)",
+    "https://developer.apple.com/videos/play/wwdc2018/416/"
+   ],
+   [
+    "Swiftalyzer",
+    "https://swiftalyzer.com"
+   ]
+  ],
+  "proto": [
+   [
+    "Protocols, документация Swift",
+    "https://docs.swift.org/swift-book/documentation/the-swift-programming-language/protocols/"
+   ],
+   [
+    "Protocol-Oriented Programming (видео, WWDC15)",
+    "https://developer.apple.com/videos/play/wwdc2015/408/"
+   ],
+   [
+    "POP на практике",
+    "https://www.swiftbysundell.com/articles/specializing-protocols-in-swift/"
+   ]
+  ],
+  "di": [
+   [
+    "Dependency Injection",
+    "https://www.kodeco.com/14223279-dependency-injection-tutorial-for-ios-getting-started"
+   ],
+   [
+    "DI Container",
+    "https://medium.com/sahibinden-technology/dependency-injection-container-in-swift-89392a309532"
+   ],
+   [
+    "Способы DI (avanderlee)",
+    "https://www.avanderlee.com/swift/dependency-injection/"
+   ]
+  ],
+  "clos": [
+   [
+    "Closures, документация Swift",
+    "https://docs.swift.org/swift-book/documentation/the-swift-programming-language/closures/"
+   ],
+   [
+    "Замыкания",
+    "https://swiftbook.ru/content/languageguide/closures/"
+   ],
+   [
+    "Capture list подробно",
+    "https://www.swiftbysundell.com/articles/capturing-objects-in-swift-closures/"
+   ],
+   [
+    "Когда не нужен weak self",
+    "https://medium.com/@uladzislau.komar/когда-не-нужно-использовать-weak-self-de4ba969143e"
+   ]
+  ],
+  "esc": [
+   [
+    "Escaping и non-escaping",
+    "https://medium.com/swiftcommmunity/what-do-mean-escaping-and-nonescaping-closures-in-swift-d404d721f39d"
+   ],
+   [
+    "@escaping (Hacking with Swift)",
+    "https://www.hackingwithswift.com/example-code/language/what-is-the-escaping-keyword"
+   ]
+  ],
+  "gen": [
+   [
+    "Generics tutorial",
+    "https://www.kodeco.com/3535703-swift-generics-tutorial-getting-started#toc-anchor-001"
+   ],
+   [
+    "Generics, документация Swift",
+    "https://docs.swift.org/swift-book/documentation/the-swift-programming-language/generics/"
+   ],
+   [
+    "Embrace Swift generics (видео, WWDC22)",
+    "https://developer.apple.com/videos/play/wwdc2022/110352/"
+   ]
+  ],
+  "assoc": [
+   [
+    "some и any",
+    "https://www.donnywals.com/whats-the-difference-between-any-and-some-in-swift-5-7/"
+   ],
+   [
+    "Understanding some and any",
+    "https://swiftsenpai.com/swift/understanding-some-and-any/"
+   ],
+   [
+    "Design protocol interfaces (видео, WWDC22)",
+    "https://developer.apple.com/videos/play/wwdc2022/110353/"
+   ],
+   [
+    "Виды type erasure",
+    "https://www.swiftbysundell.com/articles/different-flavors-of-type-erasure-in-swift/"
+   ],
+   [
+    "Что такое Any",
+    "https://swiftrocks.com/whats-any-understanding-type-erasure-in-swift"
+   ]
+  ],
+  "disp": [
+   [
+    "Method dispatch",
+    "https://habr.com/ru/articles/714830/"
+   ],
+   [
+    "Direct dispatch",
+    "https://habr.com/ru/companies/simbirsoft/articles/673636/"
+   ],
+   [
+    "Understanding Swift Performance (видео, WWDC16)",
+    "https://developer.apple.com/videos/play/wwdc2016/416/"
+   ],
+   [
+    "Table dispatch (видео)",
+    "https://www.youtube.com/watch?v=kolL8r7Tz2w"
+   ]
+  ],
+  "queues": [
+   [
+    "GCD, часть 1 (рус.)",
+    "https://swiftbook.ru/post/tutorials/tutorial-po-grand-central-dispatch-dlya-swift-chast-12/"
+   ],
+   [
+    "GCD part 1",
+    "https://www.kodeco.com/28540615-grand-central-dispatch-tutorial-for-swift-5-part-1-2"
+   ],
+   [
+    "GCD part 2",
+    "https://www.kodeco.com/28221123-grand-central-dispatch-tutorial-for-swift-5-part-2-2"
+   ],
+   [
+    "The GCD handbook",
+    "https://khanlou.com/2016/04/the-GCD-handbook/"
+   ]
+  ],
+  "race": [
+   [
+    "Thread safety",
+    "https://swiftrocks.com/thread-safety-in-swift"
+   ],
+   [
+    "Проблемы многопоточности",
+    "https://ios-interview.ru/multithreading-problems/"
+   ],
+   [
+    "Race conditions",
+    "https://medium.com/swiftcairo/avoiding-race-conditions-in-swift-9ccef0ec0b26"
+   ],
+   [
+    "Swift concurrency: Behind the scenes (видео, WWDC21)",
+    "https://developer.apple.com/videos/play/wwdc2021/10254/"
+   ]
+  ],
+  "dead": [
+   [
+    "Deadlocks",
+    "https://www.avanderlee.com/swift/deadlocks-detecting-solving/"
+   ]
+  ],
+  "group": [
+   [
+    "DispatchGroup на практике",
+    "https://www.avanderlee.com/swift/dispatchgroup-enter-leave/"
+   ],
+   [
+    "Explore structured concurrency (видео, WWDC21)",
+    "https://developer.apple.com/videos/play/wwdc2021/10134/"
+   ]
+  ],
+  "gcdmore": [
+   [
+    "Operation и OperationQueue",
+    "https://www.kodeco.com/5293-operation-and-operationqueue"
+   ],
+   [
+    "Readers-writers",
+    "https://medium.com/swlh/the-readers-writers-problem-swift-edition-dcba94c3f02d"
+   ],
+   [
+    "Locks",
+    "https://swiftwithmajid.com/2023/09/05/thread-safety-in-swift-with-locks/"
+   ]
+  ],
+  "async": [
+   [
+    "async/await с примерами",
+    "https://www.avanderlee.com/swift/async-await/"
+   ],
+   [
+    "Как async/await устроен внутри",
+    "https://swiftrocks.com/how-async-await-works-internally-in-swift"
+   ],
+   [
+    "Meet async/await (видео, WWDC21)",
+    "https://developer.apple.com/videos/play/wwdc2021/10132/"
+   ],
+   [
+    "Explore structured concurrency (видео, WWDC21)",
+    "https://developer.apple.com/videos/play/wwdc2021/10134/"
+   ],
+   [
+    "async/await с URLSession (видео, WWDC21)",
+    "https://developer.apple.com/videos/play/wwdc2021/10095/"
+   ]
+  ],
+  "actor": [
+   [
+    "Protect mutable state with actors (видео, WWDC21)",
+    "https://developer.apple.com/videos/play/wwdc2021/10133/"
+   ],
+   [
+    "Actors на практике",
+    "https://www.avanderlee.com/swift/actors/"
+   ],
+   [
+    "Sendable и @MainActor",
+    "https://www.hackingwithswift.com/quick-start/concurrency/understanding-how-global-actors-work"
+   ]
+  ],
+  "bigo": [
+   [
+    "Big-O cheat sheet",
+    "https://www.bigocheatsheet.com"
+   ]
+  ],
+  "skel": [
+   [
+    "Курс по алгоритмам",
+    "https://interviews.school/intro"
+   ]
+  ],
+  "live": [
+   [
+    "LeetCode",
+    "https://leetcode.com/Titaniys/"
+   ],
+   [
+    "Курс по алгоритмам",
+    "https://interviews.school/intro"
+   ]
+  ],
+  "state": [
+   [
+    "Managing state (Apple)",
+    "https://developer.apple.com/documentation/swiftui/managing-user-interface-state"
+   ],
+   [
+    "@State и @Binding (Hacking with Swift)",
+    "https://www.hackingwithswift.com/quick-start/swiftui/how-to-use-programmatic-navigation-in-swiftui"
+   ],
+   [
+    "Data Essentials in SwiftUI (видео, WWDC20)",
+    "https://developer.apple.com/videos/play/wwdc2020/10040/"
+   ]
+  ],
+  "obs": [
+   [
+    "@Observable макрос (Apple)",
+    "https://developer.apple.com/documentation/observation"
+   ],
+   [
+    "StateObject vs ObservedObject",
+    "https://www.donnywals.com/whats-the-difference-between-stateobject-and-observedobject/"
+   ],
+   [
+    "Discover Observation in SwiftUI (видео, WWDC23)",
+    "https://developer.apple.com/videos/play/wwdc2023/10149/"
+   ]
+  ],
+  "flowui": [
+   [
+    "SwiftUI data flow (Apple tutorials)",
+    "https://developer.apple.com/tutorials/swiftui"
+   ],
+   [
+    "Как работает модификатор",
+    "https://www.hackingwithswift.com/books/ios-swiftui/why-modifier-order-matters"
+   ]
+  ],
+  "mvvm": [
+   [
+    "MVVM в SwiftUI",
+    "https://www.kodeco.com/34-design-patterns-by-tutorials-mvvm"
+   ],
+   [
+    "Нужен ли MVVM в SwiftUI",
+    "https://www.swiftbysundell.com/articles/different-flavors-of-view-models-in-swift/"
+   ]
+  ],
+  "nav": [
+   [
+    "NavigationStack (Apple)",
+    "https://developer.apple.com/documentation/swiftui/navigationstack"
+   ],
+   [
+    "Навигация в SwiftUI",
+    "https://www.hackingwithswift.com/quick-start/swiftui/how-to-push-a-new-view-onto-a-navigationstack"
+   ]
+  ],
+  "codable": [
+   [
+    "Codable (Apple)",
+    "https://developer.apple.com/documentation/swift/codable"
+   ],
+   [
+    "Codable подробно (avanderlee)",
+    "https://www.avanderlee.com/swift/codable-enum/"
+   ],
+   [
+    "Codable-модели из JSON",
+    "https://app.quicktype.io"
+   ]
+  ],
+  "rest": [
+   [
+    "HTTP-методы (MDN)",
+    "https://developer.mozilla.org/ru/docs/Web/HTTP/Methods"
+   ],
+   [
+    "Коды состояния HTTP",
+    "https://developer.mozilla.org/ru/docs/Web/HTTP/Status"
+   ]
+  ],
+  "urls": [
+   [
+    "URLSession (Apple)",
+    "https://developer.apple.com/documentation/foundation/urlsession"
+   ],
+   [
+    "URLSession на практике",
+    "https://www.avanderlee.com/swift/urlsession-common-mistakes/"
+   ]
+  ],
+  "store": [
+   [
+    "UserDefaults (Apple)",
+    "https://developer.apple.com/documentation/foundation/userdefaults"
+   ],
+   [
+    "Keychain на практике",
+    "https://www.andyibanez.com/posts/using-ios-keychain-swift/"
+   ]
+  ],
+  "coredata": [
+   [
+    "Core Data (Apple)",
+    "https://developer.apple.com/documentation/coredata"
+   ],
+   [
+    "SwiftData (Apple)",
+    "https://developer.apple.com/documentation/swiftdata"
+   ],
+   [
+    "Meet SwiftData (видео, WWDC23)",
+    "https://developer.apple.com/videos/play/wwdc2023/10187/"
+   ]
+  ],
+  "vclc": [
+   [
+    "Жизненный цикл VC",
+    "https://sparrowcode.io/ru/tutorials/uiviewcontroller-lifecycle"
+   ]
+  ],
+  "frame": [
+   [
+    "Frame vs bounds",
+    "https://www.hackingwithswift.com/example-code/uikit/what-is-the-difference-between-frame-and-bounds"
+   ]
+  ],
+  "layout": [
+   [
+    "Anatomy of a Constraint (Apple)",
+    "https://developer.apple.com/library/archive/documentation/UserExperience/Conceptual/AutolayoutPG/AnatomyofaConstraint.html"
+   ],
+   [
+    "Views with Intrinsic Content Size (Apple)",
+    "https://developer.apple.com/library/archive/documentation/UserExperience/Conceptual/AutolayoutPG/ViewswithIntrinsicContentSize.html"
+   ],
+   [
+    "translatesAutoresizingMaskIntoConstraints",
+    "https://developer.apple.com/documentation/uikit/uiview/translatesautoresizingmaskintoconstraints"
+   ]
+  ],
+  "table": [
+   [
+    "dequeueReusableCell(withIdentifier:for:)",
+    "https://developer.apple.com/documentation/uikit/uitableview/dequeuereusablecell(withidentifier:for:)"
+   ],
+   [
+    "prepareForReuse()",
+    "https://developer.apple.com/documentation/uikit/uitableviewcell/prepareforreuse()"
+   ],
+   [
+    "Diffable data source",
+    "https://www.kodeco.com/8241072-ios-tutorial-collection-view-and-diffable-data-source"
+   ]
+  ],
+  "hit": [
+   [
+    "Responder chain",
+    "https://habr.com/ru/articles/464463/"
+   ],
+   [
+    "iOS responder chain",
+    "https://swiftrocks.com/understanding-the-ios-responder-chain"
+   ],
+   [
+    "hitTest",
+    "https://mayurkothawade.medium.com/hittest-and-uiresponder-in-ios-8ecee386d119"
+   ]
+  ],
+  "coord": [
+   [
+    "Modal presenting",
+    "https://habr.com/ru/companies/tinkoff/articles/467969/"
+   ],
+   [
+    "Coordinator",
+    "https://habr.com/ru/companies/umbrellaitcom/articles/426507/"
+   ]
+  ],
+  "solid": [
+   [
+    "OOP в Swift",
+    "https://www.kodeco.com/599-object-oriented-programming-in-swift"
+   ],
+   [
+    "SOLID в Swift",
+    "https://www.marcosantadev.com/solid-principles-applied-swift/"
+   ],
+   [
+    "Dependency inversion",
+    "https://medium.com/movile-tech/dependency-inversion-principle-in-swift-18ef482284f5"
+   ],
+   [
+    "KISS",
+    "https://en.wikipedia.org/wiki/KISS_principle"
+   ],
+   [
+    "DRY",
+    "https://en.wikipedia.org/wiki/Don%27t_repeat_yourself"
+   ],
+   [
+    "YAGNI",
+    "https://en.wikipedia.org/wiki/You_aren't_gonna_need_it"
+   ]
+  ],
+  "arch": [
+   [
+    "Архитектуры iOS",
+    "https://habr.com/ru/companies/badoo/articles/281162/"
+   ]
+  ],
+  "patt": [
+   [
+    "Рефакторинг гуру",
+    "https://refactoring.guru/ru"
+   ]
+  ],
+  "tests": [
+   [
+    "Unit tests best practices",
+    "https://www.avanderlee.com/swift/unit-tests-best-practices/"
+   ],
+   [
+    "Mocking, WWDC 2018",
+    "https://developer.apple.com/videos/play/wwdc2018/417/"
+   ]
+  ],
+  "git": [
+   [
+    "Git branching (интерактивно)",
+    "https://learngitbranching.js.org/?locale=ru_RU"
+   ],
+   [
+    "Pro Git (книга, рус.)",
+    "https://git-scm.com/book/ru/v2"
+   ]
+  ],
+  "debug": [
+   [
+    "Debug View Hierarchy",
+    "https://medium.com/stacc/utilizing-the-debug-view-hierarchy-to-better-understand-your-apps-ui-c8655f6d34e9"
+   ]
+  ],
+  "spm": [
+   [
+    "Swift Package Manager (Apple)",
+    "https://developer.apple.com/documentation/xcode/swift-packages"
+   ],
+   [
+    "Модульность через SPM",
+    "https://www.avanderlee.com/swift/package-manager-swift-package-collection/"
+   ]
+  ],
+  "sysd": [
+   [
+    "Mobile system design",
+    "https://github.com/weeeBox/mobile-system-design/tree/master"
+   ],
+   [
+    "Mock-собесы (YouTube)",
+    "https://www.youtube.com/@alementuev"
+   ],
+   [
+    "Excalidraw для схем",
+    "https://excalidraw.com"
+   ]
+  ],
+  "arpool": [
+   [
+    "NSAutoreleasePool (Apple)",
+    "https://developer.apple.com/documentation/foundation/nsautoreleasepool"
+   ],
+   [
+    "Analyze heap memory (видео, WWDC24)",
+    "https://developer.apple.com/videos/play/wwdc2024/10173/"
+   ]
+  ],
+  "locks": [
+   [
+    "NSLock (Apple)",
+    "https://developer.apple.com/documentation/foundation/nslock"
+   ],
+   [
+    "Thread safety",
+    "https://swiftrocks.com/thread-safety-in-swift"
+   ]
+  ],
+  "runloop": [
+   [
+    "Timer (Apple)",
+    "https://developer.apple.com/documentation/foundation/timer"
+   ],
+   [
+    "Run Loops (Apple)",
+    "https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Multithreading/RunLoopManagement/RunLoopManagement.html"
+   ]
+  ],
+  "threadbug": [
+   [
+    "Prioritize work with QoS (Apple)",
+    "https://developer.apple.com/library/archive/documentation/Performance/Conceptual/EnergyGuide-iOS/PrioritizeWorkWithQoS.html"
+   ],
+   [
+    "Проблемы многопоточности",
+    "https://ios-interview.ru/multithreading-problems/"
+   ]
+  ],
+  "fp": [
+   [
+    "Functions (Swift Book)",
+    "https://docs.swift.org/swift-book/documentation/the-swift-programming-language/functions/"
+   ],
+   [
+    "Value and Reference Types",
+    "https://www.swift.org/documentation/articles/value-and-reference-types.html"
+   ]
+  ],
+  "objc": [
+   [
+    "Using KVO in Swift (Apple)",
+    "https://developer.apple.com/documentation/swift/using-key-value-observing-in-swift"
+   ],
+   [
+    "method_exchangeImplementations (Apple)",
+    "https://developer.apple.com/documentation/objectivec/method_exchangeimplementations(_:_:)"
+   ]
+  ],
+  "collection": [
+   [
+    "NSDiffableDataSourceSnapshot (Apple)",
+    "https://developer.apple.com/documentation/uikit/nsdiffabledatasourcesnapshot-swift.struct"
+   ],
+   [
+    "UICollectionView.CellRegistration (Apple)",
+    "https://developer.apple.com/documentation/uikit/uicollectionview/cellregistration"
+   ]
+  ],
+  "coreanim": [
+   [
+    "Core Animation Basics (Apple)",
+    "https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/CoreAnimation_guide/CoreAnimationBasics/CoreAnimationBasics.html"
+   ],
+   [
+    "Animating Layer Content (Apple)",
+    "https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/CoreAnimation_guide/CreatingBasicAnimations/CreatingBasicAnimations.html"
+   ]
+  ],
+  "render": [
+   [
+    "Understanding hitches (Apple)",
+    "https://developer.apple.com/documentation/xcode/understanding-hitches-in-your-app"
+   ],
+   [
+    "setNeedsLayout (Apple)",
+    "https://developer.apple.com/documentation/uikit/uiview/setneedslayout()"
+   ]
+  ],
+  "uitest": [
+   [
+    "User interface tests (Apple)",
+    "https://developer.apple.com/documentation/xctest/user_interface_tests"
+   ]
+  ],
+  "review": [
+   [
+    "Firebase Crashlytics",
+    "https://firebase.google.com/docs/crashlytics"
+   ],
+   [
+    "Google: code review guide",
+    "https://google.github.io/eng-practices/review/"
+   ]
+  ]
+ },
+ "compare": {
+  "weak": [
+   {
+    "t": "weak vs unowned",
+    "a": "weak",
+    "b": "unowned",
+    "rows": [
+     [
+      "Тип",
+      "Optional",
+      "обычно не-Optional (бывает unowned T?)"
+     ],
+     [
+      "При dealloc цели",
+      "сам станет nil",
+      "крэш при доступе"
+     ],
+     [
+      "Когда брать",
+      "цель может исчезнуть",
+      "цель точно жива дольше ссылки"
+     ],
+     [
+      "Владение",
+      "не владеет",
+      "не владеет"
+     ]
+    ]
+   }
+  ],
+  "valref": [
+   {
+    "t": "struct vs class",
+    "a": "struct (value)",
+    "b": "class (reference)",
+    "rows": [
+     [
+      "Семантика",
+      "копия при присваивании",
+      "общий объект по ссылке"
+     ],
+     [
+      "Память",
+      "часто inline/stack — не гарантия",
+      "heap + ARC"
+     ],
+     [
+      "Наследование",
+      "нет",
+      "есть"
+     ],
+     [
+      "let",
+      "запрещает менять свои свойства",
+      "нельзя сменить ссылку, var-поля можно"
+     ],
+     [
+      "Идентичность ===",
+      "нет",
+      "есть"
+     ]
+    ]
+   }
+  ],
+  "assoc": [
+   {
+    "t": "some vs any",
+    "a": "some (opaque)",
+    "b": "any (existential)",
+    "rows": [
+     [
+      "Тип",
+      "один конкретный, скрыт",
+      "любой подходящий (коробка)"
+     ],
+     [
+      "Диспетчеризация",
+      "статическая",
+      "динамическая (witness table)"
+     ],
+     [
+      "Скорость",
+      "быстрее (специализация)",
+      "медленнее (боксинг)"
+     ],
+     [
+      "Разные типы вместе",
+      "нельзя",
+      "можно (гетерогенно)"
+     ]
+    ]
+   }
+  ],
+  "opt": [
+   {
+    "t": "map vs flatMap (Optional)",
+    "a": "map",
+    "b": "flatMap",
+    "rows": [
+     [
+      "Из T? с Int($0)",
+      "заворачивает ещё раз → T??",
+      "сплющивает → T?"
+     ],
+     [
+      "Роль",
+      "преобразовать каждый",
+      "преобразовать + убрать вложенность"
+     ],
+     [
+      "Родня",
+      "—",
+      "compactMap убирает nil"
+     ]
+    ]
+   }
+  ],
+  "obs": [
+   {
+    "t": "@StateObject vs @ObservedObject",
+    "a": "@StateObject",
+    "b": "@ObservedObject",
+    "rows": [
+     [
+      "Владение",
+      "владеет, создаёт 1 раз",
+      "не владеет"
+     ],
+     [
+      "При пересоздании вью",
+      "сохраняется",
+      "пересоздаётся, теряет состояние"
+     ],
+     [
+      "Кто использует",
+      "тот, кто создал",
+      "кому передали"
+     ]
+    ]
+   }
+  ],
+  "esc": [
+   {
+    "t": "escaping vs non-escaping",
+    "a": "@escaping",
+    "b": "non-escaping",
+    "rows": [
+     [
+      "Время жизни",
+      "переживает вызов",
+      "только внутри вызова"
+     ],
+     [
+      "По умолчанию",
+      "—",
+      "да"
+     ],
+     [
+      "self в теле",
+      "явно, self.",
+      "можно без self"
+     ],
+     [
+      "Пример",
+      "completion, хранимое",
+      "map, filter"
+     ]
+    ]
+   }
+  ],
+  "eq": [
+   {
+    "t": "== vs ===",
+    "a": "==",
+    "b": "===",
+    "rows": [
+     [
+      "Что сравнивает",
+      "значение (Equatable)",
+      "один ли это объект"
+     ],
+     [
+      "Для каких типов",
+      "любые Equatable",
+      "только классы"
+     ]
+    ]
+   }
+  ],
+  "err": [
+   {
+    "t": "throws vs Result",
+    "a": "throws",
+    "b": "Result",
+    "rows": [
+     [
+      "Форма",
+      "бросок (try / do-catch)",
+      "значение .success/.failure"
+     ],
+     [
+      "Когда",
+      "обработать тут же",
+      "сохранить/передать исход (колбэк)"
+     ]
+    ]
+   }
+  ],
+  "queues": [
+   {
+    "t": "serial vs concurrent (очередь)",
+    "a": "serial",
+    "b": "concurrent",
+    "rows": [
+     [
+      "Выполнение",
+      "по одной по порядку",
+      "несколько параллельно"
+     ],
+     [
+      "main",
+      "serial",
+      "—"
+     ],
+     [
+      "Ось",
+      "«сколько сразу» (не про sync/async)",
+      "то же"
+     ]
+    ]
+   }
+  ],
+  "frame": [
+   {
+    "t": "frame vs bounds",
+    "a": "frame",
+    "b": "bounds",
+    "rows": [
+     [
+      "Система координат",
+      "родителя",
+      "своя (origin 0,0)"
+     ],
+     [
+      "Двигать view",
+      "frame.origin",
+      "—"
+     ],
+     [
+      "Прокрутка scrollView",
+      "—",
+      "bounds.origin"
+     ]
+    ]
+   }
+  ],
+  "nav": [
+   {
+    "t": "NavigationStack vs NavigationView",
+    "a": "NavigationStack",
+    "b": "NavigationView",
+    "rows": [
+     [
+      "Статус",
+      "iOS 16+, актуальный",
+      "устарел"
+     ],
+     [
+      "Управление",
+      "программно через path",
+      "ограниченное"
+     ]
+    ]
+   }
+  ],
+  "coredata": [
+   {
+    "t": "Core Data vs SwiftData",
+    "a": "Core Data",
+    "b": "SwiftData",
+    "rows": [
+     [
+      "API",
+      "зрелый, бойлерплейт",
+      "современный @Model, меньше кода"
+     ],
+     [
+      "Обновление UI",
+      "вручную",
+      "@Query авто-обновляет"
+     ],
+     [
+      "iOS",
+      "давно",
+      "17+"
+     ]
+    ]
+   }
+  ]
+ },
+ "glossary": [
+  [
+   "Optional",
+   "Тип-обёртка: значение или nil (enum .some/.none).",
+   "opt"
+  ],
+  [
+   "ARC",
+   "Автоматический подсчёт ссылок; объект освобождается при счётчике 0.",
+   "arc"
+  ],
+  [
+   "retain cycle",
+   "Взаимные сильные ссылки, из-за которых объекты не освобождаются.",
+   "weak"
+  ],
+  [
+   "weak",
+   "Невладеющая Optional-ссылка, сама становится nil при освобождении цели.",
+   "weak"
+  ],
+  [
+   "unowned",
+   "Невладеющая не-Optional ссылка; крэш при доступе после dealloc.",
+   "weak"
+  ],
+  [
+   "value type",
+   "Тип, копируемый при присваивании (struct, enum).",
+   "valref"
+  ],
+  [
+   "reference type",
+   "Тип, у которого копируется ссылка на общий объект (class).",
+   "valref"
+  ],
+  [
+   "Copy-on-Write",
+   "Отложенное копирование буфера до первой мутации (Array/Dict/Set/String).",
+   "cow"
+  ],
+  [
+   "Equatable",
+   "Протокол равенства по значению (оператор ==).",
+   "eq"
+  ],
+  [
+   "Hashable",
+   "Протокол хеширования; нужен для Set и ключей Dictionary.",
+   "coll"
+  ],
+  [
+   "closure",
+   "Функция с захваченным окружением.",
+   "clos"
+  ],
+  [
+   "capture list",
+   "[ ] в замыкании: как захватывать значения/ссылки (weak/unowned/копия).",
+   "clos"
+  ],
+  [
+   "@escaping",
+   "Замыкание, которое может пережить вызов функции (сохраняется/вызывается позже).",
+   "esc"
+  ],
+  [
+   "protocol",
+   "Контракт из требований, которые тип обязан выполнить.",
+   "proto"
+  ],
+  [
+   "Dependency Injection",
+   "Передача зависимостей снаружи вместо создания внутри.",
+   "di"
+  ],
+  [
+   "generics",
+   "Параметризация типом с сохранением типобезопасности.",
+   "gen"
+  ],
+  [
+   "associatedtype",
+   "«Дырка под тип» внутри протокола (protocol with associated type).",
+   "assoc"
+  ],
+  [
+   "some (opaque)",
+   "Один конкретный тип, скрытый от вызывающего; статическая диспетчеризация.",
+   "assoc"
+  ],
+  [
+   "any (existential)",
+   "Коробка над любым типом, соответствующим протоколу; динамическая.",
+   "assoc"
+  ],
+  [
+   "type erasure",
+   "Обёртка, прячущая PAT за конкретным типом (напр. AnySequence).",
+   "assoc"
+  ],
+  [
+   "method dispatch",
+   "Механизм выбора реализации метода в рантайме.",
+   "disp"
+  ],
+  [
+   "witness table",
+   "Таблица реализаций требований протокола конкретным типом.",
+   "disp"
+  ],
+  [
+   "vtable",
+   "Таблица методов класса для динамического вызова (override).",
+   "disp"
+  ],
+  [
+   "GCD",
+   "Grand Central Dispatch: очереди для многопоточности.",
+   "queues"
+  ],
+  [
+   "serial queue",
+   "Очередь, выполняющая задачи по одной по порядку.",
+   "queues"
+  ],
+  [
+   "concurrent queue",
+   "Очередь, выполняющая задачи параллельно.",
+   "queues"
+  ],
+  [
+   "race condition",
+   "Гонка данных при несинхронизированном доступе (≥1 пишет).",
+   "race"
+  ],
+  [
+   "deadlock",
+   "Взаимная вечная блокировка задач.",
+   "dead"
+  ],
+  [
+   "DispatchGroup",
+   "Ожидание завершения набора асинхронных задач.",
+   "group"
+  ],
+  [
+   "semaphore",
+   "Счётный примитив (wait/signal) для ограничения доступа/параллелизма.",
+   "gcdmore"
+  ],
+  [
+   "barrier",
+   "Эксклюзивная задача среди параллельных на concurrent-очереди.",
+   "gcdmore"
+  ],
+  [
+   "async/await",
+   "Линейный синтаксис асинхронного кода без колбэков.",
+   "async"
+  ],
+  [
+   "Task",
+   "Единица асинхронной работы поверх пула потоков.",
+   "async"
+  ],
+  [
+   "actor",
+   "Ссылочный тип, сериализующий доступ к своему изменяемому состоянию.",
+   "actor"
+  ],
+  [
+   "@MainActor",
+   "Привязка кода/типа к главному потоку (для UI).",
+   "actor"
+  ],
+  [
+   "Sendable",
+   "Тип, безопасный для передачи между задачами/акторами.",
+   "actor"
+  ],
+  [
+   "@State",
+   "Property wrapper локального состояния вью (SwiftUI).",
+   "state"
+  ],
+  [
+   "@Binding",
+   "Двусторонняя ссылка на чужое состояние.",
+   "state"
+  ],
+  [
+   "@Observable",
+   "Макрос наблюдаемого класса (iOS 17+).",
+   "obs"
+  ],
+  [
+   "@StateObject / @ObservedObject",
+   "Владелец / не-владелец наблюдаемого объекта (старый стиль).",
+   "obs"
+  ],
+  [
+   "property wrapper",
+   "Обёртка над свойством с логикой доступа (wrappedValue/projectedValue).",
+   "pw"
+  ],
+  [
+   "projectedValue",
+   "«Второе лицо» обёртки, доступное через $ (у @State — Binding).",
+   "pw"
+  ],
+  [
+   "NavigationStack",
+   "Контейнер стековой навигации (iOS 16+).",
+   "nav"
+  ],
+  [
+   "VC lifecycle",
+   "Последовательность viewDidLoad/viewWillAppear/viewDidAppear/…",
+   "vclc"
+  ],
+  [
+   "frame",
+   "Прямоугольник view в координатах родителя.",
+   "frame"
+  ],
+  [
+   "bounds",
+   "Прямоугольник view в его собственной системе координат.",
+   "frame"
+  ],
+  [
+   "Auto Layout",
+   "Система констрейнтов для адаптивной раскладки.",
+   "layout"
+  ],
+  [
+   "Content Hugging",
+   "Приоритет «не растягиваться больше внутреннего размера».",
+   "layout"
+  ],
+  [
+   "Compression Resistance",
+   "Приоритет «не сжиматься меньше внутреннего размера».",
+   "layout"
+  ],
+  [
+   "cell reuse",
+   "Переиспользование ячеек списка (dequeueReusableCell).",
+   "table"
+  ],
+  [
+   "hitTest",
+   "Метод определения view, который получит касание.",
+   "hit"
+  ],
+  [
+   "responder chain",
+   "Цепочка обработки событий вверх по иерархии (nextResponder).",
+   "hit"
+  ],
+  [
+   "Coordinator",
+   "Объект, выносящий навигацию из контроллеров.",
+   "coord"
+  ],
+  [
+   "Codable",
+   "Протоколы кодирования/декодирования (JSON ↔ тип).",
+   "codable"
+  ],
+  [
+   "URLSession",
+   "API сетевых запросов.",
+   "urls"
+  ],
+  [
+   "REST",
+   "Стиль HTTP-API над ресурсами (методы + коды).",
+   "rest"
+  ],
+  [
+   "Keychain",
+   "Защищённое (шифруемое) хранилище секретов.",
+   "store"
+  ],
+  [
+   "Core Data / SwiftData",
+   "Фреймворки локальной персистентности графа объектов.",
+   "coredata"
+  ],
+  [
+   "SOLID",
+   "Пять принципов проектирования (SRP/OCP/LSP/ISP/DIP).",
+   "solid"
+  ],
+  [
+   "MVVM",
+   "Архитектура Model-View-ViewModel.",
+   "mvvm"
+  ],
+  [
+   "Big-O",
+   "Оценка роста времени/памяти алгоритма с размером входа.",
+   "bigo"
+  ],
+  [
+   "two pointers",
+   "Приём двух указателей (навстречу / окно).",
+   "ptr"
+  ],
+  [
+   "unit test",
+   "Изолированная проверка логики (Arrange-Act-Assert).",
+   "tests"
+  ],
+  [
+   "mock / stub / spy",
+   "Тестовые двойники: заглушка данных / фиксация вызовов.",
+   "tests"
+  ],
+  [
+   "SPM",
+   "Swift Package Manager: модульность и зависимости.",
+   "spm"
+  ],
+  [
+   "access control",
+   "Уровни доступа: private/fileprivate/internal/public/open.",
+   "access"
+  ],
+  [
+   "final",
+   "Запрет наследования/переопределения; ускоряет диспетчеризацию.",
+   "access"
+  ]
+ ]
+}

@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Предскажи маршрут",
+  "prompt": "Что вернёт функция для трёх записей? Объясни ранний выход.",
+  "code": "enum Priority { case normal, urgent, muted }\nstruct Notice { let id: Int?; let priority: Priority }\nfunc message(_ t: Notice) -> String? {\n    guard let n = t.id else { return nil }\n    switch t.priority {\n    case .normal: return \"Уведомление \\(n)\"\n    case .urgent: return \"СРОЧНО \\(n)\"\n    case .muted: return nil\n    }\n}\nprint(message(Notice(id: nil, priority: .urgent)) as Any)\nprint(message(Notice(id: 3, priority: .urgent)) as Any)",
+  "key": "Optional(nil) выводится как nil, второй результат — Optional(\"СРОЧНО 3\"). guard прекращает функцию при отсутствующем IDе; switch выбирает подпись только после проверки."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Собери по каркасу",
+  "prompt": "Заполни message: нет ID или приоритет muted — nil; normal и urgent получают разные подписи.",
+  "code": "func message(_ t: Notice) -> String? {\n    // 1. Извлеки ID через guard.\n    // 2. Разбери Priority через switch.\n}",
+  "key": "func message(_ t: Notice) -> String? {\n    guard let n = t.id else { return nil }\n    switch t.priority {\n    case .normal: return \"Уведомление \\(n)\"\n    case .urgent: return \"СРОЧНО \\(n)\"\n    case .muted: return nil\n    }\n}\n\nguard делает ID доступным после проверки. switch без default покрывает весь enum и не пропустит новый случай при сборке."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Ограничь ленту",
+  "prompt": "Напиши цикл, который возвращает первые три успешно показанные подписи. nil-записи пропускай.",
+  "code": "func firstMessages(_ notices: [Notice]) -> [String] {\n    var result: [String] = []\n    // for-in, continue, break\n    return result\n}",
+  "key": "func firstMessages(_ notices: [Notice]) -> [String] {\n    var result: [String] = []\n    for notice in notices {\n        guard let text = message(notice) else { continue }\n        result.append(text)\n        if result.count == 3 { break }\n    }\n    return result\n}\n\ncontinue пропускает плохую запись, break останавливает цикл после трёх показанных. Считаем результат, а не входные индексы."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Найди ошибку",
+  "prompt": "Почему обработка останавливается после первой записи без ID? Почини одним управляющим словом.",
+  "code": "for notice in notices {\n    guard let text = message(notice) else { break }\n    result.append(text)\n}",
+  "key": "for notice in notices {\n    guard let text = message(notice) else { continue }\n    result.append(text)\n}\n\nbreak завершает весь цикл, а нам нужно пропустить только текущую запись. continue начинает следующую итерацию."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни напарнику (устно)",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Лента уведомлений с ID Int? и Priority.\n1. Что делает guard?\n2. Почему switch без default?\n3. Чем continue отличается от break?",
+  "key": "guard отсекает запись без ID и позволяет пользоваться обычным Int дальше. switch покрывает все случаи Priority; новый случай потребует правки. continue переходит к следующей записи, break завершает весь цикл."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Отдельный лимит",
+  "prompt": "Сделай функцию с параметром limit. При limit <= 0 верни пустой массив, иначе возьми не больше limit показанных записей.",
+  "code": "func firstMessages(_ notices: [Notice], limit: Int) -> [String] {\n    // Сначала проверь лимит.\n    // Потом message, continue и break.\n}",
+  "key": "func firstMessages(_ notices: [Notice], limit: Int) -> [String] {\n    guard limit > 0 else { return [] }\n    var result: [String] = []\n    for notice in notices {\n        guard let text = message(notice) else { continue }\n        result.append(text)\n        if result.count == limit { break }\n    }\n    return result\n}\n\nРанний выход убирает бессмысленный цикл при нулевом лимите. Ограничение по result.count относится к принятым записям."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Напиши message через guard и switch. Затем цикл первых трёх показанных записей через continue и break.\nОбъясни разницу между ними.",
+  "key": "func message(_ t: Notice) -> String? {\n    guard let n = t.id else { return nil }\n    switch t.priority {\n    case .normal: return \"Уведомление \\(n)\"\n    case .urgent: return \"СРОЧНО \\(n)\"\n    case .muted: return nil\n    }\n}\n\ncontinue пропускает одну запись, break завершает цикл. После самостоятельного решения проверь пустой ввод и первые три nil-записи."
+ }
+]

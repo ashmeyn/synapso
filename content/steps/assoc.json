@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Прочитай связанный тип",
+  "prompt": "Назови два значения: первый id и первая строка. Какие Item у реализаций? Для пустого IDFeed что вернётся?",
+  "code": "protocol Feed {\n    associatedtype Item\n    func first() -> Item?\n}\nstruct IDFeed: Feed {\n    typealias Item = Int\n    let ids: [Int]\n    func first() -> Int? { ids.first }\n}\nstruct NameFeed: Feed {\n    let names: [String]\n    func first() -> String? { names.first }\n}\nprint(IDFeed(ids: [71]).first() ?? 0)\nprint(NameFeed(names: [\"Фото\"]).first() ?? \"Нет\")",
+  "key": "71\nФото\n\nItem равен Int и String; пустой IDFeed возвращает nil."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Задай связанный тип",
+  "prompt": "Заполни associatedtype и typealias в Feed/IDFeed. Не делай Item равным Any.",
+  "code": "protocol Feed {\n    /* Связанный тип */ Item\n    func first() -> Item?\n}\nstruct IDFeed: Feed {\n    /* Выбор реализации */ Item = Int\n    let ids: [Int]\n    func first() -> Int? { ids.first }\n}",
+  "key": "protocol Feed {\n    associatedtype Item\n    func first() -> Item?\n}\nstruct IDFeed: Feed {\n    typealias Item = Int\n    let ids: [Int]\n    func first() -> Int? { ids.first }\n}\n\nfirst возвращает Int?; Item задан явно через typealias."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Напиши opaque-фабрику",
+  "prompt": "После объявленных Card и моделей напиши makeCard(id:) -> some Card, которая всегда возвращает IDCard. Покажи summary для 71.",
+  "code": "protocol Card { func summary() -> String }\nstruct IDCard: Card {\n    let id: Int\n    func summary() -> String { \"Проект \\(id)\" }\n}\nstruct NameCard: Card {\n    let name: String\n    func summary() -> String { name }\n}\n// Напиши makeCard",
+  "key": "protocol Card { func summary() -> String }\nstruct IDCard: Card {\n    let id: Int\n    func summary() -> String { \"Проект \\(id)\" }\n}\nstruct NameCard: Card {\n    let name: String\n    func summary() -> String { name }\n}\nfunc makeCard(id: Int) -> some Card { IDCard(id: id) }\nprint(makeCard(id: 71).summary())\n\nВывод «Проект 71»; тип скрыт интерфейсом, но фиксирован реализацией."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Исправь две ветки возврата",
+  "prompt": "chooseCard возвращает разные типы. Поменяй контракт на any Card и сохрани обе ветки. Затем собери [any Card] из chooseCard(true) и chooseCard(false), выведи summary каждого: «Проект 71», «Фото».",
+  "code": "protocol Card { func summary() -> String }\nstruct IDCard: Card {\n    let id: Int\n    func summary() -> String { \"Проект \\(id)\" }\n}\nstruct NameCard: Card {\n    let name: String\n    func summary() -> String { name }\n}\nfunc chooseCard(showID: Bool) -> some Card {\n    if showID { return IDCard(id: 71) }\n    return NameCard(name: \"Фото\")\n}",
+  "key": "protocol Card { func summary() -> String }\nstruct IDCard: Card {\n    let id: Int\n    func summary() -> String { \"Проект \\(id)\" }\n}\nstruct NameCard: Card {\n    let name: String\n    func summary() -> String { name }\n}\nfunc chooseCard(showID: Bool) -> any Card {\n    if showID { return IDCard(id: 71) }\n    return NameCard(name: \"Фото\")\n}\nlet cards: [any Card] = [\n    chooseCard(showID: true), chooseCard(showID: false)\n]\nfor card in cards { print(card.summary()) }\n\nExistential-возврат допускает два разных конкретных типа; обычный some-возврат здесь не компилируется."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни границы",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Кто задаёт Item? Кто выбирает скрытый тип some-возврата? Что позволяют any и primary associated type?",
+  "key": "Item задаёт конкретное соответствие протоколу, явно или выводом. some-возврат скрывает фиксированный тип реализации. any допускает разные соответствующие значения; primary associated type может сохранить нужный тип элемента у такой коробки."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Собери коллекции с Int",
+  "prompt": "Напиши total(_:) с any Collection<Int>. Сумма Array [71,72] и Set тех же id — 143; пустая коллекция — 0. Это ограниченный existential, не приведение к Array.",
+  "code": "// Напиши total",
+  "key": "func total(_ values: any Collection<Int>) -> Int {\n    values.reduce(0, +)\n}\nprint(total([71, 72]))\nprint(total(Set([71, 72])))\n\nЭлементы обеих коллекций известны как Int. Не требуется одна и та же конкретная коллекция."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови Feed, IDFeed и firstID<F: Feed>(_:), где F.Item == Int. Из [71,72] выведи 71, для пустого источника — true в проверке nil. Не возвращай Any и не используй as?.",
+  "key": "protocol Feed {\n    associatedtype Item\n    func first() -> Item?\n}\nstruct IDFeed: Feed {\n    typealias Item = Int\n    let ids: [Int]\n    func first() -> Int? { ids.first }\n}\nstruct NameFeed: Feed {\n    let names: [String]\n    func first() -> String? { names.first }\n}\nfunc firstID<F: Feed>(_ feed: F) -> Int? where F.Item == Int {\n    feed.first()\n}\nprint(firstID(IDFeed(ids: [71, 72])) ?? 0)\nprint(firstID(IDFeed(ids: [])) == nil)\n\nСвязь Item == Int проверяется на уровне generic-функции."
+ }
+]

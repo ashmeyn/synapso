@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Выбор и отсутствие",
+  "prompt": "Назови три строки локальной проверки. Нужна ли карта для этого поиска?",
+  "code": "import MapKit\nstruct Fountain: Identifiable {\n    let id: Int\n    let title: String\n    let coordinate: CLLocationCoordinate2D\n}\nfunc caption(for id: Int?, points: [Fountain]) -> String {\n    guard let id, let point = points.first(where: { $0.id == id }) else {\n        return \"Выбери точку\"\n    }\n    return point.title\n}\nlet points = [\n    Fountain(id: 51, title: \"У входа\",\n        coordinate: .init(latitude: 55.75, longitude: 37.61)),\n    Fountain(id: 52, title: \"У входа\",\n        coordinate: .init(latitude: 55.76, longitude: 37.62))\n]\nprint(caption(for: 52, points: points))\nprint(caption(for: 99, points: points))\nprint(caption(for: nil, points: points))",
+  "key": "У входа\nВыбери точку\nВыбери точку\n\n52 найден по id; 99 и nil не дают модель."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Свяжи Map с состоянием",
+  "prompt": "Заполни Binding выбора и tag метки. Модель и весь экран даны.",
+  "code": "import SwiftUI\nimport MapKit\nstruct Fountain: Identifiable {\n    let id: Int\n    let title: String\n    let coordinate: CLLocationCoordinate2D\n}\nstruct RefillMap: View {\n    let points: [Fountain]\n    @State private var selectedID: Int?\n    private var chosenPoint: Fountain? {\n        points.first { $0.id == selectedID }\n    }\n    var body: some View {\n        VStack {\n            Map(selection: /* Binding */) {\n                ForEach(points) { point in\n                    Marker(point.title, coordinate: point.coordinate)\n                        .tag(/* id */)\n                }\n            }\n            Text(chosenPoint?.title ?? \"Выбери точку\")\n        }\n    }\n}",
+  "key": "import SwiftUI\nimport MapKit\nstruct Fountain: Identifiable {\n    let id: Int\n    let title: String\n    let coordinate: CLLocationCoordinate2D\n}\nstruct RefillMap: View {\n    let points: [Fountain]\n    @State private var selectedID: Int?\n    private var chosenPoint: Fountain? {\n        points.first { $0.id == selectedID }\n    }\n    var body: some View {\n        VStack {\n            Map(selection: $selectedID) {\n                ForEach(points) { point in\n                    Marker(point.title, coordinate: point.coordinate)\n                        .tag(point.id)\n                }\n            }\n            Text(chosenPoint?.title ?? \"Выбери точку\")\n        }\n    }\n}\n\nВыбранный tag записывается в selectedID. Текст вычисляется из соответствующей модели."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Напиши поиск модели",
+  "prompt": "Напиши caption(for:points:). Неизвестный id и nil дают «Выбери точку», известный — title. Даны модель, данные и проверки.",
+  "code": "import MapKit\nstruct Fountain: Identifiable {\n    let id: Int\n    let title: String\n    let coordinate: CLLocationCoordinate2D\n}\nlet points = [\n    Fountain(id: 51, title: \"У входа\",\n        coordinate: .init(latitude: 55.75, longitude: 37.61)),\n    Fountain(id: 52, title: \"У входа\",\n        coordinate: .init(latitude: 55.76, longitude: 37.62))\n]\n// Напиши caption\nprint(caption(for: 52, points: points))\nprint(caption(for: 99, points: points))\nprint(caption(for: nil, points: points))",
+  "key": "import MapKit\nstruct Fountain: Identifiable {\n    let id: Int\n    let title: String\n    let coordinate: CLLocationCoordinate2D\n}\nfunc caption(for id: Int?, points: [Fountain]) -> String {\n    guard let id, let point = points.first(where: { $0.id == id }) else {\n        return \"Выбери точку\"\n    }\n    return point.title\n}\nlet points = [\n    Fountain(id: 51, title: \"У входа\",\n        coordinate: .init(latitude: 55.75, longitude: 37.61)),\n    Fountain(id: 52, title: \"У входа\",\n        coordinate: .init(latitude: 55.76, longitude: 37.62))\n]\nprint(caption(for: 52, points: points))\nprint(caption(for: 99, points: points))\nprint(caption(for: nil, points: points))\n\nТри строки: «У входа», «Выбери точку», «Выбери точку». Никаких принудительных раскрытий Optional."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Название выбрало соседа",
+  "prompt": "Выбран id 52, но печатается 51. Исправь поиск, сохранив данные.",
+  "code": "import MapKit\nstruct Fountain: Identifiable {\n    let id: Int\n    let title: String\n    let coordinate: CLLocationCoordinate2D\n}\nlet points = [\n    Fountain(id: 51, title: \"У входа\",\n        coordinate: .init(latitude: 55.75, longitude: 37.61)),\n    Fountain(id: 52, title: \"У входа\",\n        coordinate: .init(latitude: 55.76, longitude: 37.62))\n]\nlet selectedID = 52\nlet chosen = points.first { $0.title == \"У входа\" }\nprint(chosen?.id ?? 0)",
+  "key": "import MapKit\nstruct Fountain: Identifiable {\n    let id: Int\n    let title: String\n    let coordinate: CLLocationCoordinate2D\n}\nlet points = [\n    Fountain(id: 51, title: \"У входа\",\n        coordinate: .init(latitude: 55.75, longitude: 37.61)),\n    Fountain(id: 52, title: \"У входа\",\n        coordinate: .init(latitude: 55.76, longitude: 37.62))\n]\nlet selectedID = 52\nlet chosen = points.first { $0.id == selectedID }\nprint(chosen?.id ?? 0)\n\nПосле правки печатается 52. Название не уникально, поэтому сравниваем id."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни выбор",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Два фонтанчика имеют одинаковый title.\nКак метка меняет selectedID?\nПочему нельзя искать по title?\nЧто делать после скрытия выбранной точки?",
+  "key": "Map связывает tag метки с Binding selectedID. По title можно найти другую запись с тем же названием; id обозначает конкретный объект. После фильтра проверяем доступность id и очищаем отсутствующий выбор; UI показывает запасную подпись."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Скрой выбранную точку",
+  "prompt": "Фильтр оставляет только 51. Напиши очистку selectedID, если его нет среди видимых точек. Выведи факт отсутствия выбора и число видимых точек.",
+  "code": "import MapKit\nstruct Fountain: Identifiable {\n    let id: Int\n    let title: String\n    let coordinate: CLLocationCoordinate2D\n}\nlet points = [\n    Fountain(id: 51, title: \"У входа\",\n        coordinate: .init(latitude: 55.75, longitude: 37.61)),\n    Fountain(id: 52, title: \"У входа\",\n        coordinate: .init(latitude: 55.76, longitude: 37.62))\n]\nvar selectedID: Int? = 52\nlet visible = points.filter { $0.id == 51 }\n// Очисти недоступный выбор\nprint(selectedID == nil)\nprint(visible.count)",
+  "key": "import MapKit\nstruct Fountain: Identifiable {\n    let id: Int\n    let title: String\n    let coordinate: CLLocationCoordinate2D\n}\nlet points = [\n    Fountain(id: 51, title: \"У входа\",\n        coordinate: .init(latitude: 55.75, longitude: 37.61)),\n    Fountain(id: 52, title: \"У входа\",\n        coordinate: .init(latitude: 55.76, longitude: 37.62))\n]\nvar selectedID: Int? = 52\nlet visible = points.filter { $0.id == 51 }\nif let id = selectedID, !visible.contains(where: { $0.id == id }) {\n    selectedID = nil\n}\nprint(selectedID == nil)\nprint(visible.count)\n\nВывод true, 1. Выбор 52 больше не относится к отображаемому набору."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "По памяти создай Bench (id, title, coordinate) и BenchMap. Map показывает Marker для каждой скамейки и связывает выбор Int? с tag id. Под картой title выбранной скамейки или «Выбери точку». Две скамейки могут называться одинаково; отсутствующий id не должен падать.",
+  "key": "import SwiftUI\nimport MapKit\nstruct Bench: Identifiable {\n    let id: Int\n    let title: String\n    let coordinate: CLLocationCoordinate2D\n}\nstruct BenchMap: View {\n    let points: [Bench]\n    @State private var selectedID: Int?\n    private var chosenPoint: Bench? {\n        points.first { $0.id == selectedID }\n    }\n    var body: some View {\n        VStack {\n            Map(selection: $selectedID) {\n                ForEach(points) { point in\n                    Marker(point.title, coordinate: point.coordinate)\n                        .tag(point.id)\n                }\n            }\n            Text(chosenPoint?.title ?? \"Выбери точку\")\n        }\n    }\n}\n\nТот же путь перенесён на скамейки: выбор по id, текст из модели, запасное значение при отсутствии."
+ }
+]

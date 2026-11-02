@@ -1,0 +1,38 @@
+[
+ {
+  "id": "sysd-b1",
+  "topics": [
+   "sysd"
+  ],
+  "type": "Допиши",
+  "title": "Курсор перестал продвигаться",
+  "prompt": "Напиши checkedCursor(previous:next:): повтор непустого токена бросает CursorError.repeated, nil означает конец, новый токен возвращается. Проверь a→b, a→nil и a→a.",
+  "code": "enum CursorError: Error { case repeated }\n// Не парси содержимое непрозрачного cursor.",
+  "key": "enum CursorError: Error { case repeated }\nfunc checkedCursor(previous: String?, next: String?) throws -> String? {\n    if let next, next == previous { throw CursorError.repeated }\n    return next\n}\nlet continued = try checkedCursor(previous: \"a\", next: \"b\")\nassert(continued == \"b\")\nlet ended = try checkedCursor(previous: \"a\", next: nil)\nassert(ended == nil)\ndo {\n    _ = try checkedCursor(previous: \"a\", next: \"a\")\n    assertionFailure(\"Нужно обнаружить зацикливание\")\n} catch { assert(error is CursorError) }\n\nПовтор токена прекращает зацикливание; nil не считается повтором первой страницы и означает финальный ответ.",
+  "added": "2026-10-12"
+ },
+ {
+  "id": "sysd-b2",
+  "topics": [
+   "sysd"
+  ],
+  "type": "Допиши",
+  "title": "Подтверждение старой закладки",
+  "prompt": "Текущая pending-операция token=second,value=false, пришёл ack для first. Напиши acknowledge, очищающую pending только при совпадении токена; проверь старый и актуальный ack. Это правило нашего контракта, не готовая гарантия транспорта. Серверное базовое значение уже применено из ответа; здесь проверяем только очистку pending.",
+  "code": "struct SaveIntent: Equatable { let token: String; let value: Bool }",
+  "key": "struct SaveIntent: Equatable { let token: String; let value: Bool }\nfunc acknowledge(_ token: String, current: SaveIntent?) -> SaveIntent? {\n    current?.token == token ? nil : current\n}\nlet pending = SaveIntent(token: \"second\", value: false)\nassert(acknowledge(\"first\", current: pending) == pending)\nassert(acknowledge(\"second\", current: pending) == nil)\n\nСерверная часть ответа уже применена по условию. Подтверждение относится к операции, не просто к post. Старый ответ не стирает более новое намерение пользователя.",
+  "added": "2026-10-12"
+ },
+ {
+  "id": "sysd-b3",
+  "topics": [
+   "sysd"
+  ],
+  "type": "Допиши",
+  "title": "Счётчик попаданий кэша",
+  "prompt": "Напиши hitRatio(hits:misses:)->Double?: неотрицательные входы, nil при отсутствии запросов или отрицательном счётчике. Проверь 3/1→0.75, 0/0→nil и -1/2→nil. Это доля запросов за один период, не доля пользователей.",
+  "code": "// Не дели hits на misses и не называй отсутствие данных 0%.",
+  "key": "func hitRatio(hits: Int, misses: Int) -> Double? {\n    guard hits >= 0, misses >= 0 else { return nil }\n    let total = Double(hits) + Double(misses)\n    guard total > 0 else { return nil }\n    return Double(hits) / total\n}\nassert(hitRatio(hits: 3, misses: 1) == 0.75)\nassert(hitRatio(hits: 0, misses: 0) == nil)\nassert(hitRatio(hits: -1, misses: 2) == nil)\n\nЗнаменатель — все обращения. Преобразование в Double до сложения избегает переполнения суммы Int в этой небольшой функции.",
+  "added": "2026-10-12"
+ }
+]

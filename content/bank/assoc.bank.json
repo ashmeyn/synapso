@@ -1,0 +1,35 @@
+[
+ {
+  "id": "assoc-b1",
+  "topics": [
+   "assoc"
+  ],
+  "type": "Допиши",
+  "title": "Сверка источников экспортируемых id",
+  "prompt": "Напиши sameFirst для двух разных Feed с равными Item и Equatable. IDFeed и SavedIDs могут быть разными типами, но оба дают Int?.",
+  "code": "protocol Feed {\n    associatedtype Item\n    func first() -> Item?\n}\nstruct IDFeed: Feed {\n    typealias Item = Int\n    let ids: [Int]\n    func first() -> Int? { ids.first }\n}\nstruct NameFeed: Feed {\n    let names: [String]\n    func first() -> String? { names.first }\n}\nstruct SavedIDs: Feed {\n    let ids: [Int]\n    func first() -> Int? { ids.first }\n}\n// Напиши sameFirst",
+  "key": "protocol Feed {\n    associatedtype Item\n    func first() -> Item?\n}\nstruct IDFeed: Feed {\n    typealias Item = Int\n    let ids: [Int]\n    func first() -> Int? { ids.first }\n}\nstruct NameFeed: Feed {\n    let names: [String]\n    func first() -> String? { names.first }\n}\nfunc sameFirst<A: Feed, B: Feed>(_ a: A, _ b: B) -> Bool\nwhere A.Item == B.Item, A.Item: Equatable {\n    a.first() == b.first()\n}\nstruct SavedIDs: Feed {\n    let ids: [Int]\n    func first() -> Int? { ids.first }\n}\nprint(sameFirst(IDFeed(ids: [71]), SavedIDs(ids: [71])))\n\nПример печатает true; два пустых источника также дают true по сравнению Optional."
+ },
+ {
+  "id": "assoc-b2",
+  "topics": [
+   "assoc"
+  ],
+  "type": "Перепиши",
+  "title": "История значков проекта",
+  "prompt": "Исходный send принимает any Sink и String, но неизвестный Item мог быть Int. Перепиши send как generic с S.Item и inout S. Тест IconHistory принимает «Звезда».",
+  "code": "protocol Sink {\n    associatedtype Item\n    mutating func push(_ item: Item)\n}\nstruct IconHistory: Sink {\n    var names: [String] = []\n    mutating func push(_ item: String) { names.append(item) }\n}\nfunc send(_ item: String, to sink: inout any Sink) {\n    sink.push(item)\n}",
+  "key": "protocol Sink {\n    associatedtype Item\n    mutating func push(_ item: Item)\n}\nstruct IconHistory: Sink {\n    var names: [String] = []\n    mutating func push(_ item: String) { names.append(item) }\n}\nfunc send<S: Sink>(_ item: S.Item, to sink: inout S) {\n    sink.push(item)\n}\nvar history = IconHistory()\nsend(\"Звезда\", to: &history)\nprint(history.names)\n\nТип входа связан с реализацией; печатается [\"Звезда\"]."
+ },
+ {
+  "id": "assoc-b3",
+  "topics": [
+   "assoc"
+  ],
+  "type": "Допиши",
+  "title": "Предпросмотр конкретной карточки",
+  "prompt": "Caller хочет после echo читать card.id как Int. Напиши generic echo<C: Card>(_:) -> C, сохрани тип аргумента; existential или opaque-возврат скрыл бы доступ к id.",
+  "code": "protocol Card { func summary() -> String }\nstruct IDCard: Card {\n    let id: Int\n    func summary() -> String { \"Проект \\(id)\" }\n}\nstruct NameCard: Card {\n    let name: String\n    func summary() -> String { name }\n}\n// Напиши echo и используй IDCard",
+  "key": "protocol Card { func summary() -> String }\nstruct IDCard: Card {\n    let id: Int\n    func summary() -> String { \"Проект \\(id)\" }\n}\nstruct NameCard: Card {\n    let name: String\n    func summary() -> String { name }\n}\nfunc echo<C: Card>(_ card: C) -> C { card }\nlet card: IDCard = echo(IDCard(id: 71))\nprint(card.id)\n\nВывод 71; caller выбирает C аргументом, результат сохраняет именно C."
+ }
+]

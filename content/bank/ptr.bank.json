@@ -1,0 +1,38 @@
+[
+ {
+  "id": "ptr-b1",
+  "topics": [
+   "ptr"
+  ],
+  "type": "Допиши",
+  "title": "Две отсортированные дорожки",
+  "prompt": "Слей два неубывающих массива, сохраняя все повторы; числа -1000...1000. Используй по указателю на массив и добавь остатки после прохода. Проверь [1,4]+[2,4] и пустой первый.",
+  "code": "// func mergeSorted(_ first: [Int], _ second: [Int]) -> [Int]",
+  "key": "func mergeSorted(_ first: [Int], _ second: [Int]) -> [Int] {\n    var result: [Int] = []\n    var left = 0, right = 0\n    while left < first.count && right < second.count {\n        if first[left] <= second[right] {\n            result.append(first[left]); left += 1\n        } else {\n            result.append(second[right]); right += 1\n        }\n    }\n    result.append(contentsOf: first[left...])\n    result.append(contentsOf: second[right...])\n    return result\n}\nassert(mergeSorted([1, 4], [2, 4]) == [1, 2, 4, 4])\nassert(mergeSorted([], [2]) == [2])\n\nВ ответ попадает минимальный из непрочитанных элементов. Остаток уже отсортирован и добавляется без нового выбора.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "ptr-b2",
+  "topics": [
+   "ptr"
+  ],
+  "type": "Допиши",
+  "title": "Нули в конец без перестановки ненулевых",
+  "prompt": "Перемести нули в конец inout-массива, сохранив порядок остальных. На [0,3,0,2] получи [3,2,0,0]; размер неизменен. Не сортируй и не удаляй во время чтения.",
+  "code": "// func moveZeros(_ values: inout [Int])",
+  "key": "func moveZeros(_ values: inout [Int]) {\n    var write = 0\n    for read in values.indices {\n        if values[read] != 0 {\n            values[write] = values[read]\n            write += 1\n        }\n    }\n    for index in write..<values.count { values[index] = 0 }\n}\nvar values = [0, 3, 0, 2]\nmoveZeros(&values)\nassert(values == [3, 2, 0, 0])\n\nwrite собирает ненулевой префикс, затем хвост заполняется нулями. read никогда не читает уже испорченные будущие позиции.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "ptr-b3",
+  "topics": [
+   "ptr"
+  ],
+  "type": "Допиши",
+  "title": "Подпоследовательность подписи",
+  "prompt": "Проверь, встречаются ли Character small в large в том же порядке, не обязательно подряд. Пустой small подходит любой строке. Проверь emoji и противоположный порядок «ба»/«аб».",
+  "code": "// func isSubsequence(_ small: String, of large: String) -> Bool",
+  "key": "func isSubsequence(_ small: String, of large: String) -> Bool {\n    let required = Array(small)\n    var read = 0\n    for character in large {\n        if read < required.count && required[read] == character { read += 1 }\n    }\n    return read == required.count\n}\nassert(isSubsequence(\"👨‍👩‍👧‍👦Б\", of: \"А👨‍👩‍👧‍👦Б\"))\nassert(isSubsequence(\"\", of: \"abc\"))\nassert(!isSubsequence(\"ба\", of: \"аб\"))\n\nОдин указатель продвигается по требуемым Character, второй проход идёт по большой строке. Это подпоследовательность, не поиск непрерывной подстроки.",
+  "added": "2026-10-20"
+ }
+]

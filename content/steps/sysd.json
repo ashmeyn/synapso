@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Первый запрос или конец",
+  "prompt": "Предскажи две строки. Почему одинаковый nil означает разные вещи в first.cursor и ответе accept?",
+  "code": "struct CursorRequest { let cursor: String? }\nstruct CursorPager {\n    private(set) var next: String?\n    private(set) var endReached = false\n    private(set) var loading = false\n    mutating func begin() -> CursorRequest? {\n        guard !loading, !endReached else { return nil }\n        loading = true\n        return CursorRequest(cursor: next)\n    }\n    mutating func accept(nextCursor: String?) {\n        next = nextCursor\n        endReached = nextCursor == nil\n        loading = false\n    }\n    mutating func fail() { loading = false }\n}\nvar pager = CursorPager()\nlet first = pager.begin()\nprint(first?.cursor ?? \"FIRST\")\npager.accept(nextCursor: nil)\nprint(pager.begin() == nil ? \"STOP\" : \"AGAIN\")",
+  "key": "FIRST\nSTOP\n\nПервый begin возвращает существующий CursorRequest с cursor=nil. После ответа nextCursor=nil endReached=true, новый begin возвращает отсутствие запроса."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Не потеряй курсор при ошибке",
+  "prompt": "Создай CursorPager из правил основы: begin запрещён при loading/endReached; успех устанавливает next и конец по nil; fail только снимает loading. Проверь параллельный begin, переход на page-2, повтор page-2 после ошибки и остановку после финального ответа.",
+  "code": "struct CursorRequest { let cursor: String? }\n// Напиши CursorPager: begin, accept(nextCursor:), fail.",
+  "key": "struct CursorRequest { let cursor: String? }\nstruct CursorPager {\n    private(set) var next: String?\n    private(set) var endReached = false\n    private(set) var loading = false\n    mutating func begin() -> CursorRequest? {\n        guard !loading, !endReached else { return nil }\n        loading = true\n        return CursorRequest(cursor: next)\n    }\n    mutating func accept(nextCursor: String?) {\n        next = nextCursor\n        endReached = nextCursor == nil\n        loading = false\n    }\n    mutating func fail() { loading = false }\n}\nvar pager = CursorPager()\nassert(pager.begin() != nil)\nassert(pager.begin() == nil)\npager.accept(nextCursor: \"page-2\")\nassert(pager.begin()?.cursor == \"page-2\")\npager.fail()\nassert(pager.begin()?.cursor == \"page-2\")\npager.accept(nextCursor: nil)\nassert(pager.begin() == nil)\n\nКурсор продвигается только после успеха. loading и endReached различают временную занятость и окончание прохода."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Сохрани локальную закладку",
+  "prompt": "Напиши mergeOne и merge для моделей ниже. Страница обновляет только более свежую server.revision, pendingSaved сохраняется; сортировка order убывает, при равенстве id возрастает. На post31 обнови title «Черновик»→«Исправлено» при pending=true, затем проверь, что старая revision не откатывает кэш.",
+  "code": "struct Post: Equatable {\n    let id: Int\n    let revision: Int\n    let order: Int\n    let title: String\n    let isSaved: Bool\n}\nstruct CachedPost: Equatable {\n    var server: Post\n    var pendingSaved: Bool?\n    var visibleSaved: Bool { pendingSaved ?? server.isSaved }\n}",
+  "key": "struct Post: Equatable {\n    let id: Int\n    let revision: Int\n    let order: Int\n    let title: String\n    let isSaved: Bool\n}\nstruct CachedPost: Equatable {\n    var server: Post\n    var pendingSaved: Bool?\n    var visibleSaved: Bool { pendingSaved ?? server.isSaved }\n}\nfunc mergeOne(_ remote: Post, existing: CachedPost?) -> CachedPost {\n    guard var cached = existing else {\n        return CachedPost(server: remote, pendingSaved: nil)\n    }\n    if remote.revision > cached.server.revision { cached.server = remote }\n    return cached\n}\nfunc merge(_ remote: [Post], local: [CachedPost]) -> [CachedPost] {\n    let pairs = local.map { ($0.server.id, $0) }\n    var index = Dictionary(uniqueKeysWithValues: pairs)\n    for post in remote {\n        index[post.id] = mergeOne(post, existing: index[post.id])\n    }\n    return index.values.sorted { a, b in\n        if a.server.order == b.server.order { return a.server.id < b.server.id }\n        return a.server.order > b.server.order\n    }\n}\nlet old = Post(id: 31, revision: 1, order: 10,\n               title: \"Черновик\", isSaved: false)\nlet new = Post(id: 31, revision: 2, order: 10,\n               title: \"Исправлено\", isSaved: false)\nlet result = merge([new], local: [CachedPost(server: old, pendingSaved: true)])\nassert(result.count == 1)\nassert(result[0].server.title == \"Исправлено\")\nassert(result[0].visibleSaved)\nassert(result[0].pendingSaved == true)\nassert(merge([old], local: result) == result)\n\nСерверное содержимое и локальное намерение не смешаны. Дубликат id объединяется, pending не исчезает из-за новой страницы."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Повтор даже после отказа авторизации",
+  "prompt": "Ниже unauthorized получает повтор, а attempt=3 всё ещё возвращает задержку. Исправь retryDelay: только transient, попытки 1 и 2 дают 1 и 2, остальные nil. Проверь обе категории постоянных ошибок и attempt=0; сеть не запускай.",
+  "code": "enum FeedFailure { case transient, unauthorized, invalidData }\nfunc retryDelay(_ failure: FeedFailure, attempt: Int) -> Int? {\n    attempt * 2\n}\nprint(retryDelay(.unauthorized, attempt: 1) ?? -1)\nprint(retryDelay(.transient, attempt: 3) ?? -1)",
+  "key": "enum FeedFailure { case transient, unauthorized, invalidData }\nfunc retryDelay(_ failure: FeedFailure, attempt: Int) -> Int? {\n    guard case .transient = failure, (1...2).contains(attempt) else {\n        return nil\n    }\n    return [1, 2][attempt - 1]\n}\nassert(retryDelay(.transient, attempt: 1) == 1)\nassert(retryDelay(.transient, attempt: 2) == 2)\nassert(retryDelay(.transient, attempt: 3) == nil)\nassert(retryDelay(.unauthorized, attempt: 1) == nil)\nassert(retryDelay(.invalidData, attempt: 1) == nil)\nassert(retryDelay(.transient, attempt: 0) == nil)\n\nЛимит относится к числу попыток, а не к бесконечной смене задержки. Постоянную ошибку нужно разобрать или восстановить доступ, не повторять этим правилом."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Защити компромиссы",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Что уточняешь перед API и почему выбираешь дисковую копию плюс отдельный кэш изображений? Как курсор, revision и pendingSaved решают разные задачи? Как ограничиваешь повторы и real-time, и какие метрики докажут результат?",
+  "key": "Уточняем офлайн после перезапуска, объём и изменения; дисковая копия даёт сохранённые записи, NSCache лишь временные картинки. Курсор задаёт продолжение прохода, revision обновляет серверное содержимое, pending сохраняет локальную закладку. Чтение повторяем ограниченно только при transient, push может быть сигналом проверки, а пропуски восполняем запросом; измеряем первый контент, ошибки, попадания кэша и конфликты в заданном периоде."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Старый refresh завершился последним",
+  "prompt": "Напиши RefreshGate: refresh увеличивает generation и возвращает token, accept применяет rows только для текущей generation. Старые данные кэша не стирай в refresh. Проверь два начала и ответы old→latest→old: итог [32,33], последний старый ответ его не портит.",
+  "code": "struct RefreshToken { let generation: Int }\n// rows — [Int], новый проход имеет новый generation.",
+  "key": "struct RefreshToken { let generation: Int }\nstruct RefreshGate {\n    private(set) var generation = 0\n    private(set) var rows: [Int] = []\n    mutating func refresh() -> RefreshToken {\n        generation += 1\n        return RefreshToken(generation: generation)\n    }\n    mutating func accept(_ ids: [Int], token: RefreshToken) {\n        guard token.generation == generation else { return }\n        rows = ids\n    }\n}\nvar gate = RefreshGate()\nlet old = gate.refresh()\nlet latest = gate.refresh()\ngate.accept([31], token: old)\nassert(gate.rows.isEmpty)\ngate.accept([32, 33], token: latest)\nassert(gate.rows == [32, 33])\ngate.accept([31], token: old)\nassert(gate.rows == [32, 33])\n\nПроверка выполняется до изменения результата; отмена запроса не заменяет контроль generation. Это детерминированная модель ответов, не настоящая сеть."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Сервер прислал явные deletedIDs. По памяти напиши applyDeleted(_:local:) для Post/CachedPost из урока: удаление сильнее pendingSaved и убирает запись; другие записи и порядок сохраняются. Проверь удаление post31 с pending=true, пустой набор и неизвестный 99. Не выводи deletedIDs из отсутствия в странице.",
+  "key": "struct Post: Equatable {\n    let id: Int\n    let revision: Int\n    let order: Int\n    let title: String\n    let isSaved: Bool\n}\nstruct CachedPost: Equatable {\n    var server: Post\n    var pendingSaved: Bool?\n    var visibleSaved: Bool { pendingSaved ?? server.isSaved }\n}\nfunc applyDeleted(_ ids: Set<Int>, local: [CachedPost]) -> [CachedPost] {\n    local.filter { !ids.contains($0.server.id) }\n}\nlet a = Post(id: 31, revision: 1, order: 10,\n             title: \"Пост\", isSaved: false)\nlet b = Post(id: 32, revision: 1, order: 9,\n             title: \"Другой\", isSaved: false)\nlet local = [CachedPost(server: a, pendingSaved: true),\n             CachedPost(server: b, pendingSaved: nil)]\nlet result = applyDeleted([31], local: local)\nassert(result.map { $0.server.id } == [32])\nassert(applyDeleted([], local: local) == local)\nassert(applyDeleted([99], local: local) == local)\n\nНовая механика — явное удаление, не ещё одно обновление revision. Локальная закладка не воскрешает удалённый сервером пост по выбранному контракту."
+ }
+]

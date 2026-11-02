@@ -1,0 +1,35 @@
+[
+ {
+  "id": "cache-b1",
+  "topics": [
+   "cache"
+  ],
+  "type": "Допиши",
+  "title": "Панель комикса",
+  "prompt": "Оцени байты декодированного CGImage: bytesPerRow × height. UIImage без cgImage даёт nil. Это стоимость буфера, а не всего объекта; JPEG Data.count здесь не подходит.",
+  "code": "import UIKit\nfunc pixelBufferCost(of image: UIImage) -> Int? {\n    guard let bitmap = image.cgImage else { return nil }\n    /* верни оценку буфера */\n}",
+  "key": "import UIKit\nfunc pixelBufferCost(of image: UIImage) -> Int? {\n    guard let bitmap = image.cgImage else { return nil }\n    return bitmap.bytesPerRow * bitmap.height\n}\n\nДля заданного буфера стоимость равна ширине строки в байтах, умноженной на число строк. Проверено компиляцией, живой UIKit-буфер не запускался."
+ },
+ {
+  "id": "cache-b2",
+  "topics": [
+   "cache"
+  ],
+  "type": "Найди ошибку",
+  "title": "Фотографии номера отеля",
+  "prompt": "В одном номере две фотографии одинакового размера и версии. Ключ игнорирует photoID. Исправь идентичность результата.",
+  "code": "func roomPreviewKey(\n    roomID: Int, photoID: Int, version: Int, width: Int\n) -> String {\n    \"room:\\(roomID):v\\(version):w\\(width)\"\n}\nlet first = roomPreviewKey(roomID: 9, photoID: 1, version: 2, width: 128)\nlet second = roomPreviewKey(roomID: 9, photoID: 2, version: 2, width: 128)\nprint(first == second)",
+  "key": "func roomPreviewKey(\n    roomID: Int, photoID: Int, version: Int, width: Int\n) -> String {\n    \"room:\\(roomID):photo:\\(photoID):v\\(version):w\\(width)\"\n}\nlet first = roomPreviewKey(roomID: 9, photoID: 1, version: 2, width: 128)\nlet second = roomPreviewKey(roomID: 9, photoID: 2, version: 2, width: 128)\nprint(first == second)\n\nДо правки true, после false. roomID обозначает номер, photoID — отдельную фотографию; нужны оба."
+ },
+ {
+  "id": "cache-b3",
+  "topics": [
+   "cache"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Набор стикеров",
+  "prompt": "Первая попытка источника бросает ошибку. Назови вывод второй попытки и объясни, почему отказ не стал закэшированным успехом.",
+  "code": "import Foundation\nprotocol ArtworkSource {\n    func fetchBytes(for key: String) throws -> Data\n}\nfinal class ArtworkLoader {\n    private let memory = NSCache<NSString, NSData>()\n    private let source: any ArtworkSource\n    init(source: any ArtworkSource) { self.source = source }\n    func loadBytes(for key: String) throws -> Data {\n        let cacheKey = key as NSString\n        if let bytes = memory.object(forKey: cacheKey) {\n            return bytes as Data\n        }\n        let bytes = try source.fetchBytes(for: key)\n        memory.setObject(bytes as NSData, forKey: cacheKey, cost: bytes.count)\n        return bytes\n    }\n    func invalidate(key: String) {\n        memory.removeObject(forKey: key as NSString)\n    }\n    func clearMemory() { memory.removeAllObjects() }\n}\nenum StickerError: Error { case temporaryFailure }\nfinal class StickerSource: ArtworkSource {\n    private(set) var calls = 0\n    func fetchBytes(for key: String) throws -> Data {\n        calls += 1\n        if calls == 1 { throw StickerError.temporaryFailure }\n        return Data([7])\n    }\n}\nlet source = StickerSource()\nlet loader = ArtworkLoader(source: source)\ndo { _ = try loader.loadBytes(for: \"pack:4:v1:icon\") }\ncatch { print(\"Отказ\") }\nprint(try loader.loadBytes(for: \"pack:4:v1:icon\").count)\nprint(source.calls)",
+  "key": "Отказ\n1\n2\n\nПервая попытка не дошла до setObject. Вторая снова вызвала источник и получила один байт; данные учебные, не изображение."
+ }
+]

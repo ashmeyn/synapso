@@ -1,0 +1,35 @@
+[
+ {
+  "id": "coord-b1",
+  "topics": [
+   "coord"
+  ],
+  "type": "Допиши",
+  "title": "Плейлист открывается один раз",
+  "prompt": "Контракт start одноразовый. Добавь started и guard, чтобы два вызова сделали только один push. Fake и controller даны; реальный UI не нужен.",
+  "code": "protocol Coordinator: AnyObject { func start() }\nfinal class PlaylistController {}\nprotocol Navigating { func push(_ screen: PlaylistController) }\nfinal class FakeNavigator: Navigating {\n    var screens: [PlaylistController] = []\n    func push(_ screen: PlaylistController) { screens.append(screen) }\n}\nfinal class PlaylistCoordinator: Coordinator {\n    let navigator: any Navigating\n    private var started = false\n    init(navigator: any Navigating) { self.navigator = navigator }\n    func start() {\n        // TODO: защита от повторного start\n        navigator.push(PlaylistController())\n    }\n}\nlet navigator = FakeNavigator()\nlet coordinator = PlaylistCoordinator(navigator: navigator)\ncoordinator.start()\ncoordinator.start()\nassert(navigator.screens.count == 1)",
+  "key": "protocol Coordinator: AnyObject { func start() }\nfinal class PlaylistController {}\nprotocol Navigating { func push(_ screen: PlaylistController) }\nfinal class FakeNavigator: Navigating {\n    var screens: [PlaylistController] = []\n    func push(_ screen: PlaylistController) { screens.append(screen) }\n}\nfinal class PlaylistCoordinator: Coordinator {\n    let navigator: any Navigating\n    private var started = false\n    init(navigator: any Navigating) { self.navigator = navigator }\n    func start() {\n        guard !started else { return }\n        started = true\n        navigator.push(PlaylistController())\n    }\n}\nlet navigator = FakeNavigator()\nlet coordinator = PlaylistCoordinator(navigator: navigator)\ncoordinator.start()\ncoordinator.start()\nassert(navigator.screens.count == 1)\n\nПовторный start не создаёт второй экран. Это явно заданный контракт, не универсальное требование Coordinator."
+ },
+ {
+  "id": "coord-b2",
+  "topics": [
+   "coord"
+  ],
+  "type": "Допиши",
+  "title": "Повторное подтверждение печати фото",
+  "prompt": "onConfirm может прийти дважды. Допиши finish, чтобы onFinish вызывался только один раз. finished меняется до внешнего callback, поэтому повторный вход тоже безопасен в этом синхронном контексте.",
+  "code": "final class PrintController { var onConfirm: (() -> Void)? }\nfinal class PrintCoordinator {\n    let controller = PrintController()\n    var onFinish: (() -> Void)?\n    private var finished = false\n    func start() {\n        controller.onConfirm = { [weak self] in self?.finish() }\n    }\n    private func finish() {\n        // TODO: защита от повторного finish\n        onFinish?()\n    }\n}\nlet coordinator = PrintCoordinator()\nvar completions = 0\ncoordinator.onFinish = { completions += 1 }\ncoordinator.start()\ncoordinator.controller.onConfirm?()\ncoordinator.controller.onConfirm?()\nassert(completions == 1)",
+  "key": "final class PrintController { var onConfirm: (() -> Void)? }\nfinal class PrintCoordinator {\n    let controller = PrintController()\n    var onFinish: (() -> Void)?\n    private var finished = false\n    func start() {\n        controller.onConfirm = { [weak self] in self?.finish() }\n    }\n    private func finish() {\n        guard !finished else { return }\n        finished = true\n        onFinish?()\n    }\n}\nlet coordinator = PrintCoordinator()\nvar completions = 0\ncoordinator.onFinish = { completions += 1 }\ncoordinator.start()\ncoordinator.controller.onConfirm?()\ncoordinator.controller.onConfirm?()\nassert(completions == 1)\n\nСобытие завершения идемпотентно; ресурс результата не обрабатывается дважды."
+ },
+ {
+  "id": "coord-b3",
+  "topics": [
+   "coord"
+  ],
+  "type": "Найди ошибку",
+  "title": "Router смены языка потерял стек",
+  "prompt": "Router создаёт новый fake при каждом showLanguage и не использует переданный навигатор. Исправь метод, чтобы push записался в navigator вызывающего экрана. Новый навигатор внутри метода не нужен.",
+  "code": "final class LanguageController {}\nprotocol Navigating { func push(_ screen: LanguageController) }\nfinal class FakeNavigator: Navigating {\n    var screens: [LanguageController] = []\n    func push(_ screen: LanguageController) { screens.append(screen) }\n}\nfinal class LanguageRouter {\n    let navigator: any Navigating\n    init(navigator: any Navigating) { self.navigator = navigator }\n    func showLanguage() { FakeNavigator().push(LanguageController()) }\n}\nlet navigator = FakeNavigator()\nlet router = LanguageRouter(navigator: navigator)\nrouter.showLanguage()\nassert(navigator.screens.count == 1)",
+  "key": "final class LanguageController {}\nprotocol Navigating { func push(_ screen: LanguageController) }\nfinal class FakeNavigator: Navigating {\n    var screens: [LanguageController] = []\n    func push(_ screen: LanguageController) { screens.append(screen) }\n}\nfinal class LanguageRouter {\n    let navigator: any Navigating\n    init(navigator: any Navigating) { self.navigator = navigator }\n    func showLanguage() { navigator.push(LanguageController()) }\n}\nlet navigator = FakeNavigator()\nlet router = LanguageRouter(navigator: navigator)\nrouter.showLanguage()\nassert(navigator.screens.count == 1)\n\npush пришёл в инъецированный navigator; тест проверяет именно разделяемый объект, а не существование любого вызова push."
+ }
+]

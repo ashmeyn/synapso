@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. После очистки",
+  "prompt": "В тестовом источнике каждая загрузка отдаёт три байта. Назови вывод после двух обращений с явной очисткой между ними.",
+  "code": "import Foundation\nprotocol ArtworkSource {\n    func fetchBytes(for key: String) throws -> Data\n}\nfinal class ArtworkLoader {\n    private let memory = NSCache<NSString, NSData>()\n    private let source: any ArtworkSource\n    init(source: any ArtworkSource) { self.source = source }\n    func loadBytes(for key: String) throws -> Data {\n        let cacheKey = key as NSString\n        if let bytes = memory.object(forKey: cacheKey) {\n            return bytes as Data\n        }\n        let bytes = try source.fetchBytes(for: key)\n        memory.setObject(bytes as NSData, forKey: cacheKey, cost: bytes.count)\n        return bytes\n    }\n    func invalidate(key: String) {\n        memory.removeObject(forKey: key as NSString)\n    }\n    func clearMemory() { memory.removeAllObjects() }\n}\nfinal class MemoryArtworkSource: ArtworkSource {\n    private(set) var calls = 0\n    func fetchBytes(for key: String) throws -> Data {\n        calls += 1\n        return Data([1, 2, 3])\n    }\n}\nlet source = MemoryArtworkSource()\nlet loader = ArtworkLoader(source: source)\nprint(try loader.loadBytes(for: \"album:41:v1:small\").count)\nloader.clearMemory()\nprint(try loader.loadBytes(for: \"album:41:v1:small\").count)\nprint(source.calls)",
+  "key": "3\n3\n2\n\nПервый кэш пуст, затем очищен вручную. Оба обращения идут к источнику независимо от политики вытеснения."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Заполни путь hit и miss",
+  "prompt": "Допиши возврат при найденном объекте, вызов источника и сохранение с cost. Типы уже даны.",
+  "code": "import Foundation\nprotocol ArtworkSource {\n    func fetchBytes(for key: String) throws -> Data\n}\nfinal class ArtworkLoader {\n    private let memory = NSCache<NSString, NSData>()\n    private let source: any ArtworkSource\n    init(source: any ArtworkSource) { self.source = source }\n    func loadBytes(for key: String) throws -> Data {\n        let cacheKey = key as NSString\n        if let bytes = memory.object(forKey: cacheKey) {\n            /* верни найденные байты */\n        }\n        let bytes = /* получи байты из источника */\n        /* сохрани байты по cacheKey со стоимостью bytes.count */\n        return bytes\n    }\n    func invalidate(key: String) {\n        memory.removeObject(forKey: key as NSString)\n    }\n    func clearMemory() { memory.removeAllObjects() }\n}",
+  "key": "import Foundation\nprotocol ArtworkSource {\n    func fetchBytes(for key: String) throws -> Data\n}\nfinal class ArtworkLoader {\n    private let memory = NSCache<NSString, NSData>()\n    private let source: any ArtworkSource\n    init(source: any ArtworkSource) { self.source = source }\n    func loadBytes(for key: String) throws -> Data {\n        let cacheKey = key as NSString\n        if let bytes = memory.object(forKey: cacheKey) {\n            return bytes as Data\n        }\n        let bytes = try source.fetchBytes(for: key)\n        memory.setObject(bytes as NSData, forKey: cacheKey, cost: bytes.count)\n        return bytes\n    }\n    func invalidate(key: String) {\n        memory.removeObject(forKey: key as NSString)\n    }\n    func clearMemory() { memory.removeAllObjects() }\n}\n\nНа hit источник не вызывается. На miss возвращаем его результат и сохраняем восстановимую копию."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Различи размер и версию",
+  "prompt": "Напиши artworkKey(id:version:size:). Выведи ключи для 41/v1/small, 41/v1/large и 41/v2/small.",
+  "code": "// Напиши artworkKey\nprint(artworkKey(id: 41, version: 1, size: \"small\"))\nprint(artworkKey(id: 41, version: 1, size: \"large\"))\nprint(artworkKey(id: 41, version: 2, size: \"small\"))",
+  "key": "func artworkKey(id: Int, version: Int, size: String) -> String {\n    \"album:\\(id):v\\(version):\\(size)\"\n}\nprint(artworkKey(id: 41, version: 1, size: \"small\"))\nprint(artworkKey(id: 41, version: 1, size: \"large\"))\nprint(artworkKey(id: 41, version: 2, size: \"small\"))\n\nТри разные строки: album:41:v1:small, album:41:v1:large, album:41:v2:small."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Размер потерялся",
+  "prompt": "Ключи для двух размеров совпали. Исправь функцию без изменения входных значений.",
+  "code": "import Foundation\nfunc artworkKey(id: Int, version: Int, size: String) -> String {\n    \"album:\\(id)\"\n}\nlet small = artworkKey(id: 41, version: 1, size: \"small\")\nlet large = artworkKey(id: 41, version: 1, size: \"large\")\nprint(small == large)",
+  "key": "import Foundation\nfunc artworkKey(id: Int, version: Int, size: String) -> String {\n    \"album:\\(id):v\\(version):\\(size)\"\n}\nlet small = artworkKey(id: 41, version: 1, size: \"small\")\nlet large = artworkKey(id: 41, version: 1, size: \"large\")\nprint(small == large)\n\nПосле правки печатается false. В кэше разные варианты больше не обращаются к одному ключу."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни кэш",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Альбом 41 имеет small и large, источник может выдать данные снова.\nЧто делаем на hit и miss?\nПочему одного id мало?\nЧто произойдёт после очистки и после ошибки источника?",
+  "key": "На hit возвращаем найденную копию, на miss получаем данные от источника и сохраняем успешный результат. Размер и версия меняют конкретную картинку, поэтому входят в ключ. После очистки снова загрузим, а ошибку источника пробросим: кэш не является оригиналом или постоянным хранилищем."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Обнови одну обложку",
+  "prompt": "Допиши invalidate только для указанного ключа. Программа явно удаляет этот ключ между обращениями; ожидаются две загрузки.",
+  "code": "import Foundation\nprotocol ArtworkSource {\n    func fetchBytes(for key: String) throws -> Data\n}\nfinal class ArtworkLoader {\n    private let memory = NSCache<NSString, NSData>()\n    private let source: any ArtworkSource\n    init(source: any ArtworkSource) { self.source = source }\n    func loadBytes(for key: String) throws -> Data {\n        let cacheKey = key as NSString\n        if let bytes = memory.object(forKey: cacheKey) {\n            return bytes as Data\n        }\n        let bytes = try source.fetchBytes(for: key)\n        memory.setObject(bytes as NSData, forKey: cacheKey, cost: bytes.count)\n        return bytes\n    }\n    func invalidate(key: String) {\n        // Удали только этот key\n    }\n    func clearMemory() { memory.removeAllObjects() }\n}\nfinal class MemoryArtworkSource: ArtworkSource {\n    private(set) var calls = 0\n    func fetchBytes(for key: String) throws -> Data {\n        calls += 1\n        return Data([1, 2, 3])\n    }\n}\nlet source = MemoryArtworkSource()\nlet loader = ArtworkLoader(source: source)\n_ = try loader.loadBytes(for: \"album:41:v1:small\")\nloader.invalidate(key: \"album:41:v1:small\")\n_ = try loader.loadBytes(for: \"album:41:v1:small\")\nprint(source.calls)",
+  "key": "import Foundation\nprotocol ArtworkSource {\n    func fetchBytes(for key: String) throws -> Data\n}\nfinal class ArtworkLoader {\n    private let memory = NSCache<NSString, NSData>()\n    private let source: any ArtworkSource\n    init(source: any ArtworkSource) { self.source = source }\n    func loadBytes(for key: String) throws -> Data {\n        let cacheKey = key as NSString\n        if let bytes = memory.object(forKey: cacheKey) {\n            return bytes as Data\n        }\n        let bytes = try source.fetchBytes(for: key)\n        memory.setObject(bytes as NSData, forKey: cacheKey, cost: bytes.count)\n        return bytes\n    }\n    func invalidate(key: String) {\n        memory.removeObject(forKey: key as NSString)\n    }\n    func clearMemory() { memory.removeAllObjects() }\n}\nfinal class MemoryArtworkSource: ArtworkSource {\n    private(set) var calls = 0\n    func fetchBytes(for key: String) throws -> Data {\n        calls += 1\n        return Data([1, 2, 3])\n    }\n}\nlet source = MemoryArtworkSource()\nlet loader = ArtworkLoader(source: source)\n_ = try loader.loadBytes(for: \"album:41:v1:small\")\nloader.invalidate(key: \"album:41:v1:small\")\n_ = try loader.loadBytes(for: \"album:41:v1:small\")\nprint(source.calls)\n\nВывод 2. Обновление не должно обязательно очищать другие версии и размеры."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "По памяти напиши WaveformSource и WaveformLoader для байтов формы звуковой волны. Источник передаётся снаружи, кэш — NSCache<NSString, NSData>, ключ track:8:v2:tiny. Hit возвращает найденное, miss загружает и сохраняет bytes.count как cost; добавь удаление ключа и полную очистку. Ошибку не скрывай.",
+  "key": "import Foundation\nprotocol WaveformSource {\n    func fetchBytes(for key: String) throws -> Data\n}\nfinal class WaveformLoader {\n    private let memory = NSCache<NSString, NSData>()\n    private let source: any WaveformSource\n    init(source: any WaveformSource) { self.source = source }\n    func loadBytes(for key: String) throws -> Data {\n        let cacheKey = key as NSString\n        if let bytes = memory.object(forKey: cacheKey) {\n            return bytes as Data\n        }\n        let bytes = try source.fetchBytes(for: key)\n        memory.setObject(bytes as NSData, forKey: cacheKey, cost: bytes.count)\n        return bytes\n    }\n    func invalidate(key: String) {\n        memory.removeObject(forKey: key as NSString)\n    }\n    func clearMemory() { memory.removeAllObjects() }\n}\n\nПереносим восстановимую копию на другой результат музыкального приложения. Ключ обязан различать версию и вариант формы волны."
+ }
+]

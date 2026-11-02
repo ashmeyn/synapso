@@ -1,0 +1,35 @@
+[
+ {
+  "id": "flowui-b1",
+  "topics": [
+   "flowui"
+  ],
+  "type": "Найди ошибку",
+  "title": "Настройки заблокировали себя",
+  "prompt": "Экран открывается с locked == true. Toggle и «Помощь» должны оставаться доступными: это настройка статуса, а не запрет управления этими элементами. Найди ошибку и покажи статус отдельным Text.",
+  "code": "import SwiftUI\nstruct SettingsScreen: View {\n    @State private var locked = true\n    var body: some View {\n        VStack {\n            Toggle(\"Блокировка\", isOn: $locked)\n            Button(\"Помощь\") { }\n        }.disabled(locked)\n    }\n}",
+  "key": "import SwiftUI\nstruct SettingsScreen: View {\n    @State private var locked = true\n    var body: some View {\n        VStack {\n            Toggle(\"Блокировка\", isOn: $locked)\n            Text(locked ? \"Заблокировано\" : \"Доступно\")\n            Button(\"Помощь\") { }\n        }\n    }\n}\n\ndisabled на общем контейнере блокировал и сам переключатель. Удаление общего запрета сохраняет управление; Text показывает статус из locked."
+ },
+ {
+  "id": "flowui-b2",
+  "topics": [
+   "flowui"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Свободные места в календаре",
+  "prompt": "Пользователь увеличил booked дважды через Stepper. Что покажут оба текста? Почему не нужен State remaining?",
+  "code": "import SwiftUI\nstruct CalendarScreen: View {\n    @State private var booked = 1\n    var remaining: Int { 4 - booked }\n    var body: some View {\n        VStack {\n            Text(\"Свободно: \\(remaining)\")\n            Stepper(\"Занято: \\(booked)\", value: $booked, in: 0...4)\n        }\n    }\n}",
+  "key": "После двух увеличений booked == 3. Text показывает «Свободно: 1», Stepper — «Занято: 3». remaining вычисляется как 4 - booked при чтении и не требует отдельного состояния."
+ },
+ {
+  "id": "flowui-b3",
+  "topics": [
+   "flowui"
+  ],
+  "type": "Допиши",
+  "title": "Кнопка подписки: значение вниз, действие вверх",
+  "prompt": "Канал с 120 подписчиками. Допиши вызов SubscribeButton: кнопка показывает «Подписаться» или «Отписаться», а подписку меняет владелец. Не добавляй состояние в SubscribeButton и не храни followers отдельно. Что покажет счётчик после одного и двух нажатий?",
+  "code": "import SwiftUI\nstruct ChannelScreen: View {\n    @State private var subscribed = false\n    var followers: Int { 120 + (subscribed ? 1 : 0) }\n    var body: some View {\n        VStack {\n            Text(\"Подписчиков: \\(followers)\")\n            SubscribeButton(isSubscribed: /* значение */, onToggle: /* действие */)\n        }\n    }\n}\nstruct SubscribeButton: View {\n    let isSubscribed: Bool\n    let onToggle: () -> Void\n    var body: some View {\n        Button(isSubscribed ? \"Отписаться\" : \"Подписаться\", action: onToggle)\n    }\n}",
+  "key": "import SwiftUI\nstruct ChannelScreen: View {\n    @State private var subscribed = false\n    var followers: Int { 120 + (subscribed ? 1 : 0) }\n    var body: some View {\n        VStack {\n            Text(\"Подписчиков: \\(followers)\")\n            SubscribeButton(isSubscribed: subscribed) { subscribed.toggle() }\n        }\n    }\n}\nstruct SubscribeButton: View {\n    let isSubscribed: Bool\n    let onToggle: () -> Void\n    var body: some View {\n        Button(isSubscribed ? \"Отписаться\" : \"Подписаться\", action: onToggle)\n    }\n}\n\nВниз идёт значение subscribed — кнопке оно нужно только для подписи. Наверх — действие: решение меняет владелец через toggle(). followers вычисляется, поэтому после нажатия станет 121, после повторного — снова 120."
+ }
+]

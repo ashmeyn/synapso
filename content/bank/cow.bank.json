@@ -1,0 +1,35 @@
+[
+ {
+  "id": "cow-b1",
+  "topics": [
+   "cow"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Окно истории действий",
+  "prompt": "Покажи индексы среза и самостоятельного массива. Почему slice[0] здесь нельзя считать первым элементом среза?",
+  "code": "let timeline = [\"A\", \"B\", \"C\", \"D\"]\nlet slice = timeline.suffix(2)\nprint(slice.startIndex)\nlet window = Array(slice)\nprint(window.startIndex)\nprint(window[0])",
+  "key": "2\n0\nC\n\nArraySlice сохраняет исходные индексы, Array(slice) имеет индексы своего массива. Это не измерение физического буфера."
+ },
+ {
+  "id": "cow-b2",
+  "topics": [
+   "cow"
+  ],
+  "type": "Найди ошибку",
+  "title": "Заметки к главам подкаста",
+  "prompt": "Изменить нужно только note элемента copy с id 4. Замени этот элемент новым ChapterDraft, сохрани его id; не утверждай, что Array клонирует классы.",
+  "code": "final class ChapterDraft {\n    let id: Int\n    var note: String\n    init(id: Int, note: String) { self.id = id; self.note = note }\n}\nlet original = [ChapterDraft(id: 4, note: \"Черновик\")]\nvar copy = original\ncopy[0].note = \"Готово\"\nprint(original[0].note)",
+  "key": "final class ChapterDraft {\n    let id: Int\n    var note: String\n    init(id: Int, note: String) { self.id = id; self.note = note }\n}\nlet original = [ChapterDraft(id: 4, note: \"Черновик\")]\nvar copy = original\nlet entry = copy[0]\ncopy[0] = ChapterDraft(id: entry.id, note: \"Готово\")\nprint(original[0].note)\nprint(copy[0].note)\n\nДо правки оригинал показывает «Готово». После — «Черновик», «Готово»: заменён отдельный экземпляр только в copy."
+ },
+ {
+  "id": "cow-b3",
+  "topics": [
+   "cow"
+  ],
+  "type": "Допиши",
+  "title": "Пакет тегов задачи",
+  "prompt": "Допиши тело edit: сначала барьер CoW, затем передача storage.items в немедленное change-замыкание. Оно меняет массив двумя операциями, но не получает сам ListStorage.",
+  "code": "private final class ListStorage {\n    var items: [String]\n    init(_ items: [String]) { self.items = items }\n}\nstruct TagList {\n    private var storage: ListStorage\n    init(_ items: [String]) { storage = ListStorage(items) }\n    var items: [String] { storage.items }\n    mutating func edit(_ change: (inout [String]) -> Void) {\n        // Отделись при необходимости и вызови change\n    }\n    mutating func append(_ item: String) {\n        if !isKnownUniquelyReferenced(&storage) {\n            storage = ListStorage(storage.items)\n        }\n        storage.items.append(item)\n    }\n}\nlet original = TagList([\"Работа\", \"Позже\"])\nvar draft = original\ndraft.edit { items in\n    items.removeLast()\n    items.append(\"Сегодня\")\n}\nprint(original.items)\nprint(draft.items)",
+  "key": "private final class ListStorage {\n    var items: [String]\n    init(_ items: [String]) { self.items = items }\n}\nstruct TagList {\n    private var storage: ListStorage\n    init(_ items: [String]) { storage = ListStorage(items) }\n    var items: [String] { storage.items }\n    mutating func edit(_ change: (inout [String]) -> Void) {\n        if !isKnownUniquelyReferenced(&storage) {\n            storage = ListStorage(storage.items)\n        }\n        change(&storage.items)\n    }\n    mutating func append(_ item: String) {\n        if !isKnownUniquelyReferenced(&storage) {\n            storage = ListStorage(storage.items)\n        }\n        storage.items.append(item)\n    }\n}\nlet original = TagList([\"Работа\", \"Позже\"])\nvar draft = original\ndraft.edit { items in\n    items.removeLast()\n    items.append(\"Сегодня\")\n}\nprint(original.items)\nprint(draft.items)\n\nОригинал: [\"Работа\", \"Позже\"], черновик: [\"Работа\", \"Сегодня\"]. Пакетный интерфейс тоже обязан отделиться до правок."
+ }
+]

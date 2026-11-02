@@ -1,0 +1,35 @@
+[
+ {
+  "id": "clos-b1",
+  "topics": [
+   "clos"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Подтверждение адреса доставки",
+  "prompt": "Адрес редактировали после подготовки подтверждения. Какой адрес покажет действие? Здесь нужен снимок выбора, не текущая строка.",
+  "code": "var address = \"Дом\"\nlet confirm = { [address] in print(address) }\naddress = \"Офис\"\nconfirm()",
+  "key": "Дом\n\n[address] сохранил строку «Дом» при создании, поздняя запись «Офис» не меняет этот снимок."
+ },
+ {
+  "id": "clos-b2",
+  "topics": [
+   "clos"
+  ],
+  "type": "Найди ошибку",
+  "title": "Закрытие экрана фонарика",
+  "prompt": "Это проверка жизни контроллера, оборудование не включается. После закрытия probe должна стать nil даже с внешним action. Найди и убери кольцо, сохранив действие.",
+  "code": "final class TorchController {\n    var isOn = false\n    var action: (() -> Void)?\n    func configure() {\n        action = {\n            print(self.isOn)\n        }\n    }\n}\nvar controller: TorchController? = TorchController()\ncontroller?.configure()\nweak var probe = controller\nlet action = controller?.action\ncontroller = nil\nprint(probe == nil)\naction?()",
+  "key": "final class TorchController {\n    var isOn = false\n    var action: (() -> Void)?\n    func configure() {\n        action = { [weak self] in\n            guard let self else { return }\n            print(self.isOn)\n        }\n    }\n}\nvar controller: TorchController? = TorchController()\ncontroller?.configure()\nweak var probe = controller\nlet action = controller?.action\ncontroller = nil\nprint(probe == nil)\naction?()\n\nСлабый захват разрывает controller → action → controller. Вывод true, внешний вызов action после закрытия ничего не печатает."
+ },
+ {
+  "id": "clos-b3",
+  "topics": [
+   "clos"
+  ],
+  "type": "Допиши",
+  "title": "Оформление строки субтитров",
+  "prompt": "Дополни тип и тело format. Строку получаем параметром и возвращаем в верхнем регистре; захват объекта плеера не нужен.",
+  "code": "let format: /* параметр и результат */ = { line in /* форматирование line */ }\nprint(format(\"Вступление\"))",
+  "key": "let format: (String) -> String = { line in line.uppercased() }\nprint(format(\"Вступление\"))\n\nЗамыкание получает String и возвращает String. Вывод «ВСТУПЛЕНИЕ»."
+ }
+]

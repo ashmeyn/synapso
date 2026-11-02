@@ -1,0 +1,35 @@
+[
+ {
+  "id": "weak-b1",
+  "topics": [
+   "weak"
+  ],
+  "type": "Допиши",
+  "title": "Подключение пульта лампы",
+  "prompt": "Делегат создан слишком ненадолго. Сохрани Receiver в сильном local receiver до завершения сигнала через withExtendedLifetime(receiver). Оставь delegate слабым: цель — обеспечить владельца, а не вернуть сильную обратную связь.",
+  "code": "protocol LampDelegate: AnyObject { func didChange() }\nfinal class LampRemote {\n    weak var delegate: (any LampDelegate)?\n    func signal() { delegate?.didChange() }\n}\nfinal class Receiver: LampDelegate {\n    func didChange() { print(\"Свет включён\") }\n}\nlet remote = LampRemote()\n// Создай receiver, назначь delegate и удержи на время signal",
+  "key": "protocol LampDelegate: AnyObject { func didChange() }\nfinal class LampRemote {\n    weak var delegate: (any LampDelegate)?\n    func signal() { delegate?.didChange() }\n}\nfinal class Receiver: LampDelegate {\n    func didChange() { print(\"Свет включён\") }\n}\nlet remote = LampRemote()\nlet receiver = Receiver()\nremote.delegate = receiver\nwithExtendedLifetime(receiver) { remote.signal() }\n\nВывод «Свет включён». У получателя есть сильный владелец на время события; weak остаётся обратной связью."
+ },
+ {
+  "id": "weak-b2",
+  "topics": [
+   "weak"
+  ],
+  "type": "Найди ошибку",
+  "title": "Вращение модели планеты",
+  "prompt": "Кнопка останется в панели после удаления модели. Замени unowned на weak, для исчезнувшей модели напечатай «Модель удалена», не убирай action().",
+  "code": "final class PlanetModel {\n    let id = 6\n    func makeAction() -> () -> Void {\n        { [unowned self] in print(self.id) }\n    }\n}\nvar model: PlanetModel? = PlanetModel()\nlet action = model!.makeAction()\nmodel = nil\naction()",
+  "key": "final class PlanetModel {\n    let id = 6\n    func makeAction() -> () -> Void {\n        { [weak self] in\n            guard let self else { print(\"Модель удалена\"); return }\n            print(self.id)\n        }\n    }\n}\nvar model: PlanetModel? = PlanetModel()\nlet action = model!.makeAction()\nmodel = nil\naction()\n\nВывод «Модель удалена». Сохранённая кнопка не имеет гарантии жизни модели."
+ },
+ {
+  "id": "weak-b3",
+  "topics": [
+   "weak"
+  ],
+  "type": "Перепиши",
+  "title": "Локальная партия шахмат",
+  "prompt": "Сейчас действие удерживает партию, хотя нужно сохранить только её id. Захвати id значением в capture list, не self: действие после закрытия должно по-прежнему печатать 7. Не заменяй поведение молчанием через weak.",
+  "code": "final class ChessMatch {\n    let id = 7\n    func makeHistoryAction() -> () -> Void {\n        { print(self.id) }\n    }\n    deinit { print(\"Партия освобождена\") }\n}\nvar match: ChessMatch? = ChessMatch()\nlet action = match!.makeHistoryAction()\nmatch = nil\naction()",
+  "key": "final class ChessMatch {\n    let id = 7\n    func makeHistoryAction() -> () -> Void {\n        { [id = self.id] in print(id) }\n    }\n    deinit { print(\"Партия освобождена\") }\n}\nvar match: ChessMatch? = ChessMatch()\nlet action = match!.makeHistoryAction()\nmatch = nil\naction()\n\nВывод «Партия освобождена», 7. Действию нужен снимок Int, а не живой объект партии."
+ }
+]

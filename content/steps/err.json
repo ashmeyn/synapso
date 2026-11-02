@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Предскажи исход",
+  "prompt": "Какая ветка catch выполнится для строки Встреча:abc и что выведется?",
+  "code": "enum EventImportError: Error { case wrongFormat, invalidDuration }\nfunc parse(_ text: String) throws -> Int {\n    let parts = text.split(separator: \":\")\n    guard parts.count == 2 else { throw EventImportError.wrongFormat }\n    guard let minutes = Int(parts[1]) else { throw EventImportError.invalidDuration }\n    return minutes\n}\ndo { print(try parse(\"Встреча:abc\")) }\ncatch EventImportError.invalidDuration { print(\"Длительность не число\") }\ncatch { print(\"Другой формат\") }",
+  "key": "Будет выведено «Длительность не число». Int(\"abc\") даёт nil, поэтому parse бросает EventImportError.invalidDuration, а соответствующий catch обрабатывает его."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Собери по каркасу",
+  "prompt": "Заполни parse: две части через двоеточие, непустое название, длительность Int; иначе брось нужную ошибку.",
+  "code": "enum EventImportError: Error { case wrongFormat, emptyName, invalidDuration }\nfunc parse(_ line: String) throws -> (String, Int) {\n    // Раздели с сохранением пустых частей.\n    // Проверь формат, имя и длительность.\n}",
+  "key": "func parse(_ line: String) throws -> (String, Int) {\n    let parts = line.split(separator: \":\", omittingEmptySubsequences: false)\n    guard parts.count == 2 else { throw EventImportError.wrongFormat }\n    let name = String(parts[0])\n    guard !name.isEmpty else { throw EventImportError.emptyName }\n    guard let minutes = Int(parts[1]) else { throw EventImportError.invalidDuration }\n    return (name, minutes)\n}\n\nКаждый отказ имеет отдельную причину; вызывающий экран сможет дать точную подсказку вместо общего nil."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Сообщи причину",
+  "prompt": "Напиши обработку do/catch: invalidDuration → «Проверь длительность», emptyName → «Добавь название», остальное → «Проверь формат».",
+  "code": "func message(for line: String) -> String {\n    // Вызови try parse(line) внутри do.\n    // Разбери три ветки catch.\n}",
+  "key": "func message(for line: String) -> String {\n    do {\n        let (name, _) = try parse(line)\n        return \"Добавлено: \\(name)\"\n    } catch EventImportError.invalidDuration {\n        return \"Проверь длительность\"\n    } catch EventImportError.emptyName {\n        return \"Добавь название\"\n    } catch {\n        return \"Проверь формат\"\n    }\n}\n\ntry помечает бросающий вызов, а catch превращает тип ошибки в действие для пользователя. Последний catch закрывает остальные ошибки."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Найди потерю причины",
+  "prompt": "Почему экран не может сказать, что длительность некорректна? Исправь ветку обработки.",
+  "code": "let item = try? parse(\"Встреча:abc\")\nif item == nil { print(\"Не получилось\") }",
+  "key": "do {\n    _ = try parse(\"Встреча:abc\")\n} catch EventImportError.invalidDuration {\n    print(\"Проверь длительность\")\n} catch {\n    print(\"Проверь формат\")\n}\n\ntry? превратил любую ошибку в nil и стёр причину. do/catch сохраняет различие нужных пользователю случаев."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни напарнику (устно)",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Импорт календаря из строки.\n1. Что обещает throws?\n2. Где пишется try?\n3. Когда try? допустим, а когда нет?",
+  "key": "throws означает, что функция может завершиться ошибкой, а вызывающий код должен её обработать или передать. try стоит у вызова. try? превращает ошибку в nil и подходит только когда причина не нужна; для исправления импорта нужна точная причина через catch."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Сохрани исход как Result",
+  "prompt": "Получи Result<(String, Int), Error> для строки Встреча:45 и разберись с ним через switch.",
+  "code": "// Есть функция parse(_:) throws -> (String, Int).\n// Создай outcome через Result { try parse(...) }.\n// Покажи success или failure.",
+  "key": "let outcome: Result<(String, Int), Error> = Result {\n    try parse(\"Встреча:45\")\n}\nswitch outcome {\ncase .success(let item): print(item)\ncase .failure(let error): print(error)\n}\n\nResult хранит исход как значение для передачи или поздней обработки. Для обычного прямого вызова parse проще do/catch."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Опиши EventImportError и parse строки название:длительность. Покажи try с catch для нечисловой длительности. Объясни, почему try! здесь нельзя.",
+  "key": "enum EventImportError: Error { case wrongFormat, invalidDuration }\nfunc parse(_ line: String) throws -> Int {\n    let parts = line.split(separator: \":\")\n    guard parts.count == 2 else { throw EventImportError.wrongFormat }\n    guard let minutes = Int(parts[1]) else { throw EventImportError.invalidDuration }\n    return minutes\n}\ndo { print(try parse(\"Встреча:abc\")) }\ncatch EventImportError.invalidDuration { print(\"Проверь длительность\") }\ncatch { print(\"Проверь формат\") }\n\ntry! завершит программу на обычной ошибке пользовательского ввода. Сверь решение в Swift Playground."
+ }
+]

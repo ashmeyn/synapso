@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Предпросмотр оставил след",
+  "prompt": "Предскажи две строки. Почему вторая нарушает сценарий?",
+  "code": "struct Ride { let id: Int; let minutes: Int }\nfinal class RideScreen {\n    var saved: [Int: Int] = [:]\n    func preview(_ ride: Ride) -> String {\n        let amount = ride.minutes * 2\n        saved[ride.id] = amount\n        return \"Итого: \\(amount)\"\n    }\n}\nlet screen = RideScreen()\nprint(screen.preview(Ride(id: 11, minutes: 10)))\nprint(screen.saved.count)",
+  "key": "Итого: 20\n1\n\npreview записал saved, хотя покупки ещё не подтвердили."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Раздели обязанности",
+  "prompt": "Раздели исходный RideScreen на MeteredPrice.amount, ReceiptText.text и MemoryQuotes.save. Покажи цену и текст предпросмотра, проверь пустое хранилище; затем явно сохрани 20 по id=11. Не вызывай save из расчёта или форматирования.",
+  "code": "struct Ride { let id: Int; let minutes: Int }\nfinal class RideScreen {\n    var saved: [Int: Int] = [:]\n    func preview(_ ride: Ride) -> String {\n        let amount = ride.minutes * 2\n        saved[ride.id] = amount\n        return \"Итого: \\(amount)\"\n    }\n}",
+  "key": "struct Ride { let id: Int; let minutes: Int }\nstruct MeteredPrice {\n    func amount(_ ride: Ride) -> Int { ride.minutes * 2 }\n}\nstruct ReceiptText {\n    func text(_ amount: Int) -> String { \"Итого: \\(amount)\" }\n}\nfinal class MemoryQuotes {\n    var values: [Int: Int] = [:]\n    func save(id: Int, amount: Int) { values[id] = amount }\n}\nlet store = MemoryQuotes()\nlet ride = Ride(id: 11, minutes: 10)\nlet amount = MeteredPrice().amount(ride)\nassert(ReceiptText().text(amount) == \"Итого: 20\")\nassert(store.values.isEmpty)\nstore.save(id: ride.id, amount: amount)\nassert(store.values[11] == 20)\n\nРазные правила вынесены в самостоятельные компоненты; сохранение — явное действие после расчёта."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Внедри абонемент и store",
+  "prompt": "Самостоятельно создай RidePricing, MeteredPrice, PassPrice=30, QuoteSaving и MemoryQuotes. RideCheckout получает оба протокола: preview считает без записи, confirm сохраняет. На десяти минутах с PassPrice ожидаем 30 и отсутствие записи до confirm.",
+  "code": "struct Ride { let id: Int; let minutes: Int }",
+  "key": "struct Ride { let id: Int; let minutes: Int }\nprotocol RidePricing { func amount(_ ride: Ride) -> Int }\nstruct MeteredPrice: RidePricing {\n    func amount(_ ride: Ride) -> Int { ride.minutes * 2 }\n}\nstruct PassPrice: RidePricing {\n    func amount(_ ride: Ride) -> Int { 30 }\n}\nprotocol QuoteSaving: AnyObject { func save(id: Int, amount: Int) }\nfinal class MemoryQuotes: QuoteSaving {\n    private(set) var values: [Int: Int] = [:]\n    func save(id: Int, amount: Int) { values[id] = amount }\n}\nstruct RideCheckout {\n    let pricing: any RidePricing\n    let store: any QuoteSaving\n    func preview(_ ride: Ride) -> Int { pricing.amount(ride) }\n    func confirm(_ ride: Ride) {\n        store.save(id: ride.id, amount: pricing.amount(ride))\n    }\n}\nlet store = MemoryQuotes()\nlet checkout = RideCheckout(pricing: PassPrice(), store: store)\nlet ride = Ride(id: 11, minutes: 10)\nassert(checkout.preview(ride) == 30)\nassert(store.values.isEmpty)\ncheckout.confirm(ride)\nassert(store.values[11] == 30)\n\nТариф расширяется реализацией, клиент не выбирает его switch. Хранилище передано снаружи и наблюдается проверкой."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Наследник сломал обещание",
+  "prompt": "База обещает неотрицательную цену для minutes 0...100. Исправь PromoPrice как скидку 5 от базовой суммы с нижней границей 0. Проверь через переменную BasePrice на 0,1,10; результаты 0,0,15.",
+  "code": "class BasePrice {\n    // Контракт: для minutes 0...100 результат неотрицательный.\n    func amount(minutes: Int) -> Int { minutes * 2 }\n}\nfinal class PromoPrice: BasePrice {\n    override func amount(minutes: Int) -> Int { -5 }\n}\nlet price: BasePrice = PromoPrice()\nprint(price.amount(minutes: 10))",
+  "key": "class BasePrice {\n    // Контракт: для minutes 0...100 результат неотрицательный.\n    func amount(minutes: Int) -> Int { minutes * 2 }\n}\nfinal class PromoPrice: BasePrice {\n    override func amount(minutes: Int) -> Int {\n        max(0, super.amount(minutes: minutes) - 5)\n    }\n}\nlet price: BasePrice = PromoPrice()\nassert(price.amount(minutes: 0) == 0)\nassert(price.amount(minutes: 1) == 0)\nassert(price.amount(minutes: 10) == 15)\n\nПодстановка сохраняет заявленный контракт; клиенту не понадобилась проверка типа."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни выбор",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Что делишь по SRP и что передаёшь по DIP? Где OCP расширяет тариф, а LSP ограничивает наследника? Когда ISP, KISS и DRY помогают, а когда добавляют шум?",
+  "key": "Расчёт, текст и сохранение имеют разные причины изменения; клиент зависит от протоколов, полученных снаружи. Новый тариф реализует общий контракт без switch клиента; подстановка обязана сохранить обещанное поведение. ISP разделяет независимые роли, KISS удерживает нужную сложность, DRY объединяет общее знание, а не любой похожий текст."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Хранилище не отправляет чек",
+  "prompt": "Раздели RideServices на QuoteSaving и ReceiptSharing. MemoryQuotes реализует только сохранение. Напиши saveOnly(id:store:), принимающую any QuoteSaving: она сохраняет amount=20 по id=11 и не требует share. Покажи проверку значений.",
+  "code": "protocol RideServices {\n    func save(id: Int, amount: Int)\n    func share(id: Int, text: String)\n}",
+  "key": "protocol QuoteSaving: AnyObject { func save(id: Int, amount: Int) }\nprotocol ReceiptSharing { func share(id: Int, text: String) }\nfinal class MemoryQuotes: QuoteSaving {\n    private(set) var values: [Int: Int] = [:]\n    func save(id: Int, amount: Int) { values[id] = amount }\n}\nfunc saveOnly(id: Int, store: any QuoteSaving) {\n    store.save(id: id, amount: 20)\n}\nlet store = MemoryQuotes()\nsaveOnly(id: 11, store: store)\nassert(store.values[11] == 20)\n\nКлиент зависит только от сохранения. Нельзя подменить отсутствующую роль пустой реализацией share."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови новый QuoteShare: получает any RidePricing и any ReceiptSharing, sendPreview считает цену и отправляет текст Предпросмотр: <amount> вместе с id. Ничего не сохраняет и не подтверждает. На поездке id=12 длительностью 5 минут с MeteredPrice и ShareLog проверь сообщение Предпросмотр: 10. Контракт ReceiptSharing содержит share(id:text:).",
+  "key": "struct Ride { let id: Int; let minutes: Int }\nprotocol RidePricing { func amount(_ ride: Ride) -> Int }\nstruct MeteredPrice: RidePricing {\n    func amount(_ ride: Ride) -> Int { ride.minutes * 2 }\n}\nstruct PassPrice: RidePricing {\n    func amount(_ ride: Ride) -> Int { 30 }\n}\nprotocol ReceiptSharing: AnyObject { func share(id: Int, text: String) }\nfinal class ShareLog: ReceiptSharing {\n    var messages: [Int: String] = [:]\n    func share(id: Int, text: String) { messages[id] = text }\n}\nstruct QuoteShare {\n    let pricing: any RidePricing\n    let sharing: any ReceiptSharing\n    func sendPreview(_ ride: Ride) {\n        let text = \"Предпросмотр: \\(pricing.amount(ride))\"\n        sharing.share(id: ride.id, text: text)\n    }\n}\nlet log = ShareLog()\nlet share = QuoteShare(pricing: MeteredPrice(), sharing: log)\nshare.sendPreview(Ride(id: 12, minutes: 5))\nassert(log.messages[12] == \"Предпросмотр: 10\")\n\nВ новом элементе внедрена отправка вместо хранилища. Расчёт сохраняет контракт, предпросмотр не превратился в покупку."
+ }
+]

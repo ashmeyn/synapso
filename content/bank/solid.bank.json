@@ -1,0 +1,35 @@
+[
+ {
+  "id": "solid-b1",
+  "topics": [
+   "solid"
+  ],
+  "type": "Допиши",
+  "title": "Пробные минуты велопроката",
+  "prompt": "Добавь TrialPrice к RidePricing: первые три минуты бесплатны, остальные по 2. Клиент quote не меняй. Проверь 2→0 и 5→4 на малых неотрицательных входах.",
+  "code": "struct Ride { let id: Int; let minutes: Int }\nprotocol RidePricing { func amount(_ ride: Ride) -> Int }\nstruct MeteredPrice: RidePricing {\n    func amount(_ ride: Ride) -> Int { ride.minutes * 2 }\n}\nstruct PassPrice: RidePricing {\n    func amount(_ ride: Ride) -> Int { 30 }\n}\nstruct TrialPrice: RidePricing {\n    func amount(_ ride: Ride) -> Int { 0 /* TODO */ }\n}\nfunc quote(_ ride: Ride, pricing: any RidePricing) -> Int {\n    pricing.amount(ride)\n}\nassert(quote(Ride(id: 21, minutes: 2), pricing: TrialPrice()) == 0)\nassert(quote(Ride(id: 22, minutes: 5), pricing: TrialPrice()) == 4)",
+  "key": "struct Ride { let id: Int; let minutes: Int }\nprotocol RidePricing { func amount(_ ride: Ride) -> Int }\nstruct MeteredPrice: RidePricing {\n    func amount(_ ride: Ride) -> Int { ride.minutes * 2 }\n}\nstruct PassPrice: RidePricing {\n    func amount(_ ride: Ride) -> Int { 30 }\n}\nstruct TrialPrice: RidePricing {\n    func amount(_ ride: Ride) -> Int { max(0, ride.minutes - 3) * 2 }\n}\nfunc quote(_ ride: Ride, pricing: any RidePricing) -> Int {\n    pricing.amount(ride)\n}\nassert(quote(Ride(id: 21, minutes: 2), pricing: TrialPrice()) == 0)\nassert(quote(Ride(id: 22, minutes: 5), pricing: TrialPrice()) == 4)\n\nНовый тариф расширяет реализацию контракта, не условие в клиенте."
+ },
+ {
+  "id": "solid-b2",
+  "topics": [
+   "solid"
+  ],
+  "type": "Перепиши",
+  "title": "Домофон и доставка не одно правило",
+  "prompt": "validCode объединила независимые политики. PIN — четыре цифры, код доставки — шесть. Раздели функции и проверь оба корректных входа, неверную длину PIN и буквы в доставке. В обеих функциях допустимы только символы 0...9; allSatisfy проверяет каждый символ через contains.",
+  "code": "func validCode(_ value: String) -> Bool {\n    value.count == 4 && value.allSatisfy { \"0123456789\".contains($0) }\n}\nprint(validCode(\"1234\"))\nprint(validCode(\"123456\"))",
+  "key": "func validDoorPIN(_ value: String) -> Bool {\n    value.count == 4 && value.allSatisfy { \"0123456789\".contains($0) }\n}\nfunc validDeliveryCode(_ value: String) -> Bool {\n    value.count == 6 && value.allSatisfy { \"0123456789\".contains($0) }\n}\nassert(validDoorPIN(\"1234\"))\nassert(validDeliveryCode(\"123456\"))\nassert(!validDoorPIN(\"123456\"))\nassert(!validDeliveryCode(\"12ab56\"))\nassert(!validDoorPIN(\"١٢٣٤\"))\n\nДлины принадлежат разным контрактам. Разделение убрало преждевременную общую политику без role-флага."
+ },
+ {
+  "id": "solid-b3",
+  "topics": [
+   "solid"
+  ],
+  "type": "Допиши",
+  "title": "Подпись расчёта в виджете",
+  "prompt": "Добавь независимую QuoteText.text(amount:) и внедри ShortQuoteText в QuoteLabel вместе с pricing. На десяти минутах текст Всего 20; сам тариф не меняется. Не делай текст методом тарифа.",
+  "code": "struct Ride { let id: Int; let minutes: Int }\nprotocol RidePricing { func amount(_ ride: Ride) -> Int }\nstruct MeteredPrice: RidePricing {\n    func amount(_ ride: Ride) -> Int { ride.minutes * 2 }\n}\nstruct PassPrice: RidePricing {\n    func amount(_ ride: Ride) -> Int { 30 }\n}\nprotocol QuoteText { func text(amount: Int) -> String }\nstruct ShortQuoteText: QuoteText {\n    func text(amount: Int) -> String { \"Всего \\(amount)\" }\n}\nstruct QuoteLabel {\n    let pricing: any RidePricing\n    let formatter: any QuoteText\n    func label(_ ride: Ride) -> String {\n        \"\" // TODO\n    }\n}\nlet label = QuoteLabel(pricing: MeteredPrice(), formatter: ShortQuoteText())\nassert(label.label(Ride(id: 23, minutes: 10)) == \"Всего 20\")",
+  "key": "struct Ride { let id: Int; let minutes: Int }\nprotocol RidePricing { func amount(_ ride: Ride) -> Int }\nstruct MeteredPrice: RidePricing {\n    func amount(_ ride: Ride) -> Int { ride.minutes * 2 }\n}\nstruct PassPrice: RidePricing {\n    func amount(_ ride: Ride) -> Int { 30 }\n}\nprotocol QuoteText { func text(amount: Int) -> String }\nstruct ShortQuoteText: QuoteText {\n    func text(amount: Int) -> String { \"Всего \\(amount)\" }\n}\nstruct QuoteLabel {\n    let pricing: any RidePricing\n    let formatter: any QuoteText\n    func label(_ ride: Ride) -> String {\n        formatter.text(amount: pricing.amount(ride))\n    }\n}\nlet label = QuoteLabel(pricing: MeteredPrice(), formatter: ShortQuoteText())\nassert(label.label(Ride(id: 23, minutes: 10)) == \"Всего 20\")\n\nФорматирование — отдельная причина изменения, цена остаётся числом."
+ }
+]

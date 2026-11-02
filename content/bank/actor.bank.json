@@ -1,0 +1,35 @@
+[
+ {
+  "id": "actor-b1",
+  "topics": [
+   "actor"
+  ],
+  "type": "Допиши",
+  "title": "Сводка экрана тренировочных попыток",
+  "prompt": "Напиши ProgressBoard: record(success:) обновляет один из счётчиков, snapshot возвращает completed и failed вместе в синхронном actor-методе. Не собирай пару двумя внешними await.",
+  "code": "actor ProgressBoard {\n    private var completed = 0\n    private var failed = 0\n    func record(success: Bool) {\n        if success { completed += 1 } else { failed += 1 }\n    }\n    // Добавь snapshot\n}",
+  "key": "actor ProgressBoard {\n    private var completed = 0\n    private var failed = 0\n    func record(success: Bool) {\n        if success { completed += 1 } else { failed += 1 }\n    }\n    func snapshot() -> (completed: Int, failed: Int) {\n        (completed, failed)\n    }\n}\n\nПосле true, false, true один snapshot даёт (2, 1)."
+ },
+ {
+  "id": "actor-b2",
+  "topics": [
+   "actor"
+  ],
+  "type": "Найди ошибку",
+  "title": "Справка экрана растяжки",
+  "prompt": "help должен работать без await и возвращать фиксированную подсказку. Убери чтение completed из nonisolated; для счётчика оставь отдельный изолированный read.",
+  "code": "actor WorkoutInfo {\n    nonisolated let name = \"Растяжка\"\n    private var completed = 0\n    nonisolated func help() -> String { \"Готово: \\(completed)\" }\n    func finish() { completed += 1 }\n    func read() -> Int { completed }\n}",
+  "key": "actor WorkoutInfo {\n    nonisolated let name = \"Растяжка\"\n    private var completed = 0\n    nonisolated func help() -> String { \"Нажми завершить\" }\n    func finish() { completed += 1 }\n    func read() -> Int { completed }\n}\n\nИмя и help не требуют await, изменяемый completed читается только изолированным read. Неправильный исходник должен быть отвергнут компилятором."
+ },
+ {
+  "id": "actor-b3",
+  "topics": [
+   "actor"
+  ],
+  "type": "Найди ошибку",
+  "title": "Цель нового дня",
+  "prompt": "Пока check ждёт, reset открывает новый день. Не прибавляй старый результат: сохрани generation до await и перепроверь после. reset увеличивает поколение и обнуляет счётчик.",
+  "code": "actor DailyGoal {\n    private var completed = 0\n    private var generation = 0\n    func reset() { generation += 1; completed = 0 }\n    func read() -> Int { completed }\n    func addAfterCheck(check: () async -> Bool) async -> Bool {\n        guard await check() else { return false }\n        completed += 1\n        return true\n    }\n}",
+  "key": "actor DailyGoal {\n    private var completed = 0\n    private var generation = 0\n    func reset() { generation += 1; completed = 0 }\n    func read() -> Int { completed }\n    func addAfterCheck(check: () async -> Bool) async -> Bool {\n        let expected = generation\n        guard await check() else { return false }\n        guard generation == expected else { return false }\n        completed += 1\n        return true\n    }\n}\n\nСброс во время check приводит к false и итоговому 0, без сброса — true и 1."
+ }
+]

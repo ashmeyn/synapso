@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Пройди четыре входа",
+  "prompt": "Предскажи четыре строки. Что обеспечивает безопасный пустой случай и почему emoji не распадается?",
+  "code": "func isPalindrome(_ text: String) -> Bool {\n    let characters = Array(text)\n    var left = 0\n    var right = characters.count - 1\n    while left < right {\n        guard characters[left] == characters[right] else { return false }\n        left += 1\n        right -= 1\n    }\n    return true\n}\nprint(isPalindrome(\"топот\"))\nprint(isPalindrome(\"👨‍👩‍👧‍👦а👨‍👩‍👧‍👦\"))\nprint(isPalindrome(\"\"))\nprint(isPalindrome(\"Топот\"))",
+  "key": "true\ntrue\ntrue\nfalse\n\nleft<right проверяется до чтения; Array хранит Character, включая целое семейное emoji. Регистр в основе значим."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Восстанови строковое правило",
+  "prompt": "Напиши isPalindrome(String)->Bool по Character. Пустая строка true, регистр значим. Проверь один Character, семейное emoji, несовпадение и пустую строку. Каркас содержит только сигнатуру — объясни инвариант перед заполнением.",
+  "code": "func isPalindrome(_ text: String) -> Bool {\n    // Напиши проверку.\n}",
+  "key": "func isPalindrome(_ text: String) -> Bool {\n    let characters = Array(text)\n    var left = 0\n    var right = characters.count - 1\n    while left < right {\n        guard characters[left] == characters[right] else { return false }\n        left += 1\n        right -= 1\n    }\n    return true\n}\nassert(isPalindrome(\"а\"))\nassert(isPalindrome(\"👨‍👩‍👧‍👦а👨‍👩‍👧‍👦\"))\nassert(!isPalindrome(\"аб\"))\nassert(isPalindrome(\"\"))\n\nУже проверенные внешние пары равны. После несовпадения возвращаем false, после схождения границ — true."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Найди пару в числах",
+  "prompt": "Самостоятельно напиши pairIndices: отсортированный неубывающий [Int], числа/target -1000...1000, два разных индекса либо nil. Для [1,3,4,8], target=7 ожидаем (1,2); также проверь один элемент и пустой вход. Не возвращай значения вместо индексов.",
+  "code": "// func pairIndices(_ values: [Int], target: Int) -> (Int, Int)?",
+  "key": "func pairIndices(_ values: [Int], target: Int) -> (Int, Int)? {\n    var left = 0\n    var right = values.count - 1\n    while left < right {\n        let sum = values[left] + values[right]\n        if sum == target { return (left, right) }\n        if sum < target { left += 1 } else { right -= 1 }\n    }\n    return nil\n}\nlet result = pairIndices([1, 3, 4, 8], target: 7)\nassert(result?.0 == 1 && result?.1 == 2)\nassert(pairIndices([3], target: 6) == nil)\nassert(pairIndices([], target: 6) == nil)\n\nНаправление движения следует из сортировки. left<right сохраняет два разных элемента; целочисленная сумма безопасна в заданных границах."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Запись без продвижения",
+  "prompt": "compactUnique возвращает только [1] на [1,1,2,2,3]. Исправь работу write; функция возвращает длину уникального префикса отсортированного массива. Исходный размер не уменьшай, хвост не проверяй как ответ.",
+  "code": "func compactUnique(_ values: inout [Int]) -> Int {\n    guard !values.isEmpty else { return 0 }\n    var write = 1\n    for read in 1..<values.count {\n        if values[read] != values[write - 1] {\n            values[write] = values[read]\n        }\n    }\n    return write\n}\nvar values = [1, 1, 2, 2, 3]\nlet count = compactUnique(&values)\nprint(Array(values.prefix(count)))",
+  "key": "func compactUnique(_ values: inout [Int]) -> Int {\n    guard !values.isEmpty else { return 0 }\n    var write = 1\n    for read in 1..<values.count {\n        if values[read] != values[write - 1] {\n            values[write] = values[read]\n            write += 1\n        }\n    }\n    return write\n}\nvar values = [1, 1, 2, 2, 3]\nlet count = compactUnique(&values)\nassert(Array(values.prefix(count)) == [1, 2, 3])\nvar empty: [Int] = []\nassert(compactUnique(&empty) == 0)\n\nПри новом элементе write продвигается после записи. Неудалённый хвост намеренно вне возвращённого префикса."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Докажи выбор",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Что является символом строки и что инвариант проверяет до чтения? Почему движение пары чисел требует сортировки? Как read/write отличаются от встречных указателей и сколько памяти требует Array(text)?",
+  "key": "Символ — Character, расширенный графемный кластер; читаем края только при left<right. Сортировка доказывает, что сдвиг нужной границы может изменить сумму в нужную сторону. read проходит исходный массив, write обозначает принятый префикс; встречные границы сужают непроверенный участок. Array(text) использует дополнительную память по числу Character с учётом их хранения."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Игнорируй ровно пробел",
+  "prompt": "Измени строковое правило: игнорировать только U+0020, регистр и другие Character значимы. Напиши isCompactPalindrome и проверь фразу «а роза упала на лапу азора», одни пробелы, «А а» и несовпадение с табом.",
+  "code": "// Не используй isWhitespace: оно удалит больше, чем U+0020.",
+  "key": "func isCompactPalindrome(_ text: String) -> Bool {\n    let characters = Array(text.filter { $0 != \" \" })\n    var left = 0\n    var right = characters.count - 1\n    while left < right {\n        guard characters[left] == characters[right] else { return false }\n        left += 1\n        right -= 1\n    }\n    return true\n}\nassert(isCompactPalindrome(\"а роза упала на лапу азора\"))\nassert(isCompactPalindrome(\"  \"))\nassert(!isCompactPalindrome(\"А а\"))\nassert(!isCompactPalindrome(\"а\\tа а\"))\n\nФильтрация соответствует точному контракту. lowercased и широкое удаление whitespace не добавлены незаметно."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "По памяти напиши reverseCharacters(String)->String через встречные указатели и swapAt на Array<Character>. На «А👨‍👩‍👧‍👦Б» получи «Б👨‍👩‍👧‍👦А», пустое и один Character сохраняются. Не используй reversed() и не переставляй UTF-8 байты.",
+  "key": "func reverseCharacters(_ text: String) -> String {\n    var characters = Array(text)\n    var left = 0\n    var right = characters.count - 1\n    while left < right {\n        characters.swapAt(left, right)\n        left += 1\n        right -= 1\n    }\n    return String(characters)\n}\nassert(reverseCharacters(\"А👨‍👩‍👧‍👦Б\") == \"Б👨‍👩‍👧‍👦А\")\nassert(reverseCharacters(\"\").isEmpty)\nassert(reverseCharacters(\"а\") == \"а\")\n\nНовая операция переставляет крайние Character целиком. Условие чтения осталось тем же, результат преобразуется обратно в String."
+ }
+]

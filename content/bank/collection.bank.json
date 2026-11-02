@@ -1,0 +1,35 @@
+[
+ {
+  "id": "collection-b1",
+  "topics": [
+   "collection"
+  ],
+  "type": "Допиши",
+  "title": "Очередь электронных журналов",
+  "prompt": "В секции reading стоят 81,82. Вставь 83 перед 82, затем удали 81; ожидается [83,82]. Используй insertItems/deleteItems, не пересоздавай id.",
+  "code": "import UIKit\nenum Section: Hashable { case reading }\nvar snapshot = NSDiffableDataSourceSnapshot<Section, Int>()\nsnapshot.appendSections([.reading])\nsnapshot.appendItems([81, 82], toSection: .reading)\n// TODO: вставка и удаление\nassert(snapshot.itemIdentifiers == [83, 82])",
+  "key": "import UIKit\nenum Section: Hashable { case reading }\nvar snapshot = NSDiffableDataSourceSnapshot<Section, Int>()\nsnapshot.appendSections([.reading])\nsnapshot.appendItems([81, 82], toSection: .reading)\nsnapshot.insertItems([83], beforeItem: 82)\nsnapshot.deleteItems([81])\nassert(snapshot.itemIdentifiers == [83, 82])\n\nНовые операции меняют порядок и состав снимка; модели сохраняют прежние id."
+ },
+ {
+  "id": "collection-b2",
+  "topics": [
+   "collection"
+  ],
+  "type": "Перепиши",
+  "title": "Переименованная комната умного дома",
+  "prompt": "Синтезированный Hashable учитывает title: old и updated не равны, хотя id общий. Перейди на snapshot<Int,Int> с id=91 и отдельный store; обнови title и отметь reconfigureItems([91]). Проверь одну карточку с новой подписью.",
+  "code": "import UIKit\nstruct Room: Hashable {\n    let id: Int\n    var title: String\n}\nlet old = Room(id: 91, title: \"Кухня\")\nlet updated = Room(id: 91, title: \"Большая кухня\")\nprint(old == updated)\nprint(Set([old, updated]).count)",
+  "key": "import UIKit\nstruct Room { let id: Int; var title: String }\nlet old = Room(id: 91, title: \"Кухня\")\nlet updated = Room(id: 91, title: \"Большая кухня\")\nvar store = [old.id: old]\nstore[updated.id] = updated\nvar snapshot = NSDiffableDataSourceSnapshot<Int, Int>()\nsnapshot.appendSections([0])\nsnapshot.appendItems([old.id])\nsnapshot.reconfigureItems([updated.id])\nassert(snapshot.itemIdentifiers == [91])\nassert(store[91]?.title == \"Большая кухня\")\n\nИдентичность — Int id, содержимое обновлено в store. reconfigureItems отмечает повторную настройку после последующего apply."
+ },
+ {
+  "id": "collection-b3",
+  "topics": [
+   "collection"
+  ],
+  "type": "Допиши",
+  "title": "Широкая полка виниловых пластинок",
+  "prompt": "В section provider используй effectiveContentSize.width: от 600 — четыре колонки по 0.25, иначе две по 0.5. Высоты estimated(80), без spacing. Scaffold содержит вход environment; его вызов реальным UICollectionView здесь не запускай.",
+  "code": "import UIKit\nlet layout = UICollectionViewCompositionalLayout { _, environment in\n    let width = environment.container.effectiveContentSize.width\n    let fraction: CGFloat = 1 /* TODO */\n    let size = NSCollectionLayoutSize(\n        widthDimension: .fractionalWidth(fraction),\n        heightDimension: .estimated(80)\n    )\n    let item = NSCollectionLayoutItem(layoutSize: size)\n    let groupSize = NSCollectionLayoutSize(\n        widthDimension: .fractionalWidth(1), heightDimension: .estimated(80)\n    )\n    let count = 1 /* TODO */\n    let group = NSCollectionLayoutGroup.horizontal(\n        layoutSize: groupSize, subitems: Array(repeating: item, count: count)\n    )\n    return NSCollectionLayoutSection(group: group)\n}",
+  "key": "import UIKit\nlet layout = UICollectionViewCompositionalLayout { _, environment in\n    let width = environment.container.effectiveContentSize.width\n    let fraction: CGFloat = width >= 600 ? 0.25 : 0.5\n    let size = NSCollectionLayoutSize(\n        widthDimension: .fractionalWidth(fraction),\n        heightDimension: .estimated(80)\n    )\n    let item = NSCollectionLayoutItem(layoutSize: size)\n    let groupSize = NSCollectionLayoutSize(\n        widthDimension: .fractionalWidth(1), heightDimension: .estimated(80)\n    )\n    let count = width >= 600 ? 4 : 2\n    let group = NSCollectionLayoutGroup.horizontal(\n        layoutSize: groupSize, subitems: Array(repeating: item, count: count)\n    )\n    return NSCollectionLayoutSection(group: group)\n}\n\nВыбор зависит от контейнера layout, а не глобального размера экрана. Итоговая геометрия требует отдельной раскладки UIKit."
+ }
+]

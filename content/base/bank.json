@@ -1,0 +1,571 @@
+[
+ {
+  "id": "vr-copy",
+  "topics": [
+   "valref"
+  ],
+  "type": "Предскажи вывод",
+  "title": "struct и class в одной ситуации",
+  "prompt": "Что напечатают оба print и почему результат разный?",
+  "code": "struct PointS { var x: Int }\nfinal class PointC { var x: Int; init(x: Int) { self.x = x } }\n\nvar a = PointS(x: 1)\nvar b = a\nb.x = 5\nprint(a.x)\n\nlet c = PointC(x: 1)\nlet d = c\nd.x = 5\nprint(c.x)",
+  "key": "1 и 5. struct — value type: var b = a создаёт независимую копию, менять b не трогает a. class — reference type: c и d указывают на один объект в куче, поэтому изменение через d видно через c.",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "vr-let",
+  "topics": [
+   "valref"
+  ],
+  "type": "Найди ошибку",
+  "title": "let и массив объектов",
+  "prompt": "Какие строки не скомпилируются и почему? User — класс.",
+  "code": "final class User { var name = \"\" }\n\nlet users = [User(), User()]\nusers[0].name = \"Dan\"      // 1\nusers.append(User())        // 2\n\nlet point = CGPoint(x: 0, y: 0)\npoint.x = 10                // 3",
+  "key": "Не компилируются 2 и 3. let у массива запрещает менять сам массив (append), но элементы — ссылки на объекты, и свойство объекта по ссылке менять можно (строка 1 работает). CGPoint — struct: let замораживает всё значение целиком, включая его свойства (строка 3).",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "cow-when",
+  "topics": [
+   "cow"
+  ],
+  "type": "Предскажи поведение",
+  "title": "Когда массив реально копируется",
+  "prompt": "В какой момент происходит физическое копирование буфера массива? Сколько буферов в памяти после каждой строки?",
+  "code": "var a = [1, 2, 3]\nvar b = a        // строка 2\nprint(b[0])      // строка 3\nb.append(4)      // строка 4",
+  "key": "После строк 2 и 3 — один общий буфер: присваивание и чтение не копируют. Копия создаётся на строке 4, при первой мутации b, потому что буфер не уникален (на него ссылаются и a, и b). После — два буфера: [1,2,3] у a и [1,2,3,4] у b.",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "cow-own",
+  "topics": [
+   "cow"
+  ],
+  "type": "Допиши",
+  "title": "Свой Copy-on-Write",
+  "prompt": "Сделай так, чтобы IntBag вёл себя как value type, но не копировал storage без нужды. Допиши append.",
+  "code": "final class Storage {\n    var values: [Int]\n    init(_ v: [Int]) { values = v }\n}\n\nstruct IntBag {\n    private var storage = Storage([])\n    var values: [Int] { storage.values }\n\n    mutating func append(_ x: Int) {\n        // ?\n    }\n}",
+  "key": "mutating func append(_ x: Int) {\n    if !isKnownUniquelyReferenced(&storage) {\n        storage = Storage(storage.values)\n    }\n    storage.values.append(x)\n}\n\nisKnownUniquelyReferenced проверяет, что на объект ссылается только эта копия структуры. Если ссылок больше одной — сначала делаем свою копию, потом мутируем. Так копирование происходит только при записи в разделённое хранилище.",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "arc-order",
+  "topics": [
+   "arc"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Когда вызовется deinit",
+  "prompt": "Напиши порядок вывода.",
+  "code": "final class Person {\n    init()  { print(\"init\") }\n    deinit  { print(\"deinit\") }\n}\n\nvar p: Person? = Person()\nvar q = p\np = nil\nprint(\"after p\")\nq = nil\nprint(\"after q\")",
+  "key": "init → after p → deinit → after q. После var q = p у объекта две сильные ссылки. p = nil снимает одну, счётчик 1 — объект жив. q = nil снимает последнюю, счётчик 0 — сразу вызывается deinit.",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "arc-oral",
+  "topics": [
+   "arc"
+  ],
+  "type": "Устно",
+  "title": "ARC за минуту",
+  "prompt": "Объясни как на собесе.",
+  "code": "1. Что считает ARC и когда объект освобождается?\n2. Работает ли ARC для struct?\n3. Где хранится счётчик и что меняется, когда появляется weak-ссылка?",
+  "key": "1. ARC считает сильные ссылки на экземпляр класса; компилятор сам вставляет retain/release. Когда счётчик сильных ссылок падает до 0, вызывается deinit и память освобождается.\n2. Нет: struct — value type, у неё нет счётчика ссылок (но ARC работает для классов, лежащих внутри struct).\n3. Счётчики лежат в заголовке объекта. Когда на объект появляется weak-ссылка, рантайм заводит side table — отдельную структуру, куда переезжают счётчики; weak указывает на неё, поэтому при освобождении объекта weak безопасно становится nil.",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "weak-closure",
+  "topics": [
+   "weak",
+   "clos"
+  ],
+  "type": "Найди ошибку",
+  "title": "Замыкание держит ViewModel",
+  "prompt": "Почему ViewModel никогда не освобождается? Исправь минимально.",
+  "code": "final class ProfileViewModel {\n    var onUpdate: (() -> Void)?\n\n    func bind() {\n        onUpdate = {\n            self.render()\n        }\n    }\n    func render() { }\n    deinit { print(\"deinit\") }\n}",
+  "key": "Retain cycle: ViewModel держит замыкание (onUpdate), замыкание сильно захватывает self. Счётчик никогда не станет 0.\nПочинка:\nonUpdate = { [weak self] in\n    self?.render()\n}",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "weak-delegate",
+  "topics": [
+   "weak",
+   "patt"
+  ],
+  "type": "Предскажи поведение",
+  "title": "Делегат исчез",
+  "prompt": "Почему didTap() ничего не делает? Что подскажет компилятор?",
+  "code": "protocol ListDelegate: AnyObject { func didSelect() }\n\nfinal class ListViewController {\n    weak var delegate: ListDelegate?\n    func didTap() { delegate?.didSelect() }\n}\n\nfinal class Coordinator: ListDelegate {\n    func didSelect() { print(\"selected\") }\n}\n\nlet vc = ListViewController()\nvc.delegate = Coordinator()\nvc.didTap()",
+  "key": "Coordinator создаётся и сразу кладётся в weak-свойство. Сильных ссылок на него нет, поэтому он освобождается мгновенно, delegate становится nil, и вызов через ?. молча ничего не делает. Компилятор предупредит: instance will be immediately deallocated because property 'delegate' is 'weak'. Нужен сильный владелец Coordinator (например, свойство у того, кто собирает экран).",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "eq-ident",
+  "topics": [
+   "eq"
+  ],
+  "type": "Предскажи вывод",
+  "title": "=== и ==",
+  "prompt": "Что напечатает и какая строка не скомпилируется?",
+  "code": "final class Box {}\n\nlet a = Box()\nlet b = a\nlet c = Box()\n\nprint(a === b)\nprint(a === c)\nprint(a == b)",
+  "key": "true, false, а третья строка не скомпилируется. === сравнивает идентичность: тот же объект в памяти (a и b — одна ссылка, c — другой объект). == требует Equatable, а Box его не реализует.",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "eq-id",
+  "topics": [
+   "eq",
+   "proto"
+  ],
+  "type": "Допиши",
+  "title": "Равенство по id",
+  "prompt": "Два товара считаются равными, если совпадает id, даже при разной цене. Допиши.",
+  "code": "struct Product {\n    let id: UUID\n    var price: Decimal\n}\n\nextension Product: Equatable {\n    // ?\n}",
+  "key": "extension Product: Equatable {\n    static func == (lhs: Product, rhs: Product) -> Bool {\n        lhs.id == rhs.id\n    }\n}\n\nБез своей реализации компилятор синтезирует == по всем полям (id и price). Если делаешь Hashable — hash(into:) тоже должен учитывать только id, иначе равные значения дадут разные хеши.",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "leaks-nc",
+  "topics": [
+   "leaks",
+   "weak"
+  ],
+  "type": "Найди утечку",
+  "title": "NotificationCenter и блок",
+  "prompt": "Экран закрыли, но deinit не вызывается. Почему? Как исправить?",
+  "code": "final class FeedViewController: UIViewController {\n    override func viewDidLoad() {\n        super.viewDidLoad()\n        NotificationCenter.default.addObserver(\n            forName: .didLogout, object: nil, queue: .main\n        ) { _ in\n            self.reload()\n        }\n    }\n    func reload() { }\n    deinit { print(\"deinit\") }\n}",
+  "key": "Блочный addObserver возвращает токен, а NotificationCenter сильно держит блок до removeObserver(token). Блок сильно захватывает self — контроллер живёт вечно.\nПочинка: [weak self] в блоке и сохранить токен, чтобы снять наблюдение:\nprivate var token: NSObjectProtocol?\ntoken = NotificationCenter.default.addObserver(forName: .didLogout, object: nil, queue: .main) { [weak self] _ in self?.reload() }\ndeinit { if let token { NotificationCenter.default.removeObserver(token) } }",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "leaks-steps",
+  "topics": [
+   "leaks",
+   "debug"
+  ],
+  "type": "Устно",
+  "title": "Порядок поиска утечки",
+  "prompt": "Тестировщик говорит: после закрытия экрана память растёт. Опиши свои шаги.",
+  "code": "// Без кода: последовательность действий в Xcode",
+  "key": "1. Воспроизвести: открыть и закрыть экран несколько раз.\n2. Поставить print/breakpoint в deinit — убедиться, что он не вызывается.\n3. Debug Memory Graph: найти лишние экземпляры контроллера/ViewModel, посмотреть, кто держит ссылку (цепочка strong-ссылок, часто видно цикл).\n4. Типичные виновники: замыкания без [weak self], Timer, NotificationCenter с блоком, делегат без weak.\n5. Починить и повторить — экземпляров не должно оставаться. Для системного поиска — Instruments → Leaks/Allocations.",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "q-order",
+  "topics": [
+   "queues"
+  ],
+  "type": "Предскажи вывод",
+  "title": "main.async на главном потоке",
+  "prompt": "Код выполняется на главном потоке. Какой порядок вывода?",
+  "code": "print(\"1\")\nDispatchQueue.main.async {\n    print(\"2\")\n}\nprint(\"3\")",
+  "key": "1, 3, 2. async ставит блок в очередь main и сразу возвращает управление. Блок выполнится, когда текущий код на main закончится и очередь возьмёт следующую задачу.",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "q-serial",
+  "topics": [
+   "queues"
+  ],
+  "type": "Предскажи вывод",
+  "title": "async и sync на одной serial-очереди",
+  "prompt": "Код вызывается с главного потока. Порядок вывода?",
+  "code": "let q = DispatchQueue(label: \"serial\")\n\nq.async { print(\"A\") }\nq.sync  { print(\"B\") }\nprint(\"C\")",
+  "key": "A, B, C. Очередь serial: задачи идут строго по порядку постановки. A поставлена первой, B — второй, а sync блокирует вызывающий поток, пока B не выполнится. Deadlock нет: вызывающий поток — main, а не q.",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "race-count",
+  "topics": [
+   "race"
+  ],
+  "type": "Найди гонку",
+  "title": "Счётчик в concurrentPerform",
+  "prompt": "Что напечатается и почему не всегда 1000? Исправь.",
+  "code": "var count = 0\nDispatchQueue.concurrentPerform(iterations: 1000) { _ in\n    count += 1\n}\nprint(count)",
+  "key": "Обычно меньше 1000 (и это data race — неопределённое поведение). count += 1 — это прочитать, прибавить, записать; два потока читают одно значение и оба записывают +1 — одно увеличение теряется.\nПочинка — синхронизировать доступ:\nlet lock = NSLock()\nDispatchQueue.concurrentPerform(iterations: 1000) { _ in\n    lock.lock(); count += 1; lock.unlock()\n}\nИли serial-очередь / OSAllocatedUnfairLock / актор.",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "race-oral",
+  "topics": [
+   "race"
+  ],
+  "type": "Устно",
+  "title": "Data race и race condition",
+  "prompt": "Объясни разницу на примере.",
+  "code": "1. Что такое data race?\n2. Что такое race condition?\n3. Может ли быть race condition без data race?",
+  "key": "1. Data race — два потока одновременно обращаются к одной памяти без синхронизации, и хотя бы один пишет. Низкоуровневая ошибка, неопределённое поведение. Ловится Thread Sanitizer.\n2. Race condition — логическая ошибка: результат зависит от порядка событий. Например, проверили «баланс ≥ 100», а пока списывали, другой поток уже списал.\n3. Да: каждый доступ под замком (data race нет), но проверка и действие разнесены — порядок всё равно ломает логику. Типичный пример — reentrancy у актора после await.",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "dead-nested",
+  "topics": [
+   "dead",
+   "queues"
+  ],
+  "type": "Предскажи поведение",
+  "title": "sync внутри своей очереди",
+  "prompt": "Что произойдёт? Напечатается ли x?",
+  "code": "let q = DispatchQueue(label: \"serial\")\n\nq.async {\n    q.sync {\n        print(\"x\")\n    }\n}",
+  "key": "Deadlock, x не напечатается. Внешний блок выполняется на q и занимает её. Внутренний sync ставит блок в ту же serial-очередь и ждёт его завершения, а он не начнётся, пока не закончится внешний. Внешний ждёт внутренний — вечное ожидание. Если очередь главная — зависнет UI.",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "dead-main",
+  "topics": [
+   "dead"
+  ],
+  "type": "Найди ошибку",
+  "title": "Метод, который зовут отовсюду",
+  "prompt": "updateUI вызывают и с фона, и с главного потока. Иногда приложение намертво зависает. Почему и как починить?",
+  "code": "func updateUI(_ text: String) {\n    DispatchQueue.main.sync {\n        label.text = text\n    }\n}",
+  "key": "Когда updateUI вызывают с главного потока, main.sync ставит блок в main и ждёт, а main занят этим же вызовом — deadlock. С фона работает, поэтому баг «иногда».\nПочинка: DispatchQueue.main.async { self.label.text = text }. Ещё лучше — @MainActor на методе или классе, тогда компилятор сам гарантирует выполнение на главном потоке.",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "group-three",
+  "topics": [
+   "group"
+  ],
+  "type": "Допиши",
+  "title": "Дождаться трёх загрузок",
+  "prompt": "Загрузи три URL параллельно и вызови completion один раз, когда закончатся все.",
+  "code": "func loadAll(_ urls: [URL], completion: @escaping ([Data]) -> Void) {\n    var results: [Data] = []\n    // DispatchGroup: enter / leave / notify\n    for url in urls {\n        URLSession.shared.dataTask(with: url) { data, _, _ in\n            // ?\n        }.resume()\n    }\n}",
+  "key": "func loadAll(_ urls: [URL], completion: @escaping ([Data]) -> Void) {\n    let group = DispatchGroup()\n    let lock = NSLock()\n    var results: [Data] = []\n    for url in urls {\n        group.enter()\n        URLSession.shared.dataTask(with: url) { data, _, _ in\n            defer { group.leave() }\n            guard let data else { return }\n            lock.lock(); results.append(data); lock.unlock()\n        }.resume()\n    }\n    group.notify(queue: .main) { completion(results) }\n}\n\nenter перед запуском, leave в defer — на любом пути. Колбэки приходят на разных потоках, поэтому append под замком. Порядок результатов не гарантирован.",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "group-leave",
+  "topics": [
+   "group"
+  ],
+  "type": "Найди ошибку",
+  "title": "notify не срабатывает",
+  "prompt": "Иногда экран навсегда остаётся в загрузке. Почему?",
+  "code": "group.enter()\napi.load { result in\n    switch result {\n    case .success(let items):\n        self.items = items\n        group.leave()\n    case .failure:\n        return\n    }\n}\ngroup.notify(queue: .main) { self.hideLoader() }",
+  "key": "В ветке .failure нет group.leave(). Счётчик группы не возвращается к нулю, и notify никогда не вызывается. Починка: defer { group.leave() } в начале колбэка, чтобы leave выполнялся на любом пути.",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "sem-limit",
+  "topics": [
+   "gcdmore"
+  ],
+  "type": "Допиши",
+  "title": "Не больше двух загрузок",
+  "prompt": "Нужно скачать 10 картинок, но одновременно не больше двух. Используй DispatchSemaphore.",
+  "code": "let queue = DispatchQueue.global()\n// semaphore?\nfor url in urls {\n    queue.async {\n        // ждать слот\n        download(url)   // синхронная загрузка\n        // освободить слот\n    }\n}",
+  "key": "let semaphore = DispatchSemaphore(value: 2)\nfor url in urls {\n    queue.async {\n        semaphore.wait()\n        defer { semaphore.signal() }\n        download(url)\n    }\n}\n\nvalue: 2 — два свободных слота. wait уменьшает счётчик и блокирует поток при нуле; signal возвращает слот. Никогда не вызывай wait на главном потоке — заморозишь UI.",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "barrier-rw",
+  "topics": [
+   "gcdmore",
+   "race"
+  ],
+  "type": "Допиши",
+  "title": "Reader-writer через barrier",
+  "prompt": "Чтения могут идти параллельно, запись — эксклюзивно. Допиши get и set.",
+  "code": "final class SafeCache {\n    private var dict: [String: Data] = [:]\n    private let queue = DispatchQueue(label: \"cache\", attributes: .concurrent)\n\n    func get(_ key: String) -> Data? {\n        // ?\n    }\n    func set(_ key: String, _ value: Data) {\n        // ?\n    }\n}",
+  "key": "func get(_ key: String) -> Data? {\n    queue.sync { dict[key] }\n}\nfunc set(_ key: String, _ value: Data) {\n    queue.async(flags: .barrier) { self.dict[key] = value }\n}\n\nНа concurrent-очереди обычные sync-чтения идут параллельно. Барьерный блок ждёт, пока закончатся все начатые задачи, выполняется один, и только потом очередь продолжает. Важно: barrier работает только на своей concurrent-очереди, не на global().",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "async-cont",
+  "topics": [
+   "async",
+   "esc"
+  ],
+  "type": "Перепиши",
+  "title": "Из completion в async",
+  "prompt": "Оберни старый API в async-функцию, не переписывая сам API.",
+  "code": "// старый API\nfunc fetchUser(completion: @escaping (Result<User, Error>) -> Void)\n\n// нужно\nfunc fetchUser() async throws -> User {\n    // ?\n}",
+  "key": "func fetchUser() async throws -> User {\n    try await withCheckedThrowingContinuation { continuation in\n        fetchUser { result in\n            continuation.resume(with: result)\n        }\n    }\n}\n\nContinuation нужно возобновить ровно один раз: ни разу — задача повиснет навсегда, дважды — крэш (checked-версия это ловит).",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "async-let",
+  "topics": [
+   "async"
+  ],
+  "type": "Предскажи поведение",
+  "title": "Последовательно или параллельно",
+  "prompt": "fetchA и fetchB идут по 1 секунде. Сколько займёт каждый вариант и почему?",
+  "code": "// Вариант 1\nlet a = await fetchA()\nlet b = await fetchB()\n\n// Вариант 2\nasync let a2 = fetchA()\nasync let b2 = fetchB()\nlet result = await (a2, b2)",
+  "key": "Вариант 1 — около 2 секунд: второй await начнётся только после завершения первого. Вариант 2 — около 1 секунды: async let сразу запускает обе дочерние задачи, а await ждёт обе вместе. Для заранее неизвестного числа задач — withTaskGroup.",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "actor-reent",
+  "topics": [
+   "actor",
+   "race"
+  ],
+  "type": "Найди ошибку",
+  "title": "Reentrancy в акторе",
+  "prompt": "Два вызова withdraw(100) при балансе 150 иногда дают -50. Как, если это actor?",
+  "code": "actor BankAccount {\n    private(set) var balance = 150\n\n    func withdraw(_ amount: Int) async {\n        guard balance >= amount else { return }\n        await audit(amount)     // уходит в сеть\n        balance -= amount\n    }\n    func audit(_ amount: Int) async { }\n}",
+  "key": "Актор защищает от data race, но на await он отпускает исполнение (reentrancy). Первый вызов проверил баланс и ушёл в await, второй вошёл, тоже увидел 150 и тоже ушёл в await. Потом оба списали — -50.\nПочинка: изменить состояние до await (проверить и списать синхронно, а audit после), либо перепроверять условие после await.",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "actor-await",
+  "topics": [
+   "actor"
+  ],
+  "type": "Найди ошибку",
+  "title": "Доступ к актору снаружи",
+  "prompt": "Какие строки не скомпилируются и почему?",
+  "code": "actor Counter {\n    var value = 0\n    func increment() { value += 1 }\n}\n\nfunc test() async {\n    let c = Counter()\n    c.increment()          // 1\n    print(c.value)         // 2\n    await c.increment()    // 3\n    print(await c.value)   // 4\n}",
+  "key": "Не скомпилируются 1 и 2. Снаружи актора к его методам и изменяемому состоянию можно обращаться только асинхронно, через await: вызов может подождать, пока актор освободится. Строки 3 и 4 корректны.",
+  "added": "2026-10-11"
+ },
+ {
+  "id": "m-layout",
+  "topics": [
+   "flowui",
+   "state"
+  ],
+  "type": "Разбор экрана",
+  "title": "Что должно прокручиваться?",
+  "prompt": "По макету список карточек прокручивается под закреплённым поиском. Опиши иерархию SwiftUI-контейнеров и где разместишь поле поиска.",
+  "code": "VStack {\n    SearchField(...)\n    List(properties) { property in\n        PropertyCard(property: property)\n    }\n}",
+  "key": "Поиск расположен вне List, поэтому остаётся на месте. Карточки внутри List прокручиваются. Состояние текста хранится у владельца экрана и передаётся в поле через Binding. Для точного поведения под навигацией проверь safe area и заголовок на устройстве.",
+  "added": "2026-10-11",
+  "mins": 12
+ },
+ {
+  "id": "m-state",
+  "topics": [
+   "obs"
+  ],
+  "type": "Найди риск",
+  "title": "Кто владеет моделью экрана?",
+  "prompt": "Вью создаёт объект и ждёт обновления после изменения models. Что здесь может пойти не так? Назови минимальную правку для старого ObservableObject.",
+  "code": "struct SearchView: View {\n    @ObservedObject private var vm = SearchViewModel()\n    var body: some View { List(vm.models) { ... } }\n}",
+  "key": "Если вью сама создаёт ObservableObject, для стабильного владения при пересоздании View обычно нужен @StateObject. Свойство models должно публиковать изменения через @Published. Если модель передаётся извне, @ObservedObject уместен. Для нового Observation с @Observable схема владения другая.",
+  "added": "2026-10-11",
+  "mins": 12
+ },
+ {
+  "id": "m-cell",
+  "topics": [
+   "table"
+  ],
+  "type": "Найди ошибку",
+  "title": "Переиспользование ячейки",
+  "prompt": "После прокрутки у некоторых элементов остаётся бейдж «Новый». Почему? Перепиши настройку бейджа одним выражением.",
+  "code": "if movie.isNew {\n    cell.badge.isHidden = false\n}\nreturn cell",
+  "key": "Ячейки переиспользуются: при isNew == false старое значение остаётся. Нужна настройка для обоих случаев: cell.badge.isHidden = !movie.isNew. Все изменяемые свойства ячейки должны задаваться при каждой конфигурации.",
+  "added": "2026-10-11",
+  "mins": 15
+ },
+ {
+  "id": "m-review",
+  "topics": [
+   "review",
+   "git"
+  ],
+  "type": "Код-ревью",
+  "title": "Замечание, которое можно проверить",
+  "prompt": "Поиск вызывает запрос на каждый символ. Ответы могут приходить в другом порядке. Сформулируй комментарий к diff: сценарий, последствие и проверка.",
+  "code": "func textDidChange(_ q: String) {\n    api.search(q) { items in\n        self.results = items\n    }\n}",
+  "key": "Например: «Если ввести A, затем AB, ответ A может прийти последним и перезаписать результаты AB. Быстро введите два запроса при задержке первого и проверьте список. Можно отменять прежний запрос или сверять актуальный текст перед присваиванием». Дополнительно проверь поток обновления UI и владение self.",
+  "added": "2026-10-11",
+  "mins": 15
+ },
+ {
+  "id": "m-decode",
+  "topics": [
+   "codable"
+  ],
+  "type": "Допиши модель",
+  "title": "Ответ API для карусели",
+  "prompt": "У сервера есть массив похожих фильмов. Какие поля и протоколы нужны минимальной модели для декодирования и показа списка? Напиши тип и поясни обработку отсутствующего постера.",
+  "code": "{ \"results\": [{ \"id\": 7, \"title\": \"Film\", \"poster_path\": null }] }",
+  "key": "Например: struct Response: Decodable { let results: [Movie] }; struct Movie: Decodable, Identifiable { let id: Int; let title: String; let posterPath: String?; enum CodingKeys: String, CodingKey { case id, title; case posterPath = \"poster_path\" } }. nil для постера допустим: покажи placeholder.",
+  "added": "2026-10-11",
+  "mins": 18
+ },
+ {
+  "id": "m-error",
+  "topics": [
+   "err",
+   "urls"
+  ],
+  "type": "Предскажи поведение",
+  "title": "Ошибка похожих фильмов",
+  "prompt": "Запрос карусели упал, но детали фильма уже загружены. Какое состояние должен показать экран? Где разделить эти загрузки?",
+  "code": "details = .loaded(movie)\nsimilar = .failed(error)",
+  "key": "Основные детали остаются видимыми. Для карусели отдельное состояние загрузки/ошибки/пустого результата и retry при необходимости. Не превращай ошибку второстепенного блока в пустой экран деталей.",
+  "added": "2026-10-11",
+  "mins": 12
+ },
+ {
+  "id": "m-pages",
+  "topics": [
+   "race",
+   "async"
+  ],
+  "type": "Найди гонку",
+  "title": "Два запроса одной страницы",
+  "prompt": "onAppear последней ячейки срабатывает несколько раз. Какое условие поставишь до await и когда обновишь page?",
+  "code": "func loadMore() async {\n    let users = try? await api.page(nextPage)\n    items += users ?? []\n    nextPage += 1\n}",
+  "key": "Проверь isLoading и hasMore до запроса, установи isLoading = true ДО await. При успехе добавь данные без дублей и обнови nextPage; при ошибке оставь номер страницы прежним, чтобы retry запросил её снова. isLoading сбрось при любом завершении.",
+  "added": "2026-10-11",
+  "mins": 18
+ },
+ {
+  "id": "m-sort",
+  "topics": [
+   "coll",
+   "hof"
+  ],
+  "type": "Проверь край",
+  "title": "Порядок по дате",
+  "prompt": "Назови два случая, когда простое append страниц не гарантирует сортировку newest first, и как проверишь итог.",
+  "code": "items.append(contentsOf: nextPage)",
+  "key": "API может не гарантировать сортировку внутри страницы или данные могут измениться между запросами, создав дубль/сдвиг границы. Уточни контракт API, дедуплицируй по ID и при необходимости сортируй по Date убыванию. Тест: одинаковые даты, пересекающиеся страницы, новая запись между загрузками.",
+  "added": "2026-10-11",
+  "mins": 12
+ },
+ {
+  "id": "m-form",
+  "topics": [
+   "state",
+   "flowui"
+  ],
+  "type": "Напиши проверку",
+  "title": "Валидация формы",
+  "prompt": "Поле имени не должно состоять только из пробелов. Напиши простую проверку и объясни, когда показывать ошибку пользователю.",
+  "code": "let name = inputName\n// validName = ?",
+  "key": "let validName = !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty. Показывай ошибку после попытки отправки или после взаимодействия с полем согласно макету, а не при первом появлении экрана. Отдельно проверяй правила остальных полей.",
+  "added": "2026-10-11",
+  "mins": 18
+ },
+ {
+  "id": "m-post",
+  "topics": [
+   "urls",
+   "rest"
+  ],
+  "type": "Найди риск",
+  "title": "Двойной POST",
+  "prompt": "Пользователь дважды нажал «Отправить» во время сетевого запроса. Какие состояния и действия нужны, чтобы не получить две регистрации?",
+  "code": "Button(\"Отправить\") { Task { await submit() } }",
+  "key": "Перед await выставь isSubmitting, повторное нажатие игнорируй и сделай кнопку недоступной; сбрось флаг на успехе и ошибке. Для действительно критичных повторов сервер может поддерживать идемпотентный ключ, но интерфейс всё равно должен блокировать повтор.",
+  "added": "2026-10-11",
+  "mins": 15
+ },
+ {
+  "id": "m-actor",
+  "topics": [
+   "actor"
+  ],
+  "type": "Предскажи гонку",
+  "title": "Actor и await",
+  "prompt": "Два вызова попали в actor. Может ли второй вызвать operation, пока первый ждёт? Что нужно повторно проверить после await?",
+  "code": "actor Gate {\n    var started = false\n    func run() async {\n        if !started {\n            await waitForNetwork()\n            started = true\n            operation()\n        }\n    }\n}",
+  "key": "Да. Actor защищает изолированное состояние между точками ожидания, но на await допускает другой вызов. Оба могут увидеть started == false до ожидания. После await повторно проверь состояние либо зафиксируй владение запуском до ожидания и явно обработай отмену/таймаут.",
+  "added": "2026-10-11",
+  "mins": 18
+ },
+ {
+  "id": "m-timeout",
+  "topics": [
+   "tests",
+   "urls"
+  ],
+  "type": "Тест-кейсы",
+  "title": "Сеть на границе таймаута",
+  "prompt": "Перечисли тесты для функции ожидания сети с таймаутом и что должна делать отмена. Не пиши реализацию.",
+  "code": "await performer.perform(withinSeconds: 2) { await operation() }",
+  "key": "Минимум: сеть доступна сразу; появилась до срока; появилась после срока; не появилась; появилась одновременно с таймаутом; задача отменена; два одновременных вызова. Явно зафиксируй правило выигрыша на границе и убери монитор/ожидание после любого исхода. Уже начатая операция требует отдельной политики отмены.",
+  "added": "2026-10-11",
+  "mins": 15
+ },
+ {
+  "id": "m-deps",
+  "topics": [
+   "setdict",
+   "func"
+  ],
+  "type": "Напиши условие",
+  "title": "Можно ли завершить задачу?",
+  "prompt": "Задача зависит от ID других задач. Напиши условия для canComplete и назови поведение при отсутствующем ID.",
+  "code": "struct TaskItem { let id: String; let prerequisites: [String]; var done: Bool }\nfunc canComplete(_ task: TaskItem, all: [String: TaskItem]) -> Bool {\n    // ...\n}",
+  "key": "return task.prerequisites.allSatisfy { id in all[id]?.done == true }. Отсутствующий ID даёт false, если политика запрещает выполнять задачу с неизвестной предпосылкой. Отдельно проверь циклы в графе, если нужно построить порядок Upcoming.",
+  "added": "2026-10-11",
+  "mins": 18
+ },
+ {
+  "id": "m-crypto",
+  "topics": [
+   "store"
+  ],
+  "type": "Граница данных",
+  "title": "Что хранить локально?",
+  "prompt": "API прислал зашифрованный title. Требование: локальная копия тоже зашифрована. Где проводить decrypt?",
+  "code": "API encryptedTitle → local store → task screen",
+  "key": "Сохраняй encryptedTitle в локальном хранилище без расшифровки. Декодируй при отображении или в адаптере презентации непосредственно перед ним. Не записывай расшифрованное поле в кэш, если это нарушает требование. Проверь ошибку decrypt отдельно.",
+  "added": "2026-10-11",
+  "mins": 12
+ },
+ {
+  "id": "m-money",
+  "topics": [
+   "func",
+   "flow"
+  ],
+  "type": "Напиши функцию",
+  "title": "Округление в пенсах",
+  "prompt": "Для положительного расхода amount в пенсах верни добавку до следующего целого фунта. Проверь 100, 101 и 435.",
+  "code": "func roundUp(_ amount: Int) -> Int {\n    // ...\n}",
+  "key": "guard amount > 0 else { return 0 }; return (100 - amount % 100) % 100. Проверки: 100→0, 101→99, 435→65. Суммируй Int в пенсах; возвраты и входящие переводы фильтруй по явному правилу.",
+  "added": "2026-10-11",
+  "mins": 18
+ },
+ {
+  "id": "m-perf",
+  "topics": [
+   "table",
+   "leaks",
+   "debug"
+  ],
+  "type": "Диагностика",
+  "title": "Лента тормозит при прокрутке",
+  "prompt": "Назови три измерения, которыми проверишь: UI, сеть, память. Как отличить гипотезу от доказанного дефекта?",
+  "code": "Feed → image loader → row → scroll",
+  "key": "UI: время кадра/подвисания в Instruments; сеть: число запросов и повторов на те же URL; память: рост и удержанные изображения/объекты. Зафиксируй сценарий и базовый замер, затем одно изменение и повторный замер. Без измерения причина остаётся гипотезой.",
+  "added": "2026-10-11",
+  "mins": 15
+ },
+ {
+  "id": "m-triage",
+  "topics": [
+   "feature",
+   "live"
+  ],
+  "type": "Планирование",
+  "title": "Что делать в первые 5 минут?",
+  "prompt": "Тебе дали незнакомое задание на 45 минут. Выпиши действия до первой строки UI-кода и критерий, когда пора остановить чтение.",
+  "code": "0:00 → ?\n0:05 → работающий первый срез",
+  "key": "Прочитай обязательные пункты, входные данные и ограничения; выпиши модель, экран, основной сценарий, ошибки и допущения. Выбери самый маленький запускаемый срез. Примерно к пятой минуте прекращай разбор и начинай код, если нет блокирующей неизвестности.",
+  "added": "2026-10-11",
+  "mins": 12
+ },
+ {
+  "id": "m-finish",
+  "topics": [
+   "live",
+   "feature"
+  ],
+  "type": "Сдача",
+  "title": "Осталось пять минут",
+  "prompt": "Основной экран работает, но есть косметический недочёт и непроверенный крайний случай. Что сделать и как описать результат?",
+  "code": "40:00 → 45:00",
+  "key": "Сделай чистую сборку и пройди основной сценарий, затем проверь один рискованный край. Если косметика не влияет на требование, запиши её в follow-up. Кратко укажи сделанное, допущения и неполные пункты без выдачи их за готовые.",
+  "added": "2026-10-11",
+  "mins": 12
+ }
+]

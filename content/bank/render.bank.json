@@ -1,0 +1,35 @@
+[
+ {
+  "id": "render-b1",
+  "topics": [
+   "render"
+  ],
+  "type": "Допиши",
+  "title": "Маркер ширины окна эквалайзера",
+  "prompt": "Переопредели layoutSubviews в ResizeProbe: вызови super и задай marker.width=bounds.width/2, высоту 4. Ручной контекст меняет ширину 200→320, помечает layout и проверяет 100→160.",
+  "code": "import UIKit\nfinal class ResizeProbe: UIView {\n    let marker = UIView()\n    override init(frame: CGRect) {\n        super.init(frame: frame)\n        addSubview(marker)\n    }\n    required init?(coder: NSCoder) { fatalError(\"Code only\") }\n    override func layoutSubviews() {\n        super.layoutSubviews()\n        // TODO: frame дочернего маркера\n    }\n}\nlet view = ResizeProbe(frame: CGRect(x: 0, y: 0, width: 200, height: 40))\nview.setNeedsLayout()\nview.layoutIfNeeded()\nassert(view.marker.frame.width == 100)\nview.bounds.size.width = 320\nview.setNeedsLayout()\nview.layoutIfNeeded()\nassert(view.marker.frame.width == 160)",
+  "key": "import UIKit\nfinal class ResizeProbe: UIView {\n    let marker = UIView()\n    override init(frame: CGRect) {\n        super.init(frame: frame)\n        addSubview(marker)\n    }\n    required init?(coder: NSCoder) { fatalError(\"Code only\") }\n    override func layoutSubviews() {\n        super.layoutSubviews()\n        marker.frame = CGRect(x: 0, y: 0, width: bounds.width / 2, height: 4)\n    }\n}\nlet view = ResizeProbe(frame: CGRect(x: 0, y: 0, width: 200, height: 40))\nview.setNeedsLayout()\nview.layoutIfNeeded()\nassert(view.marker.frame.width == 100)\nview.bounds.size.width = 320\nview.setNeedsLayout()\nview.layoutIfNeeded()\nassert(view.marker.frame.width == 160)\n\nПроверка относится к реальному UIView и layoutIfNeeded; автоматическое изменение размера окна не запускается."
+ },
+ {
+  "id": "render-b2",
+  "topics": [
+   "render"
+  ],
+  "type": "Допиши",
+  "title": "Bitmap-превью микрофона рации",
+  "prompt": "Для данного LevelView level=70 создай UIGraphicsImageRenderer с размером bounds. В image-блоке вызови draw вручную; проверь размер UIImage и level. Это проверка тела draw в контексте, не планирования setNeedsDisplay.",
+  "code": "import UIKit\nfinal class LevelView: UIView {\n    private(set) var level = 20\n    func updateLevel(_ value: Int) {\n        let next = min(max(value, 0), 100)\n        guard next != level else { return }\n        level = next\n        setNeedsDisplay()\n    }\n    override func draw(_ rect: CGRect) {\n        guard let context = UIGraphicsGetCurrentContext() else { return }\n        context.setFillColor(UIColor.systemTeal.cgColor)\n        context.fill(CGRect(\n            x: 0, y: 0, width: bounds.width * CGFloat(level) / 100,\n            height: bounds.height\n        ))\n    }\n}\nlet view = LevelView(frame: CGRect(x: 0, y: 0, width: 100, height: 20))\nview.updateLevel(70)\n// TODO: renderer и ручной draw",
+  "key": "import UIKit\nfinal class LevelView: UIView {\n    private(set) var level = 20\n    func updateLevel(_ value: Int) {\n        let next = min(max(value, 0), 100)\n        guard next != level else { return }\n        level = next\n        setNeedsDisplay()\n    }\n    override func draw(_ rect: CGRect) {\n        guard let context = UIGraphicsGetCurrentContext() else { return }\n        context.setFillColor(UIColor.systemTeal.cgColor)\n        context.fill(CGRect(\n            x: 0, y: 0, width: bounds.width * CGFloat(level) / 100,\n            height: bounds.height\n        ))\n    }\n}\nlet view = LevelView(frame: CGRect(x: 0, y: 0, width: 100, height: 20))\nview.updateLevel(70)\nlet renderer = UIGraphicsImageRenderer(size: view.bounds.size)\nlet image = renderer.image { _ in view.draw(view.bounds) }\nassert(image.size == view.bounds.size)\nassert(view.level == 70)\n\nrenderer предоставил графический контекст. Размер результата проверяем; он сам по себе не доказывает правильность каждого пикселя."
+ },
+ {
+  "id": "render-b3",
+  "topics": [
+   "render"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Layout не погасил display",
+  "prompt": "В ручном контексте помечены обе работы, но выполнен только layout. Назови две строки вывода: журнал после layout и needsDisplay. Затем объясни, что изменит displayIfNeeded.",
+  "code": "import QuartzCore\nimport CoreGraphics\nfinal class TraceLayer: CALayer {\n    var events: [String] = []\n    override func layoutSublayers() {\n        super.layoutSublayers()\n        events.append(\"layout\")\n    }\n    override func display() {\n        events.append(\"display\")\n        super.display()\n    }\n}\nlet layer = TraceLayer()\nlayer.bounds = CGRect(x: 0, y: 0, width: 100, height: 40)\nlayer.layoutIfNeeded()\nlayer.displayIfNeeded()\nlayer.events.removeAll()\nlayer.setNeedsLayout()\nlayer.setNeedsDisplay()\nlayer.layoutIfNeeded()\nprint(layer.events)\nprint(layer.needsDisplay())",
+  "key": "[\"layout\"]\ntrue\n\nlayout обработал геометрию, запрос display остался. После явного displayIfNeeded в журнал добавится display и его флаг очистится."
+ }
+]

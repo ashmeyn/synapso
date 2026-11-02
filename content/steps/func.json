@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Предскажи вызов",
+  "prompt": "Какие два вызова корректны и что вернёт каждый? Объясни внешнюю метку.",
+  "code": "func totalMinutes(for durations: [Int], bufferMinutes: Int = 0) -> Int {\n    durations.reduce(0, +) + bufferMinutes\n}\nprint(totalMinutes(for: [25, 40]))\nprint(totalMinutes(for: [25, 40], bufferMinutes: 10))",
+  "key": "65 и 75. `for` — обязательная внешняя метка первого аргумента; запас времени по умолчанию 0, во втором вызове добавляются 10 минут."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Собери по каркасу",
+  "prompt": "Заполни функцию суммы с внешней меткой for и значением запаса времени по умолчанию 0.",
+  "code": "func totalMinutes(for durations: [Int], bufferMinutes: Int = 0) -> Int {\n    // 1. Сложи длительности.\n    // 2. Примени запас времени.\n}",
+  "key": "func totalMinutes(for durations: [Int], bufferMinutes: Int = 0) -> Int {\n    let subtotalMinutes = durations.reduce(0, +)\n    return subtotalMinutes + bufferMinutes\n}\n\nМетка делает вызов читаемым, а значение по умолчанию убирает отдельную перегрузку без запаса времени. Отрицательный запас нужно проверять отдельно: значение по умолчанию его не запрещает."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Измени итог недели",
+  "prompt": "Напиши функцию, которая увеличивает переданную переменную weekMinutes. Покажи правильный вызов.",
+  "code": "var weekMinutes = 100\nfunc add(_ amount: Int, to weekMinutes: inout Int) {\n    // Измени исходную переменную.\n}\n// Вызови с amount = 75.",
+  "key": "var weekMinutes = 100\nfunc add(_ amount: Int, to weekMinutes: inout Int) {\n    weekMinutes += amount\n}\nadd(75, to: &weekMinutes)\n\ninout нужен для изменения исходного var; & в вызове показывает это намерение. После вызова weekMinutes равно 175."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Найди ошибку",
+  "prompt": "Почему итог недели останется 100? Исправь контракт функции и вызов.",
+  "code": "var weekMinutes = 100\nfunc add(_ amount: Int, to weekMinutes: Int) {\n    var copy = weekMinutes\n    copy += amount\n}\nadd(75, to: weekMinutes)\nprint(weekMinutes)",
+  "key": "var weekMinutes = 100\nfunc add(_ amount: Int, to weekMinutes: inout Int) {\n    weekMinutes += amount\n}\nadd(75, to: &weekMinutes)\n\nИсходный параметр был локальным значением; изменение copy не записывалось обратно. inout делает изменение переданного var частью контракта."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни напарнику (устно)",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Функции расписания и недельного итога.\n1. Зачем totalMinutes(for:) нужна метка?\n2. Что делает запас времени по умолчанию?\n3. Почему add(_:to:) принимает inout?",
+  "key": "Метка сообщает смысл аргумента в месте вызова. Значение по умолчанию подставляет 0, когда запас времени не передали, но не валидирует вход. inout применяется, потому что add меняет исходную переменную недельного итога; вызов требует & и var."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Передай функцию как значение",
+  "prompt": "Сохрани функцию totalMinutes(for:bufferMinutes:) в переменной calculator и вызови её с массивом и запасом времени.",
+  "code": "func totalMinutes(for durations: [Int], bufferMinutes: Int = 0) -> Int? {\n    guard bufferMinutes >= 0 else { return nil }\n    return durations.reduce(0, +) + bufferMinutes\n}\n// Тип переменной: ([Int], Int) -> Int?",
+  "key": "let calculator: ([Int], Int) -> Int? = totalMinutes(for:bufferMinutes:)\nlet check = calculator([25, 40], 10)\n\nФункция — значение с типом входов и выхода. Значение по умолчанию работает при прямом вызове по имени, но у переменной-функции нужно передать оба аргумента."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Напиши функцию totalMinutes(for:bufferMinutes:) с дефолтом 0.\nНапиши add(_:to:), меняющую var через inout.\nПокажи оба вызова.",
+  "key": "func totalMinutes(for durations: [Int], bufferMinutes: Int = 0) -> Int {\n    durations.reduce(0, +) + bufferMinutes\n}\nfunc add(_ amount: Int, to weekMinutes: inout Int) { weekMinutes += amount }\nvar weekMinutes = 0\nadd(totalMinutes(for: [25, 40]), to: &weekMinutes)\n\nПри вызове метка `for` обязательна, а `&` отмечает изменение weekMinutes. Сверь расчёт в Swift Playground."
+ }
+]

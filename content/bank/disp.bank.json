@@ -1,0 +1,35 @@
+[
+ {
+  "id": "disp-b1",
+  "topics": [
+   "disp"
+  ],
+  "type": "Перепиши",
+  "title": "Статус экрана доставки",
+  "prompt": "BaseStatus использует default-witness из extension, подкласс добавил своё text. Через any Status всё ещё «Общее». Реализуй text в базе и override в DeliveryStatus, чтобы стало «Доставлено».",
+  "code": "protocol Status { func text() -> String }\nextension Status { func text() -> String { \"Общее\" } }\nclass BaseStatus: Status {\n}\nclass DeliveryStatus: BaseStatus {\n    func text() -> String { \"Доставлено\" }\n}\nlet status: any Status = DeliveryStatus()\nprint(status.text())",
+  "key": "protocol Status { func text() -> String }\nextension Status { func text() -> String { \"Общее\" } }\nclass BaseStatus: Status {\n    func text() -> String { \"База\" }\n}\nclass DeliveryStatus: BaseStatus {\n    override func text() -> String { \"Доставлено\" }\n}\nlet status: any Status = DeliveryStatus()\nprint(status.text())\n\nСоответствие базы использует её метод; дальнейший class-override даёт Доставлено."
+ },
+ {
+  "id": "disp-b2",
+  "topics": [
+   "disp"
+  ],
+  "type": "Допиши",
+  "title": "Значок проигрывателя для Objective-C",
+  "prompt": "Добавь @objc dynamic к text NSObject-подкласса PlayerBadge. Не делай вид, что одно @objc гарантирует dynamic для любых Swift-вызовов.",
+  "code": "import Foundation\nclass PlayerBadge: NSObject {\n    func text() -> String { \"Воспроизведение\" }\n}\nprint(PlayerBadge().text())",
+  "key": "import Foundation\nclass PlayerBadge: NSObject {\n    @objc dynamic func text() -> String { \"Воспроизведение\" }\n}\nprint(PlayerBadge().text())\n\nВывод «Воспроизведение». Вывод не меняется: разница в механизме вызова (Objective-C runtime), а не в результате и не в скорости."
+ },
+ {
+  "id": "disp-b3",
+  "topics": [
+   "disp"
+  ],
+  "type": "Найди ошибку",
+  "title": "Подарочный чек",
+  "prompt": "prefix намеренно final. Удали попытку override prefix; customization перенеси в overridable body, сохранив базовый prefix «Чек».",
+  "code": "class ReceiptFormatter {\n    final func prefix() -> String { \"Чек\" }\n    func body() -> String { \"Обычный\" }\n}\nclass GiftFormatter: ReceiptFormatter {\n    override func prefix() -> String { \"Подарок\" }\n}\nlet formatter: ReceiptFormatter = GiftFormatter()\nprint(formatter.prefix(), formatter.body())",
+  "key": "class ReceiptFormatter {\n    final func prefix() -> String { \"Чек\" }\n    func body() -> String { \"Обычный\" }\n}\nclass GiftFormatter: ReceiptFormatter {\n    override func body() -> String { \"Подарочный\" }\n}\nlet formatter: ReceiptFormatter = GiftFormatter()\nprint(formatter.prefix(), formatter.body())\n\nВывод «Чек Подарочный»; final-контракт не нарушен."
+ }
+]

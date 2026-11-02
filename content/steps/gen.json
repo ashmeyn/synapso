@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Проследи выбор типа",
+  "prompt": "Назови две строки вывода и тип результата каждого firstValue до ??; пустой [Int] что вернёт?",
+  "code": "func firstValue<T>(_ values: [T]) -> T? {\n    values.first\n}\nprint(firstValue([71, 72]) ?? 0)\nprint(firstValue([\"Эскиз\", \"Фото\"]) ?? \"Нет\")",
+  "key": "71\nЭскиз\n\nДо ?? результаты Int? и String?. Пустой [Int] даёт nil."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Свяжи вход и выход",
+  "prompt": "Заполни T у generic-функции: [T] на входе и T? на выходе. Не используй Any и as?.",
+  "code": "func firstValue</* Тип */>(_ values: [/* Тип */]) -> /* Тип */? {\n    values.first\n}\nprint(firstValue([71, 72]) ?? 0)\nprint(firstValue([\"Эскиз\", \"Фото\"]) ?? \"Нет\")",
+  "key": "func firstValue<T>(_ values: [T]) -> T? {\n    values.first\n}\nprint(firstValue([71, 72]) ?? 0)\nprint(firstValue([\"Эскиз\", \"Фото\"]) ?? \"Нет\")\n\nВывод 71 и Эскиз, типы результатов сохраняются."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Напиши контейнер",
+  "prompt": "Самостоятельно напиши Shelf<Item>: private items, mutating add, first и count. В Shelf<Int> положи 71 и 72, в Shelf<String> — «Фото».",
+  "code": "// Напиши Shelf<Item>",
+  "key": "struct Shelf<Item> {\n    private var items: [Item] = []\n    mutating func add(_ item: Item) { items.append(item) }\n    func first() -> Item? { items.first }\n    var count: Int { items.count }\n}\nvar ids = Shelf<Int>()\nids.add(71); ids.add(72)\nvar titles = Shelf<String>()\ntitles.add(\"Фото\")\nprint(ids.count, ids.first() ?? 0)\nprint(titles.first() ?? \"Нет\")\n\nВывод 2 71 и Фото. Экземпляры хранят разные конкретные типы."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Добавь честное ограничение",
+  "prompt": "has использует сравнение, которого T не обещает. Исправь сигнатуру через T: Equatable и проверь Int и String. Сохрани имя has как в коде.",
+  "code": "func has<T>(_ value: T, in values: [T]) -> Bool {\n    values.contains(value)\n}",
+  "key": "func has<T: Equatable>(_ value: T, in values: [T]) -> Bool {\n    values.contains(value)\n}\nprint(has(71, in: [71, 72]))\nprint(has(\"Фото\", in: [\"Эскиз\"]))\n\nФункция компилируется благодаря Equatable. Вывод true и false."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни контракт",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Почему firstValue возвращает конкретный T? Какие операции обещает Equatable? Почему where лучше ограничения всей Shelf для одного contains?",
+  "key": "T связывает вход и выход одним выбранным типом без обязательного приведения. Equatable разрешает проверку равенства. Условное расширение добавляет contains только сравнимым элементам, сохраняя базовый контейнер для остальных типов."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Добавь условную способность",
+  "prompt": "К объявленной Shelf добавь extension where Item: Equatable с contains. Покажи, что Shelf<Preview> без Equatable всё ещё умеет add/first, а Shelf<Int> умеет contains.",
+  "code": "struct Shelf<Item> {\n    private var items: [Item] = []\n    mutating func add(_ item: Item) { items.append(item) }\n    func first() -> Item? { items.first }\n    var count: Int { items.count }\n}\n// Напиши условное расширение",
+  "key": "struct Shelf<Item> {\n    private var items: [Item] = []\n    mutating func add(_ item: Item) { items.append(item) }\n    func first() -> Item? { items.first }\n    var count: Int { items.count }\n}\nextension Shelf where Item: Equatable {\n    func contains(_ item: Item) -> Bool { items.contains(item) }\n}\nstruct Preview { let id: Int }\nvar previews = Shelf<Preview>()\npreviews.add(Preview(id: 71))\nprint(previews.first()?.id ?? 0)\nvar ids = Shelf<Int>()\nids.add(71)\nprint(ids.contains(71))\n\nВывод 71, true; Preview не обязан быть Equatable для хранения."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови replacing<T: Equatable>(_:old:new:): верни новый массив, заменив каждый элемент, равный old, на new. Для [71,72,71], old 71 и new 99 ожидается [99,72,99]; пустой массив остаётся пустым. В теле сравнение и сбор массива, исходный вход не меняй.",
+  "key": "func replacing<T: Equatable>(\n    _ values: [T], old: T, new: T\n) -> [T] {\n    var result: [T] = []\n    for value in values { result.append(value == old ? new : value) }\n    return result\n}\nprint(replacing([71, 72, 71], old: 71, new: 99))\n\nТа же generic-связь сохранена в аргументах и результате; Equatable нужен только для сравнения."
+ }
+]

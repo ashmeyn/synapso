@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Удержание и разрыв",
+  "prompt": "Назови весь вывод. Сначала удаляется внешняя screen, затем observer?.close() разрывает демонстрационный цикл. Какие три сильные связи существовали?",
+  "code": "final class PulseSource {\n    var onTick: (() -> Void)?\n    func tick() { onTick?() }\n}\nfinal class BreathingScreen {\n    let id = 9\n    let source = PulseSource()\n    func start() { source.onTick = { print(self.id) } }\n    func close() { source.onTick = nil }\n    deinit { print(\"Экран дыхания освобождён\") }\n}\nvar screen: BreathingScreen? = BreathingScreen()\nweak var observer = screen\nscreen!.start()\nscreen = nil\nprint(observer == nil)\nobserver?.close()\nprint(observer == nil)",
+  "key": "false\nЭкран дыхания освобождён\ntrue\n\nЦепочка экран → источник → замыкание → экран удерживает экземпляр. close очищает onTick, затем слабый observer становится nil."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Исправь захват",
+  "prompt": "Заполни weak-захват в start и безопасный доступ к id с fallback -1. Источник может жить после экрана.",
+  "code": "final class PulseSource {\n    var onTick: (() -> Void)?\n    func tick() { onTick?() }\n}\nfinal class BreathingScreen {\n    let id = 9\n    let source = PulseSource()\n    func start() { source.onTick = { /* Безопасный захват и вывод */ } }\n    func close() { source.onTick = nil }\n    deinit { print(\"Экран дыхания освобождён\") }\n}\nvar screen: BreathingScreen? = BreathingScreen()\nweak var observer = screen\nlet source = screen!.source\nscreen!.start()\nsource.tick()\nscreen = nil\nprint(observer == nil)\nsource.onTick = nil",
+  "key": "final class PulseSource {\n    var onTick: (() -> Void)?\n    func tick() { onTick?() }\n}\nfinal class BreathingScreen {\n    let id = 9\n    let source = PulseSource()\n    func start() { source.onTick = { [weak self] in print(self?.id ?? -1) } }\n    func close() { source.onTick = nil }\n    deinit { print(\"Экран дыхания освобождён\") }\n}\nvar screen: BreathingScreen? = BreathingScreen()\nweak var observer = screen\nlet source = screen!.source\nscreen!.start()\nsource.tick()\nscreen = nil\nprint(observer == nil)\nsource.onTick = nil\n\nВывод 9, «Экран дыхания освобождён», true. Источник остался жив, а получатель события освободился."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Напиши проверку освобождения",
+  "prompt": "Дан исправленный класс. Самостоятельно создай Optional screen, weak observer, вызови start и очисти screen. Проверь observer == nil. Не оставляй отдельную сильную ссылку на экран.",
+  "code": "final class PulseSource {\n    var onTick: (() -> Void)?\n    func tick() { onTick?() }\n}\nfinal class BreathingScreen {\n    let id = 9\n    let source = PulseSource()\n    func start() { source.onTick = { [weak self] in print(self?.id ?? -1) } }\n    func close() { source.onTick = nil }\n    deinit { print(\"Экран дыхания освобождён\") }\n}\n// Напиши жизненный цикл и проверку",
+  "key": "final class PulseSource {\n    var onTick: (() -> Void)?\n    func tick() { onTick?() }\n}\nfinal class BreathingScreen {\n    let id = 9\n    let source = PulseSource()\n    func start() { source.onTick = { [weak self] in print(self?.id ?? -1) } }\n    func close() { source.onTick = nil }\n    deinit { print(\"Экран дыхания освобождён\") }\n}\nvar screen: BreathingScreen? = BreathingScreen()\nweak var observer = screen\nscreen!.start()\nscreen = nil\nprint(observer == nil)\n\nВывод «Экран дыхания освобождён», true. Наблюдатель не поддерживает жизнь проверяемого объекта."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. close вызвал, но не очистил",
+  "prompt": "В close ошибочно вызвали источник вместо удаления действия. Исправь только close; сильный callback должен быть очищен до screen = nil. Объясни, почему очистка из deinit не помогла бы циклу.",
+  "code": "final class PulseSource {\n    var onTick: (() -> Void)?\n    func tick() { onTick?() }\n}\nfinal class BreathingScreen {\n    let id = 9\n    let source = PulseSource()\n    func start() { source.onTick = { print(self.id) } }\n    func close() { source.tick() }\n    deinit { print(\"Экран дыхания освобождён\") }\n}\nvar screen: BreathingScreen? = BreathingScreen()\nweak var observer = screen\nscreen!.start()\nscreen!.close()\nscreen = nil\nprint(observer == nil)",
+  "key": "final class PulseSource {\n    var onTick: (() -> Void)?\n    func tick() { onTick?() }\n}\nfinal class BreathingScreen {\n    let id = 9\n    let source = PulseSource()\n    func start() { source.onTick = { print(self.id) } }\n    func close() { source.onTick = nil }\n    deinit { print(\"Экран дыхания освобождён\") }\n}\nvar screen: BreathingScreen? = BreathingScreen()\nweak var observer = screen\nscreen!.start()\nscreen!.close()\nscreen = nil\nprint(observer == nil)\n\nПосле правки «Экран дыхания освобождён», true. Вызов tick не удаляет сохранённое действие; нужен source.onTick = nil."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни диагностику",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Как воспроизвести и наблюдать удержание? Какие связи читать в Memory Graph? Чем цикл отличается от экрана, сохранённого в recent?",
+  "key": "Повторяем открытие и закрытие при известном контракте освобождения, удаляем внешнего владельца и проверяем deinit и слабый observer. В Memory Graph ищем оставшийся экземпляр и входящие сильные связи до конкретного свойства или захвата; цикл замыкается обратно на объект. recent даёт внешний достижимый путь: он может быть намеренным или лишним, но weak в callback его не удалит. После исправления повторяем тот же сценарий, а модель не заменяет проверку приложения."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Лишний владелец в истории",
+  "prompt": "Захват уже weak, но recent хранит экран. Допиши очистку recent после первого false. Не меняй start и не объясняй этот путь циклом.",
+  "code": "final class PulseSource {\n    var onTick: (() -> Void)?\n    func tick() { onTick?() }\n}\nfinal class BreathingScreen {\n    let id = 9\n    let source = PulseSource()\n    func start() { source.onTick = { [weak self] in print(self?.id ?? -1) } }\n    func close() { source.onTick = nil }\n    deinit { print(\"Экран дыхания освобождён\") }\n}\nvar screen: BreathingScreen? = BreathingScreen()\nvar recent: [BreathingScreen] = [screen!]\nweak var observer = screen\nscreen!.start()\nscreen = nil\nprint(observer == nil)\n// Убери внешних владельцев из recent\nprint(observer == nil)",
+  "key": "final class PulseSource {\n    var onTick: (() -> Void)?\n    func tick() { onTick?() }\n}\nfinal class BreathingScreen {\n    let id = 9\n    let source = PulseSource()\n    func start() { source.onTick = { [weak self] in print(self?.id ?? -1) } }\n    func close() { source.onTick = nil }\n    deinit { print(\"Экран дыхания освобождён\") }\n}\nvar screen: BreathingScreen? = BreathingScreen()\nvar recent: [BreathingScreen] = [screen!]\nweak var observer = screen\nscreen!.start()\nscreen = nil\nprint(observer == nil)\nrecent.removeAll()\nprint(observer == nil)\n\nВывод false, «Экран дыхания освобождён», true. Последним владельцем был элемент массива, а не callback."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови BreathSummary для сводки упражнения: let rounds = 3, Optional onOpen и prepare(), сохраняющий действие с weak self и выводом rounds (0, если объекта нет). Добавь deinit «Сводка освобождена». Создай Optional summary и weak observer, вызови prepare и onOpen, очисти summary, проверь nil. Ожидаются 3, сообщение deinit, true.",
+  "key": "final class BreathSummary {\n    let rounds = 3\n    var onOpen: (() -> Void)?\n    func prepare() {\n        onOpen = { [weak self] in print(self?.rounds ?? 0) }\n    }\n    deinit { print(\"Сводка освобождена\") }\n}\nvar summary: BreathSummary? = BreathSummary()\nweak var observer = summary\nsummary!.prepare()\nsummary!.onOpen?()\nsummary = nil\nprint(observer == nil)\n\nВывод 3, «Сводка освобождена», true. Проверка перенесена на действие сводки, без источника тиков и истории экранов."
+ }
+]

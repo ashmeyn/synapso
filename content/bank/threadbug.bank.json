@@ -1,0 +1,35 @@
+[
+ {
+  "id": "threadbug-b1",
+  "topics": [
+   "threadbug"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Зависимость срочного превью от фонового владельца",
+  "prompt": "Прочитай заданные шаги: medium не освобождает owner, release-low освобождает, run-high завершает только после освобождения. Назови два вывода; QoS ядра не симулируется.",
+  "code": "func outcome(_ steps: [String]) -> String {\n    var released = false\n    for step in steps {\n        if step == \"release-low\" { released = true }\n        if step == \"run-high\", released { return \"Готово\" }\n    }\n    return \"Ждёт\"\n}\nprint(outcome([\"run-medium\", \"run-medium\", \"run-high\"]))\nprint(outcome([\"release-low\", \"run-high\"]))",
+  "key": "Ждёт\nГотово"
+ },
+ {
+  "id": "threadbug-b2",
+  "topics": [
+   "threadbug"
+  ],
+  "type": "Допиши",
+  "title": "Повтор попытки выгрузки архивов",
+  "prompt": "Напиши retryLater(attempt:maxAttempts:), которая сообщает, разрешена ли новая попытка после уже выполненного attempt. Номер попытки начинается с 1; новая разрешена, только если бюджет ещё не исчерпан. Это решение допуска, а не немедленный spin.",
+  "code": "// Напиши retryLater(attempt:maxAttempts:)",
+  "key": "func retryLater(attempt: Int, maxAttempts: Int) -> Bool {\n    attempt < maxAttempts\n}\nprint(retryLater(attempt: 1, maxAttempts: 3))\nprint(retryLater(attempt: 3, maxAttempts: 3))\n\nПри 1 из 3 true, при 3 из 3 false. При exhausted-бюджете caller должен закончить или сообщить ошибку."
+ },
+ {
+  "id": "threadbug-b3",
+  "topics": [
+   "threadbug"
+  ],
+  "type": "Перепиши",
+  "title": "Слот печати фотокниги",
+  "prompt": "upload крутит lock.try() в бесконечном цикле, пока слот не освободится: поток сжигает процессор и никогда не сдаётся. Перепиши на конечное число попыток: при успехе выполни work под lock и верни true, при исчерпании бюджета верни false без work. unlock — только после успешного try.",
+  "code": "import Foundation\nfinal class PrintSlot {\n    private let lock = NSLock()\n    func upload(maxAttempts: Int, work: () -> Void) -> Bool {\n        while !lock.try() {}\n        defer { lock.unlock() }\n        work()\n        return true\n    }\n}\nlet slot = PrintSlot()\nprint(slot.upload(maxAttempts: 2) { print(\"Фотокнига\") })\nprint(slot.upload(maxAttempts: 0) { print(\"Фотокнига\") })",
+  "key": "import Foundation\nfinal class PrintSlot {\n    private let lock = NSLock()\n    func upload(maxAttempts: Int, work: () -> Void) -> Bool {\n        for _ in 0..<max(0, maxAttempts) {\n            if lock.try() {\n                defer { lock.unlock() }\n                work()\n                return true\n            }\n        }\n        return false\n    }\n}\nlet slot = PrintSlot()\nprint(slot.upload(maxAttempts: 2) { print(\"Фотокнига\") })\nprint(slot.upload(maxAttempts: 0) { print(\"Фотокнига\") })\n\nВывод «Фотокнига», true, затем false без печати. Бюджет гарантирует выход и честный статус caller-у, но не успех: при занятом слоте все попытки вернут false. В реальном коде между попытками ждут события готовности, а не крутят цикл подряд."
+ }
+]

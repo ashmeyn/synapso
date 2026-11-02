@@ -1,0 +1,35 @@
+[
+ {
+  "id": "fp-b1",
+  "topics": [
+   "fp"
+  ],
+  "type": "Перепиши",
+  "title": "Восстановление резервной копии",
+  "prompt": "Функция completed меняет исходный объект, хотя result объявлен через let. Перейди на структуру с let percent и верни новое значение. Должно получиться 10 100.",
+  "code": "final class RestoreProgress {\n    var percent = 10\n}\nfunc completed(_ item: RestoreProgress) -> RestoreProgress {\n    let result = item\n    result.percent = 100\n    return result\n}\nlet original = RestoreProgress()\nlet result = completed(original)\nprint(original.percent, result.percent)",
+  "key": "struct RestoreProgress {\n    let percent: Int\n}\nfunc completed(_ item: RestoreProgress) -> RestoreProgress {\n    RestoreProgress(percent: 100)\n}\nlet original = RestoreProgress(percent: 10)\nlet result = completed(original)\nprint(original.percent, result.percent)\n\nПередача ссылки разделяла один объект. Новый снимок значения оставляет исходный прогресс прежним."
+ },
+ {
+  "id": "fp-b2",
+  "topics": [
+   "fp"
+  ],
+  "type": "Допиши",
+  "title": "Напоминание без часов внутри",
+  "prompt": "Функция решает, пора ли показывать напоминание. Передай текущее время параметром now: Int, без Date() внутри. Граница включительна: deadline=8, now=7 → false, now=8 → true.",
+  "code": "struct Reminder { let deadline: Int }\nfunc isDue(_ reminder: Reminder, now: Int) -> Bool {\n    // TODO\n}",
+  "key": "struct Reminder {\n    let deadline: Int\n}\nfunc isDue(_ reminder: Reminder, now: Int) -> Bool {\n    reminder.deadline <= now\n}\nlet reminder = Reminder(deadline: 8)\nprint(isDue(reminder, now: 7))\nprint(isDue(reminder, now: 8))\n\nВывод: false, true. Явный now позволяет повторить проверку на тех же входах и проверить границу."
+ },
+ {
+  "id": "fp-b3",
+  "topics": [
+   "fp"
+  ],
+  "type": "Допиши",
+  "title": "Индикатор батареи",
+  "prompt": "Допиши compose: верни функцию, которая сначала применяет first, затем second. Ни одна из них не меняет внешнее состояние. @escaping нужен, потому что возвращаемое замыкание использует параметры после возврата compose. Проверь 120 и −5.",
+  "code": "func compose<A, B, C>(\n    _ first: @escaping (A) -> B,\n    _ second: @escaping (B) -> C\n) -> (A) -> C {\n    // TODO\n}\nfunc clamp(_ value: Int) -> Int { min(max(value, 0), 100) }\nfunc label(_ value: Int) -> String { \"\\(value)%\" }",
+  "key": "func compose<A, B, C>(\n    _ first: @escaping (A) -> B,\n    _ second: @escaping (B) -> C\n) -> (A) -> C {\n    { second(first($0)) }\n}\nfunc clamp(_ value: Int) -> Int { min(max(value, 0), 100) }\nfunc label(_ value: Int) -> String { \"\\(value)%\" }\nlet display = compose(clamp, label)\nprint(display(120))\nprint(display(-5))\n\nВывод: 100%, 0%. Порядок функций закреплён типами A → B → C; compose сама возвращает правило."
+ }
+]

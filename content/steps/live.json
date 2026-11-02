@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Контрпример знакомому решению",
+  "prompt": "Предскажи строку. Какой контракт нарушен и какое условие пустого массива надо уточнить до правки?",
+  "code": "func badMaximum(_ values: [Int]) -> Int {\n    var best = 0\n    for value in values { best = max(best, value) }\n    return best\n}\nprint(badMaximum([-5, -2]))",
+  "key": "0\n\nДля [-5,-2] максимум должен быть -2. best=0 — не допустимая начальная база; для пустого нужно согласовать nil либо другой отдельный результат."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Назови инвариант и напиши",
+  "prompt": "Посчитай суммарное число Character в [String]; пустой массив даёт 0. Напиши totalLengths и проверки ASCII, семейного emoji и пустого. Перед кодом одной фразой назови состояние счётчика.",
+  "code": "// func totalLengths(_ values: [String]) -> Int",
+  "key": "func totalLengths(_ values: [String]) -> Int {\n    var count = 0\n    for value in values { count += value.count }\n    return count\n}\nassert(totalLengths([\"А\", \"👨‍👩‍👧‍👦\"]) == 2)\nassert(totalLengths([]) == 0)\n\nСчётчик хранит сумму count уже обработанных строк. Выбираем Character по контракту, не количество байтов."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Сохрани нужный результат",
+  "prompt": "Самостоятельно напиши unfinishedIDs([Reminder])->[Int]: id невыполненных в исходном порядке. id уникальны, сортировки нет. Проверь [8 done=true,9 done=false] и пустое.",
+  "code": "struct Reminder { let id: Int; let isDone: Bool }",
+  "key": "struct Reminder { let id: Int; let isDone: Bool }\nfunc unfinishedIDs(_ values: [Reminder]) -> [Int] {\n    var result: [Int] = []\n    for value in values where !value.isDone { result.append(value.id) }\n    return result\n}\nassert(unfinishedIDs([Reminder(id: 8, isDone: true),\n                      Reminder(id: 9, isDone: false)]) == [9])\nassert(unfinishedIDs([]).isEmpty)\n\nОтвет — id, не индекс и не новое имя. Выбор результата сделан до оптимизации."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Проверь границу",
+  "prompt": "allPositive должен принимать только значения >0, а пустой массив — true. Найди ошибку на [2,0], исправь, добавь нормальный и пустой вход. Объясни заменённый знак.",
+  "code": "func allPositive(_ values: [Int]) -> Bool {\n    for value in values { if value < 0 { return false } }\n    return true\n}\nprint(allPositive([2, 0]))",
+  "key": "func allPositive(_ values: [Int]) -> Bool {\n    for value in values { if value <= 0 { return false } }\n    return true\n}\nassert(allPositive([2, 3]))\nassert(!allPositive([2, 0]))\nassert(allPositive([]))\n\nНоль нарушает строгое >0, поэтому отвергаем <=0. Пустой вход проходит выбранное универсальное условие."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Защити ход решения",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Что уточняешь до написания и как выбираешь результат? Почему нужны контрпример и инвариант? Как рассказываешь о сложности и следующем улучшении, не скрывая границы решения?",
+  "key": "Уточняем диапазон, порядок, повторы, пустой случай и тип ответа. Инвариант объясняет каждый шаг, контрпример проверяет обещание, а не только знакомый happy path. Сложность выводим из операций и числа проходов с названной единицей входа; улучшение связываем с новым размером или требованием, сохраняя корректный вариант."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Поменяй результат поиска",
+  "prompt": "Теперь нужно не число, а индекс первого нечётного Int либо nil. Отрицательные нечётные допустимы. Напиши firstOddIndex, проверь [2,6,-3,1]→2, все чётные и пустое. Не переписывай функцию длины строк.",
+  "code": "// func firstOddIndex(_ values: [Int]) -> Int?",
+  "key": "func firstOddIndex(_ values: [Int]) -> Int? {\n    for index in values.indices where values[index] % 2 != 0 { return index }\n    return nil\n}\nassert(firstOddIndex([2, 6, -3, 1]) == 2)\nassert(firstOddIndex([2, 4]) == nil)\nassert(firstOddIndex([]) == nil)\n\nСохраняется первый подходящий индекс, отсутствие — Optional. Для отрицательных проверяем остаток !=0, не ==1."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "По памяти напиши hasAdjacentDuplicate([Int])->Bool: true только при одинаковых соседях. Проверь [1,2,2], [1,2,1], пустое и один элемент. Вслух объясни, почему поиск любых дублей через Set изменил бы задачу.",
+  "key": "func hasAdjacentDuplicate(_ values: [Int]) -> Bool {\n    guard values.count > 1 else { return false }\n    for index in 1..<values.count {\n        if values[index] == values[index - 1] { return true }\n    }\n    return false\n}\nassert(hasAdjacentDuplicate([1, 2, 2]))\nassert(!hasAdjacentDuplicate([1, 2, 1]))\nassert(!hasAdjacentDuplicate([]))\nassert(!hasAdjacentDuplicate([1]))\n\nКонтракт про соседство требует сравнить соседние позиции. Наличие одинаковых значений где угодно — другое условие."
+ }
+]

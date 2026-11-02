@@ -1,0 +1,35 @@
+[
+ {
+  "id": "spm-b1",
+  "topics": [
+   "spm"
+  ],
+  "type": "Допиши",
+  "title": "Длина текста в редакторе",
+  "prompt": "В локальном TextPolicy функция visibleCount должна остаться internal. Собери testTarget и тест на «Лист»=4 с @testable import, не меняй доступ ради теста.",
+  "code": "// Файл: Sources/TextPolicy/Policy.swift\nfunc visibleCount(_ value: String) -> Int { value.count }",
+  "key": "// Файл: Package.swift\n// swift-tools-version: 5.9\nimport PackageDescription\nlet package = Package(\n    name: \"TextPolicy\",\n    products: [.library(name: \"TextPolicy\", targets: [\"TextPolicy\"])],\n    targets: [\n        .target(name: \"TextPolicy\"),\n        .testTarget(name: \"TextPolicyTests\", dependencies: [\"TextPolicy\"])\n    ]\n)\n// Файл: Sources/TextPolicy/Policy.swift\nfunc visibleCount(_ value: String) -> Int { value.count }\n// Файл: Tests/TextPolicyTests/PolicyTests.swift\nimport XCTest\n@testable import TextPolicy\nfinal class PolicyTests: XCTestCase {\n    func testCount() { XCTAssertEqual(visibleCount(\"Лист\"), 4) }\n}\n\n@testable применяется в тестовом target с testability. Публичный интерфейс библиотеки не расширялся."
+ },
+ {
+  "id": "spm-b2",
+  "topics": [
+   "spm"
+  ],
+  "type": "Перепиши",
+  "title": "Упорядоченные поля формы",
+  "prompt": "FormattingClient должен импортировать OrderedCollections из swift-collections. Сейчас нет ни пакетной, ни target-зависимости. Допиши полный manifest, разрешив только 1.1.x; имя продукта не заменяй именем пакета.",
+  "code": "// swift-tools-version: 5.9\nimport PackageDescription\nlet package = Package(name: \"FormattingClient\", targets: [\n    .target(name: \"FormattingClient\")\n])",
+  "key": "// swift-tools-version: 5.9\nimport PackageDescription\nlet package = Package(\n    name: \"FormattingClient\",\n    dependencies: [.package(\n        url: \"https://github.com/apple/swift-collections.git\",\n        .upToNextMinor(from: \"1.1.0\")\n    )],\n    targets: [.target(name: \"FormattingClient\", dependencies: [\n        .product(name: \"OrderedCollections\", package: \"swift-collections\")\n    ])]\n)\n\nURL и ограничение лежат в dependencies пакета, .product — в dependencies клиента. Нижняя граница 1.1.0 включена, 1.2.0 исключена."
+ },
+ {
+  "id": "spm-b3",
+  "topics": [
+   "spm"
+  ],
+  "type": "Перепиши",
+  "title": "Публичный заголовок архива",
+  "prompt": "ArchiveCore хранит ArchiveLabel(text) и технический DiskPath(raw). Только label нужен ArchiveFeature и внешнему клиенту; путь нужен лишь core. Напиши минимальную границу доступа и функцию archiveTitle в feature, не открывай DiskPath.",
+  "code": "struct ArchiveLabel { let text: String }\nstruct DiskPath { let raw: String }",
+  "key": "// Файл: Sources/ArchiveCore/Label.swift\npublic struct ArchiveLabel {\n    public let text: String\n    public init(text: String) { self.text = text }\n}\nstruct DiskPath { let raw: String }\n// Файл: Sources/ArchiveFeature/Title.swift\nimport ArchiveCore\npublic func archiveTitle(_ label: ArchiveLabel) -> String { label.text }\n\npublic API включает тип, чтение и создание label; DiskPath остаётся internal и не появляется в публичной сигнатуре."
+ }
+]

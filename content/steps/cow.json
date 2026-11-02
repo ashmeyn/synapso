@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Общий класс внутри значения",
+  "prompt": "Что напечатают два массива до реализации CoW? Не объясняй результат тем, что struct якобы «живёт в heap».",
+  "code": "private final class ListStorage {\n    var items: [String]\n    init(_ items: [String]) { self.items = items }\n}\nstruct PackingList {\n    private var storage: ListStorage\n    init(_ items: [String]) { storage = ListStorage(items) }\n    var items: [String] { storage.items }\n    mutating func append(_ item: String) {\n        storage.items.append(item)\n    }\n}\nlet original = PackingList([\"Кроссовки\"])\nvar draft = original\ndraft.append(\"Полотенце\")\nprint(original.items)\nprint(draft.items)",
+  "key": "[\"Кроссовки\", \"Полотенце\"]\n[\"Кроссовки\", \"Полотенце\"]\n\nОбе обёртки хранят одну ссылку ListStorage, поэтому append меняет общий объект."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Отдели перед записью",
+  "prompt": "Заполни проверку известной уникальности и создание нового ListStorage до append.",
+  "code": "private final class ListStorage {\n    var items: [String]\n    init(_ items: [String]) { self.items = items }\n}\nstruct PackingList {\n    private var storage: ListStorage\n    init(_ items: [String]) { storage = ListStorage(items) }\n    var items: [String] { storage.items }\n    mutating func append(_ item: String) {\n        if /* уникальность не подтверждена */ {\n            /* новое хранилище со старым значением */\n        }\n        storage.items.append(item)\n    }\n}\nlet original = PackingList([\"Кроссовки\"])\nvar draft = original\ndraft.append(\"Полотенце\")\nprint(original.items)\nprint(draft.items)",
+  "key": "private final class ListStorage {\n    var items: [String]\n    init(_ items: [String]) { self.items = items }\n}\nstruct PackingList {\n    private var storage: ListStorage\n    init(_ items: [String]) { storage = ListStorage(items) }\n    var items: [String] { storage.items }\n    mutating func append(_ item: String) {\n        if !isKnownUniquelyReferenced(&storage) {\n            storage = ListStorage(storage.items)\n        }\n        storage.items.append(item)\n    }\n}\nlet original = PackingList([\"Кроссовки\"])\nvar draft = original\ndraft.append(\"Полотенце\")\nprint(original.items)\nprint(draft.items)\n\nОригинал содержит «Кроссовки», черновик — ещё «Полотенце». Проверка и отделение предшествуют изменению."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Напиши свою обёртку",
+  "prompt": "Даны ListStorage и хвост проверки. Самостоятельно напиши PackingList: private storage, init, getter items и mutating append с isKnownUniquelyReferenced.",
+  "code": "private final class ListStorage {\n    var items: [String]\n    init(_ items: [String]) { self.items = items }\n}\n// Напиши PackingList\nlet original = PackingList([\"Кроссовки\"])\nvar draft = original\ndraft.append(\"Полотенце\")\nprint(original.items)\nprint(draft.items)",
+  "key": "private final class ListStorage {\n    var items: [String]\n    init(_ items: [String]) { self.items = items }\n}\nstruct PackingList {\n    private var storage: ListStorage\n    init(_ items: [String]) { storage = ListStorage(items) }\n    var items: [String] { storage.items }\n    mutating func append(_ item: String) {\n        if !isKnownUniquelyReferenced(&storage) {\n            storage = ListStorage(storage.items)\n        }\n        storage.items.append(item)\n    }\n}\nlet original = PackingList([\"Кроссовки\"])\nvar draft = original\ndraft.append(\"Полотенце\")\nprint(original.items)\nprint(draft.items)\n\nКласс остаётся деталью реализации. Письменно восстановлен алгоритм CoW своей структуры, а не только стандартной Array."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Перепутали условие",
+  "prompt": "При общем storage отделение не срабатывает. Исправь условие; копирование должно идти при неподтверждённой уникальности.",
+  "code": "private final class ListStorage {\n    var items: [String]\n    init(_ items: [String]) { self.items = items }\n}\nstruct PackingList {\n    private var storage: ListStorage\n    init(_ items: [String]) { storage = ListStorage(items) }\n    var items: [String] { storage.items }\n    mutating func append(_ item: String) {\n        if isKnownUniquelyReferenced(&storage) {\n            storage = ListStorage(storage.items)\n        }\n        storage.items.append(item)\n    }\n}\nlet original = PackingList([\"Кроссовки\"])\nvar draft = original\ndraft.append(\"Полотенце\")\nprint(original.items)\nprint(draft.items)",
+  "key": "private final class ListStorage {\n    var items: [String]\n    init(_ items: [String]) { self.items = items }\n}\nstruct PackingList {\n    private var storage: ListStorage\n    init(_ items: [String]) { storage = ListStorage(items) }\n    var items: [String] { storage.items }\n    mutating func append(_ item: String) {\n        if !isKnownUniquelyReferenced(&storage) {\n            storage = ListStorage(storage.items)\n        }\n        storage.items.append(item)\n    }\n}\nlet original = PackingList([\"Кроссовки\"])\nvar draft = original\ndraft.append(\"Полотенце\")\nprint(original.items)\nprint(draft.items)\n\nДо правки оба массива содержат «Полотенце». После неё оригинал не изменился."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни отделение",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "PackingList хранит class со строками. Почему нужна проверка уникальности? Почему она стоит перед записью? Как влияет новый mutating-метод без проверки?",
+  "key": "Обёртки могут разделять ListStorage, поэтому перед изменением нужен отдельный объект, если уникальность не подтверждена. Проверка после записи не отменит уже общее изменение. Любой новый путь мутации обязан соблюдать правило, иначе value-поведение снова нарушится."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Безопасно удали вещь",
+  "prompt": "Добавь removeLast() -> String?. Пустой список возвращает nil; непустой сначала отделяется при необходимости, затем делает popLast. Оригинал из двух вещей не должен уменьшиться.",
+  "code": "private final class ListStorage {\n    var items: [String]\n    init(_ items: [String]) { self.items = items }\n}\nstruct PackingList {\n    private var storage: ListStorage\n    init(_ items: [String]) { storage = ListStorage(items) }\n    var items: [String] { storage.items }\n    mutating func append(_ item: String) {\n        if !isKnownUniquelyReferenced(&storage) {\n            storage = ListStorage(storage.items)\n        }\n        storage.items.append(item)\n    }\n}\n// Добавь removeLast внутрь PackingList\nlet original = PackingList([\"Кроссовки\", \"Полотенце\"])\nvar draft = original\nprint(draft.removeLast() ?? \"Пусто\")\nprint(original.items.count)\nprint(draft.items.count)\nvar empty = PackingList([])\nprint(empty.removeLast() == nil)",
+  "key": "private final class ListStorage {\n    var items: [String]\n    init(_ items: [String]) { self.items = items }\n}\nstruct PackingList {\n    private var storage: ListStorage\n    init(_ items: [String]) { storage = ListStorage(items) }\n    var items: [String] { storage.items }\n    mutating func removeLast() -> String? {\n        guard !storage.items.isEmpty else { return nil }\n        if !isKnownUniquelyReferenced(&storage) {\n            storage = ListStorage(storage.items)\n        }\n        return storage.items.popLast()\n    }\n    mutating func append(_ item: String) {\n        if !isKnownUniquelyReferenced(&storage) {\n            storage = ListStorage(storage.items)\n        }\n        storage.items.append(item)\n    }\n}\nlet original = PackingList([\"Кроссовки\", \"Полотенце\"])\nvar draft = original\nprint(draft.removeLast() ?? \"Пусто\")\nprint(original.items.count)\nprint(draft.items.count)\nvar empty = PackingList([])\nprint(empty.removeLast() == nil)\n\nВывод «Полотенце», 2, 1, true. Удаление соблюдает тот же барьер перед записью, пустой случай безопасен."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "По памяти создай PackingState со скрытым PackingStorage-классом, хранящим Bool isPacked. Getter возвращает Bool, setPacked(_:) — mutating и проверяет isKnownUniquelyReferenced до изменения. Копия original с false получает true; покажи false оригинала и true копии.",
+  "key": "private final class PackingStorage {\n    var isPacked: Bool\n    init(_ isPacked: Bool) { self.isPacked = isPacked }\n}\nstruct PackingState {\n    private var storage: PackingStorage\n    init(isPacked: Bool) { storage = PackingStorage(isPacked) }\n    var isPacked: Bool { storage.isPacked }\n    mutating func setPacked(_ value: Bool) {\n        if !isKnownUniquelyReferenced(&storage) {\n            storage = PackingStorage(storage.isPacked)\n        }\n        storage.isPacked = value\n    }\n}\nlet original = PackingState(isPacked: false)\nvar draft = original\ndraft.setPacked(true)\nprint(original.isPacked)\nprint(draft.isPacked)\n\nВывод false, true. Алгоритм отделения перенесён на другой элемент состояния, а не повторён append."
+ }
+]

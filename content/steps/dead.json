@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Прочитай цикл",
+  "prompt": "Назови цепочку взаимного ожидания и недостижимую успешную строку. Не запускай исходник для получения полного вывода; не обещай конкретный вид диагностики Dispatch.",
+  "code": "import Dispatch\nlet index = DispatchQueue(label: \"library.index\")\nlet settings = DispatchQueue(label: \"library.settings\")\nindex.sync {\n    print(\"Индекс 41\")\n    settings.sync {\n        print(\"Настройки\")\n        index.sync { print(\"Книга 41\") }\n    }\n}",
+  "key": "index ждёт settings, settings ждёт index. Полного успешного вывода нет: «Книга 41» не должна считаться нормальным результатом. Возможны зависание или аварийная диагностика Dispatch."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Передай книгу дальше",
+  "prompt": "Заполни async на всех трёх фазах и main.async для done. Не заменяй callback записью во внешнюю изменяемую переменную.",
+  "code": "import Dispatch\nfunc findBook(id: Int, done: @escaping (String) -> Void) {\n    let index = DispatchQueue(label: \"library.index\")\n    let settings = DispatchQueue(label: \"library.settings\")\n    index./* Без ожидания */ {\n        print(\"Индекс \\(id)\")\n        settings./* Без ожидания */ {\n            print(\"Настройки\")\n            index./* Без ожидания */ {\n                let title = \"Книга \\(id)\"\n                DispatchQueue.main./* Доставка */ { done(title) }\n            }\n        }\n    }\n}",
+  "key": "import Dispatch\nfunc findBook(id: Int, done: @escaping (String) -> Void) {\n    let index = DispatchQueue(label: \"library.index\")\n    let settings = DispatchQueue(label: \"library.settings\")\n    index.async {\n        print(\"Индекс \\(id)\")\n        settings.async {\n            print(\"Настройки\")\n            index.async {\n                let title = \"Книга \\(id)\"\n                DispatchQueue.main.async { done(title) }\n            }\n        }\n    }\n}\n\nДля id 41: «Индекс 41», «Настройки», затем callback «Книга 41». Нигде внутри цепочки нет ожидания своей будущей работы."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Напиши поиск закладки",
+  "prompt": "Самостоятельно напиши findBookmark(id:done:) с цепочкой index.async → settings.async → index.async → main.async. Результат для id 42 — «Закладка 42», первые сообщения — «Индекс 42», «Настройки».",
+  "code": "import Dispatch\n// Напиши findBookmark(id:done:)",
+  "key": "import Dispatch\nfunc findBookmark(id: Int, done: @escaping (String) -> Void) {\n    let index = DispatchQueue(label: \"library.index\")\n    let settings = DispatchQueue(label: \"library.settings\")\n    index.async {\n        print(\"Индекс \\(id)\")\n        settings.async {\n            print(\"Настройки\")\n            index.async {\n                let title = \"Закладка \\(id)\"\n                DispatchQueue.main.async { done(title) }\n            }\n        }\n    }\n}\n\nПроверка для id 42 даёт другой результат, чем в ступени 2. Порядок фаз сохранён callback-цепочкой без sync."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Исправь main.sync",
+  "prompt": "showBook вызывается с главного потока приложения. Замени доставку на main.async и сохрани вызов done после сообщения. Исходник не является успешным исполняемым примером.",
+  "code": "import Dispatch\n// Контекст: эта функция вызвана на главном потоке приложения.\nfunc showBook(done: @escaping () -> Void) {\n    DispatchQueue.main.sync {\n        print(\"Книга 41\")\n        done()\n    }\n}",
+  "key": "import Dispatch\n// Контекст: эта функция вызвана на главном потоке приложения.\nfunc showBook(done: @escaping () -> Void) {\n    DispatchQueue.main.async {\n        print(\"Книга 41\")\n        done()\n    }\n}\n\nПосле исправления поставленный блок печатает «Книга 41», затем вызывает done; вызывающий главный поток не ждёт себя."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни ожидание",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Почему две очереди образуют цикл? Почему main.sync с главного потока опасен? Как async и callback сохраняют порядок результата?",
+  "key": "index блокируется до завершения settings, а settings — до работы index, которая не может продолжиться. main.sync с главного потока создаёт ожидание собственного исполнителя. async ставит следующую фазу и освобождает текущую; callback получает готовое значение позже. При этом главную очередь нельзя блокировать ожиданием callback."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Верни рейтинг UI",
+  "prompt": "Перепиши showRating: worker.async готовит результат, main.async показывает «Рейтинг 5» и вызывает done. Вызов начинается на главном потоке; не используй worker.sync/main.sync.",
+  "code": "import Dispatch\n// Контекст: вызов с главного потока приложения.\nfunc showRating(done: @escaping () -> Void) {\n    let worker = DispatchQueue(label: \"library.rating\")\n    worker.sync {\n        DispatchQueue.main.sync {\n            print(\"Рейтинг 5\")\n            done()\n        }\n    }\n}",
+  "key": "import Dispatch\n// Контекст: вызов с главного потока приложения.\nfunc showRating(done: @escaping () -> Void) {\n    let worker = DispatchQueue(label: \"library.rating\")\n    worker.async {\n        DispatchQueue.main.async {\n            print(\"Рейтинг 5\")\n            done()\n        }\n    }\n}\n\nПоявится «Рейтинг 5», затем done. Цикл UI → worker → UI устранён асинхронной передачей."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови countMatches(done:) по памяти: index.async получает неизменяемый count = 2, settings.async продолжает обработку и main.async передаёт Int в done. Никаких sync и внешней общей переменной. В callback ожидается 2.",
+  "key": "import Dispatch\nfunc countMatches(done: @escaping (Int) -> Void) {\n    let index = DispatchQueue(label: \"library.index\")\n    let settings = DispatchQueue(label: \"library.settings\")\n    index.async {\n        let count = 2\n        settings.async {\n            DispatchQueue.main.async { done(count) }\n        }\n    }\n}\n\nПередано 2. Механизм перенесён на числовой результат, а не копию строки книги."
+ }
+]

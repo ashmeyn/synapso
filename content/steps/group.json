@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Нулевой баланс раньше работы",
+  "prompt": "inspectEarlyLeave вызывается с внешней фоновой очереди. Назови вывод и объясни, почему true не означает готовую карточку. В wait используется немедленный deadline.",
+  "code": "import Dispatch\n// Контекст: внешняя фоновая работа, не главная очередь.\nfunc inspectEarlyLeave() {\n    let group = DispatchGroup()\n    group.enter()\n    let finish = { print(\"Карточка 71\") }\n    group.leave()\n    print(group.wait(timeout: .now()) == .success)\n    finish()\n}",
+  "key": "true\nКарточка 71\n\nУчёт отпущен до finish, поэтому группа уже нулевая. Это неверная граница окончания, а не успешное ожидание результата."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Одна карточка и notify",
+  "prompt": "Заполни enter, defer leave и notify для refreshOne. Для этой партии нужен только id 71, без wait главного потока.",
+  "code": "import Dispatch\nfunc refreshOne(done: @escaping () -> Void) {\n    let worker = DispatchQueue(label: \"garden.cards\")\n    let group = DispatchGroup()\n    for id in [71] {\n        // Войди до отправки\n        worker.async {\n            // Заверши один учёт при выходе\n            print(\"Карточка \\(id)\")\n        }\n    }\n    group./* Уведомление */(queue: .main) {\n        print(\"Панель готова\")\n        done()\n    }\n}",
+  "key": "import Dispatch\nfunc refreshOne(done: @escaping () -> Void) {\n    let worker = DispatchQueue(label: \"garden.cards\")\n    let group = DispatchGroup()\n    for id in [71] {\n        group.enter()\n        worker.async {\n            defer { group.leave() }\n            print(\"Карточка \\(id)\")\n        }\n    }\n    group.notify(queue: .main) {\n        print(\"Панель готова\")\n        done()\n    }\n}\n\nВывод «Карточка 71», «Панель готова», затем done. enter() и leave() относятся к реальной работе одной карточки."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Поставь три карточки",
+  "prompt": "Самостоятельно напиши refreshThree(done:) для id 71, 72, 73: serial worker, локальная группа, enter до каждой отправки, defer leave в работе, notify на main после постановки всех.",
+  "code": "import Dispatch\n// Напиши refreshThree(done:)",
+  "key": "import Dispatch\nfunc refreshThree(done: @escaping () -> Void) {\n    let worker = DispatchQueue(label: \"garden.cards\")\n    let group = DispatchGroup()\n    for id in [71, 72, 73] {\n        group.enter()\n        worker.async {\n            defer { group.leave() }\n            print(\"Карточка \\(id)\")\n        }\n    }\n    group.notify(queue: .main) {\n        print(\"Панель готова\")\n        done()\n    }\n}\n\nВывод трёх id по порядку, затем «Панель готова». Это другая партия и другой результат, чем в ступени 2."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Ошибка пропустила leave",
+  "prompt": "Для id 72 срабатывает return до leave. Исправь refreshAvailable через defer до guard, сохрани сообщение «Нет карточки 72» и финальный notify. Не добавляй второй leave.",
+  "code": "import Dispatch\nfunc refreshAvailable(done: @escaping () -> Void) {\n    let worker = DispatchQueue(label: \"garden.cards\")\n    let group = DispatchGroup()\n    for id in [71, 72] {\n        group.enter()\n        worker.async {\n            guard id != 72 else { print(\"Нет карточки 72\"); return }\n            print(\"Карточка \\(id)\")\n            group.leave()\n        }\n    }\n    group.notify(queue: .main) {\n        print(\"Панель готова\")\n        done()\n    }\n}",
+  "key": "import Dispatch\nfunc refreshAvailable(done: @escaping () -> Void) {\n    let worker = DispatchQueue(label: \"garden.cards\")\n    let group = DispatchGroup()\n    for id in [71, 72] {\n        group.enter()\n        worker.async {\n            defer { group.leave() }\n            guard id != 72 else { print(\"Нет карточки 72\"); return }\n            print(\"Карточка \\(id)\")\n        }\n    }\n    group.notify(queue: .main) {\n        print(\"Панель готова\")\n        done()\n    }\n}\n\nВывод «Карточка 71», «Нет карточки 72», «Панель готова». Завершение группы не означает успех обеих карточек, но баланс соблюдён."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни учёт",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Как связать enter/leave с работой? Почему notify подходит UI? Что означает .timedOut у wait?",
+  "key": "Enter регистрирует одну незавершённую работу до запуска, leave соответствует её настоящему окончанию ровно один раз на всех путях. notify ставит продолжение на выбранную очередь при нулевом балансе и не блокирует вызывающий UI. wait блокирует поток до нуля или deadline; .timedOut не отменяет работу и не обещает готовые результаты."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Проверь фон без ожидания UI",
+  "prompt": "Напиши inspectPending: global.async создаёт группу, делает enter, проверяет wait(timeout: .now()) и печатает true для .timedOut. Затем leave и notify на main с done. Главный поток не должен вызывать wait.",
+  "code": "import Dispatch\n// Напиши inspectPending(done:)",
+  "key": "import Dispatch\nfunc inspectPending(done: @escaping () -> Void) {\n    DispatchQueue.global().async {\n        let group = DispatchGroup()\n        group.enter()\n        let status = group.wait(timeout: .now())\n        print(status == .timedOut)\n        group.leave()\n        group.notify(queue: .main) { done() }\n    }\n}\n\nВывод true, затем done на main. Проверка известного незавершённого учёта происходит в фоне, timeout не отменяет его."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "По памяти создай refreshTips(done:): два локальных совета 81 и 82 на serial worker, enter до отправки и defer leave после работы, notify на main печатает «Советы готовы» и вызывает done. Каждый worker печатает «Совет id». Ни wait на main, ни общая переменная результатов не нужны.",
+  "key": "import Dispatch\nfunc refreshTips(done: @escaping () -> Void) {\n    let worker = DispatchQueue(label: \"garden.cards\")\n    let group = DispatchGroup()\n    for id in [81, 82] {\n        group.enter()\n        worker.async {\n            defer { group.leave() }\n            print(\"Совет \\(id)\")\n        }\n    }\n    group.notify(queue: .main) {\n        print(\"Советы готовы\")\n        done()\n    }\n}\n\nВывод «Совет 81», «Совет 82», «Советы готовы». Учёт перенесён на другую часть панели сада."
+ }
+]

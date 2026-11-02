@@ -1,0 +1,35 @@
+[
+ {
+  "id": "eq-b1",
+  "topics": [
+   "eq"
+  ],
+  "type": "Найди ошибку",
+  "title": "Аудиотуры разных музеев",
+  "prompt": "У двух музеев есть trackID 3. Сейчас Set склеивает их. Включи museumID и trackID в == и hash, сохрани оба элемента.",
+  "code": "struct TourKey: Hashable {\n    let museumID: Int\n    let trackID: Int\n    static func == (lhs: TourKey, rhs: TourKey) -> Bool {\n        lhs.trackID == rhs.trackID\n    }\n    func hash(into hasher: inout Hasher) { hasher.combine(trackID) }\n}\nlet keys: Set<TourKey> = [\n    TourKey(museumID: 1, trackID: 3),\n    TourKey(museumID: 2, trackID: 3)\n]\nprint(keys.count)",
+  "key": "struct TourKey: Hashable {\n    let museumID: Int\n    let trackID: Int\n    static func == (lhs: TourKey, rhs: TourKey) -> Bool {\n        lhs.museumID == rhs.museumID && lhs.trackID == rhs.trackID\n    }\n    func hash(into hasher: inout Hasher) {\n        hasher.combine(museumID)\n        hasher.combine(trackID)\n    }\n}\nlet keys: Set<TourKey> = [\n    TourKey(museumID: 1, trackID: 3),\n    TourKey(museumID: 2, trackID: 3)\n]\nprint(keys.count)\n\nДо правки 1, после 2. Граница уникальности — музей и аудиодорожка вместе."
+ },
+ {
+  "id": "eq-b2",
+  "topics": [
+   "eq"
+  ],
+  "type": "Перепиши",
+  "title": "Коды дорожек караоке",
+  "prompt": "Для ASCII-кодов языка дорожки EN и en нужно одно значение. Нормализуй обе стороны == и компонент hash одинаковым lowercased(). Не исправляй входные метки.",
+  "code": "struct LanguageTag: Hashable {\n    let code: String\n    static func == (lhs: LanguageTag, rhs: LanguageTag) -> Bool {\n        lhs.code.lowercased() == rhs.code.lowercased()\n    }\n    func hash(into hasher: inout Hasher) { hasher.combine(code) }\n}\nlet first = LanguageTag(code: \"EN\")\nlet second = LanguageTag(code: \"en\")\nprint(first == second)\n// Здесь нарушен контракт Hashable, не проверяй count испорченного Set",
+  "key": "struct LanguageTag: Hashable {\n    let code: String\n    static func == (lhs: LanguageTag, rhs: LanguageTag) -> Bool {\n        lhs.code.lowercased() == rhs.code.lowercased()\n    }\n    func hash(into hasher: inout Hasher) {\n        hasher.combine(code.lowercased())\n    }\n}\nlet first = LanguageTag(code: \"EN\")\nlet second = LanguageTag(code: \"en\")\nprint(first == second)\nprint(first.hashValue == second.hashValue)\nprint(Set([first, second]).count)\n\nВывод true, true, 1. Та же нормализация применяется к равенству и хэшированию; пример ограничен ASCII, не задаёт общую политику Unicode."
+ },
+ {
+  "id": "eq-b3",
+  "topics": [
+   "eq"
+  ],
+  "type": "Допиши",
+  "title": "Очередь аудиомонтажа",
+  "prompt": "У элемента-значения меняется приоритет, который участвует в синтезе Hashable. Удали старый Job, создай новый с тем же id и priority 2, вставь новый. Нельзя просто изменить локальную копию и ожидать обновления Set.",
+  "code": "struct EditJob: Hashable { let id: Int; var priority: Int }\nlet old = EditJob(id: 9, priority: 1)\nvar jobs: Set<EditJob> = [old]\n// Замени значение через remove и insert\nprint(jobs.contains(old))\nprint(jobs.contains(EditJob(id: 9, priority: 2)))\nprint(jobs.count)",
+  "key": "struct EditJob: Hashable { let id: Int; var priority: Int }\nlet old = EditJob(id: 9, priority: 1)\nvar jobs: Set<EditJob> = [old]\njobs.remove(old)\nvar updated = old\nupdated.priority = 2\njobs.insert(updated)\nprint(jobs.contains(old))\nprint(jobs.contains(EditJob(id: 9, priority: 2)))\nprint(jobs.count)\n\nВывод false, true, 1. Заменён элемент Set, а не только локальная копия."
+ }
+]

@@ -1,0 +1,35 @@
+[
+ {
+  "id": "hit-b1",
+  "topics": [
+   "hit"
+  ],
+  "type": "Найди ошибку",
+  "title": "Кнопка на изображении погодного радара",
+  "prompt": "UIImageView по умолчанию пропускает взаимодействие вместе с детьми. Исправь настройку родителя, чтобы hitTest вернул button. Геометрию не меняй.",
+  "code": "import UIKit\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 200, height: 140))\nlet image = UIImageView(frame: CGRect(x: 20, y: 20, width: 100, height: 80))\nlet button = UIButton(frame: CGRect(x: 10, y: 10, width: 30, height: 30))\nroot.addSubview(image)\nimage.addSubview(button)\nprint(root.hitTest(CGPoint(x: 35, y: 35), with: nil) === button)",
+  "key": "import UIKit\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 200, height: 140))\nlet image = UIImageView(frame: CGRect(x: 20, y: 20, width: 100, height: 80))\nlet button = UIButton(frame: CGRect(x: 10, y: 10, width: 30, height: 30))\nroot.addSubview(image)\nimage.addSubview(button)\nimage.isUserInteractionEnabled = true\nprint(root.hitTest(CGPoint(x: 35, y: 35), with: nil) === button)\n\nВывод: true. Ветка доступна после включения isUserInteractionEnabled у UIImageView."
+ },
+ {
+  "id": "hit-b2",
+  "topics": [
+   "hit"
+  ],
+  "type": "Допиши",
+  "title": "Порядок слоёв палитры",
+  "prompt": "Проверки перекрывающихся left/right уже заданы. Между ними поменяй порядок через bringSubviewToFront, чтобы второй hitTest нашёл left. Не добавляй view повторно.",
+  "code": "import UIKit\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 200, height: 140))\nlet left = UIView(frame: CGRect(x: 20, y: 20, width: 80, height: 60))\nlet right = UIView(frame: left.frame)\nroot.addSubview(left)\nroot.addSubview(right)\nlet point = CGPoint(x: 30, y: 30)\nassert(root.hitTest(point, with: nil) === right)\n// TODO: поднять left\nassert(root.hitTest(point, with: nil) === left)",
+  "key": "import UIKit\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 200, height: 140))\nlet left = UIView(frame: CGRect(x: 20, y: 20, width: 80, height: 60))\nlet right = UIView(frame: left.frame)\nroot.addSubview(left)\nroot.addSubview(right)\nlet point = CGPoint(x: 30, y: 30)\nassert(root.hitTest(point, with: nil) === right)\nroot.bringSubviewToFront(left)\nassert(root.hitTest(point, with: nil) === left)\n\nИзменён порядок subviews; второй поиск начинает с left."
+ },
+ {
+  "id": "hit-b3",
+  "topics": [
+   "hit"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Декорация спрятала кнопку будильника",
+  "prompt": "Предскажи вывод. Переопределение возвращает nil без вызова super. Почему кнопка внутри тоже не получит поиск?",
+  "code": "import UIKit\nfinal class DecorationView: UIView {\n    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {\n        nil\n    }\n}\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 200, height: 140))\nlet decoration = DecorationView(frame: root.bounds)\nlet button = UIButton(frame: CGRect(x: 10, y: 10, width: 40, height: 30))\nroot.addSubview(decoration)\ndecoration.addSubview(button)\nprint(root.hitTest(CGPoint(x: 20, y: 20), with: nil) === button)",
+  "key": "false\n\nВся ветка DecorationView пропущена, а не только её фон. root становится результатом этого дерева."
+ }
+]

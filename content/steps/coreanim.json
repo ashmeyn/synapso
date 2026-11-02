@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Модель не получила цель",
+  "prompt": "Предскажи два числа: opacity модели и toValue анимации. Анимация не добавлена к слою.",
+  "code": "import QuartzCore\nimport CoreGraphics\nlet layer = CALayer()\nCATransaction.begin()\nCATransaction.setDisableActions(true)\nlayer.opacity = 0.3\nCATransaction.commit()\nlet animation = CABasicAnimation(keyPath: \"opacity\")\nanimation.fromValue = 0.3\nanimation.toValue = 0.9\nanimation.duration = 0.25\nprint(layer.opacity)\nprint((animation.toValue as? NSNumber)?.doubleValue ?? -1)",
+  "key": "0.3\n0.9\n\nЗадан только временный переход; модель всё ещё хранит прежнюю прозрачность."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Убери обрезку тени",
+  "prompt": "Содержимое этой карточки не нужно обрезать. Исправь свойство слоя, которое мешает внешней тени; сохрани параметры тени и cornerRadius. Проверь свойство, не утверждай, что тест уже увидел пиксели.",
+  "code": "import QuartzCore\nimport CoreGraphics\nlet card = CALayer()\ncard.bounds = CGRect(x: 0, y: 0, width: 120, height: 60)\ncard.backgroundColor = CGColor(gray: 1, alpha: 1)\ncard.cornerRadius = 12\ncard.masksToBounds = true\ncard.shadowOpacity = 0.4\ncard.shadowRadius = 8\ncard.shadowOffset = CGSize(width: 0, height: 3)",
+  "key": "import QuartzCore\nimport CoreGraphics\nlet card = CALayer()\ncard.bounds = CGRect(x: 0, y: 0, width: 120, height: 60)\ncard.backgroundColor = CGColor(gray: 1, alpha: 1)\ncard.cornerRadius = 12\ncard.masksToBounds = false\ncard.shadowOpacity = 0.4\ncard.shadowRadius = 8\ncard.shadowOffset = CGSize(width: 0, height: 3)\nassert(!card.masksToBounds)\n\nmasksToBounds отключён. Это проверка конфигурации, а не изображения тени в окне."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Подготовь правильный fade",
+  "prompt": "Напиши prepareFade: сохрани start, без implicit actions запиши target в модель, подготовь CABasicAnimation для opacity с from/to и duration=0.25. На старте 0.3, цели 0.9 проверь модель и оба значения анимации. Не вызывай add.",
+  "code": "import QuartzCore\nimport CoreGraphics\n// TODO: prepareFade и проверки",
+  "key": "import QuartzCore\nimport CoreGraphics\nfunc prepareFade(layer: CALayer, to target: Float) -> CABasicAnimation {\n    let start = layer.opacity\n    CATransaction.begin()\n    CATransaction.setDisableActions(true)\n    layer.opacity = target\n    CATransaction.commit()\n    let animation = CABasicAnimation(keyPath: \"opacity\")\n    animation.fromValue = start\n    animation.toValue = target\n    animation.duration = 0.25\n    return animation\n}\nlet layer = CALayer()\nCATransaction.begin()\nCATransaction.setDisableActions(true)\nlayer.opacity = 0.3\nCATransaction.commit()\nlet animation = prepareFade(layer: layer, to: 0.9)\nassert(layer.opacity == 0.9)\nassert(animation.keyPath == \"opacity\")\nassert((animation.fromValue as? NSNumber)?.floatValue == 0.3)\nassert((animation.toValue as? NSNumber)?.floatValue == 0.9)\n\nМодель уже 0.9; параметры анимации описывают 0.3 → 0.9. Подготовка не является запуском."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Начало прочитали слишком поздно",
+  "prompt": "Модель уже правильно равна 0.9, но fromValue прочитан после её изменения: переход получился 0.9 → 0.9. Исправь прямой код без helper: сохрани прежнее значение до записи target и используй его как from. Проверь model=0.9 и from=0.3, не запускай анимацию.",
+  "code": "import QuartzCore\nimport CoreGraphics\nlet layer = CALayer()\nCATransaction.begin()\nCATransaction.setDisableActions(true)\nlayer.opacity = 0.3\nlayer.opacity = 0.9\nCATransaction.commit()\nlet animation = CABasicAnimation(keyPath: \"opacity\")\nanimation.fromValue = layer.opacity\nanimation.toValue = 0.9\nanimation.duration = 0.25\nprint(layer.opacity)\nprint((animation.fromValue as? NSNumber)?.floatValue ?? -1)",
+  "key": "import QuartzCore\nimport CoreGraphics\nlet layer = CALayer()\nCATransaction.begin()\nCATransaction.setDisableActions(true)\nlayer.opacity = 0.3\nlet start = layer.opacity\nlayer.opacity = 0.9\nCATransaction.commit()\nlet animation = CABasicAnimation(keyPath: \"opacity\")\nanimation.fromValue = start\nanimation.toValue = 0.9\nanimation.duration = 0.25\nassert(layer.opacity == 0.9)\nassert((animation.fromValue as? NSNumber)?.floatValue == 0.3)\n\nНачало прочитано до изменения модели. Удержание fillMode не заменяет model-запись."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни слой",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Кто управляет layer UIView? Чем отличаются implicit actions и explicit animation? Почему после перехода нужно правильное model-значение?",
+  "key": "UIView создаёт и управляет backing layer; самостоятельный CALayer управляется своим владельцем и правилами actions. Неявное действие может возникнуть от записи свойства, явную CABasicAnimation добавляют отдельно. model хранит конечную цель, presentation — текущий показ; параметры явной анимации не обновляют model сами."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Тень и обрезка нужны вместе",
+  "prompt": "Создай outer 120×60 с тенью и masksToBounds=false. Внутри content с frame=outer.bounds, cornerRadius=12 и masksToBounds=true. Проверь иерархию и оба флага. Не включай обрезку у outer ради контента.",
+  "code": "import QuartzCore\nimport CoreGraphics\n// TODO: два слоя",
+  "key": "import QuartzCore\nimport CoreGraphics\nlet outer = CALayer()\nlet content = CALayer()\nouter.bounds = CGRect(x: 0, y: 0, width: 120, height: 60)\nouter.shadowOpacity = 0.4\nouter.shadowRadius = 8\nouter.masksToBounds = false\ncontent.frame = outer.bounds\ncontent.backgroundColor = CGColor(gray: 1, alpha: 1)\ncontent.cornerRadius = 12\ncontent.masksToBounds = true\nouter.addSublayer(content)\nassert(content.superlayer === outer)\nassert(!outer.masksToBounds && content.masksToBounds)\n\nРазделены две обязанности, которые нельзя совместить одним masksToBounds у внешнего слоя. Геометрию content при изменении outer нужно обновлять отдельно."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови подготовку другой анимации: ширина индикатора bounds.size.width меняется с 30 на 90, высота 10 сохраняется. Функция prepareWidth принимает CALayer и CGFloat target, без implicit actions пишет новый bounds, возвращает CABasicAnimation с keyPath bounds.size.width, старым from и новым to, duration=0.25. Проверь свойства до add.",
+  "key": "import QuartzCore\nimport CoreGraphics\nfunc prepareWidth(layer: CALayer, to target: CGFloat) -> CABasicAnimation {\n    let start = layer.bounds.width\n    CATransaction.begin()\n    CATransaction.setDisableActions(true)\n    var bounds = layer.bounds\n    bounds.size.width = target\n    layer.bounds = bounds\n    CATransaction.commit()\n    let animation = CABasicAnimation(keyPath: \"bounds.size.width\")\n    animation.fromValue = start\n    animation.toValue = target\n    animation.duration = 0.25\n    return animation\n}\nlet layer = CALayer()\nlayer.bounds = CGRect(x: 0, y: 0, width: 30, height: 10)\nlet animation = prepareWidth(layer: layer, to: 90)\nassert(layer.bounds.width == 90)\nassert((animation.fromValue as? NSNumber)?.doubleValue == 30)\nassert((animation.toValue as? NSNumber)?.doubleValue == 90)\n\nНовый элемент анимируется по ширине, не по прозрачности. Конечная модель записана; установка animation не выполнялась."
+ }
+]

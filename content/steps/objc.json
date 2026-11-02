@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Токен живёт до отключения",
+  "prompt": "Предскажи весь вывод: сколько изменений дойдёт до наблюдателя?",
+  "code": "import Foundation\nfinal class PlayerState: NSObject {\n    @objc dynamic var volume = 20\n    @objc dynamic func status() -> NSString { \"Готов\" }\n}\nlet player = PlayerState()\nlet token = player.observe(\\.volume, options: [.new]) { _, change in\n    print(change.newValue ?? -1)\n}\nplayer.volume = 35\ntoken.invalidate()\nplayer.volume = 50",
+  "key": "35\n\nПодписка активна на первой записи. После invalidate вторая запись не вызывает callback."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Метод для селектора",
+  "prompt": "Добавь к status аннотации @objc dynamic. Метод возвращает NSString и не принимает аргументов. Выведи responds(to:) и статус через perform с тем же селектором.",
+  "code": "import Foundation\nfinal class PlayerState: NSObject {\n    func status() -> NSString { \"Готов\" }\n}\nlet player = PlayerState()\n// TODO: selector, проверка и вызов",
+  "key": "import Foundation\nfinal class PlayerState: NSObject {\n    @objc dynamic func status() -> NSString { \"Готов\" }\n}\nlet player = PlayerState()\nlet selector = #selector(PlayerState.status)\nprint(player.responds(to: selector))\nlet value = player.perform(selector)?.takeUnretainedValue()\nprint(value as? NSString ?? \"Нет статуса\")\n\nВывод: true, Готов. #selector ссылается на экспортированный метод; perform здесь возвращает объект."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Самостоятельная подписка",
+  "prompt": "На PlayerState с @objc dynamic volume=20 подпишись на новое значение. Измени громкость на 35, отключи подписку, измени на 50. Вывод должен содержать только 35.",
+  "code": "import Foundation\nfinal class PlayerState: NSObject {\n    @objc dynamic var volume = 20\n    @objc dynamic func status() -> NSString { \"Готов\" }\n}",
+  "key": "import Foundation\nfinal class PlayerState: NSObject {\n    @objc dynamic var volume = 20\n    @objc dynamic func status() -> NSString { \"Готов\" }\n}\nlet player = PlayerState()\nlet token = player.observe(\\.volume, options: [.new]) { _, change in\n    print(change.newValue ?? -1)\n}\nplayer.volume = 35\ntoken.invalidate()\nplayer.volume = 50\n\nТокен сохранён до записи и отключён перед второй записью; начальное значение не выводится."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Повторный запуск подписки",
+  "prompt": "Повторный start добавил два наблюдения: после одной записи выводится [35, 35]. Замени массив токенов одним optional-токеном и отключай прежнее наблюдение перед новым. Два start и одна запись должны дать [35]. Сохрани weak-захват.",
+  "code": "import Foundation\nfinal class PlayerState: NSObject {\n    @objc dynamic var volume = 20\n}\nfinal class VolumeMonitor {\n    let player = PlayerState()\n    var tokens: [NSKeyValueObservation] = []\n    var values: [Int] = []\n    func start() {\n        let token = player.observe(\\.volume, options: [.new]) {\n            [weak self] _, change in\n            self?.values.append(change.newValue ?? -1)\n        }\n        tokens.append(token)\n    }\n}\nlet monitor = VolumeMonitor()\nmonitor.start()\nmonitor.start()\nmonitor.player.volume = 35\nprint(monitor.values)",
+  "key": "import Foundation\nfinal class PlayerState: NSObject {\n    @objc dynamic var volume = 20\n}\nfinal class VolumeMonitor {\n    let player = PlayerState()\n    var token: NSKeyValueObservation?\n    var values: [Int] = []\n    func start() {\n        token?.invalidate()\n        token = player.observe(\\.volume, options: [.new]) {\n            [weak self] _, change in\n            self?.values.append(change.newValue ?? -1)\n        }\n    }\n}\nlet monitor = VolumeMonitor()\nmonitor.start()\nmonitor.start()\nmonitor.player.volume = 35\nprint(monitor.values)\n\nВывод: [35]. Повторный start заменяет наблюдение, а не добавляет второе; callback не удерживает monitor."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни мост",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Что даёт @objc и зачем здесь dynamic? Что удерживает наблюдение и как его завершить? Чем прямое volume отличается от KVC-доступа по строке?",
+  "key": "@objc экспортирует совместимое объявление для Objective-C, dynamic обеспечивает динамический доступ из Swift. Наблюдение живёт вместе с сохранённым токеном; invalidate завершает его раньше освобождения токена. Прямое свойство типизировано, KVC использует ключ и нетипизированный результат, а неверный ключ может вызвать Objective-C исключение."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Покажи переход громкости",
+  "prompt": "Плеер должен выводить старое и новое значение только при их различии. Подключи .old и .new, сравни значения в callback. Записи 20 и 35 из начального 20 должны дать единственную строку 20 -> 35. Отключи токен после записей.",
+  "code": "import Foundation\nfinal class PlayerState: NSObject {\n    @objc dynamic var volume = 20\n    @objc dynamic func status() -> NSString { \"Готов\" }\n}",
+  "key": "import Foundation\nfinal class PlayerState: NSObject {\n    @objc dynamic var volume = 20\n    @objc dynamic func status() -> NSString { \"Готов\" }\n}\nlet player = PlayerState()\nlet token = player.observe(\\.volume, options: [.old, .new]) { _, change in\n    let old = change.oldValue ?? -1\n    let new = change.newValue ?? -1\n    if old != new { print(\"\\(old) -> \\(new)\") }\n}\nplayer.volume = 20\nplayer.volume = 35\ntoken.invalidate()\n\nВывод: 20 -> 35. Наблюдатель сам отбрасывает событие без изменения значения; KVO не заменяет это условие."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови NSObject-модель PlayerState с @objc dynamic isMuted=false. Наблюдай новое значение, включи isMuted, отключи токен, выключи isMuted. Должна появиться только строка true. Дополнительно для volume=20 напиши KVC-запись 35 через #keyPath и чтение с проверкой Int; это отдельный пример.",
+  "key": "import Foundation\nfinal class PlayerState: NSObject {\n    @objc dynamic var isMuted = false\n}\nlet player = PlayerState()\nlet token = player.observe(\\.isMuted, options: [.new]) { _, change in\n    print(change.newValue ?? false)\n}\nplayer.isMuted = true\ntoken.invalidate()\nplayer.isMuted = false\nfinal class VolumeState: NSObject {\n    @objc dynamic var volume = 20\n}\nlet volumeState = VolumeState()\nlet key = #keyPath(VolumeState.volume)\nvolumeState.setValue(35, forKey: key)\nprint(volumeState.value(forKey: key) as? Int ?? -1)\n\nПервый пример выводит true, второй — 35. #keyPath использует конкретную NSObject-модель VolumeState с volume; результат KVC проверяется приведением."
+ }
+]

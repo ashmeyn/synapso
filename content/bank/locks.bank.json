@@ -1,0 +1,35 @@
+[
+ {
+  "id": "locks-b1",
+  "topics": [
+   "locks"
+  ],
+  "type": "Найди ошибку",
+  "title": "Настройка метронома",
+  "prompt": "Отрицательный bpm выбрасывает TempoError.invalid. Сейчас после throw lock не освобождён. Поставь defer сразу после захвата, проверь ошибку, затем успешный set(90) и read.",
+  "code": "import Foundation\nenum TempoError: Error { case invalid }\nfinal class Metronome {\n    private let lock = NSLock()\n    private var bpm = 60\n    func set(_ value: Int) throws {\n        lock.lock()\n        guard value > 0 else { throw TempoError.invalid }\n        bpm = value\n        lock.unlock()\n    }\n    func read() -> Int {\n        lock.lock(); defer { lock.unlock() }\n        return bpm\n    }\n}",
+  "key": "import Foundation\nenum TempoError: Error { case invalid }\nfinal class Metronome {\n    private let lock = NSLock()\n    private var bpm = 60\n    func set(_ value: Int) throws {\n        lock.lock(); defer { lock.unlock() }\n        guard value > 0 else { throw TempoError.invalid }\n        bpm = value\n    }\n    func read() -> Int {\n        lock.lock(); defer { lock.unlock() }\n        return bpm\n    }\n}\n\nПосле отклонённого -1 значение 60, последующий set(90) доступен и даёт 90. Неправильный путь не запускай с повторным доступом."
+ },
+ {
+  "id": "locks-b2",
+  "topics": [
+   "locks"
+  ],
+  "type": "Допиши",
+  "title": "Экран шахматных часов",
+  "prompt": "Напиши snapshot(), возвращающий white и black одним захватом. Два отдельных getter могут дать пару разных моментов. moveSecond уже меняет оба поля под одним lock.",
+  "code": "import Foundation\nfinal class ChessClock {\n    private let lock = NSLock()\n    private var white = 30\n    private var black = 30\n    func moveSecond() {\n        lock.lock(); defer { lock.unlock() }\n        white -= 1; black += 1\n    }\n    // Добавь snapshot\n}",
+  "key": "import Foundation\nfinal class ChessClock {\n    private let lock = NSLock()\n    private var white = 30\n    private var black = 30\n    func moveSecond() {\n        lock.lock(); defer { lock.unlock() }\n        white -= 1; black += 1\n    }\n    func snapshot() -> (Int, Int) {\n        lock.lock(); defer { lock.unlock() }\n        return (white, black)\n    }\n}\n\nПосле moveSecond снимок (29, 31), сумма 60."
+ },
+ {
+  "id": "locks-b3",
+  "topics": [
+   "locks"
+  ],
+  "type": "Перепиши",
+  "title": "Выдержка телескопа",
+  "prompt": "snapshot возвращает изменяемый Exposure, который caller способен менять вне lock. Верни Int-снимок seconds; запись оставь только в set под тем же владельцем.",
+  "code": "import Foundation\nfinal class Exposure { var seconds = 1 }\nfinal class Telescope {\n    private let lock = NSLock()\n    private let exposure = Exposure()\n    func snapshot() -> Exposure {\n        lock.lock(); defer { lock.unlock() }\n        return exposure\n    }\n    func set(_ seconds: Int) {\n        lock.lock(); defer { lock.unlock() }\n        exposure.seconds = seconds\n    }\n}",
+  "key": "import Foundation\nfinal class Exposure { var seconds = 1 }\nfinal class Telescope {\n    private let lock = NSLock()\n    private let exposure = Exposure()\n    func snapshot() -> Int {\n        lock.lock(); defer { lock.unlock() }\n        return exposure.seconds\n    }\n    func set(_ seconds: Int) {\n        lock.lock(); defer { lock.unlock() }\n        exposure.seconds = seconds\n    }\n}\n\nCaller получает значение, не ссылку на закрытый изменяемый объект. После set(4) снимок 4."
+ }
+]

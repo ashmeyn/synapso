@@ -1,0 +1,35 @@
+[
+ {
+  "id": "pw-b1",
+  "topics": [
+   "pw"
+  ],
+  "type": "Найди ошибку",
+  "title": "Начальная яркость экрана чтения",
+  "prompt": "В wrapper ограничен setter, но init сохраняет 150 без правила и ставит limited = false. Исправь именно путь инициализации: ожидается 100 true без последующей записи.",
+  "code": "@propertyWrapper\nstruct Clamped {\n    private var value: Int\n    private var limited: Bool\n    init(wrappedValue: Int) {\n        value = wrappedValue\n        limited = false\n    }\n    var wrappedValue: Int {\n        get { value }\n        set {\n            value = min(100, max(0, newValue))\n            limited = value != newValue\n        }\n    }\n    var projectedValue: Bool { limited }\n}\nstruct BrightnessSettings { @Clamped var brightness = 150 }\nlet settings = BrightnessSettings()\nprint(settings.brightness, settings.$brightness)",
+  "key": "@propertyWrapper\nstruct Clamped {\n    private var value: Int\n    private var limited: Bool\n    init(wrappedValue: Int) {\n        value = min(100, max(0, wrappedValue))\n        limited = value != wrappedValue\n    }\n    var wrappedValue: Int {\n        get { value }\n        set {\n            value = min(100, max(0, newValue))\n            limited = value != newValue\n        }\n    }\n    var projectedValue: Bool { limited }\n}\nstruct BrightnessSettings { @Clamped var brightness = 150 }\nlet settings = BrightnessSettings()\nprint(settings.brightness, settings.$brightness)\n\nИнициализация не может обходить инвариант setter."
+ },
+ {
+  "id": "pw-b2",
+  "topics": [
+   "pw"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Копия настроек прозрачности слоя",
+  "prompt": "original скопирован в copied; Clamped — struct с Int и Bool, не общей ссылкой. Назови две пары и объясни независимость состояния.",
+  "code": "@propertyWrapper\nstruct Clamped {\n    private var value: Int\n    private var limited: Bool\n    init(wrappedValue: Int) {\n        value = min(100, max(0, wrappedValue))\n        limited = value != wrappedValue\n    }\n    var wrappedValue: Int {\n        get { value }\n        set {\n            value = min(100, max(0, newValue))\n            limited = value != newValue\n        }\n    }\n    var projectedValue: Bool { limited }\n}\nstruct OpacitySettings { @Clamped var opacity = 50 }\nvar original = OpacitySettings()\nvar copied = original\ncopied.opacity = 150\nprint(original.opacity, original.$opacity)\nprint(copied.opacity, copied.$opacity)",
+  "key": "50 false\n100 true\n\nКопирование value-wrapper сохраняет отдельное состояние в каждом владельце."
+ },
+ {
+  "id": "pw-b3",
+  "topics": [
+   "pw"
+  ],
+  "type": "Допиши",
+  "title": "Интенсивность тактильного отклика",
+  "prompt": "Оставь private(set) у intensity: внешний caller меняет её только через setIntensity. Напиши метод владельца и wasLimited, не открывая _intensity наружу.",
+  "code": "@propertyWrapper\nstruct Clamped {\n    private var value: Int\n    private var limited: Bool\n    init(wrappedValue: Int) {\n        value = min(100, max(0, wrappedValue))\n        limited = value != wrappedValue\n    }\n    var wrappedValue: Int {\n        get { value }\n        set {\n            value = min(100, max(0, newValue))\n            limited = value != newValue\n        }\n    }\n    var projectedValue: Bool { limited }\n}\nstruct HapticSettings {\n    @Clamped private(set) var intensity = 50\n    // Добавь метод изменения\n    // Добавь чтение проекции\n}\nvar settings = HapticSettings()\nsettings.setIntensity(150)\nprint(settings.intensity, settings.wasLimited)",
+  "key": "@propertyWrapper\nstruct Clamped {\n    private var value: Int\n    private var limited: Bool\n    init(wrappedValue: Int) {\n        value = min(100, max(0, wrappedValue))\n        limited = value != wrappedValue\n    }\n    var wrappedValue: Int {\n        get { value }\n        set {\n            value = min(100, max(0, newValue))\n            limited = value != newValue\n        }\n    }\n    var projectedValue: Bool { limited }\n}\nstruct HapticSettings {\n    @Clamped private(set) var intensity = 50\n    mutating func setIntensity(_ requested: Int) { intensity = requested }\n    var wasLimited: Bool { $intensity }\n}\nvar settings = HapticSettings()\nsettings.setIntensity(150)\nprint(settings.intensity, settings.wasLimited)\n\nМетод владельца сохраняет правило и закрытую внешнюю запись. Вывод 100 true."
+ }
+]

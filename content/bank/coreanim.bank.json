@@ -1,0 +1,35 @@
+[
+ {
+  "id": "coreanim-b1",
+  "topics": [
+   "coreanim"
+  ],
+  "type": "Допиши",
+  "title": "Тень удостоверения питомца устарела",
+  "prompt": "После смены bounds со 100×50 на 200×70 путь тени остался старым. Пересоздай прямоугольный CGPath из текущих bounds и сравни boundingBoxOfPath. Это учебный прямоугольник, без скруглённого контура.",
+  "code": "import QuartzCore\nimport CoreGraphics\nlet card = CALayer()\ncard.bounds = CGRect(x: 0, y: 0, width: 100, height: 50)\ncard.shadowOpacity = 0.5\ncard.shadowPath = CGPath(rect: card.bounds, transform: nil)\ncard.bounds.size = CGSize(width: 200, height: 70)\n// TODO: новый путь\nassert(card.shadowPath?.boundingBoxOfPath == card.bounds)",
+  "key": "import QuartzCore\nimport CoreGraphics\nlet card = CALayer()\ncard.bounds = CGRect(x: 0, y: 0, width: 100, height: 50)\ncard.shadowOpacity = 0.5\ncard.shadowPath = CGPath(rect: card.bounds, transform: nil)\ncard.bounds.size = CGSize(width: 200, height: 70)\ncard.shadowPath = CGPath(rect: card.bounds, transform: nil)\nassert(card.shadowPath?.boundingBoxOfPath == card.bounds)\n\nПуть соответствует новой геометрии. Тест не измеряет выигрыш render server и не проверяет внешний вид тени."
+ },
+ {
+  "id": "coreanim-b2",
+  "topics": [
+   "coreanim"
+  ],
+  "type": "Допиши",
+  "title": "Бейдж писем сменил панель",
+  "prompt": "badge сначала находится в inbox. Вызови removeFromSuperlayer и addSublayer у toolbar; проверь новую superlayer и отсутствие в старой. Визуальные координаты здесь не сохраняем, проверяем только иерархию.",
+  "code": "import QuartzCore\nimport CoreGraphics\nlet inbox = CALayer()\nlet toolbar = CALayer()\nlet badge = CALayer()\ninbox.addSublayer(badge)\nassert(badge.superlayer === inbox)\n// TODO: перенос слоя\nassert(badge.superlayer === toolbar)\nassert(inbox.sublayers?.contains { $0 === badge } != true)",
+  "key": "import QuartzCore\nimport CoreGraphics\nlet inbox = CALayer()\nlet toolbar = CALayer()\nlet badge = CALayer()\ninbox.addSublayer(badge)\nassert(badge.superlayer === inbox)\nbadge.removeFromSuperlayer()\ntoolbar.addSublayer(badge)\nassert(badge.superlayer === toolbar)\nassert(inbox.sublayers?.contains { $0 === badge } != true)\n\nЛокальная ссылка badge остаётся сильной; изменён родитель дерева слоёв, не владелец переменной."
+ },
+ {
+  "id": "coreanim-b3",
+  "topics": [
+   "coreanim"
+  ],
+  "type": "Допиши",
+  "title": "Новый переход значка видеозвонка",
+  "prompt": "Допиши prepareRetarget: начало — visibleOpacity, если передано, иначе model.opacity. Затем без actions запиши target, верни animation с from/to. На модели 0.9, видимой 0.6, цели 0.2 проверь from=0.6. В приложении visibleOpacity читают из presentation()?.opacity.",
+  "code": "import QuartzCore\nimport CoreGraphics\nfunc prepareRetarget(\n    layer: CALayer, visibleOpacity: Float?, to target: Float\n) -> CABasicAnimation {\n    let start: Float = 0 /* TODO */\n    CATransaction.begin()\n    CATransaction.setDisableActions(true)\n    layer.opacity = target\n    CATransaction.commit()\n    let animation = CABasicAnimation(keyPath: \"opacity\")\n    animation.fromValue = start\n    animation.toValue = target\n    return animation\n}\nlet layer = CALayer()\nlayer.opacity = 0.9\nlet animation = prepareRetarget(layer: layer, visibleOpacity: 0.6, to: 0.2)\nassert(layer.opacity == 0.2)\nassert((animation.fromValue as? NSNumber)?.floatValue == 0.6)",
+  "key": "import QuartzCore\nimport CoreGraphics\nfunc prepareRetarget(\n    layer: CALayer, visibleOpacity: Float?, to target: Float\n) -> CABasicAnimation {\n    let start = visibleOpacity ?? layer.opacity\n    CATransaction.begin()\n    CATransaction.setDisableActions(true)\n    layer.opacity = target\n    CATransaction.commit()\n    let animation = CABasicAnimation(keyPath: \"opacity\")\n    animation.fromValue = start\n    animation.toValue = target\n    return animation\n}\nlet layer = CALayer()\nlayer.opacity = 0.9\nlet animation = prepareRetarget(layer: layer, visibleOpacity: 0.6, to: 0.2)\nassert(layer.opacity == 0.2)\nassert((animation.fromValue as? NSNumber)?.floatValue == 0.6)\n\nТекущее отображение отделено от цели модели. Можно проверить выбор начала без реальной presentation-анимации."
+ }
+]

@@ -1,0 +1,35 @@
+[
+ {
+  "id": "gen-b1",
+  "topics": [
+   "gen"
+  ],
+  "type": "Найди ошибку",
+  "title": "Пара координат редактора маршрутов",
+  "prompt": "Pair<Value> должен хранить два значения одного выбранного типа. Первый аргумент Int 3, второй строка «5» — неверный вызов. Исправь вызов на два Int и покажи сумму; не меняй поля на Any.",
+  "code": "struct Pair<Value> {\n    let first: Value\n    let second: Value\n}\nlet points = Pair(first: 3, second: \"5\")\nprint(points.first + points.second)",
+  "key": "struct Pair<Value> {\n    let first: Value\n    let second: Value\n}\nlet points = Pair(first: 3, second: 5)\nprint(points.first + points.second)\n\nСумма 8. Разные типы нельзя незаметно принять в Pair с одним Value."
+ },
+ {
+  "id": "gen-b2",
+  "topics": [
+   "gen"
+  ],
+  "type": "Допиши",
+  "title": "Поиск названия в списке маяков",
+  "prompt": "Объявлены Named и Label. Напиши uniqueName с двумя требованиями в where: T: Named и T: Equatable; если значение есть в массиве, верни его name, иначе nil.",
+  "code": "protocol Named { var name: String { get } }\nstruct Label: Named, Equatable { let name: String }\n// Напиши uniqueName",
+  "key": "protocol Named { var name: String { get } }\nstruct Label: Named, Equatable { let name: String }\nfunc uniqueName<T>(_ value: T, in values: [T]) -> String?\nwhere T: Named, T: Equatable {\n    values.contains(value) ? value.name : nil\n}\nprint(uniqueName(Label(name: \"Север\"), in: [Label(name: \"Север\")]) ?? \"Нет\")\n\nДля Label(name: Север) в таком же списке получаем Север; пустой массив даёт nil."
+ },
+ {
+  "id": "gen-b3",
+  "topics": [
+   "gen"
+  ],
+  "type": "Допиши",
+  "title": "История выбора кистей",
+  "prompt": "Recent<Value> хранит последовательность через push. Добавь pushUnique только в расширении where Value: Equatable: повторный элемент не добавляется, обычный push доступен любому Value.",
+  "code": "struct Recent<Value> {\n    private(set) var values: [Value] = []\n    mutating func push(_ value: Value) { values.append(value) }\n}\n// Добавь условный pushUnique",
+  "key": "struct Recent<Value> {\n    private(set) var values: [Value] = []\n    mutating func push(_ value: Value) { values.append(value) }\n}\nextension Recent where Value: Equatable {\n    mutating func pushUnique(_ value: Value) {\n        guard !values.contains(value) else { return }\n        push(value)\n    }\n}\n\nПосле двух pushUnique(\"Тонкая\") массив содержит одну строку. Уникальность — условная способность, не ограничение основного хранилища."
+ }
+]

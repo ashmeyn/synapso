@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Что вошло в коммит",
+  "prompt": "Старт: main на A, theme.txt=cyan, дерево чистое. Предскажи содержимое theme.txt в HEAD и на диске, log из двух строк и status. В log обозначь хэш сообщения A буквой A, сообщения B — B.",
+  "code": "# В theme.txt коммита A записано cyan. Рабочее дерево чистое.\nprintf 'pink\\n' > theme.txt\ngit add theme.txt\nprintf 'red\\n' > theme.txt\ngit commit -m B\ngit log --oneline -2\ngit status --short",
+  "key": "B B\nA A\n M theme.txt\n\nHEAD содержит pink, рабочий файл red. Коммит берёт индекс, подготовленный add до второй записи; буквы в log — учебная нормализация хэшей."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Личная ветка поверх main",
+  "prompt": "Старт: A→B на личной неопубликованной theme и A→C на main. B добавляет preview.txt, C добавляет help.txt, конфликтов нет, дерево чистое. Заполни команды переключения на theme и переноса её работы поверх main; покажи log/status и опиши родителей.",
+  "code": "# Переключись на theme.\n# Перенеси её изменения поверх main.\ngit log --oneline --all\ngit status --short",
+  "key": "git switch theme\ngit rebase main\ngit log --oneline --all\ngit status --short\n\nПолучится A→C→B′, main=C, theme=B′, дерево чистое. log показывает сообщения B,C,A (хэш B изменён); B′ имеет одного родителя C."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Разреши смысловой конфликт",
+  "prompt": "Старт: merge main в theme остановлен. В main accent=blue/contrast=high, в theme accent=pink/contrast=normal; конфликтный файл приведён ниже. Выпуск требует pink и high. Запиши команды сохранения результата, staging, проверки и завершения merge.",
+  "code": "<<<<<<< HEAD\naccent=pink\ncontrast=normal\n=======\naccent=blue\ncontrast=high\n>>>>>>> main",
+  "key": "printf 'accent=pink\\ncontrast=high\\n' > theme.txt\ngit add theme.txt\ngit status --short\ngit diff --cached\ngit commit -m M\n\nФайл содержит две настройки без маркеров. M имеет двух родителей; add отметил разрешение, commit завершил merge."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Не переписывай общую ветку",
+  "prompt": "Команды ниже — ошибочный план, не выполняй их. main имеет опубликованную цепочку A→B→C, коллега строит работу от C. Только C содержит ошибочный цвет; дерево чистое, rebase ещё не начат. Предложи отмену C без изменения старых коммитов.",
+  "code": "# Ошибочный план для общей main:\n# git rebase -i HEAD~2\n# git push --force\n# Нужно отменить только C, сохранив A, B и C.",
+  "key": "git switch main\ngit revert --no-edit HEAD\ngit log --oneline -4\ngit status --short\n\nПоявится новый R с обратным изменением C: A→B→C→R. Старые идентичности и база коллеги остаются; рабочее дерево чистое. Обычный push выполняется по правилам проекта, force не требуется."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни историю",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Что хранят рабочий файл, индекс и коммит темы? Почему merge и rebase дают разные графы? Как сохранить черновик и отменить опубликованный ошибочный коммит, не переписывая базу коллеги?",
+  "key": "Рабочий файл меняется на диске; add готовит снимок в индексе, commit сохраняет именно его. merge сохраняет старые коммиты и на развилке добавляет общего потомка с двумя родителями, rebase воспроизводит изменения в новых коммитах над другой базой. Черновик сохраняем stash push -u, возвращаем apply и проверяем перед drop; опубликованную ошибку отменяем новым revert-коммитом."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Срочная правка во время черновика",
+  "prompt": "На theme незакоммиченный theme.txt=pink и новый неотслеживаемый notes.txt=draft. На main и theme исходный theme.txt=cyan; help.txt отсутствует. Сохрани оба файла, переключись на main, закоммить help.txt=help сообщением D, вернись на theme и восстанови черновик. После проверки удали stash. Не вливай D в theme.",
+  "code": "git status --short\n#  M theme.txt\n# ?? notes.txt\n# Текущая ветка theme; конфликтов при возврате нет.",
+  "key": "git stash push -u -m theme-draft\ngit switch main\nprintf 'help\\n' > help.txt\ngit add help.txt\ngit commit -m D\ngit switch theme\ngit stash apply\ngit status --short\n# После проверки theme.txt и notes.txt:\ngit stash drop\n\nНа theme вернутся pink и notes.txt=draft, help.txt в её дереве нет. main получил D; запись stash удаляется после проверки восстановленных файлов."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Личный неопубликованный main: A содержит theme.txt=cyan, последний B — theme.txt=pink; дерево чистое. По памяти убери B из вершины ветки, сохрани его изменение в индексе и файле, затем создай новый коммит C с тем же содержимым. Покажи status перед commit и log после. Не используй hard.",
+  "key": "git reset --soft HEAD~1\ngit status --short\ngit diff --cached\ngit commit -m C\ngit log --oneline -2\n\nПосле soft ветка на A, status показывает «M  theme.txt», рабочий файл pink. После commit история A→C, дерево чистое; B больше не предок main, хотя ещё может быть доступен через reflog."
+ }
+]

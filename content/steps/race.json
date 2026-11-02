@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Проиграй потерю",
+  "prompt": "Назови вывод и значения readA/readB. Это последовательная модель: какой возможный порядок конкурентных шагов она показывает?",
+  "code": "var completed = 0\nlet readA = completed\nlet readB = completed\ncompleted = readA + 1\ncompleted = readB + 1\nprint(completed)",
+  "key": "1\n\nreadA и readB равны 0; A пишет 1, B затем пишет свою 1. Показана потеря обновления, но программа модели не выполняет настоящие несинхронизированные доступы потоков."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Защити операцию и чтение",
+  "prompt": "Заполни sync для целого increment и для read; не разделяй прибавление на два sync.",
+  "code": "import Dispatch\nfinal class CompletedCounter {\n    private let queue = DispatchQueue(label: \"practice.counter\")\n    private var stored = 0\n    func increment() { /* Выполни целую запись через queue */ }\n    func read() -> Int { /* Верни чтение через queue */ }\n}\nlet counter = CompletedCounter()\ncounter.increment()\ncounter.increment()\nprint(counter.read())",
+  "key": "import Dispatch\nfinal class CompletedCounter {\n    private let queue = DispatchQueue(label: \"practice.counter\")\n    private var stored = 0\n    func increment() { queue.sync { stored += 1 } }\n    func read() -> Int { queue.sync { stored } }\n}\nlet counter = CompletedCounter()\ncounter.increment()\ncounter.increment()\nprint(counter.read())\n\nВывод 2. Каждое изменение и чтение проходят через одну приватную serial-очередь."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Напиши владельца счётчика",
+  "prompt": "Самостоятельно напиши CompletedCounter: private stored, одна private serial queue, increment и read через sync. Создай объект, вызови increment дважды и выведи read.",
+  "code": "import Dispatch\n// Напиши класс и локальную проверку",
+  "key": "import Dispatch\nfinal class CompletedCounter {\n    private let queue = DispatchQueue(label: \"practice.counter\")\n    private var stored = 0\n    func increment() { queue.sync { stored += 1 } }\n    func read() -> Int { queue.sync { stored } }\n}\nlet counter = CompletedCounter()\ncounter.increment()\ncounter.increment()\nprint(counter.read())\n\nИтог 2. Внешний код получает операции, а не возможность раздельного read-modify-write."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Разделили целую операцию",
+  "prompt": "Каждый метод синхронизирован, но вывод 1. Перепиши интерфейс и вызовы на два increment целиком внутри очереди; итог должен стать 2.",
+  "code": "import Dispatch\nfinal class CompletedCounter {\n    private let queue = DispatchQueue(label: \"practice.counter\")\n    private var stored = 0\n    func read() -> Int { queue.sync { stored } }\n    func store(_ value: Int) { queue.sync { stored = value } }\n}\nlet counter = CompletedCounter()\nlet readA = counter.read()\nlet readB = counter.read()\ncounter.store(readA + 1)\ncounter.store(readB + 1)\nprint(counter.read())",
+  "key": "import Dispatch\nfinal class CompletedCounter {\n    private let queue = DispatchQueue(label: \"practice.counter\")\n    private var stored = 0\n    func increment() { queue.sync { stored += 1 } }\n    func read() -> Int { queue.sync { stored } }\n}\nlet counter = CompletedCounter()\ncounter.increment()\ncounter.increment()\nprint(counter.read())\n\nread/store по отдельности не запрещают чередование составной операции. После переписывания два целых increment дают 2."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни границу",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Что показывает последовательная модель? Как serial исправляет целый increment? Почему TSan не обязан сообщать о модели или раздельной логической операции?",
+  "key": "Модель явно чередует прочитал/записал и показывает потерю обновления без настоящего data race. Одна очередь исполняет целый read-modify-write без перекрытия с другими её операциями; все чтения также проходят через неё. TSan ищет реальные несинхронизированные доступы потоков, а последовательная модель их не создаёт. Раздельные защищённые read/store могут быть логически неверны без обнаруживаемого data race."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Введи лимит завершений",
+  "prompt": "Добавь claim(limit:) -> Bool: в одном sync проверь stored < limit, прибавь 1 и верни true, иначе false. Проверь два вызова при limit 1 и отдельный limit 0.",
+  "code": "import Dispatch\nfinal class CompletedCounter {\n    private let queue = DispatchQueue(label: \"practice.counter\")\n    private var stored = 0\n    func increment() { queue.sync { stored += 1 } }\n    func read() -> Int { queue.sync { stored } }\n}\n// Добавь claim внутрь класса\nlet counter = CompletedCounter()\nprint(counter.claim(limit: 1))\nprint(counter.claim(limit: 1))\nprint(counter.read())\nlet empty = CompletedCounter()\nprint(empty.claim(limit: 0))",
+  "key": "import Dispatch\nfinal class CompletedCounter {\n    private let queue = DispatchQueue(label: \"practice.counter\")\n    private var stored = 0\n    func claim(limit: Int) -> Bool {\n        queue.sync {\n            guard stored < limit else { return false }\n            stored += 1\n            return true\n        }\n    }\n    func increment() { queue.sync { stored += 1 } }\n    func read() -> Int { queue.sync { stored } }\n}\nlet counter = CompletedCounter()\nprint(counter.claim(limit: 1))\nprint(counter.claim(limit: 1))\nprint(counter.read())\nlet empty = CompletedCounter()\nprint(empty.claim(limit: 0))\n\nВывод true, false, 1, false. Проверка и изменение составляют одну операцию; пустой лимит не меняет состояние."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "По памяти создай PracticeBudget с private remaining: Int, init и одной private serial-очередью. consume() -> Bool в одном sync проверяет remaining > 0 и уменьшает его на 1; при нуле возвращает false. read() тоже проходит через очередь. Для начальных 2 вызови consume трижды и выведи остаток: true, true, false, 0.",
+  "key": "import Dispatch\nfinal class PracticeBudget {\n    private let queue = DispatchQueue(label: \"practice.budget\")\n    private var remaining: Int\n    init(remaining: Int) { self.remaining = remaining }\n    func consume() -> Bool {\n        queue.sync {\n            guard remaining > 0 else { return false }\n            remaining -= 1\n            return true\n        }\n    }\n    func read() -> Int { queue.sync { remaining } }\n}\nlet budget = PracticeBudget(remaining: 2)\nprint(budget.consume())\nprint(budget.consume())\nprint(budget.consume())\nprint(budget.read())\n\nОстаток не ушёл ниже нуля. Условие и уменьшение защищены вместе; перенесён принцип на другое состояние."
+ }
+]

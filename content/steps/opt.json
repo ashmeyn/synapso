@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Предскажи вывод",
+  "prompt": "Не запуская код, запиши, что напечатает каждая строка, и какой тип у title. Почему пустая строка ведёт себя не так, как nil?",
+  "code": "let a: String? = nil\nlet b: String? = \"\"\nprint(a ?? \"Гость\")\nprint(b ?? \"Гость\")\nlet title = b ?? \"Гость\"\nprint(title.count)",
+  "key": "Гость\n(пустая строка)\n0\n\ntitle имеет тип String. ?? подставляет запасное значение только при nil. Пустая строка — существующее значение, поэтому она и остаётся."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Собери экранное имя",
+  "prompt": "Заполни функцию через if let: непустое имя — вернуть его, nil или пустая строка — «Гость».",
+  "code": "func displayName(_ name: String?) -> String {\n    // 1. есть ли значение?\n    // 2. не пустое ли оно?\n}\n\n// displayName(\"Нора\") → \"Нора\"\n// displayName(nil)    → \"Гость\"\n// displayName(\"\")     → \"Гость\"",
+  "key": "func displayName(_ name: String?) -> String {\n    if let name, !name.isEmpty {\n        return name\n    }\n    return \"Гость\"\n}\n\nif let достаёт String, а !name.isEmpty отдельно проверяет содержимое. nil и \"\" — разные случаи, но экрану здесь подходит одна замена."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Ранний выход",
+  "prompt": "Напиши через guard let: нет id — вернуть nil, есть — путь к профилю. Объясни, почему функция возвращает String?.",
+  "code": "func profilePath(id: Int?) -> String? {\n    // твой код\n}\n\n// profilePath(id: 42)  → \"/users/42\"\n// profilePath(id: nil) → nil",
+  "key": "func profilePath(id: Int?) -> String? {\n    guard let id else { return nil }\n    return \"/users/\\(id)\"\n}\n\nПути может не быть — значит, честный тип результата String?. После guard let id — обычный Int до конца функции."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Найди падение",
+  "prompt": "Когда приложение упадёт? Исправь так, чтобы без имени показывался «Гость». Что будет при пустой строке?",
+  "code": "struct User { let name: String? }\n\nfunc title(for user: User) -> String {\n    return user.name!\n}",
+  "key": "При User(name: nil) user.name! принудительно разворачивает nil — крэш.\n\nfunc title(for user: User) -> String {\n    user.name ?? \"Гость\"\n}\n\nПри name == \"\" вернётся пустая строка: ?? её не заменяет. Если нужно — проверка isEmpty, как в ступени 2."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни напарнику (устно)",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Ситуация: API прислал пользователя с name: nil.\nОбъясни напарнику:\n1. Что хранит String? и чем nil отличается от \"\"?\n2. Когда if let, когда guard let, когда ???\n3. Почему user.name! — плохая идея здесь?",
+  "key": "1. String? — либо строка, либо её отсутствие (nil). \"\" — строка есть, просто без символов.\n2. if let — развилка внутри кода; guard let — ранний выход, значение нужно дальше; ?? — простое значение по умолчанию.\n3. ! падает при nil, а nil от сервера — нормальная ситуация, не ошибка программиста. Безопасно: name ?? \"Гость\" плюс отдельная проверка пустой строки."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Карточка профиля",
+  "prompt": "Верни «Имя · N символов». При nil или пустой строке — «Гость · 0». Используй optional chaining хотя бы раз и назови тип промежуточного результата.",
+  "code": "struct User { let name: String? }\n\nfunc cardTitle(for user: User) -> String {\n    // твой код\n}\n\n// nil    → \"Гость · 0\"\n// \"Нора\" → \"Нора · 4\"\n// \"\"     → \"Гость · 0\"",
+  "key": "func cardTitle(for user: User) -> String {\n    let count: Int? = user.name?.count\n    guard let name = user.name, !name.isEmpty else {\n        return \"Гость · 0\"\n    }\n    return \"\\(name) · \\(count ?? 0)\"\n}\n\nuser.name?.count — Int?: число, если имя есть, иначе nil. В реальном коде после guard проще взять name.count — chaining здесь для тренировки."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "func displayName(_ name: String?) -> String {\n    // восстанови по памяти: nil и \"\" → \"Гость\"\n}\n\n// + объясни вслух: почему ?? не заменяет \"\"",
+  "key": "func displayName(_ name: String?) -> String {\n    guard let name, !name.isEmpty else { return \"Гость\" }\n    return name\n}\n\n?? срабатывает только на nil. Пустая строка — существующее значение, её проверяют отдельно (isEmpty)."
+ }
+]

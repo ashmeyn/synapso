@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Предскажи сводку",
+  "prompt": "Что окажется в recipients и amounts? Что вернёт reduce?",
+  "code": "struct Transfer { let recipient: String; let amountText: String; let posted: Bool }\nlet transfers = [Transfer(recipient: \"Анна\", amountText: \"180\", posted: true),\n             Transfer(recipient: \"Олег\", amountText: \"abc\", posted: true),\n             Transfer(recipient: \"Мария\", amountText: \"90\", posted: false)]\nlet posted = transfers.filter { $0.posted }\nlet recipients = posted.map { $0.recipient }\nlet amounts = posted.compactMap { Int($0.amountText) }\nprint(recipients, amounts, amounts.reduce(0, +))",
+  "key": "recipients = [\"Анна\", \"Олег\"], amounts = [180], сумма = 180. compactMap выбросил плохую сумму; для истории операций это опасная потеря проведённого перевода."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Собери по каркасу",
+  "prompt": "Заполни: оставь проведённые переводы, получи имена получателей и числовые суммы.",
+  "code": "func pieces(_ transfers: [Transfer]) -> ([String], [Int]) {\n    // 1. filter проведённые\n    // 2. map имена\n    // 3. compactMap суммы\n}",
+  "key": "func pieces(_ transfers: [Transfer]) -> ([String], [Int]) {\n    let posted = transfers.filter { $0.posted }\n    let recipients = posted.map { $0.recipient }\n    let amounts = posted.compactMap { Int($0.amountText) }\n    return (recipients, amounts)\n}\n\nfilter выбирает записи, map сохраняет по одной подписи на запись, compactMap убирает nil после Int(text). Пока это только технические части, не безопасный денежный отчёт."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Проверь пропажу суммы",
+  "prompt": "Напиши summary: если хотя бы одна проведённая сумма не разобралась, верни nil; иначе сложи суммы.",
+  "code": "func totalAmount(_ transfers: [Transfer]) -> Int? {\n    // posted → amounts → проверка count → reduce\n}",
+  "key": "func totalAmount(_ transfers: [Transfer]) -> Int? {\n    let posted = transfers.filter { $0.posted }\n    let amounts = posted.compactMap { Int($0.amountText) }\n    guard amounts.count == posted.count else { return nil }\n    return amounts.reduce(0, +)\n}\n\nРазница количеств показывает, что compactMap потерял запись. Возвращаем nil вместо правдоподобной неправильной суммы."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Найди ошибку",
+  "prompt": "Почему код сообщает 180 вместо ошибки? Исправь его, не выбрасывая проведённый перевод молча.",
+  "code": "let posted = transfers.filter { $0.posted }\nlet totalAmount = posted.compactMap { Int($0.amountText) }.reduce(0, +)\nprint(totalAmount)",
+  "key": "struct Transfer { let recipient: String; let amountText: String; let posted: Bool }\nlet transfers = [Transfer(recipient: \"Анна\", amountText: \"180\", posted: true),\n             Transfer(recipient: \"Олег\", amountText: \"abc\", posted: true)]\nlet posted = transfers.filter { $0.posted }\nlet amounts = posted.compactMap { Int($0.amountText) }\nlet totalAmount: Int? = amounts.count == posted.count ? amounts.reduce(0, +) : nil\n\ncompactMap удалил nil от строки \"abc\"; без проверки отчёт занижен. Optional результата заставляет экран показать проблему."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни напарнику (устно)",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Сводка проведённых переводов.\n1. Чем filter отличается от map?\n2. Почему compactMap может быть опасен?\n3. Что сворачивает reduce?",
+  "key": "filter оставляет часть переводов, map преобразует каждый оставшийся, compactMap удаляет nil после неудачного преобразования. В отчёте это может скрыть ошибку суммы. reduce складывает полученные числа в один итог."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Частоты через reduce(into:)",
+  "prompt": "Из имён проведённых получателей собери словарь частот через reduce(into:).",
+  "code": "let recipients = [\"Анна\", \"Олег\", \"Анна\"]\n// Получи [\"Анна\": 2, \"Олег\": 1].",
+  "key": "let recipients = [\"Анна\", \"Олег\", \"Анна\"]\nlet counts = recipients.reduce(into: [String: Int]()) { result, name in\n    result[name, default: 0] += 1\n}\n\nreduce(into:) изменяет один аккумулятор-словарь по ходу обхода. Это уместно, когда результат сам изменяемая коллекция."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Напиши функцию суммы переводов: только проведённые записи; плохая сумма делает итог недоступным. Объясни четыре операции.",
+  "key": "func totalAmount(_ transfers: [Transfer]) -> Int? {\n    let posted = transfers.filter { $0.posted }\n    let amounts = posted.compactMap { Int($0.amountText) }\n    guard posted.count == amounts.count else { return nil }\n    return amounts.reduce(0, +)\n}\n\nfilter отбирает, map преобразует каждый, compactMap убирает nil, reduce объединяет. Проверь код на пустом списке и некорректной сумме."
+ }
+]

@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Возврат случился раньше",
+  "prompt": "Что выведет программа? Отличи возвращённую строку от захваченной переменной.",
+  "code": "final class PreviewQueue {\n    private var pending: ((String) -> Void)?\n    func request(_ completion: @escaping (String) -> Void) {\n        pending = completion\n    }\n    func finish(_ text: String) {\n        let completion = pending\n        pending = nil\n        completion?(text)\n    }\n    func cancel() { pending = nil }\n}\nfunc previewTitle(queue: PreviewQueue) -> String {\n    var title = \"Ожидание\"\n    queue.request { title = $0 }\n    return title\n}\nlet queue = PreviewQueue()\nlet title = previewTitle(queue: queue)\nqueue.finish(\"Тёплый свет\")\nprint(title)",
+  "key": "Ожидание\n\nФункция уже вернула строковое значение. Более поздняя запись в захваченную переменную не меняет отданную копию."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Обозначь время жизни",
+  "prompt": "Заполни аннотацию параметра и вызов Optional-обработчика. Он должен пережить request, но выполниться только один раз.",
+  "code": "final class PreviewQueue {\n    private var pending: ((String) -> Void)?\n    func request(_ completion: /* аннотация */ (String) -> Void) {\n        pending = completion\n    }\n    func finish(_ text: String) {\n        let completion = pending\n        pending = nil\n        /* вызови обработчик с text, если он есть */\n    }\n    func cancel() { pending = nil }\n}",
+  "key": "final class PreviewQueue {\n    private var pending: ((String) -> Void)?\n    func request(_ completion: @escaping (String) -> Void) {\n        pending = completion\n    }\n    func finish(_ text: String) {\n        let completion = pending\n        pending = nil\n        completion?(text)\n    }\n    func cancel() { pending = nil }\n}\n\nПараметр escaping, поскольку сохраняется. Слот очищен до вызова, а повторный finish ничего не вызывает."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Напиши очередь",
+  "prompt": "Напиши PreviewQueue с request, finish и cancel по контракту одного слота. finish очищает слот перед вызовом. Хвост проверки дан.",
+  "code": "// Объяви PreviewQueue\nlet queue = PreviewQueue()\nqueue.request { print($0) }\nqueue.finish(\"Тёплый свет\")\nqueue.finish(\"Лишний ответ\")",
+  "key": "final class PreviewQueue {\n    private var pending: ((String) -> Void)?\n    func request(_ completion: @escaping (String) -> Void) {\n        pending = completion\n    }\n    func finish(_ text: String) {\n        let completion = pending\n        pending = nil\n        completion?(text)\n    }\n    func cancel() { pending = nil }\n}\nlet queue = PreviewQueue()\nqueue.request { print($0) }\nqueue.finish(\"Тёплый свет\")\nqueue.finish(\"Лишний ответ\")\n\nВывод — только «Тёплый свет». Второе завершение не повторяет одноразовый обработчик."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Результат вернули слишком рано",
+  "prompt": "Исправь previewTitle: вместо раннего возврата обновляй модель PreviewScreen через callback. Прогнозируй обе фазы.",
+  "code": "final class PreviewQueue {\n    private var pending: ((String) -> Void)?\n    func request(_ completion: @escaping (String) -> Void) {\n        pending = completion\n    }\n    func finish(_ text: String) {\n        let completion = pending\n        pending = nil\n        completion?(text)\n    }\n    func cancel() { pending = nil }\n}\nfunc previewTitle(queue: PreviewQueue) -> String {\n    var title = \"Ожидание\"\n    queue.request { title = $0 }\n    return title\n}\nlet queue = PreviewQueue()\nlet title = previewTitle(queue: queue)\nqueue.finish(\"Тёплый свет\")\nprint(title)",
+  "key": "final class PreviewQueue {\n    private var pending: ((String) -> Void)?\n    func request(_ completion: @escaping (String) -> Void) {\n        pending = completion\n    }\n    func finish(_ text: String) {\n        let completion = pending\n        pending = nil\n        completion?(text)\n    }\n    func cancel() { pending = nil }\n}\nfinal class PreviewScreen {\n    private(set) var title = \"Ожидание\"\n    func start(queue: PreviewQueue) {\n        queue.request { [weak self] text in self?.title = text }\n    }\n}\nlet queue = PreviewQueue()\nlet screen = PreviewScreen()\nscreen.start(queue: queue)\nprint(screen.title)\nqueue.finish(\"Тёплый свет\")\nprint(screen.title)\nqueue.finish(\"Лишний ответ\")\nprint(screen.title)\n\nДо правки печаталось «Ожидание». После неё экран меняется только в callback; повторный finish не меняет подпись."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни контракт",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Редактор хранит обработчик подписи до finish.\nПочему request escaping?\nПочему немедленный transform non-escaping?\nЧто отдельно решают weak self и очистка pending?",
+  "key": "request сохраняет параметр после возврата, поэтому ему нужен @escaping. transform вызывается только внутри prepareTitle и не сохраняется. weak self управляет удержанием экрана, а очистка pending — одноразовым вызовом и повторным входом; аннотация не заменяет ни одно правило."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Где нужен @escaping",
+  "prompt": "В очереди фильтра две функции принимают замыкания. Код не компилируется. Поставь @escaping только там, где параметр переживает вызов, объясни, почему у второго аннотация не нужна, и предскажи вывод.",
+  "code": "final class FilterQueue {\n    private var pending: ((String) -> Void)?\n    func request(_ completion: (String) -> Void) {\n        pending = completion\n    }\n    func prepare(_ text: String, transform: (String) -> String) -> String {\n        transform(text)\n    }\n    func finish(_ text: String) {\n        let completion = pending\n        pending = nil\n        completion?(text)\n    }\n}\nlet queue = FilterQueue()\nprint(queue.prepare(\"Тёплый свет\") { $0.uppercased() })\nqueue.request { print($0) }\nqueue.finish(\"Готово\")",
+  "key": "final class FilterQueue {\n    private var pending: ((String) -> Void)?\n    func request(_ completion: @escaping (String) -> Void) {\n        pending = completion\n    }\n    func prepare(_ text: String, transform: (String) -> String) -> String {\n        transform(text)\n    }\n    func finish(_ text: String) {\n        let completion = pending\n        pending = nil\n        completion?(text)\n    }\n}\nlet queue = FilterQueue()\nprint(queue.prepare(\"Тёплый свет\") { $0.uppercased() })\nqueue.request { print($0) }\nqueue.finish(\"Готово\")\n\nrequest сохраняет параметр в pending — без @escaping это не компилируется. prepare вызывает transform сразу и ничего не хранит, поэтому остаётся non-escaping. Вывод «ТЁПЛЫЙ СВЕТ», затем «Готово»."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "По памяти восстанови SizeQueue с одним обработчиком (Int) -> Void и SizeScreen с size = 0. start сохраняет callback со слабым экраном; finish отдаёт 640 один раз, второй finish с 900 игнорируется. Покажи size до результата и после обоих finish. Добавь cancel.",
+  "key": "final class SizeQueue {\n    private var pending: ((Int) -> Void)?\n    func request(_ completion: @escaping (Int) -> Void) { pending = completion }\n    func finish(_ size: Int) {\n        let completion = pending\n        pending = nil\n        completion?(size)\n    }\n    func cancel() { pending = nil }\n}\nfinal class SizeScreen {\n    private(set) var size = 0\n    func start(queue: SizeQueue) {\n        queue.request { [weak self] size in self?.size = size }\n    }\n}\nlet queue = SizeQueue()\nlet screen = SizeScreen()\nscreen.start(queue: queue)\nprint(screen.size)\nqueue.finish(640)\nprint(screen.size)\nqueue.finish(900)\nprint(screen.size)\n\nВывод 0, 640, 640. Переносим тот же контракт на числовой размер превью, не возвращаем будущий результат обычным return."
+ }
+]

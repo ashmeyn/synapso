@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Предскажи остановку",
+  "prompt": "Что напечатают три вызова? Для cart назови позицию, на которой функция заканчивает работу.",
+  "code": "struct CartItem { let id: Int; let quantity: Int; let stock: Int }\nfunc firstUnavailableID(in items: [CartItem]) -> Int? {\n    for item in items {\n        if item.quantity > item.stock { return item.id }\n    }\n    return nil\n}\nlet cart = [CartItem(id: 20, quantity: 1, stock: 3),\n            CartItem(id: 70, quantity: 4, stock: 2),\n            CartItem(id: 10, quantity: 2, stock: 0)]\nprint(firstUnavailableID(in: cart) as Any)\nprint(firstUnavailableID(in: []) as Any)\nprint(firstUnavailableID(in: [CartItem(id: 90, quantity: 2, stock: 2)]) as Any)",
+  "key": "Optional(70), nil, nil. Позиция 20 доступна, на 70 условие истинно и return завершает функцию. Равенство запроса и остатка допускается."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Напиши каркас",
+  "prompt": "Опиши функцию, которая получает [CartItem] и возвращает Int?. Добавь проход по items и nil после него; проверку пока оставь комментарием.",
+  "code": "struct CartItem { let id: Int; let quantity: Int; let stock: Int }\n// Сигнатура: firstUnavailableID(in:).\n// Три места: проход, проверка одной позиции, ответ после прохода.",
+  "key": "struct CartItem { let id: Int; let quantity: Int; let stock: Int }\nfunc firstUnavailableID(in items: [CartItem]) -> Int? {\n    for item in items {\n        // Проверку item добавим следующим шагом.\n        _ = item\n    }\n    return nil\n}\n\nЭто исполняемая заглушка, которая пока всегда возвращает nil. Тип результата уже выражает отсутствие проблемного номера; nil стоит после прохода."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Заполни шаг",
+  "prompt": "Добавь условие недоступности и немедленный возврат id. Запрос, равный остатку, должен считаться доступным.",
+  "code": "struct CartItem { let id: Int; let quantity: Int; let stock: Int }\nfunc firstUnavailableID(in items: [CartItem]) -> Int? {\n    for item in items {\n        // Сравни quantity со stock.\n    }\n    return nil\n}",
+  "key": "struct CartItem { let id: Int; let quantity: Int; let stock: Int }\nfunc firstUnavailableID(in items: [CartItem]) -> Int? {\n    for item in items {\n        if item.quantity > item.stock { return item.id }\n    }\n    return nil\n}\n\nУсловие — quantity > stock. return внутри цикла заканчивает функцию при первой проблеме; последнее nil нужно для корзины без проблем."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Найди преждевременный выход",
+  "prompt": "Почему этот код вернёт nil для cart, хотя две позиции недоступны? Перенеси одну строку и объясни обе ветки выхода.",
+  "code": "struct CartItem { let id: Int; let quantity: Int; let stock: Int }\nlet cart = [CartItem(id: 20, quantity: 1, stock: 3),\n            CartItem(id: 70, quantity: 4, stock: 2),\n            CartItem(id: 10, quantity: 2, stock: 0)]\nfunc firstUnavailableID(in items: [CartItem]) -> Int? {\n    for item in items {\n        if item.quantity > item.stock { return item.id }\n        return nil\n    }\n    return nil\n}\nprint(firstUnavailableID(in: cart) as Any)",
+  "key": "struct CartItem { let id: Int; let quantity: Int; let stock: Int }\nfunc firstUnavailableID(in items: [CartItem]) -> Int? {\n    for item in items {\n        if item.quantity > item.stock { return item.id }\n    }\n    return nil\n}\nlet cart = [CartItem(id: 20, quantity: 1, stock: 3),\n            CartItem(id: 70, quantity: 4, stock: 2),\n            CartItem(id: 10, quantity: 2, stock: 0)]\nprint(firstUnavailableID(in: cart) as Any)\n\nБудет Optional(70). В ошибочной версии доступная позиция 20 сразу возвращала nil; ответ «проблем нет» можно дать только после проверки всех позиций."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни напарнику (устно)",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Оплата подсвечивает первую недоступную позицию корзины.\n- Как сформулировать вход, выход и смысл «первой»?\n- Где должны стоять два return и почему?\n- Как одним примером поймать ошибку >= вместо >?",
+  "key": "Вход — позиции в порядке корзины, выход — id первой с quantity > stock или nil. Номер возвращается внутри цикла при первой проблеме, nil — после цикла. Позиция с quantity = stock доступна; этот пример обнаружит ошибочное >=."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Найди все проблемы",
+  "prompt": "Экран теперь хочет подсветить все недоступные позиции в порядке корзины. Напиши unavailableIDs(in:) -> [Int], измени место возврата и покажи результат для cart.",
+  "code": "struct CartItem { let id: Int; let quantity: Int; let stock: Int }\nlet cart = [CartItem(id: 20, quantity: 1, stock: 3),\n            CartItem(id: 70, quantity: 4, stock: 2),\n            CartItem(id: 10, quantity: 2, stock: 0)]\n// Понадобятся массив результата, append и возврат после прохода.",
+  "key": "struct CartItem { let id: Int; let quantity: Int; let stock: Int }\nfunc unavailableIDs(in items: [CartItem]) -> [Int] {\n    var result: [Int] = []\n    for item in items {\n        if item.quantity > item.stock { result.append(item.id) }\n    }\n    return result\n}\nlet cart = [CartItem(id: 20, quantity: 1, stock: 3),\n            CartItem(id: 70, quantity: 4, stock: 2),\n            CartItem(id: 10, quantity: 2, stock: 0)]\nprint(unavailableIDs(in: cart))\n\nБудет [70, 10]. Ранний return убрал бы остальные проблемы, поэтому теперь накапливаем номера и возвращаем массив после всего прохода."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Создай CartItem с id, quantity, stock и напиши firstUnavailableID(in:).\nУточни, что означает «первая». Проверь пустую корзину, точное равенство и две недоступные позиции: сначала id 70, затем id 10.",
+  "key": "struct CartItem { let id: Int; let quantity: Int; let stock: Int }\nfunc firstUnavailableID(in items: [CartItem]) -> Int? {\n    for item in items {\n        if item.quantity > item.stock { return item.id }\n    }\n    return nil\n}\nprint(firstUnavailableID(in: []) as Any)\nprint(firstUnavailableID(in: [CartItem(id: 90, quantity: 2, stock: 2)]) as Any)\nlet broken = [CartItem(id: 70, quantity: 4, stock: 2),\n              CartItem(id: 10, quantity: 2, stock: 0)]\nprint(firstUnavailableID(in: broken) as Any)\n\nБудет nil, nil, Optional(70). «Первая» относится к порядку массива, а не к минимальному id. Количества положительны, остатки неотрицательны — это условие входа в этом уроке."
+ }
+]

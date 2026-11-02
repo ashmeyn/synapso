@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Прочитай захват",
+  "prompt": "Назови вывод двух действий и объясни, какое читает переменную при вызове, а какое хранит строковый снимок.",
+  "code": "var text = \"План\"\nlet current = { print(text) }\nlet snapshot = { [text] in print(text) }\ntext = \"Новый план\"\ncurrent()\nsnapshot()",
+  "key": "Новый план\nПлан\n\ncurrent использует текущее значение изменяемой переменной, snapshot захватил строку при создании."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Заполни слабый захват",
+  "prompt": "Вставь capture list и безопасное получение self. Действие должно печатать актуальный текст только пока редактор существует.",
+  "code": "final class DraftEditor {\n    let id = 11\n    var text = \"План\"\n    var onSave: (() -> Void)?\n    func configure() {\n        onSave = { [/* способ захвата self */] in\n            /* получи self или заверши вызов */\n            print(self.text)\n        }\n    }\n    deinit { print(\"Редактор освобождён\") }\n}\nvar editor: DraftEditor? = DraftEditor()\neditor?.configure()\neditor?.text = \"Новый план\"\neditor?.onSave?()\nweak var probe = editor\nlet savedAction = editor?.onSave\neditor = nil\nprint(probe == nil)\nsavedAction?()",
+  "key": "final class DraftEditor {\n    let id = 11\n    var text = \"План\"\n    var onSave: (() -> Void)?\n    func configure() {\n        onSave = { [weak self] in\n            guard let self else { return }\n            print(self.text)\n        }\n    }\n    deinit { print(\"Редактор освобождён\") }\n}\nvar editor: DraftEditor? = DraftEditor()\neditor?.configure()\neditor?.text = \"Новый план\"\neditor?.onSave?()\nweak var probe = editor\nlet savedAction = editor?.onSave\neditor = nil\nprint(probe == nil)\nsavedAction?()\n\nweak self не удерживает редактор, guard пропускает вызов после освобождения. Вывод «Новый план», «Редактор освобождён», true."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Напиши действие сам",
+  "prompt": "Допиши configure: сохранённое onSave читает текущий text и не создаёт цикл владения. Сохрани поведение хвоста программы.",
+  "code": "final class DraftEditor {\n    let id = 11\n    var text = \"План\"\n    var onSave: (() -> Void)?\n    func configure() {\n        // Создай безопасное сохранённое действие.\n    }\n    deinit { print(\"Редактор освобождён\") }\n}\nvar editor: DraftEditor? = DraftEditor()\neditor?.configure()\neditor?.text = \"Новый план\"\neditor?.onSave?()\nweak var probe = editor\nlet savedAction = editor?.onSave\neditor = nil\nprint(probe == nil)\nsavedAction?()",
+  "key": "final class DraftEditor {\n    let id = 11\n    var text = \"План\"\n    var onSave: (() -> Void)?\n    func configure() {\n        onSave = { [weak self] in\n            guard let self else { return }\n            print(self.text)\n        }\n    }\n    deinit { print(\"Редактор освобождён\") }\n}\nvar editor: DraftEditor? = DraftEditor()\neditor?.configure()\neditor?.text = \"Новый план\"\neditor?.onSave?()\nweak var probe = editor\nlet savedAction = editor?.onSave\neditor = nil\nprint(probe == nil)\nsavedAction?()\n\nДействие слабо получает владельца и читает self.text при выполнении. После освобождения внешний savedAction безопасно ничего не делает."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Найди кольцо владения",
+  "prompt": "При editor = nil probe не становится nil и deinit не печатает освобождение. Исправь configure, не удаляя savedAction снаружи.",
+  "code": "final class DraftEditor {\n    let id = 11\n    var text = \"План\"\n    var onSave: (() -> Void)?\n    func configure() {\n        onSave = {\n            print(self.text)\n        }\n    }\n    deinit { print(\"Редактор освобождён\") }\n}\nvar editor: DraftEditor? = DraftEditor()\neditor?.configure()\neditor?.text = \"Новый план\"\neditor?.onSave?()\nweak var probe = editor\nlet savedAction = editor?.onSave\neditor = nil\nprint(probe == nil)\nsavedAction?()",
+  "key": "final class DraftEditor {\n    let id = 11\n    var text = \"План\"\n    var onSave: (() -> Void)?\n    func configure() {\n        onSave = { [weak self] in\n            guard let self else { return }\n            print(self.text)\n        }\n    }\n    deinit { print(\"Редактор освобождён\") }\n}\nvar editor: DraftEditor? = DraftEditor()\neditor?.configure()\neditor?.text = \"Новый план\"\neditor?.onSave?()\nweak var probe = editor\nlet savedAction = editor?.onSave\neditor = nil\nprint(probe == nil)\nsavedAction?()\n\nРедактор удерживал замыкание, замыкание сильно удерживало редактор. Слабый захват разрывает обратную стрелку; после закрытия probe == nil."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни напарнику (устно)",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Редактор хранит onSave, копия действия осталась после закрытия.\n- Что изменяет [text] для строки?\n- Почему сильный self в собственном onSave создаёт цикл?\n- Что дают weak self и guard при вызове после закрытия?",
+  "key": "[text] сохраняет значение строки при создании, а обычный захват изменяемой переменной видит её актуальное значение при вызове. Редактор сильно хранит onSave, а сильный захват self удерживает редактор обратно. weak не удерживает его; после освобождения self == nil, guard завершает действие без обращения к объекту."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Передай текст параметром",
+  "prompt": "Добавь onRename типа ((String) -> Void)? и rename(to:): сохранить новый text и передать его действию. Внешнее действие печатает строку в верхнем регистре. Передай «Поездка», затем отдельно выведи editor.text. Внешнее действие не захватывает editor.",
+  "code": "Создай DraftEditor с id 11, text «План», optional-действием onRename и методом rename(to:). Настрой замыкание с явным параметром title; используй uppercased() из основы.",
+  "key": "final class DraftEditor {\n    let id = 11\n    var text = \"План\"\n    var onRename: ((String) -> Void)?\n    func rename(to value: String) {\n        text = value\n        onRename?(value)\n    }\n}\nlet editor = DraftEditor()\neditor.onRename = { title in print(title.uppercased()) }\neditor.rename(to: \"Поездка\")\nprint(editor.text)\n\nВывод «ПОЕЗДКА», затем «Поездка». Действие получает строку события параметром, а редактор хранит исходный текст."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Редактор черновика 11 теперь хранит revision = 1 и optional-действие onCheck без параметров. configure создаёт действие, читающее актуальную revision без цикла. Установи 3 и вызови его: вывод 3. Сохрани действие снаружи и слабую probe, закрой редактор: print(probe == nil) должен дать true. Последующий вызов сохранённого действия ничего не делает. Напиши всё без подсказок.",
+  "key": "final class RevisionEditor {\n    let id = 11\n    var revision = 1\n    var onCheck: (() -> Void)?\n    func configure() {\n        onCheck = { [weak self] in\n            guard let self else { return }\n            print(self.revision)\n        }\n    }\n}\nvar editor: RevisionEditor? = RevisionEditor()\neditor?.configure()\neditor?.revision = 3\neditor?.onCheck?()\nweak var probe = editor\nlet action = editor?.onCheck\neditor = nil\nprint(probe == nil)\naction?()\n\nЗамыкание читает актуальную версию через слабый доступ к владельцу. Вывод 3 и true; после закрытия guard завершает вызов."
+ }
+]

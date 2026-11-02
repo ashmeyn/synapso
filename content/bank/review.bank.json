@@ -1,0 +1,35 @@
+[
+ {
+  "id": "review-b1",
+  "topics": [
+   "review"
+  ],
+  "type": "Устно",
+  "title": "Один PR или три",
+  "prompt": "В PR списка домашних тренировок только именуют параметр rows яснее, но попутно меняют формат файла и сортировку. Напиши замечание о размере/связности PR и отдельное неблокирующее предложение по имени. Не требуй разбиения по числу строк.",
+  "code": "struct PracticeRow { let id: Int; let title: String }\nfunc practiceTitles(_ rows: [PracticeRow]) -> [String] {\n    rows.map { $0.title }\n}",
+  "key": "Блокирует рассмотрение поведения: можем вынести смену формата и сортировки в отдельные PR с условиями миграции и тестами? Они не нужны для переименования и скрывают риски изменения данных. Не блокирует: rows понятно в этой функции; более конкретное practiceRows можно обсудить, если рядом появились другие строки. Разделение определяется независимыми причинами изменения, а не длиной diff."
+ },
+ {
+  "id": "review-b2",
+  "topics": [
+   "review"
+  ],
+  "type": "Устно",
+  "title": "Символы соседней сборки",
+  "prompt": "Объясни, почему строка причины пока неизвестна, что запросить и как проверить соответствие. Учебные BUILD-204/203 — обозначения, не реальные UUID.",
+  "code": "УЧЕБНАЯ ЗАДАЧА СИМВОЛИКАЦИИ, НЕ FIREBASE\nПриложение BookExport, build=204\nUUID бинарника: BUILD-204 (учебное обозначение, не настоящий UUID)\nUUID загруженного dSYM: BUILD-203\nСимволов приложения нет; верхние кадры — адреса.\nКто-то предлагает «строка 42 в Export.swift, там ошибка».",
+  "key": "dSYM относится к другой сборке; адреса нельзя честно превратить в строку 42 по этому файлу. Запросить архив и dSYM build=204, проверить UUID бинарника и dSYM, загрузить недостающие подходящие символы, затем перечитать первый значимый кадр приложения и искать воспроизведение. Номер build помогает найти артефакт, но соответствие проверяют по UUID."
+ },
+ {
+  "id": "review-b3",
+  "topics": [
+   "review"
+  ],
+  "type": "Допиши",
+  "title": "Восстановимая ошибка экспорта картинки",
+  "prompt": "В редакторе открыток отсутствие шаблона должно вернуть «Шаблон недоступен» и один раз записать ImageExportError.missingTemplate через ExportIssueRecording. Напиши локальный шпион и exportImage, проверь отсутствие краша и одну запись. Это наш протокол, не подмена API Firebase.",
+  "code": "enum ImageExportError: Error { case missingTemplate }\nprotocol ExportIssueRecording { func record(_ error: Error) }",
+  "key": "enum ImageExportError: Error { case missingTemplate }\nprotocol ExportIssueRecording { func record(_ error: Error) }\nfinal class ExportIssueSpy: ExportIssueRecording {\n    private(set) var errors: [Error] = []\n    func record(_ error: Error) { errors.append(error) }\n}\nfunc exportImage(\n    templateExists: Bool, issues: any ExportIssueRecording\n) -> String {\n    guard templateExists else {\n        issues.record(ImageExportError.missingTemplate)\n        return \"Шаблон недоступен\"\n    }\n    return \"Готово\"\n}\nlet spy = ExportIssueSpy()\nassert(exportImage(templateExists: false, issues: spy) == \"Шаблон недоступен\")\nassert(spy.errors.count == 1)\n\nОшибка записана как восстановимая через собственный адаптер. В приложении Firebase-адаптер мог бы вызвать record(error:); SDK, сеть и реальный отчёт здесь не участвуют."
+ }
+]

@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Равенство и экземпляр",
+  "prompt": "Что выведет ===? Сколько экземпляров создано и почему проверка не отвечает на вопрос «один ли это урок»?",
+  "code": "final class SavedLesson {\n    let id: Int\n    var title: String\n    init(id: Int, title: String) { self.id = id; self.title = title }\n}\nlet first = SavedLesson(id: 24, title: \"Вступление\")\nlet second = SavedLesson(id: 24, title: \"Новое название\")\nprint(first === second)",
+  "key": "false\n\nСозданы два разных экземпляра. Совпадение id не делает их одной class-ссылкой; предметное равенство нужно задать через ==."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Заполни оба контракта",
+  "prompt": "Восстанови == по id и hash(into:) по тому же id. title не определяет равенство урока.",
+  "code": "final class SavedLesson: Hashable {\n    let id: Int\n    var title: String\n    init(id: Int, title: String) { self.id = id; self.title = title }\n    static func == (lhs: SavedLesson, rhs: SavedLesson) -> Bool {\n        /* Сравни существенное поле */\n    }\n    func hash(into hasher: inout Hasher) { /* Передай то же поле в hasher */ }\n}\nlet first = SavedLesson(id: 24, title: \"Вступление\")\nlet second = SavedLesson(id: 24, title: \"Новое название\")\nprint(first === second)\nprint(first == second)\nvar saved: Set<SavedLesson> = [first]\nfirst.title = \"Обновлено\"\nprint(saved.contains(second))\nprint(saved.insert(second).inserted)\nprint(saved.count)",
+  "key": "final class SavedLesson: Hashable {\n    let id: Int\n    var title: String\n    init(id: Int, title: String) { self.id = id; self.title = title }\n    static func == (lhs: SavedLesson, rhs: SavedLesson) -> Bool {\n        lhs.id == rhs.id\n    }\n    func hash(into hasher: inout Hasher) { hasher.combine(id) }\n}\nlet first = SavedLesson(id: 24, title: \"Вступление\")\nlet second = SavedLesson(id: 24, title: \"Новое название\")\nprint(first === second)\nprint(first == second)\nvar saved: Set<SavedLesson> = [first]\nfirst.title = \"Обновлено\"\nprint(saved.contains(second))\nprint(saved.insert(second).inserted)\nprint(saved.count)\n\nВывод false, true, true, false, 1. Равенство и хэш согласованы; название остаётся изменяемыми отображаемыми данными."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Напиши Hashable класса",
+  "prompt": "Даны id/title и проверка. Самостоятельно напиши static == и hash(into:) внутри SavedLesson: Hashable. Не используй === для предметного равенства.",
+  "code": "final class SavedLesson: Hashable {\n    let id: Int\n    var title: String\n    init(id: Int, title: String) { self.id = id; self.title = title }\n    // Напиши == и hash(into:)\n}\nlet first = SavedLesson(id: 24, title: \"Вступление\")\nlet second = SavedLesson(id: 24, title: \"Новое название\")\nprint(first === second)\nprint(first == second)\nprint(first.hashValue == second.hashValue)",
+  "key": "final class SavedLesson: Hashable {\n    let id: Int\n    var title: String\n    init(id: Int, title: String) { self.id = id; self.title = title }\n    static func == (lhs: SavedLesson, rhs: SavedLesson) -> Bool {\n        lhs.id == rhs.id\n    }\n    func hash(into hasher: inout Hasher) { hasher.combine(id) }\n}\nlet first = SavedLesson(id: 24, title: \"Вступление\")\nlet second = SavedLesson(id: 24, title: \"Новое название\")\nprint(first === second)\nprint(first == second)\nprint(first.hashValue == second.hashValue)\n\nВывод false, true, true. Сравнение хэшей проверяет необходимое условие в одном запуске, но не доказывает корректность Hashable на всех входах."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Ключ уже лежит в Set",
+  "prompt": "title участвует и в равенстве, и в hash, а затем меняется у элемента внутри Set. Исправь класс: правило сохранённых уроков — равенство только по неизменяемому id. После переименования поиск и удаление по id 24 должны работать. Не предсказывай содержит ли испорченный Set элемент.",
+  "code": "final class SavedLesson: Hashable {\n    let id: Int\n    var title: String\n    init(id: Int, title: String) { self.id = id; self.title = title }\n    static func == (lhs: SavedLesson, rhs: SavedLesson) -> Bool {\n        lhs.id == rhs.id && lhs.title == rhs.title\n    }\n    func hash(into hasher: inout Hasher) {\n        hasher.combine(id)\n        hasher.combine(title)\n    }\n}\nlet lesson = SavedLesson(id: 24, title: \"Вступление\")\nlet saved: Set<SavedLesson> = [lesson]\nlet insertedTitle = lesson.title\nlesson.title = \"Обновлено\"\nprint(insertedTitle)\nprint(lesson.title)\n// Не пытайся предсказать contains для нарушенного контракта",
+  "key": "final class SavedLesson: Hashable {\n    let id: Int\n    var title: String\n    init(id: Int, title: String) { self.id = id; self.title = title }\n    static func == (lhs: SavedLesson, rhs: SavedLesson) -> Bool {\n        lhs.id == rhs.id\n    }\n    func hash(into hasher: inout Hasher) { hasher.combine(id) }\n}\nlet lesson = SavedLesson(id: 24, title: \"Вступление\")\nvar saved: Set<SavedLesson> = [lesson]\nlesson.title = \"Обновлено\"\nlet lookup = SavedLesson(id: 24, title: \"Любое название\")\nprint(saved.contains(lookup))\nprint(saved.remove(lookup) != nil)\nprint(saved.isEmpty)\n\nПосле правки: true, true, true. Изменение title не затрагивает стабильный ключ. Исходный код меняет компоненты ключа уже вставленного объекта и нарушает условия использования Set."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни контракт",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Чем == отличается от ===? Какие компоненты передавать в Hasher? Почему нельзя изменять поле ключа элемента-класса, уже находящегося в Set?",
+  "key": "== сравнивает по правилу Equatable, а === проверяет один экземпляр класса. Равные элементы должны подавать одинаковые существенные компоненты в Hasher в одном порядке; одинаковый хэш не доказывает равенство. Set рассчитывает на стабильность ключа хранимого элемента: изменение общего class-объекта не сообщает коллекции, что требуется перестроить поиск. В этой библиотеке == и hash используют неизменяемый id."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Сохрани две позиции",
+  "prompt": "Теперь храним закладки: одинаковые lessonID и second дают один элемент, другая секунда — другой. Добавь Hashable к структуре с синтезом и создай Set из first, copy, later. Покажи количество.",
+  "code": "struct AudioBookmark: /* Выбери протокол */ {\n    let lessonID: Int\n    let second: Int\n}\nlet first = AudioBookmark(lessonID: 24, second: 30)\nlet copy = AudioBookmark(lessonID: 24, second: 30)\nlet later = AudioBookmark(lessonID: 24, second: 45)\nprint(first == copy)\nprint(first == later)\n// Создай marks и выведи count",
+  "key": "struct AudioBookmark: Hashable {\n    let lessonID: Int\n    let second: Int\n}\nlet first = AudioBookmark(lessonID: 24, second: 30)\nlet copy = AudioBookmark(lessonID: 24, second: 30)\nlet later = AudioBookmark(lessonID: 24, second: 45)\nprint(first == copy)\nprint(first == later)\nlet marks: Set<AudioBookmark> = [first, copy, later]\nprint(marks.count)\n\nВывод true, false, 2. Синтез учитывает оба хранимых поля; ступень 6 переносит правило на позицию, а не повторяет класс урока."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "По памяти создай SavedAudio: Hashable с let id: Int и var isDownloaded: Bool, init и явными ==/hash по id. Сделай два экземпляра id 24 с разным статусом загрузки, покажи === и ==. Вставь первый в Set, измени isDownloaded, найди и удали по второму. Ожидаются false, true, true, true и пустой Set.",
+  "key": "final class SavedAudio: Hashable {\n    let id: Int\n    var isDownloaded: Bool\n    init(id: Int, isDownloaded: Bool) {\n        self.id = id\n        self.isDownloaded = isDownloaded\n    }\n    static func == (lhs: SavedAudio, rhs: SavedAudio) -> Bool {\n        lhs.id == rhs.id\n    }\n    func hash(into hasher: inout Hasher) { hasher.combine(id) }\n}\nlet first = SavedAudio(id: 24, isDownloaded: false)\nlet second = SavedAudio(id: 24, isDownloaded: true)\nprint(first === second)\nprint(first == second)\nvar saved: Set<SavedAudio> = [first]\nfirst.isDownloaded = true\nprint(saved.contains(second))\nprint(saved.remove(second) != nil)\nprint(saved.isEmpty)\n\nВывод false, true, true, true, true. Правило перенесено на статус загрузки: он меняется, но не входит в стабильный ключ урока."
+ }
+]

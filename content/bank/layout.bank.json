@@ -1,0 +1,35 @@
+[
+ {
+  "id": "layout-b1",
+  "topics": [
+   "layout"
+  ],
+  "type": "Допиши",
+  "title": "Высота панели шумоподавления",
+  "prompt": "Карточка начинается с высоты 44. Сохрани одно ограничение height в переменной, затем измени его constant на 72 и снова выполни layout. Не добавляй вторую обязательную высоту.",
+  "code": "import UIKit\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 320, height: 120))\nlet card = UIView()\nroot.addSubview(card)\n// TODO: constraints и смена высоты",
+  "key": "import UIKit\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 320, height: 120))\nlet card = UIView()\nroot.addSubview(card)\ncard.translatesAutoresizingMaskIntoConstraints = false\nlet height = card.heightAnchor.constraint(equalToConstant: 44)\nNSLayoutConstraint.activate([\n    card.leadingAnchor.constraint(equalTo: root.leadingAnchor, constant: 16),\n    card.topAnchor.constraint(equalTo: root.topAnchor, constant: 20),\n    card.trailingAnchor.constraint(equalTo: root.trailingAnchor, constant: -16),\n    height\n])\nroot.layoutIfNeeded()\nassert(card.frame.height == 44)\nheight.constant = 72\nroot.layoutIfNeeded()\nassert(card.frame.height == 72)\n\nПервый layout даёт высоту 44, второй — 72. Изменено существующее правило, конфликт не создан."
+ },
+ {
+  "id": "layout-b2",
+  "topics": [
+   "layout"
+  ],
+  "type": "Найди ошибку",
+  "title": "Два режима индикатора записи экрана",
+  "prompt": "Одновременно активированы две обязательные ширины. Исправь режимы: сначала 80, затем отключи compactWidth и включи expandedWidth=140. Не проверяй выбранный системой frame конфликтного варианта.",
+  "code": "import UIKit\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 320, height: 120))\nlet indicator = UIView()\nindicator.translatesAutoresizingMaskIntoConstraints = false\nroot.addSubview(indicator)\nlet compactWidth = indicator.widthAnchor.constraint(equalToConstant: 80)\nlet expandedWidth = indicator.widthAnchor.constraint(equalToConstant: 140)\nNSLayoutConstraint.activate([\n    indicator.leadingAnchor.constraint(equalTo: root.leadingAnchor),\n    indicator.topAnchor.constraint(equalTo: root.topAnchor),\n    indicator.heightAnchor.constraint(equalToConstant: 20),\n    compactWidth, expandedWidth\n])\nroot.layoutIfNeeded()",
+  "key": "import UIKit\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 320, height: 120))\nlet indicator = UIView()\nindicator.translatesAutoresizingMaskIntoConstraints = false\nroot.addSubview(indicator)\nlet compactWidth = indicator.widthAnchor.constraint(equalToConstant: 80)\nlet expandedWidth = indicator.widthAnchor.constraint(equalToConstant: 140)\nNSLayoutConstraint.activate([\n    indicator.leadingAnchor.constraint(equalTo: root.leadingAnchor),\n    indicator.topAnchor.constraint(equalTo: root.topAnchor),\n    indicator.heightAnchor.constraint(equalToConstant: 20),\n    compactWidth\n])\nroot.layoutIfNeeded()\nassert(indicator.frame.width == 80)\ncompactWidth.isActive = false\nexpandedWidth.isActive = true\nroot.layoutIfNeeded()\nassert(indicator.frame.width == 140)\n\nВ каждом режиме активно только одно ограничение ширины; значения проверяются после layoutIfNeeded."
+ },
+ {
+  "id": "layout-b3",
+  "topics": [
+   "layout"
+  ],
+  "type": "Допиши",
+  "title": "Квадрат сканера QR",
+  "prompt": "Корень 320×360, зона сканирования слева/справа/сверху с отступом 16. Задай квадрат через равенство heightAnchor и widthAnchor, без явной числовой высоты. После layout ожидается (16,16,288,288).",
+  "code": "import UIKit\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 320, height: 360))\nlet scanArea = UIView()\n// TODO: маска, addSubview, activate, layout",
+  "key": "import UIKit\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 320, height: 360))\nlet scanArea = UIView()\nscanArea.translatesAutoresizingMaskIntoConstraints = false\nroot.addSubview(scanArea)\nNSLayoutConstraint.activate([\n    scanArea.leadingAnchor.constraint(\n        equalTo: root.leadingAnchor, constant: 16\n    ),\n    scanArea.trailingAnchor.constraint(\n        equalTo: root.trailingAnchor, constant: -16\n    ),\n    scanArea.topAnchor.constraint(equalTo: root.topAnchor, constant: 16),\n    scanArea.heightAnchor.constraint(equalTo: scanArea.widthAnchor)\n])\nroot.layoutIfNeeded()\nassert(scanArea.frame == CGRect(x: 16, y: 16, width: 288, height: 288))\n\nВысота следует из ширины; ширина — из краёв корня. Отношение размеров задаёт новое правило, а не лишнюю фиксированную высоту."
+ }
+]

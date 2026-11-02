@@ -1,0 +1,35 @@
+[
+ {
+  "id": "codable-b1",
+  "topics": [
+   "codable"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Карточка растения",
+  "prompt": "Назови вывод после чтения null у высоты. Это проверка формата карточки, не совет по уходу.",
+  "code": "import Foundation\nstruct Plant: Decodable {\n    let id: Int\n    let displayName: String\n    let heightCm: Int?\n    enum CodingKeys: String, CodingKey {\n        case id\n        case displayName = \"display_name\"\n        case heightCm = \"height_cm\"\n    }\n}\nlet data = Data(#\"{\"id\":7,\"display_name\":\"Фикус\",\"height_cm\":null}\"#.utf8)\ndo {\n    let plant = try JSONDecoder().decode(Plant.self, from: data)\n    print(plant.displayName)\n    print(plant.heightCm == nil)\n} catch { print(\"Некорректные данные\") }",
+  "key": "Фикус\ntrue\n\nheight_cm: null даёт nil у heightCm; display_name сопоставляется с displayName."
+ },
+ {
+  "id": "codable-b2",
+  "topics": [
+   "codable"
+  ],
+  "type": "Допиши",
+  "title": "Диагностика версии прошивки",
+  "prompt": "JSON не меняй. Два входа имеют разные ошибки. Допиши отдельные catch для отсутствующего ключа и несовпадающего типа, показывай имя поля; другой отказ — общий catch.",
+  "code": "import Foundation\nstruct Firmware: Decodable { let id: Int; let build: Int }\nlet payloads = [#\"{\"id\":6}\"#, #\"{\"id\":6,\"build\":\"12\"}\"#]\nfor json in payloads {\n    do {\n        _ = try JSONDecoder().decode(Firmware.self, from: Data(json.utf8))\n    }\n    // Допиши catch keyNotFound с именем ключа\n    // Допиши catch typeMismatch с codingPath\n    // Допиши общий catch\n}",
+  "key": "import Foundation\nstruct Firmware: Decodable { let id: Int; let build: Int }\nlet payloads = [#\"{\"id\":6}\"#, #\"{\"id\":6,\"build\":\"12\"}\"#]\nfor json in payloads {\n    do {\n        _ = try JSONDecoder().decode(Firmware.self, from: Data(json.utf8))\n    } catch DecodingError.keyNotFound(let field, _) {\n        print(\"Нет ключа: \\(field.stringValue)\")\n    } catch DecodingError.typeMismatch(_, let context) {\n        let field = context.codingPath.last?.stringValue ?? \"<корень>\"\n        print(\"Неверный тип: \\(field)\")\n    } catch { print(\"Другая ошибка\") }\n}\n\nВывод «Нет ключа: build», затем «Неверный тип: build». keyNotFound передаёт ключ отдельно, typeMismatch — путь в context; исходные данные сохранены."
+ },
+ {
+  "id": "codable-b3",
+  "topics": [
+   "codable"
+  ],
+  "type": "Допиши",
+  "title": "Результат голосования",
+  "prompt": "winner может отсутствовать, пока результат не выбран. Допиши тип с Optional; id обязателен.",
+  "code": "import Foundation\nstruct VoteSummary: Decodable { let id: Int; let winner: /* тип */ }\nlet data = Data(#\"{\"id\":8}\"#.utf8)\ndo {\n    let summary = try JSONDecoder().decode(VoteSummary.self, from: data)\n    print(summary.winner ?? \"Победитель ещё не выбран\")\n} catch { print(\"Некорректные данные\") }",
+  "key": "import Foundation\nstruct VoteSummary: Decodable { let id: Int; let winner: String? }\nlet data = Data(#\"{\"id\":8}\"#.utf8)\ndo {\n    let summary = try JSONDecoder().decode(VoteSummary.self, from: data)\n    print(summary.winner ?? \"Победитель ещё не выбран\")\n} catch { print(\"Некорректные данные\") }\n\nwinner: String? допускает отсутствующий ключ. Вывод «Победитель ещё не выбран»."
+ }
+]

@@ -1,0 +1,35 @@
+[
+ {
+  "id": "realtime-b1",
+  "topics": [
+   "realtime"
+  ],
+  "type": "Допиши",
+  "title": "Мощность умного счётчика",
+  "prompt": "Разбери локальный WebSocket Message: строка и Data содержат одинаковый JSON. Напиши перевод в bytes перед JSONDecoder; живое устройство не подключается.",
+  "code": "import Foundation\nstruct MeterReading: Decodable { let id: Int; let watts: Int }\nfunc reading(\n    from frame: URLSessionWebSocketTask.Message\n) throws -> MeterReading {\n    let bytes: Data\n    switch frame {\n    case .string(let text): /* UTF-8 байты */\n    case .data(let data): /* готовые байты */\n    @unknown default: throw URLError(.cannotParseResponse)\n    }\n    return try JSONDecoder().decode(MeterReading.self, from: bytes)\n}\nlet json = #\"{\"id\":4,\"watts\":120}\"#\nprint(try reading(from: .string(json)).watts)\nprint(try reading(from: .data(Data(json.utf8))).id)",
+  "key": "import Foundation\nstruct MeterReading: Decodable { let id: Int; let watts: Int }\nfunc reading(\n    from frame: URLSessionWebSocketTask.Message\n) throws -> MeterReading {\n    let bytes: Data\n    switch frame {\n    case .string(let text): bytes = Data(text.utf8)\n    case .data(let data): bytes = data\n    @unknown default: throw URLError(.cannotParseResponse)\n    }\n    return try JSONDecoder().decode(MeterReading.self, from: bytes)\n}\nlet json = #\"{\"id\":4,\"watts\":120}\"#\nprint(try reading(from: .string(json)).watts)\nprint(try reading(from: .data(Data(json.utf8))).id)\n\nВывод 120, 4. Сначала разбираем транспортное сообщение, затем типизированные поля."
+ },
+ {
+  "id": "realtime-b2",
+  "topics": [
+   "realtime"
+  ],
+  "type": "Допиши",
+  "title": "Число зрителей трансляции",
+  "prompt": "Тики наступили вне этой функции. На каждый тик получи один снимок, для отрицательного ticks — пустой массив. Не открывай WebSocket и не добавляй реальный таймер.",
+  "code": "import Foundation\nstruct Viewers { let streamID: Int; let revision: Int; let count: Int }\nprotocol ViewerSource { func fetchSnapshot() -> Viewers }\nstruct LocalViewerSource: ViewerSource {\n    let value: Viewers\n    func fetchSnapshot() -> Viewers { value }\n}\nfunc poll(\n    source: any ViewerSource, ticks: Int\n) -> [Viewers] {\n    var rows: [Viewers] = []\n    // Получи по одному снимку на каждый допустимый тик\n    return rows\n}\nlet source = LocalViewerSource(\n    value: Viewers(streamID: 4, revision: 2, count: 30)\n)\nprint(poll(source: source, ticks: 2).count)\nprint(poll(source: source, ticks: -1).count)",
+  "key": "import Foundation\nstruct Viewers { let streamID: Int; let revision: Int; let count: Int }\nprotocol ViewerSource { func fetchSnapshot() -> Viewers }\nstruct LocalViewerSource: ViewerSource {\n    let value: Viewers\n    func fetchSnapshot() -> Viewers { value }\n}\nfunc poll(\n    source: any ViewerSource, ticks: Int\n) -> [Viewers] {\n    var rows: [Viewers] = []\n    for _ in 0..<max(0, ticks) { rows.append(source.fetchSnapshot()) }\n    return rows\n}\nlet source = LocalViewerSource(\n    value: Viewers(streamID: 4, revision: 2, count: 30)\n)\nprint(poll(source: source, ticks: 2).count)\nprint(poll(source: source, ticks: -1).count)\n\nВывод 2, 0. Polling запрашивает снимки по ритму вызывающего кода; это не непрерывный серверный поток."
+ },
+ {
+  "id": "realtime-b3",
+  "topics": [
+   "realtime"
+  ],
+  "type": "Найди ошибку",
+  "title": "Очередь в сервисном центре",
+  "prompt": "После переподключения применили свежий полный снимок revision 8. Запоздал буферный снимок 5 и откатил waiting. Исправь правило свежести; не пытайся вычитать число людей как дельту.",
+  "code": "struct QueueSnapshot { let queueID: Int; let revision: Int; let waiting: Int }\nstruct ServiceQueueState {\n    let queueID: Int\n    var revision = 0\n    var waiting = 0\n    mutating func accept(_ value: QueueSnapshot) {\n        guard value.queueID == queueID, value.revision != revision else {\n            return\n        }\n        revision = value.revision\n        waiting = value.waiting\n    }\n}\nvar state = ServiceQueueState(queueID: 6)\nstate.accept(.init(queueID: 6, revision: 4, waiting: 12))\nstate.accept(.init(queueID: 6, revision: 8, waiting: 7))\nstate.accept(.init(queueID: 6, revision: 5, waiting: 10))\nprint(state.waiting)\nprint(state.revision)",
+  "key": "struct QueueSnapshot { let queueID: Int; let revision: Int; let waiting: Int }\nstruct ServiceQueueState {\n    let queueID: Int\n    var revision = 0\n    var waiting = 0\n    mutating func accept(_ value: QueueSnapshot) {\n        guard value.queueID == queueID, value.revision > revision else {\n            return\n        }\n        revision = value.revision\n        waiting = value.waiting\n    }\n}\nvar state = ServiceQueueState(queueID: 6)\nstate.accept(.init(queueID: 6, revision: 4, waiting: 12))\nstate.accept(.init(queueID: 6, revision: 8, waiting: 7))\nstate.accept(.init(queueID: 6, revision: 5, waiting: 10))\nprint(state.waiting)\nprint(state.revision)\n\nДо правки 10, 5; после — 7, 8. Снимок после восстановления должен выдерживать старые буферные сообщения."
+ }
+]

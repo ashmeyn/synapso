@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Предскажи порядок",
+  "prompt": "Запиши все четыре строки вывода по порядку. Между какими сообщениями сработает deinit и какой владелец остаётся после first = nil?",
+  "code": "final class RecordingSession {\n    let id: Int\n    init(id: Int) { self.id = id }\n    deinit { print(\"Освобождена сессия \\(id)\") }\n}\nvar first: RecordingSession? = RecordingSession(id: 31)\nvar second = first\nfirst = nil\nprint(\"Первую ссылку убрали\")\nprint(second!.id)\nsecond = nil\nprint(\"Вторую ссылку убрали\")",
+  "key": "Первую ссылку убрали\n31\nОсвобождена сессия 31\nВторую ссылку убрали\n\nПосле first = nil объект удерживает second. Обнуление second убирает последнего владельца."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Убери последний захват",
+  "prompt": "Заполни две строки: отпусти second перед вызовом действия, затем отпусти saved после вызова. first уже очищен. Сохрани порядок сообщений.",
+  "code": "final class RecordingSession {\n    let id: Int\n    init(id: Int) { self.id = id }\n    deinit { print(\"Освобождена сессия \\(id)\") }\n}\nvar first: RecordingSession? = RecordingSession(id: 31)\nvar second = first\nvar saved: (() -> Void)? = { [session = first!] in\n    print(session.id)\n}\nfirst = nil\n// Убери владельца second\nprint(\"Осталось замыкание\")\nsaved?()\n// Убери владельца saved\nprint(\"Все владельцы убраны\")",
+  "key": "final class RecordingSession {\n    let id: Int\n    init(id: Int) { self.id = id }\n    deinit { print(\"Освобождена сессия \\(id)\") }\n}\nvar first: RecordingSession? = RecordingSession(id: 31)\nvar second = first\nvar saved: (() -> Void)? = { [session = first!] in\n    print(session.id)\n}\nfirst = nil\nsecond = nil\nprint(\"Осталось замыкание\")\nsaved?()\nsaved = nil\nprint(\"Все владельцы убраны\")\n\nПока жив saved, его захват держит сессию. deinit выйдет перед последним сообщением."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Напиши deinit и подпиши цепочку",
+  "prompt": "Добавь deinit с сообщением «Освобождена сессия 31» через id. У каждой операции с владельцем подпиши число видимых сильных владельцев: после создания, присваивания, захвата и очистки. Не считай временные ссылки вызова и не вызывай deinit вручную.",
+  "code": "final class RecordingSession {\n    let id: Int\n    init(id: Int) { self.id = id }\n    // Добавь deinit\n}\nvar first: RecordingSession? = RecordingSession(id: 31)\nvar second = first\nvar saved: (() -> Void)? = { [session = first!] in\n    print(session.id)\n}\nfirst = nil\nsecond = nil\nsaved?()\nsaved = nil\nprint(\"Готово\")",
+  "key": "final class RecordingSession {\n    let id: Int\n    init(id: Int) { self.id = id }\n    deinit { print(\"Освобождена сессия \\(id)\") }\n}\nvar first: RecordingSession? = RecordingSession(id: 31) // 1\nvar second = first // 2\nvar saved: (() -> Void)? = { [session = first!] in // 3\n    print(session.id)\n}\nfirst = nil // 2: second и захват\nsecond = nil // 1: захват\nsaved?() // 1: захват\nsaved = nil // 0: deinit\nprint(\"Готово\")\n\nЦепочка: 1 → 2 → 3 → 2 → 1 → 1 → 0. Числа описывают владельцев в исходнике; это не показания внутреннего счётчика ARC."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Почему вызов не освобождает",
+  "prompt": "Сессия остаётся у saved даже после вызова. Исправь одну строку после saved?(), чтобы убрать действие перед сообщением о завершении. Не меняй захват и не вызывай deinit.",
+  "code": "final class RecordingSession {\n    let id: Int\n    init(id: Int) { self.id = id }\n    deinit { print(\"Освобождена сессия \\(id)\") }\n}\nvar first: RecordingSession? = RecordingSession(id: 31)\nvar second = first\nvar saved: (() -> Void)? = { [session = first!] in\n    print(session.id)\n}\nfirst = nil\nsecond = nil\nprint(\"Осталось замыкание\")\nsaved?()\n// Действие вызвали; считаем работу законченной\nprint(\"Все владельцы убраны\")",
+  "key": "final class RecordingSession {\n    let id: Int\n    init(id: Int) { self.id = id }\n    deinit { print(\"Освобождена сессия \\(id)\") }\n}\nvar first: RecordingSession? = RecordingSession(id: 31)\nvar second = first\nvar saved: (() -> Void)? = { [session = first!] in\n    print(session.id)\n}\nfirst = nil\nsecond = nil\nprint(\"Осталось замыкание\")\nsaved?()\nsaved = nil\nprint(\"Все владельцы убраны\")\n\nВызов выполняет тело, но не удаляет само замыкание из saved. Нужна явная очистка saved."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни владение",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Почему сессию держат переменная, элемент массива и захват замыкания? Когда сработает deinit в итоговом коде? Чем завершение работы отличается от deinit?",
+  "key": "ARC автоматически поддерживает сильное владение экземплярами классов. Каждая доступная сильная связь удерживает объект: локальная переменная, элемент контейнера или сохранённый захват. Когда таких владельцев не остаётся, экземпляр освобождается и вызывается deinit. Вызов замыкания сам по себе не удаляет сохранённый захват. Число владельцев в схеме не равно измеренному внутреннему счётчику runtime. Завершение пользовательской работы выполняют явно, потому что объект может продолжать жить."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Очисти очередь сессий",
+  "prompt": "Теперь последним владельцем станет элемент pending. Допиши удаление всех элементов после вывода id. Ожидается: 32, «Освобождена сессия 32», «Очередь очищена». Подпиши число видимых владельцев после session = nil.",
+  "code": "final class RecordingSession {\n    let id: Int\n    init(id: Int) { self.id = id }\n    deinit { print(\"Освобождена сессия \\(id)\") }\n}\nvar session: RecordingSession? = RecordingSession(id: 32)\nvar pending: [RecordingSession] = [session!]\nsession = nil\nprint(pending[0].id)\n// Освободи владельцев в pending\nprint(\"Очередь очищена\")",
+  "key": "final class RecordingSession {\n    let id: Int\n    init(id: Int) { self.id = id }\n    deinit { print(\"Освобождена сессия \\(id)\") }\n}\nvar session: RecordingSession? = RecordingSession(id: 32)\nvar pending: [RecordingSession] = [session!]\nsession = nil\nprint(pending[0].id)\npending.removeAll()\nprint(\"Очередь очищена\")\n\nПосле session = nil остаётся один видимый владелец: элемент pending. removeAll убирает его; в этом примере других владельцев нет."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови RecordingBuffer с let sampleCount: Int, init и deinit, который печатает «Буфер освобождён». Напиши makeReader(sampleCount:), создающую буфер и возвращающую замыкание, печатающее sampleCount. Сохрани результат в Optional reader, вызови его для 128, затем очисти reader и напечатай «Чтение завершено». Буфер должен жить после возврата функции и освободиться после очистки reader.",
+  "key": "final class RecordingBuffer {\n    let sampleCount: Int\n    init(sampleCount: Int) { self.sampleCount = sampleCount }\n    deinit { print(\"Буфер освобождён\") }\n}\nfunc makeReader(sampleCount: Int) -> () -> Void {\n    let buffer = RecordingBuffer(sampleCount: sampleCount)\n    return { print(buffer.sampleCount) }\n}\nvar reader: (() -> Void)? = makeReader(sampleCount: 128)\nreader?()\nreader = nil\nprint(\"Чтение завершено\")\n\nВывод: 128, «Буфер освобождён», «Чтение завершено». Возвращённое замыкание удерживает буфер после возврата makeReader; очистка reader убирает этот захват."
+ }
+]

@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Найди обход правила",
+  "prompt": "Что выведет print и почему наличие любого метода advance ещё не запретило бы такую запись?",
+  "code": "final class Download {\n    let id = 40\n    var progress = 0\n    func advance(to value: Int) {\n        guard value >= progress && value <= 100 else { return }\n        progress = value\n    }\n}\nlet download = Download()\ndownload.progress = 150\nprint(download.progress)",
+  "key": "150\n\nОбычный var доступен для прямой записи внутри модуля, поэтому вызывающий код обходит команду. Setter нужно ограничить отдельно."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Открой только чтение",
+  "prompt": "Добавь ограничение setter и два условия guard. На входах 25, 150, 10 результат должен остаться 25.",
+  "code": "final class Download {\n    let id = 40\n    /* доступ записи */ var progress = 0\n    func advance(to value: Int) {\n        guard /* не меньше текущего и не больше 100 */ else { return }\n        progress = value\n    }\n}\nlet download = Download()\ndownload.advance(to: 25)\ndownload.advance(to: 150)\ndownload.advance(to: 10)\nprint(download.progress)",
+  "key": "final class Download {\n    let id = 40\n    private(set) var progress = 0\n    func advance(to value: Int) {\n        guard value >= progress && value <= 100 else { return }\n        progress = value\n    }\n}\nlet download = Download()\ndownload.advance(to: 25)\ndownload.advance(to: 150)\ndownload.advance(to: 10)\nprint(download.progress)\n\nprivate(set) закрывает прямую запись, guard сохраняет монотонный прогресс в пределах 100."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Открой модель другому модулю",
+  "prompt": "Download переезжает в отдельный модуль-библиотеку. Экран приложения должен создать Download(id: 40), читать progress и вызывать advance, но не записывать progress и не наследовать класс. Расставь модификаторы доступа: что открыть наружу, что оставить закрытым. open не нужен — объясни почему.",
+  "code": "final class Download {\n    let id: Int\n    private(set) var progress = 0\n    init(id: Int) { self.id = id }\n    func advance(to value: Int) {\n        guard value >= progress && value <= 100 else { return }\n        progress = value\n    }\n}",
+  "key": "public final class Download {\n    public let id: Int\n    public private(set) var progress = 0\n    public init(id: Int) { self.id = id }\n    public func advance(to value: Int) {\n        guard value >= progress && value <= 100 else { return }\n        progress = value\n    }\n}\n\npublic у класса не открывает его члены: id, чтение progress, init и advance помечены отдельно. public private(set) — читать снаружи можно, писать только внутри. open не нужен: он разрешил бы наследование и переопределение из другого модуля, а нам это запрещено; final оставляем — он запрещает наследование и внутри модуля."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Исправь недоступную запись",
+  "prompt": "Код не компилируется: setter закрыт. Не расширяя доступ, замени прямое присваивание проверенной командой. После 25 попытка 150 должна оставить 25.",
+  "code": "final class Download {\n    let id = 40\n    private(set) var progress = 0\n    func advance(to value: Int) {\n        guard value >= progress && value <= 100 else { return }\n        progress = value\n    }\n}\nlet download = Download()\ndownload.advance(to: 25)\ndownload.progress = 150 // ❌ setter закрыт\nprint(download.progress)",
+  "key": "final class Download {\n    let id = 40\n    private(set) var progress = 0\n    func advance(to value: Int) {\n        guard value >= progress && value <= 100 else { return }\n        progress = value\n    }\n}\nlet download = Download()\ndownload.advance(to: 25)\ndownload.advance(to: 150)\ndownload.advance(to: 10)\nprint(download.progress)\n\nВызови advance(to: 150), который откажет. Не делай setter открытым ради компиляции: именно он защищает контракт."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни напарнику (устно)",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Экран читает прогресс загрузки, но меняет только командой.\n- Что ограничивает private(set), а что проверяет guard?\n- Чем различаются private, fileprivate и internal?\n- Что отдельно означают public, open и final?",
+  "key": "private(set) ограничивает область записи, guard проверяет допустимость значения. private — объявление и его extensions в том же файле; fileprivate — весь текущий файл; internal — текущий модуль. public открывает API другим модулям; open разрешает внешнее наследование и переопределение для классов/членов; final запрещает наследование класса или переопределение метода независимо от видимости."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Защити признак паузы",
+  "prompt": "Для загрузки 40 перенеси правило доступа на Bool isPaused с начальным false. Снаружи только чтение; pause и resume меняют флаг. Создай final-модель, вызови pause и resume, после каждого выведи признак.",
+  "code": "Напиши самостоятельный Download с id 40, isPaused, pause(), resume() и хвостом проверки. progress в этой отдельной версии не требуется.",
+  "key": "final class Download {\n    let id = 40\n    private(set) var isPaused = false\n    func pause() { isPaused = true }\n    func resume() { isPaused = false }\n}\nlet download = Download()\ndownload.pause()\nprint(download.isPaused)\ndownload.resume()\nprint(download.isPaused)\n\nСнаружи нельзя подменить флаг присваиванием; команды меняют его внутри Download. Вывод true и false."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Загрузка 40 имеет totalBytes = 50 и downloadedBytes = 0. Снаружи downloadedBytes только читается; final-модель меняет его через add(bytes:). Принимай лишь положительный кусок, не превышающий totalBytes - downloadedBytes. Последовательно передай 20, 40, -1, 0, 30 и выведи результат: 50. Не обрезай слишком большой кусок: отвергай целиком.",
+  "key": "final class Download {\n    let id = 40\n    let totalBytes = 50\n    private(set) var downloadedBytes = 0\n    func add(bytes: Int) {\n        guard bytes > 0 && bytes <= totalBytes - downloadedBytes else { return }\n        downloadedBytes += bytes\n    }\n}\nlet download = Download()\ndownload.add(bytes: 20)\ndownload.add(bytes: 40)\ndownload.add(bytes: -1)\ndownload.add(bytes: 0)\ndownload.add(bytes: 30)\nprint(download.downloadedBytes)\n\n20 принято, 40 отвергнуто, отрицательный и нулевой куски отвергнуты, 30 завершает объём 50. Доступ и проверка величины защищают разные части контракта."
+ }
+]

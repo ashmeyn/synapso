@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Верхний слой",
+  "prompt": "Предскажи две строки при явном hitTest. Фильтры других view не меняются.",
+  "code": "import UIKit\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 200, height: 140))\nlet back = UIView(frame: CGRect(x: 30, y: 30, width: 60, height: 40))\nlet front = UIView(frame: back.frame)\nroot.addSubview(back)\nroot.addSubview(front)\nlet point = CGPoint(x: 40, y: 40)\nprint(root.hitTest(point, with: nil) === front)\nfront.alpha = 0.005\nprint(root.hitTest(point, with: nil) === back)",
+  "key": "true\ntrue\n\nПоследний добавленный front выигрывает; после alpha=0.005 его ветка пропускается."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Расширь ручку",
+  "prompt": "Допиши HandleView.point(inside:with:): расширь bounds на 12 point во все стороны. В корне 200×140 ручка (40,40,24,24) должна принять точку root=(35,45), не меняя свой frame.",
+  "code": "import UIKit\nfinal class HandleView: UIView {\n    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {\n        // TODO\n    }\n}",
+  "key": "import UIKit\nfinal class HandleView: UIView {\n    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {\n        bounds.insetBy(dx: -12, dy: -12).contains(point)\n    }\n}\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 200, height: 140))\nlet handle = HandleView(frame: CGRect(x: 40, y: 40, width: 24, height: 24))\nroot.addSubview(handle)\nassert(root.hitTest(CGPoint(x: 35, y: 45), with: nil) === handle)\n\nЛокальная точка (−5,5) лежит в расширенных bounds. Родитель root эту точку тоже принимает."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Проверь три фильтра",
+  "prompt": "Создай перекрывающиеся back/front. Поочерёдно сделай front скрытой, выключи взаимодействие, задай alpha=0.005; каждый раз восстанови предыдущие свойства и проверь back. Затем восстанови всё и проверь front.",
+  "code": "import UIKit\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 200, height: 140))\nlet back = UIView(frame: CGRect(x: 30, y: 30, width: 60, height: 40))\nlet front = UIView(frame: back.frame)\nroot.addSubview(back)\nroot.addSubview(front)",
+  "key": "import UIKit\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 200, height: 140))\nlet back = UIView(frame: CGRect(x: 30, y: 30, width: 60, height: 40))\nlet front = UIView(frame: back.frame)\nroot.addSubview(back)\nroot.addSubview(front)\nlet point = CGPoint(x: 40, y: 40)\nfront.isHidden = true\nassert(root.hitTest(point, with: nil) === back)\nfront.isHidden = false\nfront.isUserInteractionEnabled = false\nassert(root.hitTest(point, with: nil) === back)\nfront.isUserInteractionEnabled = true\nfront.alpha = 0.005\nassert(root.hitTest(point, with: nil) === back)\nfront.alpha = 1\nassert(root.hitTest(point, with: nil) === front)\n\nКаждый фильтр независимо исключает front. Восстановление предыдущего свойства не даёт тестам случайно проверять одну и ту же причину."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Родитель отверг раньше",
+  "prompt": "Вывод false, хотя handle рисуется за краем panel. Сделай принимающую panel шириной 80 с тем же origin (20,20) и высотой 30. Объясни, почему clipsToBounds=false не хватило. Transforms единичные.",
+  "code": "import UIKit\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 200, height: 140))\nlet panel = UIView(frame: CGRect(x: 20, y: 20, width: 30, height: 30))\nlet handle = UIView(frame: CGRect(x: 40, y: 0, width: 20, height: 20))\nroot.addSubview(panel)\npanel.addSubview(handle)\npanel.clipsToBounds = false\nlet point = CGPoint(x: 70, y: 25)\nprint(root.hitTest(point, with: nil) === handle)",
+  "key": "import UIKit\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 200, height: 140))\nlet panel = UIView(frame: CGRect(x: 20, y: 20, width: 80, height: 30))\nlet handle = UIView(frame: CGRect(x: 40, y: 0, width: 20, height: 20))\nroot.addSubview(panel)\npanel.addSubview(handle)\npanel.clipsToBounds = false\nlet point = CGPoint(x: 70, y: 25)\nprint(root.hitTest(point, with: nil) === handle)\n\nВывод: true. Точка теперь проходит panel, затем переводится в handle. Изменение рамки намеренно расширяет контейнер, а не только способ рисования."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни маршруты",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Как hitTest выбирает view? Что меняет point(inside:) и когда nil полезен? Как next, target nil и becomeFirstResponder связаны с action и вводом?",
+  "key": "Стандартный поиск фильтрует ветку, проверяет локальную точку и обходит детей в обратном порядке. point(inside:) задаёт область принятия, nil из hitTest позволяет продолжить поиск за веткой. next строит responder chain; nil-target action ищет обработчика, becomeFirstResponder просит фокус и возвращает результат запроса."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Декор с рабочей кнопкой",
+  "prompt": "Напиши OverlayView: super.hitTest, nil только если найден self. Под overlay лежит behind (80,80,40,30), внутри close (10,10,40,30). Проверь фон root=(90,90) → behind, кнопку (20,20) → close.",
+  "code": "import UIKit\n// TODO: OverlayView и дерево 200×140",
+  "key": "import UIKit\nfinal class OverlayView: UIView {\n    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {\n        let hit = super.hitTest(point, with: event)\n        return hit === self ? nil : hit\n    }\n}\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 200, height: 140))\nlet behind = UIView(frame: CGRect(x: 80, y: 80, width: 40, height: 30))\nlet overlay = OverlayView(frame: root.bounds)\nlet close = UIButton(frame: CGRect(x: 10, y: 10, width: 40, height: 30))\nroot.addSubview(behind)\nroot.addSubview(overlay)\noverlay.addSubview(close)\nassert(root.hitTest(CGPoint(x: 90, y: 90), with: nil) === behind)\nassert(root.hitTest(CGPoint(x: 20, y: 20), with: nil) === close)\n\nФон не перехватывает поиск, но кнопка не теряется вместе с overlay."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови RemoteController с percent и @objc apply(_: UISlider), который сохраняет Int(sender.value). Добавь slider в корневую view, зарегистрируй action для valueChanged с target nil. Проверь next от slider к root и от root к контроллеру. В ручном контексте передай value=60 непосредственно обработчику и проверь percent=60; не выдавай прямой вызов за проверку nil-target маршрутизации.",
+  "key": "import UIKit\nfinal class RemoteController: UIViewController {\n    private(set) var percent = 0\n    @objc func apply(_ sender: UISlider) { percent = Int(sender.value) }\n}\nlet controller = RemoteController()\ncontroller.loadViewIfNeeded()\nlet slider = UISlider()\ncontroller.view.addSubview(slider)\nslider.addTarget(\n    nil, action: #selector(RemoteController.apply(_:)), for: .valueChanged\n)\nassert(slider.next === controller.view)\nassert(controller.view.next === controller)\nslider.value = 60\ncontroller.apply(slider)\nassert(controller.percent == 60)\n\nНастроен новый элемент пульта — slider. Ручной вызов проверяет обработчик и явные next-связи; реальный action-поиск без UIWindow здесь не запускается."
+ }
+]

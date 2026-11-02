@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Прочитай ручной журнал",
+  "prompt": "Предскажи точный вывод. Это явный журнал модели, а не автоматически запущенный UIViewController; скрытых callbacks нет.",
+  "code": "final class AppearanceLog {\n    var events: [String] = []\n    func record(_ event: String) { events.append(event) }\n}\nlet log = AppearanceLog()\nlog.record(\"loadView\")\nlog.record(\"viewDidLoad\")\nlog.record(\"viewWillAppear\")\nlog.record(\"viewIsAppearing\")\nlog.record(\"viewDidAppear\")\nprint(log.events.joined(separator: \" -> \"))",
+  "key": "loadView -> viewDidLoad -> viewWillAppear -> viewIsAppearing -> viewDidAppear\n\nКаждая запись вызвана явно; это проверка заданной последовательности, а не UI-перехода."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Создай подпись один раз",
+  "prompt": "В ReadingController объявлена titleLabel. Допиши viewDidLoad: вызови super, задай текст Глава 1 и добавь подпись к view. Не добавляй её в viewWillAppear.",
+  "code": "import UIKit\nfinal class ReadingController: UIViewController {\n    let titleLabel = UILabel()\n    override func viewDidLoad() {\n        // TODO\n    }\n}",
+  "key": "import UIKit\nfinal class ReadingController: UIViewController {\n    let titleLabel = UILabel()\n    override func viewDidLoad() {\n        super.viewDidLoad()\n        titleLabel.text = \"Глава 1\"\n        view.addSubview(titleLabel)\n    }\n}\n\nПодпись создаётся свойством контроллера и добавляется при загрузке view; повторное появление не добавляет новую подпись."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Новая глава при возвращении",
+  "prompt": "Напиши контроллер с titleLabel и локальным loadChapter: () -> String, по умолчанию возвращающим Глава 1. Добавь подпись при загрузке, читай источник при каждом viewWillAppear. В ручном контексте дважды вызови появление, поменяв ответ источника между вызовами.",
+  "code": "import UIKit\n// TODO: ReadingController и два места работы",
+  "key": "import UIKit\nfinal class ReadingController: UIViewController {\n    var loadChapter: () -> String = { \"Глава 1\" }\n    let titleLabel = UILabel()\n    override func viewDidLoad() {\n        super.viewDidLoad()\n        view.addSubview(titleLabel)\n    }\n    override func viewWillAppear(_ animated: Bool) {\n        super.viewWillAppear(animated)\n        titleLabel.text = loadChapter()\n    }\n}\n@MainActor\nfunc checkAppearances() {\n    let controller = ReadingController()\n    controller.loadViewIfNeeded()\n    controller.viewWillAppear(false)\n    assert(controller.titleLabel.text == \"Глава 1\")\n    controller.loadChapter = { \"Глава 2\" }\n    controller.viewWillAppear(false)\n    assert(controller.titleLabel.text == \"Глава 2\")\n    assert(controller.titleLabel.superview === controller.view)\n}\n\nРучной контекст проверяет ответ на два явных вызова, не запускает настоящий переход. Название обновилось, экземпляр подписи остался тем же."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Полоса осталась нулевой",
+  "prompt": "После loadViewIfNeeded корню явно задают ширину 320, затем вызывают viewDidLayoutSubviews. В ошибочном коде полоса остаётся нулевой. Перенеси вычисление размеров в layout; повтори на ширине 200. Ожидаем 160 и 100.",
+  "code": "import UIKit\nfinal class ReadingController: UIViewController {\n    let progressBar = UIView()\n    override func loadView() { view = UIView(frame: .zero) }\n    override func viewDidLoad() {\n        super.viewDidLoad()\n        view.addSubview(progressBar)\n        progressBar.frame = CGRect(\n            x: 0, y: 0, width: view.bounds.width / 2, height: 4\n        )\n    }\n}",
+  "key": "import UIKit\nfinal class ReadingController: UIViewController {\n    let progressBar = UIView()\n    override func loadView() { view = UIView(frame: .zero) }\n    override func viewDidLoad() {\n        super.viewDidLoad()\n        view.addSubview(progressBar)\n    }\n    override func viewDidLayoutSubviews() {\n        super.viewDidLayoutSubviews()\n        progressBar.frame = CGRect(\n            x: 0, y: 0, width: view.bounds.width / 2, height: 4\n        )\n    }\n}\n@MainActor\nfunc checkLayout() {\n    let controller = ReadingController()\n    controller.loadViewIfNeeded()\n    controller.view.bounds.size.width = 320\n    controller.viewDidLayoutSubviews()\n    assert(controller.progressBar.frame.width == 160)\n    controller.view.bounds.size.width = 200\n    controller.viewDidLayoutSubviews()\n    assert(controller.progressBar.frame.width == 100)\n}\n\nПолоса использует текущую ширину после каждого явного layout-вызова. В рабочем UI эти callbacks вызывает UIKit."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни размещение работы",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Что делаешь в viewDidLoad и viewWillAppear? Почему размер считаешь после layout? Как callback или таймер может удержать ушедший контроллер?",
+  "key": "При загрузке создаю и добавляю элементы; перед каждым появлением обновляю данные по контракту экрана. Начальная геометрия может измениться, поэтому вычисления повторяю в viewDidLayoutSubviews. Сохранённое замыкание со сильным self создаёт цикл, таймер тоже может удерживать владельца; weak разрывает захват, invalidate завершает таймер, а исчезновение не гарантирует deinit."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Источник сохраняет completion",
+  "prompt": "Вместо немедленного loadChapter источник requestChapter может сохранить completion. Объяви его как ((@escaping (String) -> Void) -> Void)?; @escaping разрешает источнику сохранить переданный callback после возврата вызова. В viewWillAppear передай callback со слабым self, обновляющий titleLabel. Считай, что источник и callback вызываются на главном потоке, ответ один и актуален; настоящей сети нет.",
+  "code": "import UIKit\n// TODO: ReadingController с requestChapter и titleLabel",
+  "key": "import UIKit\nfinal class ReadingController: UIViewController {\n    var requestChapter: ((@escaping (String) -> Void) -> Void)?\n    let titleLabel = UILabel()\n    override func viewDidLoad() {\n        super.viewDidLoad()\n        view.addSubview(titleLabel)\n    }\n    override func viewWillAppear(_ animated: Bool) {\n        super.viewWillAppear(animated)\n        requestChapter? { [weak self] title in\n            self?.titleLabel.text = title\n        }\n    }\n}\n\n@escaping нужен сохраняющему callback источнику; weak-захват не удерживает закрытый контроллер. Элементы создаются при загрузке, запрос начинается перед появлением; диспетчеризация на главный поток здесь дана контрактом, не обеспечена слабым захватом."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови ReadingController с titleLabel и loadChapter, возвращающим Глава 1. Добавь подпись только в viewDidLoad, обновляй текст в viewWillAppear, размещай в viewDidLayoutSubviews: x=16, y=16, ширина max(0, ширина корня−32), высота 24. Назови ожидаемые ширины на корне 320 и 20. Затем добавь отдельный start/stop повторяющегося таймера: перед start отключи старый, в callback используй weak self, stop вызови после исчезновения.",
+  "key": "import UIKit\nfinal class ReadingController: UIViewController {\n    var loadChapter: () -> String = { \"Глава 1\" }\n    let titleLabel = UILabel()\n    override func viewDidLoad() {\n        super.viewDidLoad()\n        view.addSubview(titleLabel)\n    }\n    override func viewWillAppear(_ animated: Bool) {\n        super.viewWillAppear(animated)\n        titleLabel.text = loadChapter()\n    }\n    override func viewDidLayoutSubviews() {\n        super.viewDidLayoutSubviews()\n        titleLabel.frame = CGRect(\n            x: 16, y: 16, width: max(0, view.bounds.width - 32),\n            height: 24\n        )\n    }\n}\nfinal class ReadingTimerController: UIViewController {\n    private var timer: Timer?\n    private(set) var ticks = 0\n    func start() {\n        timer?.invalidate()\n        timer = Timer.scheduledTimer(\n            withTimeInterval: 1, repeats: true\n        ) { [weak self] _ in self?.ticks += 1 }\n    }\n    func stop() { timer?.invalidate(); timer = nil }\n    override func viewDidAppear(_ animated: Bool) {\n        super.viewDidAppear(animated)\n        start()\n    }\n    override func viewDidDisappear(_ animated: Bool) {\n        super.viewDidDisappear(animated)\n        stop()\n    }\n    deinit { timer?.invalidate() }\n}\n\nШирины подписи: 288 и 0. Отдельный контроллер показывает жизненный цикл таймера без реального ожидания тиков: start не оставляет старый timer, stop завершает подписку, deinit — дополнительная очистка."
+ }
+]

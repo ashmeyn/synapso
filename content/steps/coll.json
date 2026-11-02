@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Предскажи отметку",
+  "prompt": "Что выведут три строки? Объясни, почему одинаковый title не должен объединять статьи.",
+  "code": "struct Article { let id: Int; let title: String; let readingMinutes: Int }\nlet feed = [Article(id: 41, title: \"Выходные\", readingMinutes: 5),\n            Article(id: 73, title: \"Выходные\", readingMinutes: 12)]\nvar titles: Set<String> = []\ntitles.insert(feed[0].title)\ntitles.insert(feed[1].title)\nvar openedIDs: Set<Int> = []\nopenedIDs.insert(41)\nprint(feed.count)\nprint(titles.count)\nprint(openedIDs.contains(73))",
+  "key": "2, 1, false. Названия совпадают, но id различаются: Set заголовков теряет различие между публикациями, а Set номеров сохраняет его."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Построй поиск",
+  "prompt": "Заполни цикл: словарь связывает id статьи с Article. Затем безопасно выведи минуты для статьи 73.",
+  "code": "struct Article { let id: Int; let title: String; let readingMinutes: Int }\nlet feed = [Article(id: 41, title: \"Выходные\", readingMinutes: 5),\n            Article(id: 73, title: \"Выходные\", readingMinutes: 12)]\nvar byID: [Int: Article] = [:]\nfor article in feed {\n    // Сохрани article под её id.\n}\n// Найди byID[73] через if let и выведи readingMinutes.",
+  "key": "struct Article { let id: Int; let title: String; let readingMinutes: Int }\nlet feed = [Article(id: 41, title: \"Выходные\", readingMinutes: 5),\n            Article(id: 73, title: \"Выходные\", readingMinutes: 12)]\nvar byID: [Int: Article] = [:]\nfor article in feed { byID[article.id] = article }\nif let selected = byID[73] { print(selected.readingMinutes) }\n\nБудет 12. Словарь возвращает Article?, потому что запрошенного id может не быть."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Первое и повторное открытие",
+  "prompt": "Отметь открытие статьи 41 дважды. Получи два Bool из inserted и проверь, открывали ли 73.",
+  "code": "var openedIDs: Set<Int> = []\n// firstOpen: первая вставка 41.\n// secondOpen: вторая вставка 41.\n// Напечатай обе отметки и contains(73).",
+  "key": "var openedIDs: Set<Int> = []\nlet firstOpen = openedIDs.insert(41).inserted\nlet secondOpen = openedIDs.insert(41).inserted\nprint(firstOpen, secondOpen, openedIDs.contains(73))\n\nБудет true false false. Множество хранит номер один раз; повторное открытие первой статьи не отмечает вторую."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Найди ошибку маршрута",
+  "prompt": "Ссылки на статью 999 уже нет в каталоге. Что не так с порядком действий? Исправь, чтобы неизвестный id не попадал в историю.",
+  "code": "struct Article { let id: Int; let title: String; let readingMinutes: Int }\nlet feed = [Article(id: 41, title: \"Выходные\", readingMinutes: 5),\n            Article(id: 73, title: \"Выходные\", readingMinutes: 12)]\nvar byID: [Int: Article] = [:]\nfor article in feed { byID[article.id] = article }\nvar openedIDs: Set<Int> = []\nlet selectedID = 999\nopenedIDs.insert(selectedID)\nif let selected = byID[selectedID] { print(selected.title) }\nprint(openedIDs.contains(999))",
+  "key": "struct Article { let id: Int; let title: String; let readingMinutes: Int }\nlet feed = [Article(id: 41, title: \"Выходные\", readingMinutes: 5),\n            Article(id: 73, title: \"Выходные\", readingMinutes: 12)]\nvar byID: [Int: Article] = [:]\nfor article in feed { byID[article.id] = article }\nvar openedIDs: Set<Int> = []\nlet selectedID = 999\nif let selected = byID[selectedID] {\n    openedIDs.insert(selected.id)\n    print(selected.title)\n} else {\n    print(\"Статья недоступна\")\n}\nprint(openedIDs.contains(999))\n\nБудет сообщение о недоступной статье и false. Сначала подтверждаем, что статья найдена; только затем записываем её открытие."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни напарнику (устно)",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "В ленте статьи 41 и 73 с названием «Выходные».\n- Что сохраняет порядок карточек?\n- Как найти минуты чтения по id?\n- Почему отметку открытия нельзя хранить по title?",
+  "key": "Array хранит порядок Article. Dictionary<Int, Article> находит все поля статьи по id; результат поиска может быть nil. Set<Int> хранит открытые публикации: одинаковые названия не означают одинаковую статью, а заголовок может измениться."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Пришла повторная страница",
+  "prompt": "Собери feed из incoming без повторных id, сохрани порядок первого появления. Если объект с тем же id пришёл снова, оставь первую версию: это условие именно этой задачи.",
+  "code": "struct Article { let id: Int; let title: String; let readingMinutes: Int }\nlet incoming = [Article(id: 41, title: \"Выходные\", readingMinutes: 5),\n                Article(id: 73, title: \"Выходные\", readingMinutes: 12),\n                Article(id: 41, title: \"Обновлённая статья\", readingMinutes: 6)]\nvar seenIDs: Set<Int> = []\nvar feed: [Article] = []\n// Проверь inserted для id и добавляй только новые статьи.",
+  "key": "struct Article { let id: Int; let title: String; let readingMinutes: Int }\nlet incoming = [Article(id: 41, title: \"Выходные\", readingMinutes: 5),\n                Article(id: 73, title: \"Выходные\", readingMinutes: 12),\n                Article(id: 41, title: \"Обновлённая статья\", readingMinutes: 6)]\nvar seenIDs: Set<Int> = []\nvar feed: [Article] = []\nfor article in incoming {\n    if seenIDs.insert(article.id).inserted { feed.append(article) }\n}\nfor article in feed { print(article.id) }\nprint(feed[0].readingMinutes)\n\nСначала напечатаются 41 и 73, затем 5. Множество проверяет повторный id, массив сохраняет порядок; политику обновления повторного объекта задаёт условие задачи."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "С нуля создай Article с id, title и readingMinutes.\nПомести в ленту статьи 41 и 73 с одинаковым title и разными минутами.\nПострой поиск по id. При выборе 73 выведи минуты и отметь открытие.\nПри неизвестном id выведи «Статья недоступна» и не меняй историю.",
+  "key": "struct Article { let id: Int; let title: String; let readingMinutes: Int }\nlet feed = [Article(id: 41, title: \"Выходные\", readingMinutes: 5),\n            Article(id: 73, title: \"Выходные\", readingMinutes: 12)]\nvar byID: [Int: Article] = [:]\nfor article in feed { byID[article.id] = article }\nvar openedIDs: Set<Int> = []\nlet selectedID = 73\nif let selected = byID[selectedID] {\n    openedIDs.insert(selected.id)\n    print(selected.readingMinutes)\n} else {\n    print(\"Статья недоступна\")\n}\n\nПорядок хранит Array, поиск по id — Dictionary, отметку открытия — Set. Проверь также selectedID = 999 и повторный выбор 73: неизвестная статья не записывается, повтор не увеличивает размер множества."
+ }
+]

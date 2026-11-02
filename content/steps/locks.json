@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Проследи модель двух списаний",
+  "prompt": "Назови три значения вывода. Почему этот код показывает логическую потерю, но не является настоящим data race?",
+  "code": "var available = 2\nlet first = available\nlet second = available\nlet acceptedFirst = first >= 2\nlet acceptedSecond = second >= 2\navailable = first - 2\navailable = second - 2\nprint(acceptedFirst, acceptedSecond, available)",
+  "key": "true true 0. Оба решения приняты по старому запасу; строки выполняются последовательно и лишь моделируют чередование."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Закрой секцию",
+  "prompt": "Заполни захват и defer освобождения в take и read. Положительный запрос не должен списывать больше остатка.",
+  "code": "import Foundation\nfinal class ToolStock {\n    private let lock = NSLock()\n    private var available = 2\n    func take(_ amount: Int) -> Bool {\n        /* Захват; освобождение на выходе */\n        guard amount > 0, available >= amount else { return false }\n        available -= amount\n        return true\n    }\n    func read() -> Int {\n        /* Захват; освобождение на выходе */\n        return available\n    }\n}",
+  "key": "import Foundation\nfinal class ToolStock {\n    private let lock = NSLock()\n    private var available = 2\n    func take(_ amount: Int) -> Bool {\n        lock.lock(); defer { lock.unlock() }\n        guard amount > 0, available >= amount else { return false }\n        available -= amount\n        return true\n    }\n    func read() -> Int {\n        lock.lock(); defer { lock.unlock() }\n        return available\n    }\n}\nlet stock = ToolStock()\nprint(stock.take(1))\nprint(stock.take(2))\nprint(stock.read())\n\ntake(1), take(2), read: true, false, 1."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Верни инструменты",
+  "prompt": "Самостоятельно добавь putBack(_:): положительный amount увеличивает available под тем же lock; 0 и отрицательный amount отвергаются. После take(2) вызови putBack(3), putBack(0).",
+  "code": "import Foundation\nfinal class ToolStock {\n    private let lock = NSLock()\n    private var available = 2\n    func take(_ amount: Int) -> Bool {\n        lock.lock(); defer { lock.unlock() }\n        guard amount > 0, available >= amount else { return false }\n        available -= amount\n        return true\n    }\n    func read() -> Int {\n        lock.lock(); defer { lock.unlock() }\n        return available\n    }\n}\n// Добавь putBack внутрь ToolStock",
+  "key": "import Foundation\nfinal class ToolStock {\n    private let lock = NSLock()\n    private var available = 2\n    func take(_ amount: Int) -> Bool {\n        lock.lock(); defer { lock.unlock() }\n        guard amount > 0, available >= amount else { return false }\n        available -= amount\n        return true\n    }\n    func putBack(_ amount: Int) -> Bool {\n        lock.lock(); defer { lock.unlock() }\n        guard amount > 0 else { return false }\n        available += amount\n        return true\n    }\n    func read() -> Int {\n        lock.lock(); defer { lock.unlock() }\n        return available\n    }\n}\n\nОтветы take(2), putBack(3), putBack(0): true, true, false; остаток 3."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Убери повторный захват",
+  "prompt": "take держит lock и вызывает read, который берёт его повторно. Исправь guard через прямое available внутри уже защищённой секции. Не запускай неправильный исходник для успешного результата.",
+  "code": "import Foundation\nfinal class ToolStock {\n    private let lock = NSLock()\n    private var available = 2\n    func take(_ amount: Int) -> Bool {\n        lock.lock(); defer { lock.unlock() }\n        guard amount > 0, read() >= amount else { return false }\n        available -= amount\n        return true\n    }\n    func read() -> Int {\n        lock.lock(); defer { lock.unlock() }\n        return available\n    }\n}",
+  "key": "import Foundation\nfinal class ToolStock {\n    private let lock = NSLock()\n    private var available = 2\n    func take(_ amount: Int) -> Bool {\n        lock.lock(); defer { lock.unlock() }\n        guard amount > 0, available >= amount else { return false }\n        available -= amount\n        return true\n    }\n    func read() -> Int {\n        lock.lock(); defer { lock.unlock() }\n        return available\n    }\n}\n\nПосле исправления take(2) даёт true, второй take(2) — false, read — 0."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Сравни контракт",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Кто блокируется у lock и queue.sync? Почему нельзя await с захваченным NSLock? Чем actor меняет внешний вызов и что нужно перепроверить после await?",
+  "key": "NSLock при конфликте и serial queue.sync блокируют вызывающий поток. NSLock должен отпустить захвативший поток, а await может приостановить задачу и продолжить на другом. Actor даёт внешнему async-caller ожидание через await; внутри после приостановки нужны актуальные условия."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Собери согласованную пару",
+  "prompt": "Напиши ToolLedger: available = 2, borrowed = 0; take() под одним lock переносит единицу при наличии, snapshot() возвращает пару одним захватом. Методы синхронные: async-caller сначала получает snapshot, завершает вызов, и только потом может await другой работы. Запиши выбор механизма: API должен оставаться синхронным; объясни, почему переход на actor изменил бы вызов.",
+  "code": "import Foundation\n// Напиши ToolLedger",
+  "key": "import Foundation\nfinal class ToolLedger {\n    private let lock = NSLock()\n    private var available = 2\n    private var borrowed = 0\n    func take() -> Bool {\n        lock.lock(); defer { lock.unlock() }\n        guard available > 0 else { return false }\n        available -= 1\n        borrowed += 1\n        return true\n    }\n    func snapshot() -> (available: Int, borrowed: Int) {\n        lock.lock(); defer { lock.unlock() }\n        return (available, borrowed)\n    }\n}\n\nПосле двух take true, true, третий false. snapshot (0, 2), сумма остаётся 2. Это синхронный снимок, не обещание заморозить состояние на время будущего await. Выбор здесь — NSLock для короткого синхронного API; serial queue.sync тоже сохраняет синхронность, actor требует await из другого контекста."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови ToolStock с private NSLock и available = 2, take(_:) и read(). Захват с defer на каждом пути, без вызова read под уже удерживаемым lock. Выведи take(1), take(2), read: true, false, 1. Нулевой и отрицательный запросы не изменяют запас.",
+  "key": "import Foundation\nfinal class ToolStock {\n    private let lock = NSLock()\n    private var available = 2\n    func take(_ amount: Int) -> Bool {\n        lock.lock(); defer { lock.unlock() }\n        guard amount > 0, available >= amount else { return false }\n        available -= amount\n        return true\n    }\n    func read() -> Int {\n        lock.lock(); defer { lock.unlock() }\n        return available\n    }\n}\nlet stock = ToolStock()\nprint(stock.take(1))\nprint(stock.take(2))\nprint(stock.read())\n\nВесь доступ синхронный и под одним lock."
+ }
+]

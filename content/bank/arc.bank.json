@@ -1,0 +1,35 @@
+[
+ {
+  "id": "arc-b1",
+  "topics": [
+   "arc"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Наблюдатель страницы сканера",
+  "prompt": "Запиши вывод. Посчитай сильных владельцев после объявления observer и объясни, почему weak здесь не удерживает страницу.",
+  "code": "final class ScanPage {\n    let id: Int\n    init(id: Int) { self.id = id }\n    deinit { print(\"Страница освобождена\") }\n}\nvar page: ScanPage? = ScanPage(id: 8)\nweak var observer = page\nprint(observer != nil)\npage = nil\nprint(observer == nil)",
+  "key": "true\nСтраница освобождена\ntrue\n\nПосле объявления observer есть один сильный владелец — page. Слабый наблюдатель не удерживает объект и становится nil после его освобождения."
+ },
+ {
+  "id": "arc-b2",
+  "topics": [
+   "arc"
+  ],
+  "type": "Допиши",
+  "title": "Инспектор жестового превью",
+  "prompt": "После закрытия основного превью его ещё держит inspector. Допиши остановку работы до вывода isRunning, сохрани инспектор живым до явной очистки. Вывод должен показать false до сообщения deinit.",
+  "code": "final class GesturePreview {\n    private(set) var isRunning = true\n    func stop() { isRunning = false }\n    deinit { print(\"Превью освобождено\") }\n}\nvar preview: GesturePreview? = GesturePreview()\nvar inspector = preview\npreview = nil\n// Останови работу через живого владельца\nprint(inspector!.isRunning)\ninspector = nil\nprint(\"Инспектор закрыт\")",
+  "key": "final class GesturePreview {\n    private(set) var isRunning = true\n    func stop() { isRunning = false }\n    deinit { print(\"Превью освобождено\") }\n}\nvar preview: GesturePreview? = GesturePreview()\nvar inspector = preview\npreview = nil\ninspector!.stop()\nprint(inspector!.isRunning)\ninspector = nil\nprint(\"Инспектор закрыт\")\n\nВывод: false, «Превью освобождено», «Инспектор закрыт». stop меняет рабочее состояние живого объекта; освобождение происходит отдельно."
+ },
+ {
+  "id": "arc-b3",
+  "topics": [
+   "arc"
+  ],
+  "type": "Найди ошибку",
+  "title": "Выбор звука будильника",
+  "prompt": "Сохранённое onApply захватывает владельца звука. Без weak и unowned разорви цикл до очистки picker, чтобы после «Дождь» вышло сообщение deinit. Не меняй исходные данные.",
+  "code": "final class AlarmSoundPicker {\n    var onApply: (() -> Void)?\n    var selected = \"Дождь\"\n    deinit { print(\"Выбор звука освобождён\") }\n    func install() { onApply = { print(self.selected) } }\n}\nvar picker: AlarmSoundPicker? = AlarmSoundPicker()\npicker!.install()\npicker!.onApply?()\n// Разорви внутреннюю связь, пока picker ещё доступен\npicker = nil\nprint(\"Выбор закрыт\")",
+  "key": "final class AlarmSoundPicker {\n    var onApply: (() -> Void)?\n    var selected = \"Дождь\"\n    deinit { print(\"Выбор звука освобождён\") }\n    func install() { onApply = { print(self.selected) } }\n}\nvar picker: AlarmSoundPicker? = AlarmSoundPicker()\npicker!.install()\npicker!.onApply?()\npicker!.onApply = nil\npicker = nil\nprint(\"Выбор закрыт\")\n\nСначала вызван onApply: «Дождь». Очистка onApply разрывает связь объект → замыкание → объект, затем picker = nil приводит к «Выбор звука освобождён». Последняя строка — «Выбор закрыт»."
+ }
+]

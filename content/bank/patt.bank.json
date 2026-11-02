@@ -1,0 +1,35 @@
+[
+ {
+  "id": "patt-b1",
+  "topics": [
+   "patt"
+  ],
+  "type": "Допиши",
+  "title": "Только активная сессия репетиции",
+  "prompt": "Подпишись на rehearsalChanged от active: Session. Опубликуй от other, затем active, проверь received=1 и явно сними token. queue=nil, локальный однопоточный контекст.",
+  "code": "import Foundation\nfinal class Session: NSObject { }\nlet center = NotificationCenter()\nlet name = Notification.Name(\"rehearsalChanged\")\nlet active = Session()\nlet other = Session()\nvar received = 0\nlet token = center.addObserver(\n    forName: name, object: nil /* TODO */, queue: nil\n) { _ in received += 1 }\ncenter.post(name: name, object: other)\ncenter.post(name: name, object: active)\nassert(received == 1)\ncenter.removeObserver(token)",
+  "key": "import Foundation\nfinal class Session: NSObject { }\nlet center = NotificationCenter()\nlet name = Notification.Name(\"rehearsalChanged\")\nlet active = Session()\nlet other = Session()\nvar received = 0\nlet token = center.addObserver(\n    forName: name, object: active, queue: nil\n) { _ in received += 1 }\ncenter.post(name: name, object: other)\ncenter.post(name: name, object: active)\nassert(received == 1)\ncenter.removeObserver(token)\n\nРегистрация фильтруется по объекту отправителя, а не только имени уведомления."
+ },
+ {
+  "id": "patt-b2",
+  "topics": [
+   "patt"
+  ],
+  "type": "Перепиши",
+  "title": "Настройка размера текста протекла в другой экран",
+  "prompt": "ScreenTitle читает изменяемый shared. Внедри TitleReading и FixedTitle: первый экран получает Крупный, второй Обычный. Проверь независимость, не сбрасывая singleton перед второй проверкой.",
+  "code": "final class TitleSettings {\n    static let shared = TitleSettings()\n    private init() { }\n    var prefix = \"Обычный\"\n}\nstruct ScreenTitle {\n    func text() -> String { TitleSettings.shared.prefix }\n}\nTitleSettings.shared.prefix = \"Крупный\"\nprint(ScreenTitle().text())",
+  "key": "protocol TitleReading { var prefix: String { get } }\nstruct FixedTitle: TitleReading { let prefix: String }\nstruct ScreenTitle {\n    let settings: any TitleReading\n    func text() -> String { settings.prefix }\n}\nlet first = ScreenTitle(settings: FixedTitle(prefix: \"Крупный\"))\nlet second = ScreenTitle(settings: FixedTitle(prefix: \"Обычный\"))\nassert(first.text() == \"Крупный\")\nassert(second.text() == \"Обычный\")\n\nДва источника переданы явно, состояние тестов не разделяет глобальный mutable shared."
+ },
+ {
+  "id": "patt-b3",
+  "topics": [
+   "patt"
+  ],
+  "type": "Найди ошибку",
+  "title": "Два диплома получили одно mutable job",
+  "prompt": "Контракт: каждое makeJob создаёт отдельный DiplomaJob. cached нарушает его: страницы первого экспорта видны второму. Исправь factory и проверь first !== second и пустые pages второго.",
+  "code": "final class DiplomaJob { var pages: [String] = [] }\nclass DiplomaCreator {\n    private let cached = DiplomaJob()\n    func makeJob() -> DiplomaJob { cached }\n}\nlet creator = DiplomaCreator()\nlet first = creator.makeJob()\nlet second = creator.makeJob()\nfirst.pages.append(\"Первый диплом\")\nprint(first === second)\nprint(second.pages)",
+  "key": "final class DiplomaJob { var pages: [String] = [] }\nclass DiplomaCreator {\n    func makeJob() -> DiplomaJob { DiplomaJob() }\n}\nlet creator = DiplomaCreator()\nlet first = creator.makeJob()\nlet second = creator.makeJob()\nfirst.pages.append(\"Первый диплом\")\nassert(first !== second)\nassert(second.pages.isEmpty)\n\nФабрика соблюдает заданное время жизни продукта; shared-кеш не смешан с состоянием задания."
+ }
+]

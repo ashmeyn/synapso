@@ -1,0 +1,35 @@
+[
+ {
+  "id": "frame-b1",
+  "topics": [
+   "frame"
+  ],
+  "type": "Допиши",
+  "title": "Указатель в редакторе диаграммы",
+  "prompt": "В дереве из входа окно сдвинуто на (25,5). Указатель пришёл в координатах root: (85,45). Переведи его в marker через convert(_:from:), ожидается (0,0).",
+  "code": "import UIKit\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 320, height: 200))\nlet viewport = UIView(frame: CGRect(x: 40, y: 30, width: 120, height: 80))\nlet marker = UIView(frame: CGRect(x: 70, y: 20, width: 20, height: 10))\nroot.addSubview(viewport)\nviewport.addSubview(marker)\nviewport.bounds.origin = CGPoint(x: 25, y: 5)\n// TODO: from root",
+  "key": "import UIKit\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 320, height: 200))\nlet viewport = UIView(frame: CGRect(x: 40, y: 30, width: 120, height: 80))\nlet marker = UIView(frame: CGRect(x: 70, y: 20, width: 20, height: 10))\nroot.addSubview(viewport)\nviewport.addSubview(marker)\nviewport.bounds.origin = CGPoint(x: 25, y: 5)\nlet pointer = CGPoint(x: 85, y: 45)\nlet local = marker.convert(pointer, from: root)\nassert(local == .zero)\n\nОбратное направление сохраняет смысл координат: root указан как исходная система."
+ },
+ {
+  "id": "frame-b2",
+  "topics": [
+   "frame"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Область видеослоя не начинается с нуля",
+  "prompt": "Предскажи две строки. Первая проверяет настоящие bounds, вторая ошибочно создаёт область с нулевым origin.",
+  "code": "import UIKit\nlet panel = UIView(frame: CGRect(x: 30, y: 20, width: 100, height: 60))\npanel.bounds.origin = CGPoint(x: 40, y: 10)\nlet localPoint = CGPoint(x: 120, y: 20)\nprint(panel.bounds.contains(localPoint))\nprint(CGRect(origin: .zero, size: panel.bounds.size).contains(localPoint))",
+  "key": "true\nfalse\n\nx=120 входит в локальные bounds 40...140, но не в ошибочный диапазон 0...100."
+ },
+ {
+  "id": "frame-b3",
+  "topics": [
+   "frame"
+  ],
+  "type": "Допиши",
+  "title": "Стикер сменил контейнер",
+  "prompt": "Перенеси sticker из canvas в toolbar, сохранив место в root. Сначала вычисли его rect в toolbar, затем поменяй родителя и присвой frame. Нет transforms и constraints. Проверь прежнее визуальное место (30,50,20,10).",
+  "code": "import UIKit\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 320, height: 200))\nlet canvas = UIView(frame: CGRect(x: 20, y: 30, width: 120, height: 100))\nlet toolbar = UIView(frame: CGRect(x: 5, y: 5, width: 200, height: 150))\nlet sticker = UIView(frame: CGRect(x: 10, y: 20, width: 20, height: 10))\nroot.addSubview(canvas)\nroot.addSubview(toolbar)\ncanvas.addSubview(sticker)\n// TODO: convert до смены родителя и перенос",
+  "key": "import UIKit\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 320, height: 200))\nlet canvas = UIView(frame: CGRect(x: 20, y: 30, width: 120, height: 100))\nlet toolbar = UIView(frame: CGRect(x: 5, y: 5, width: 200, height: 150))\nlet sticker = UIView(frame: CGRect(x: 10, y: 20, width: 20, height: 10))\nroot.addSubview(canvas)\nroot.addSubview(toolbar)\ncanvas.addSubview(sticker)\nlet newFrame = sticker.convert(sticker.bounds, to: toolbar)\nsticker.removeFromSuperview()\ntoolbar.addSubview(sticker)\nsticker.frame = newFrame\nlet visualRect = sticker.convert(sticker.bounds, to: root)\nassert(visualRect == CGRect(x: 30, y: 50, width: 20, height: 10))\n\nМеняется локальная система, а не визуальное место. convert выполнен до разрыва старого дерева."
+ }
+]

@@ -1,0 +1,35 @@
+[
+ {
+  "id": "access-b1",
+  "topics": [
+   "access"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Очередь печати",
+  "prompt": "В очереди две работы. Завершение вызвали три раза. Какой вывод и почему нельзя получить отрицательное значение через команду?",
+  "code": "final class PrintQueue {\n    private(set) var pending = 2\n    func finishOne() {\n        guard pending > 0 else { return }\n        pending -= 1\n    }\n}\nlet queue = PrintQueue()\nqueue.finishOne(); queue.finishOne(); queue.finishOne()\nprint(queue.pending)",
+  "key": "0\n\nПервые две команды уменьшают pending, третья завершается по guard. private(set) не допускает прямой записи снаружи."
+ },
+ {
+  "id": "access-b2",
+  "topics": [
+   "access"
+  ],
+  "type": "Найди ошибку",
+  "title": "Одноразовое приглашение",
+  "prompt": "Нельзя обойти одно разрешённое использование. Прямая запись в коде не компилируется. Замени её командой accept, не открывая setter.",
+  "code": "final class Invitation {\n    let id = 15\n    private(set) var remainingUses = 1\n    func accept() {\n        guard remainingUses > 0 else { return }\n        remainingUses -= 1\n    }\n}\nlet invitation = Invitation()\ninvitation.remainingUses = 0 // ❌ setter закрыт\nprint(invitation.remainingUses)",
+  "key": "final class Invitation {\n    let id = 15\n    private(set) var remainingUses = 1\n    func accept() {\n        guard remainingUses > 0 else { return }\n        remainingUses -= 1\n    }\n}\nlet invitation = Invitation()\ninvitation.accept()\nprint(invitation.remainingUses)\n\nКоманда accept уменьшает оставшиеся использования после проверки. Вывод 0; прямую запись оставить запрещённой."
+ },
+ {
+  "id": "access-b3",
+  "topics": [
+   "access"
+  ],
+  "type": "Допиши",
+  "title": "Позиция воспроизведения внутри файла",
+  "prompt": "Оба типа находятся в одном Swift-файле. Выбери минимальный доступ, чтобы DraftInspector читал position, а типы другого файла — нет. Раскрой отличие от private; public не нужен.",
+  "code": "final class PlaybackDraft {\n    /* доступ */ var position = 12\n}\nstruct DraftInspector {\n    func currentPosition(of draft: PlaybackDraft) -> Int {\n        draft.position\n    }\n}\nprint(DraftInspector().currentPosition(of: PlaybackDraft()))",
+  "key": "final class PlaybackDraft {\n    fileprivate var position = 12\n}\nstruct DraftInspector {\n    func currentPosition(of draft: PlaybackDraft) -> Int {\n        draft.position\n    }\n}\nprint(DraftInspector().currentPosition(of: PlaybackDraft()))\n\nВывод 12. fileprivate разрешает соседнему типу этого файла доступ; private не даёт его произвольному соседнему типу. Из другого файла position недоступна."
+ }
+]

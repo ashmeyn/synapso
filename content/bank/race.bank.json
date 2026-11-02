@@ -1,0 +1,35 @@
+[
+ {
+  "id": "race-b1",
+  "topics": [
+   "race"
+  ],
+  "type": "Найди ошибку",
+  "title": "Сводка зарядных станций",
+  "prompt": "Контрольный snapshot в середине finishFailure моделирует чтение другой операции между двумя обновлениями. Он видит (1, 0). Объедини изменение completed/failed в один sync, верни согласованную пару после обоих изменений; snapshot тоже должен читать пару в одном sync.",
+  "code": "import Dispatch\nfinal class ChargeStats {\n    private let queue = DispatchQueue(label: \"charge.stats\")\n    private var completed = 0\n    private var failed = 0\n    func finishFailure() -> (Int, Int) {\n        queue.sync { completed += 1 }\n        let observed = snapshot()\n        queue.sync { failed += 1 }\n        return observed\n    }\n    func snapshot() -> (Int, Int) {\n        let first = queue.sync { completed }\n        let second = queue.sync { failed }\n        return (first, second)\n    }\n}\nlet stats = ChargeStats()\nprint(stats.finishFailure())\nprint(stats.snapshot())",
+  "key": "import Dispatch\nfinal class ChargeStats {\n    private let queue = DispatchQueue(label: \"charge.stats\")\n    private var completed = 0\n    private var failed = 0\n    func finishFailure() -> (Int, Int) {\n        queue.sync {\n            completed += 1\n            failed += 1\n            return (completed, failed)\n        }\n    }\n    func snapshot() -> (Int, Int) { queue.sync { (completed, failed) } }\n}\nlet stats = ChargeStats()\nprint(stats.finishFailure())\nprint(stats.snapshot())\n\nДо правки (1, 0), (1, 1); после — (1, 1), (1, 1). Изменение пары и её чтение получили цельные границы; промежуточный снимок в модели больше не создаётся."
+ },
+ {
+  "id": "race-b2",
+  "topics": [
+   "race"
+  ],
+  "type": "Допиши",
+  "title": "Номер следующего рецепта",
+  "prompt": "nextID должен в одном sync взять текущий next, увеличить его и вернуть старое значение. Не возвращай замыкание и не разделяй две операции. Два вызова должны дать 10 и 11.",
+  "code": "import Dispatch\nfinal class RecipeIDs {\n    private let queue = DispatchQueue(label: \"recipes.ids\")\n    private var next = 10\n    func nextID() -> Int {\n        // Верни цельную операцию sync\n        return -1\n    }\n}\nlet source = RecipeIDs()\nprint(source.nextID())\nprint(source.nextID())",
+  "key": "import Dispatch\nfinal class RecipeIDs {\n    private let queue = DispatchQueue(label: \"recipes.ids\")\n    private var next = 10\n    func nextID() -> Int {\n        queue.sync {\n            let result = next\n            next += 1\n            return result\n        }\n    }\n}\nlet source = RecipeIDs()\nprint(source.nextID())\nprint(source.nextID())\n\nВывод 10, 11. Выдача уникального номера — одна read-modify-write-операция, не отдельный read плюс setter."
+ },
+ {
+  "id": "race-b3",
+  "topics": [
+   "race"
+  ],
+  "type": "Перепиши",
+  "title": "Загруженный маршрут велопрогулки",
+  "prompt": "Внешний код должен получить снимок [String], а не изменяемую ссылку NSMutableArray. Замени внутреннее хранилище на [String], добавь add и snapshot через одну очередь. После изменения локальной копии снимка внутренний count остаётся 1.",
+  "code": "import Foundation\nfinal class RouteStops {\n    private let queue = DispatchQueue(label: \"route.stops\")\n    private let rows = NSMutableArray()\n    func expose() -> NSMutableArray { queue.sync { rows } }\n}\nlet stops = RouteStops()\nlet escaped = stops.expose()\nescaped.add(\"Мост\")\n// escaped можно изменять вне очереди",
+  "key": "import Dispatch\nfinal class RouteStops {\n    private let queue = DispatchQueue(label: \"route.stops\")\n    private var rows: [String] = []\n    func add(_ title: String) { queue.sync { rows.append(title) } }\n    func snapshot() -> [String] { queue.sync { rows } }\n}\nlet stops = RouteStops()\nstops.add(\"Мост\")\nvar copy = stops.snapshot()\ncopy.append(\"Парк\")\nprint(copy.count)\nprint(stops.snapshot().count)\n\nВывод 2, 1. Наружу возвращено значение со String-элементами, а не общий изменяемый объект. Для массива элементов-классов потребовался бы отдельный контракт их изменения."
+ }
+]

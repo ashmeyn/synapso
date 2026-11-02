@@ -1,0 +1,35 @@
+[
+ {
+  "id": "arpool-b1",
+  "topics": [
+   "arpool"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Токен предпросмотра шрифта",
+  "prompt": "Что выведется? Почему пул не уничтожает token после своего выхода? token?.id читается до явного удаления сильного владельца.",
+  "code": "import Foundation\nfinal class PreviewToken: NSObject {\n    let id = 5\n    deinit { print(\"Токен освобождён\") }\n}\nvar token: PreviewToken? = autoreleasepool { PreviewToken() }\nweak var observer = token\nprint(token!.id)\nprint(observer != nil)\ntoken = nil\nprint(observer == nil)",
+  "key": "5\ntrue\nТокен освобождён\ntrue\n\nВозвращённый объект удерживается token. Пример показывает сильное владение, а не гарантирует регистрацию этого init в autorelease-пуле."
+ },
+ {
+  "id": "arpool-b2",
+  "topics": [
+   "arpool"
+  ],
+  "type": "Допиши",
+  "title": "Конфигурация сканера штрихкодов",
+  "prompt": "Восстанови do/catch вокруг try autoreleasepool: чтение JSON вернёт Bool. Ошибку отсутствующего enabled показывай как «Ошибка», не превращай её в false с try?. Пул не должен поглощать ошибку.",
+  "code": "import Foundation\nenum ConfigError: Error { case missing }\nfunc readFlag(_ text: String) throws -> Bool {\n    let object = try JSONSerialization.jsonObject(with: Data(text.utf8))\n    guard let row = object as? [String: Any],\n          let enabled = row[\"enabled\"] as? Bool else {\n        throw ConfigError.missing\n    }\n    return enabled\n}\nlet text = #\"{\"mode\":\"fast\"}\"#\n// Верни Bool из пула или покажи ошибку",
+  "key": "import Foundation\nenum ConfigError: Error { case missing }\nfunc readFlag(_ text: String) throws -> Bool {\n    let object = try JSONSerialization.jsonObject(with: Data(text.utf8))\n    guard let row = object as? [String: Any],\n          let enabled = row[\"enabled\"] as? Bool else {\n        throw ConfigError.missing\n    }\n    return enabled\n}\nlet text = #\"{\"mode\":\"fast\"}\"#\ndo {\n    let enabled = try autoreleasepool { try readFlag(text) }\n    print(enabled)\n} catch { print(\"Ошибка\") }\n\nВывод «Ошибка». Синхронная граница закончилась с throw; обработка ошибки остаётся снаружи."
+ },
+ {
+  "id": "arpool-b3",
+  "topics": [
+   "arpool"
+  ],
+  "type": "Перепиши",
+  "title": "Статистика заголовков галереи",
+  "prompt": "Нужен только totalLength, но код держит все NSMutableString в retained. Убери этот массив, в каждой итерации верни length из пула и накопи Int. Не обещай конкретный выигрыш в памяти.",
+  "code": "import Foundation\nlet titles = [\"Парк\", \"Дом\"]\nvar retained: [NSMutableString] = []\nfor title in titles {\n    autoreleasepool { retained.append(NSMutableString(string: title)) }\n}\nprint(retained.reduce(0) { $0 + $1.length })",
+  "key": "import Foundation\nlet titles = [\"Парк\", \"Дом\"]\nvar totalLength = 0\nfor title in titles {\n    let length = autoreleasepool {\n        NSMutableString(string: title).length\n    }\n    totalLength += length\n}\nprint(totalLength)\n\nВывод 7. Нет намеренного хранения всех объектов в retained; это изменение владельцев, не доказательство объёма autorelease."
+ }
+]

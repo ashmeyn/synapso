@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Проверь два обычных входа",
+  "prompt": "Предскажи две строки print. Достаточно ли их, чтобы одобрить новый guard для произвольного Int index? Не запускай отрицательный индекс в этом коде.",
+  "code": "struct PackingItem { let id: Int; let title: String }\nfunc titleAt(_ values: [PackingItem], index: Int) -> String {\n    guard index < values.count else { return \"Нет вещи\" }\n    return values[index].title\n}\nlet values = [PackingItem(id: 91, title: \"Куртка\")]\nprint(titleAt(values, index: 0))\nprint(titleAt(values, index: 1))",
+  "key": "Куртка\nНет вещи\n\nДва показанных входа проходят, но -1 не проверен: index < count пропустит его, и массив упадёт. Вывод не доказывает корректность для всех Int."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Напиши блокирующее замечание",
+  "prompt": "По diff сформулируй короткое замечание: вопрос о правке, конкретный вход, последствия и нужный тест. Явно пометь блокирующее; не обсуждай вкусы имени функции.",
+  "code": "diff --git a/PackingList.swift b/PackingList.swift\n--- a/PackingList.swift\n+++ b/PackingList.swift\n@@ -3,2 +3,2 @@\n-    guard values.indices.contains(index) else { return \"Нет вещи\" }\n+    guard index < values.count else { return \"Нет вещи\" }\n     return values[index].title",
+  "key": "Блокирует: при index=-1 и count=1 условие index < count истинно, после чего values[-1] падает. Можем сохранить values.indices.contains(index) и добавить проверку -1 вместе с count и пустым массивом? Это сохраняет обещанный безопасный доступ.\n\nЗамечание привязано к изменённой строке и воспроизводимому входу; вопрос предлагает критерий принятия, а не скрывает обязательность исправления."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Сделай регрессию границы",
+  "prompt": "Исправь titleAt и напиши XCTest для index=-1, index=0, index=count и пустого массива. Недопустимый индекс возвращает «Нет вещи», нормальный — название. Код теста должен быть вместе с моделью и функцией.",
+  "code": "struct PackingItem { let id: Int; let title: String }\nfunc titleAt(_ values: [PackingItem], index: Int) -> String {\n    guard index < values.count else { return \"Нет вещи\" }\n    return values[index].title\n}",
+  "key": "struct PackingItem { let id: Int; let title: String }\nfunc titleAt(_ values: [PackingItem], index: Int) -> String {\n    guard values.indices.contains(index) else { return \"Нет вещи\" }\n    return values[index].title\n}\nimport XCTest\nfinal class PackingTitleTests: XCTestCase {\n    func testKnownIndex() {\n        let values = [PackingItem(id: 91, title: \"Куртка\")]\n        XCTAssertEqual(titleAt(values, index: 0), \"Куртка\")\n    }\n    func testInvalidIndexes() {\n        let values = [PackingItem(id: 91, title: \"Куртка\")]\n        XCTAssertEqual(titleAt(values, index: -1), \"Нет вещи\")\n        XCTAssertEqual(titleAt(values, index: 1), \"Нет вещи\")\n        XCTAssertEqual(titleAt([], index: 0), \"Нет вещи\")\n    }\n}\n\nindices.contains проверяет обе границы. Отдельные утверждения ловят отрицательный индекс, верхнюю границу и пустой вход."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. От стека к исправлению",
+  "prompt": "Учебный стек в комментариях указывает PackingList.swift:6, values.remove(at:selectedIndex), index=2 при count=1 после обновления. Исправь выбор на selectedID и удаление по id; отсутствующая вещь не меняет список, выбор сбрасывается после попытки. Проверь id=93 отсутствует, затем id=91 есть.",
+  "code": "struct PackingItem { let id: Int; let title: String }\nfinal class PackingList {\n    var values: [PackingItem] = []\n    var selectedIndex = 2\n    func removeSelected() {\n        values.remove(at: selectedIndex)\n    }\n}\nlet list = PackingList()\nlist.values = [PackingItem(id: 91, title: \"Куртка\")]\n// selectedIndex сохранился после обновления списка.\n// list.removeSelected() упадёт: index=2, count=1.\n// Учебный стек: Swift Array.remove(at:)\n// -> PackingList.removeSelected, PackingList.swift:6\n// -> PackingController.confirm, PackingController.swift:18",
+  "key": "struct PackingItem { let id: Int; let title: String }\nfinal class PackingList {\n    var values: [PackingItem] = []\n    var selectedID: Int?\n    func removeSelected() {\n        guard let id = selectedID else { return }\n        values.removeAll { $0.id == id }\n        selectedID = nil\n    }\n}\nlet list = PackingList()\nlist.selectedID = 93\nlist.values = [PackingItem(id: 91, title: \"Куртка\")]\nlist.removeSelected()\nassert(list.values.map { $0.id } == [91])\nassert(list.selectedID == nil)\nlist.selectedID = 91\nlist.removeSelected()\nassert(list.values.isEmpty)\n\nПервый кадр приложения показывает remove(at:), а причина — устаревшая позиция после обновления. Удаление по id сохраняет контракт на исчезнувшей вещи; для настоящего отчёта нужны символы именно этой сборки."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни решение",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Что делает замечание к guard блокирующим, а self-review полезным? Почему кадр remove(at:) ещё нужно связать с устаревшим selectedIndex и правильным dSYM? Как выбрать проблему по пользователям, событиям и последствиям, отделив non-fatal?",
+  "key": "Блокирующее замечание содержит нарушенный контракт, вход и последствия; self-review проверяет diff, края, тесты и границы фактической проверки. Кадр показывает место падения, данные объясняют старый индекс; символы обязаны соответствовать UUID бинарника. Приоритет зависит от тяжести и числа затронутых людей, повторные события не равны людям; non-fatal сообщает о пойманной восстановимой ошибке без краша."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Выбери работу после выпуска",
+  "prompt": "По учебным агрегатам предложи порядок A/B/C и следующий шаг. Назови, что отсутствует для процента затронутых пользователей, и приложи короткий self-review-чек перед PR с исправлением B. Не объявляй самый частый event самым важным.",
+  "code": "УЧЕБНЫЕ АГРЕГАТЫ ЗА ОДНИ СУТКИ, ОДНА ВЕРСИЯ ПРИЛОЖЕНИЯ\nA: 80 крашей, 2 пользователя, повторное открытие упаковочного списка\nB: 18 крашей, 15 пользователей, удаление вещи, основной путь недоступен\nC: 60 non-fatal, 20 пользователей, экспорт недоступен, список работает\nНет сведений о потере данных или безопасности.\nНужен порядок разбора и план проверки, а не вычисление процента.",
+  "key": "Сначала B: 15 пользователей теряют основной путь. Затем A: повторяемый краш у двух пользователей; затем C: восстановимый отказ экспорта, пока список доступен. Это стартовый порядок при заданных последствиях, его меняем при потере данных или новом контексте. Для доли нет общего числа активных пользователей этой версии за те же сутки. Для B: сверить dSYM и build, воспроизвести обновление списка перед удалением, убрать старый индекс, добавить регрессию по id, прочитать diff и описать выполненные проверки.\n\nПриоритет не вычисляется из одного счётчика. Self-review связан с причиной B и проверкой исправления, а не общим «тесты есть»."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Новое поле той же миссии: PackingBadge.text показывает «N вещей». Предложенная update(count:) делает guard count>0 else return, затем обновляет text; после count=2 и count=0 остаётся «2 вещей». По памяти напиши исправленный класс, XCTest на переход 2→0 и одно блокирующее замечание о последствиях. Вход count неотрицательный, формы слова здесь намеренно фиксированы.",
+  "key": "final class PackingBadge {\n    private(set) var text = \"0 вещей\"\n    func update(count: Int) {\n        text = \"\\(count) вещей\"\n    }\n}\nimport XCTest\nfinal class PackingBadgeTests: XCTestCase {\n    func testBecomesEmpty() {\n        let badge = PackingBadge()\n        badge.update(count: 2)\n        XCTAssertEqual(badge.text, \"2 вещей\")\n        badge.update(count: 0)\n        XCTAssertEqual(badge.text, \"0 вещей\")\n    }\n}\n\nНоль — законное новое состояние, его нельзя пропускать. Блокирует: после удаления всех вещей подпись остаётся прежней; можем обновлять text и при count=0 и закрепить переход 2→0 тестом?"
+ }
+]

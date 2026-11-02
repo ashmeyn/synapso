@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Посчитай работу",
+  "prompt": "История содержит 3 непрочитанных уведомления. Что напечатает код? Считай входы во внутренний цикл отдельно от итоговых чисел.",
+  "code": "struct AppNotification { let id: Int; let sectionID: Int; let isUnread: Bool }\nlet notifications = [AppNotification(id: 1, sectionID: 7, isUnread: true),\n                AppNotification(id: 2, sectionID: 7, isUnread: true),\n                AppNotification(id: 3, sectionID: 9, isUnread: true)]\nvar checks = 0\nvar counts: [Int: Int] = [:]\nfor notification in notifications {\n    var count = 0\n    for candidate in notifications {\n        checks += 1\n        if candidate.sectionID == notification.sectionID { count += 1 }\n    }\n    counts[notification.sectionID] = count\n}\nprint(checks, counts[7, default: 0], counts[9, default: 0])",
+  "key": "9 2 1. Каждое из трёх уведомлений запускает три проверки: 3 × 3. Правильные счётчики не означают, что история просмотрена только один раз."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Собери один проход",
+  "prompt": "Заполни unreadCounts. Прочитанные пропускай, для непрочитанного увеличь счётчик sectionID через default: 0.",
+  "code": "struct AppNotification { let id: Int; let sectionID: Int; let isUnread: Bool }\nfunc unreadCounts(_ notifications: [AppNotification]) -> [Int: Int] {\n    var result: [Int: Int] = [:]\n    for notification in notifications {\n        // Один шаг: учитываем текущее уведомление.\n    }\n    return result\n}",
+  "key": "struct AppNotification { let id: Int; let sectionID: Int; let isUnread: Bool }\nfunc unreadCounts(_ notifications: [AppNotification]) -> [Int: Int] {\n    var result: [Int: Int] = [:]\n    for notification in notifications {\n        if notification.isUnread { result[notification.sectionID, default: 0] += 1 }\n    }\n    return result\n}\n\nПроход посещает каждое уведомление один раз. Словарь хранит только разделы с непрочитанными; для отсутствующего ключа экран берёт ноль через default: 0."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Сравни формы роста",
+  "prompt": "В истории все n уведомлений непрочитаны. Сравни: полный просмотр истории для каждого уведомления; один подсчёт; два отдельных последовательных прохода. При росте n от 100 до 1000 во сколько раз вырастет работа каждого?",
+  "code": "// A: n внешних шагов, в каждом n внутренних.\n// B: один проход по n уведомлениям.\n// C: один проход по n уведомлениям, затем ещё один.",
+  "key": "A: n² проверок, O(n²), рост в 100 раз. B: n шагов, O(n), рост в 10 раз. C: примерно 2n шагов, O(n), рост в 10 раз. Для B считаем обращения к словарю в среднем O(1); постоянный множитель у C не меняет форму роста."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Найди ошибку вывода",
+  "prompt": "Разработчик говорит: «После unreadCounts я получаю counts[7] за O(1), значит вся функция O(1)». Какую работу он не посчитал?",
+  "code": "struct AppNotification { let id: Int; let sectionID: Int; let isUnread: Bool }\nfunc unreadCounts(_ notifications: [AppNotification]) -> [Int: Int] {\n    var result: [Int: Int] = [:]\n    for notification in notifications {\n        if notification.isUnread { result[notification.sectionID, default: 0] += 1 }\n    }\n    return result\n}\nlet notifications = [AppNotification(id: 1, sectionID: 7, isUnread: true),\n                AppNotification(id: 2, sectionID: 7, isUnread: true),\n                AppNotification(id: 3, sectionID: 9, isUnread: false)]\nlet counts = unreadCounts(notifications)\nprint(counts[7, default: 0])",
+  "key": "struct AppNotification { let id: Int; let sectionID: Int; let isUnread: Bool }\nfunc unreadCounts(_ notifications: [AppNotification]) -> [Int: Int] {\n    var result: [Int: Int] = [:]\n    for notification in notifications {\n        if notification.isUnread { result[notification.sectionID, default: 0] += 1 }\n    }\n    return result\n}\nlet notifications = [AppNotification(id: 1, sectionID: 7, isUnread: true),\n                AppNotification(id: 2, sectionID: 7, isUnread: true),\n                AppNotification(id: 3, sectionID: 9, isUnread: false)]\nlet counts = unreadCounts(notifications)\nprint(counts[7, default: 0])\n\nПодготовка counts посещает все n уведомлений и занимает O(n) в среднем; один последующий поиск по ключу — O(1) в среднем. Нельзя переносить стоимость одного обращения на вычисление всей сводки."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни напарнику (устно)",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Центр уведомлений считает непрочитанные по истории.\n- Что растёт квадратично в старом решении?\n- Почему новый подсчёт линейный в среднем?\n- От чего зависит дополнительная память и почему Big-O не сообщает секунды?",
+  "key": "Старый код для каждого непрочитанного снова просматривает всю историю: при всех непрочитанных это n² проверок. Новый посещает уведомления один раз и обновляет словарь со средней постоянной стоимостью обращения: O(n) в среднем. Память O(k) для k разделов с непрочитанными, до O(n); время в секундах зависит от реализации, устройства и данных."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Повторная доставка уведомления",
+  "prompt": "В пустую локальную историю пришёл batch. Посчитай каждое уведомление по id только один раз; сначала сохраняй увиденный id, затем учитывай isUnread. Назови время прохода и дополнительную память для этой партии. Это добавления новых уведомлений, не изменения прежних.",
+  "code": "struct AppNotification { let id: Int; let sectionID: Int; let isUnread: Bool }\nlet batch = [AppNotification(id: 1, sectionID: 7, isUnread: true),\n             AppNotification(id: 1, sectionID: 7, isUnread: true),\n             AppNotification(id: 2, sectionID: 9, isUnread: false)]\nvar seenIDs: Set<Int> = []\nvar counts: [Int: Int] = [:]\n// Дедупликация по id, счётчик по sectionID.",
+  "key": "struct AppNotification { let id: Int; let sectionID: Int; let isUnread: Bool }\nlet batch = [AppNotification(id: 1, sectionID: 7, isUnread: true),\n             AppNotification(id: 1, sectionID: 7, isUnread: true),\n             AppNotification(id: 2, sectionID: 9, isUnread: false)]\nvar seenIDs: Set<Int> = []\nvar counts: [Int: Int] = [:]\nfor notification in batch {\n    if seenIDs.insert(notification.id).inserted && notification.isUnread {\n        counts[notification.sectionID, default: 0] += 1\n    }\n}\nprint(counts[7, default: 0], counts[9, default: 0], seenIDs.count)\n\nБудет 1 0 2. Для n входных уведомлений проход O(n) в среднем; память включает все уникальные id, поэтому до O(n), а не только число разделов. Изменения прежнего уведомления требуют отдельного правила обновления."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Напиши AppNotification с id, sectionID и isUnread и функцию unreadCounts.\nОбъясни время и память. Проверь [], два непрочитанных раздела 7 и одно прочитанное раздела 9.\nСкажи, на каком входе старый повторный подсчёт делает n² проверок.",
+  "key": "struct AppNotification { let id: Int; let sectionID: Int; let isUnread: Bool }\nfunc unreadCounts(_ notifications: [AppNotification]) -> [Int: Int] {\n    var result: [Int: Int] = [:]\n    for notification in notifications {\n        if notification.isUnread { result[notification.sectionID, default: 0] += 1 }\n    }\n    return result\n}\nlet notifications = [AppNotification(id: 1, sectionID: 7, isUnread: true),\n                AppNotification(id: 2, sectionID: 7, isUnread: true),\n                AppNotification(id: 3, sectionID: 9, isUnread: false)]\nlet counts = unreadCounts(notifications)\nprint(counts[7, default: 0], counts[9, default: 0])\nprint(unreadCounts([]).count)\n\nБудет 2 0, затем 0. Новый подсчёт занимает O(n) в среднем и O(k) дополнительной памяти по числу разделов с непрочитанными, до O(n). Старый делает n² внутренних проверок, когда все n уведомлений непрочитаны."
+ }
+]

@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Прочитай путь",
+  "prompt": "Пользователь нажал второй «Концерт», затем системную кнопку возврата, затем «Открыть 84». Назови массив path и зал после каждого открытия, а также путь после возврата. Это прогноз экранов, print нет.",
+  "code": "import SwiftUI\nstruct EventsScreen: View {\n    @State private var path: [Int] = []\n    private let events = [84: \"Большой зал\", 85: \"Малый зал\"]\n    var body: some View {\n        NavigationStack(path: $path) {\n            VStack {\n                NavigationLink(\"Концерт\", value: 84)\n                NavigationLink(\"Концерт\", value: 85)\n                Button(\"Открыть 84\") { path.append(84) }\n            }\n            .navigationDestination(for: Int.self) { eventID in\n                VStack {\n                    Text(events[eventID] ?? \"Событие удалено\")\n                    Button(\"Все события\") { path.removeAll() }\n                }\n            }\n        }\n    }\n}",
+  "key": "После второй ссылки path == [85], зал «Малый зал». После возврата path == [], виден корень. После кнопки path == [84], зал «Большой зал». Переход определён значением id, а не одинаковой подписью."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Свяжи значение и экран",
+  "prompt": "Заполни связь стека и тип назначения. Ссылки передают Int id; при удалённом событии запасной текст уже задан.",
+  "code": "import SwiftUI\nstruct EventsScreen: View {\n    @State private var path: [Int] = []\n    private let events = [84: \"Большой зал\", 85: \"Малый зал\"]\n    var body: some View {\n        NavigationStack(path: /* связь к массиву */) {\n            VStack {\n                NavigationLink(\"Концерт\", value: 84)\n                NavigationLink(\"Концерт\", value: 85)\n                Button(\"Открыть 84\") { path.append(84) }\n            }\n            .navigationDestination(for: /* тип значения ссылки */) { eventID in\n                VStack {\n                    Text(events[eventID] ?? \"Событие удалено\")\n                    Button(\"Все события\") { path.removeAll() }\n                }\n            }\n        }\n    }\n}",
+  "key": "import SwiftUI\nstruct EventsScreen: View {\n    @State private var path: [Int] = []\n    private let events = [84: \"Большой зал\", 85: \"Малый зал\"]\n    var body: some View {\n        NavigationStack(path: $path) {\n            VStack {\n                NavigationLink(\"Концерт\", value: 84)\n                NavigationLink(\"Концерт\", value: 85)\n                Button(\"Открыть 84\") { path.append(84) }\n            }\n            .navigationDestination(for: Int.self) { eventID in\n                VStack {\n                    Text(events[eventID] ?? \"Событие удалено\")\n                    Button(\"Все события\") { path.removeAll() }\n                }\n            }\n        }\n    }\n}\n\nСтек читает и меняет $path; назначение для Int принимает те же значения, что передают ссылки и кнопка."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Вынеси деталь",
+  "prompt": "Самостоятельно создай EventScreen с eventID, словарём events и Binding к path. Он показывает зал или «Событие удалено», а кнопка «Все события» возвращает к корню. Родитель должен передать id из назначения и именно свой путь.",
+  "code": "import SwiftUI\nstruct EventsScreen: View {\n    @State private var path: [Int] = []\n    private let events = [84: \"Большой зал\", 85: \"Малый зал\"]\n    var body: some View {\n        NavigationStack(path: $path) {\n            VStack {\n                NavigationLink(\"Концерт\", value: 84)\n                NavigationLink(\"Концерт\", value: 85)\n                Button(\"Открыть 84\") { path.append(84) }\n            }\n            .navigationDestination(for: Int.self) { eventID in\n                VStack {\n                    Text(events[eventID] ?? \"Событие удалено\")\n                    Button(\"Все события\") { path.removeAll() }\n                }\n            }\n        }\n    }\n}",
+  "key": "import SwiftUI\nstruct EventsScreen: View {\n    @State private var path: [Int] = []\n    private let events = [84: \"Большой зал\", 85: \"Малый зал\"]\n    var body: some View {\n        NavigationStack(path: $path) {\n            VStack {\n                NavigationLink(\"Концерт\", value: 84)\n                NavigationLink(\"Концерт\", value: 85)\n                Button(\"Открыть 84\") { path.append(84) }\n            }\n            .navigationDestination(for: Int.self) { eventID in\n                EventScreen(eventID: eventID, events: events, path: $path)\n            }\n        }\n    }\n}\nstruct EventScreen: View {\n    let eventID: Int\n    let events: [Int: String]\n    @Binding var path: [Int]\n    var body: some View {\n        VStack {\n            Text(events[eventID] ?? \"Событие удалено\")\n            Button(\"Все события\") { path.removeAll() }\n        }\n    }\n}\n\nНазначение передаёт выбранный id и Binding к пути владельца. Очистка общего пути снимает все страницы этого стека."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Найди несовпадение типов",
+  "prompt": "Ссылки и кнопка передают числа, но назначение принимает строку. Найди причину отсутствия подходящей детали и верни назначение залов по id.",
+  "code": "import SwiftUI\nstruct EventsScreen: View {\n    @State private var path: [Int] = []\n    private let events = [84: \"Большой зал\", 85: \"Малый зал\"]\n    var body: some View {\n        NavigationStack(path: $path) {\n            VStack {\n                NavigationLink(\"Концерт\", value: 84)\n                NavigationLink(\"Концерт\", value: 85)\n                Button(\"Открыть 84\") { path.append(84) }\n            }\n            .navigationDestination(for: String.self) { value in\n                Text(value)\n            }\n        }\n    }\n}",
+  "key": "import SwiftUI\nstruct EventsScreen: View {\n    @State private var path: [Int] = []\n    private let events = [84: \"Большой зал\", 85: \"Малый зал\"]\n    var body: some View {\n        NavigationStack(path: $path) {\n            VStack {\n                NavigationLink(\"Концерт\", value: 84)\n                NavigationLink(\"Концерт\", value: 85)\n                Button(\"Открыть 84\") { path.append(84) }\n            }\n            .navigationDestination(for: Int.self) { eventID in\n                VStack {\n                    Text(events[eventID] ?? \"Событие удалено\")\n                    Button(\"Все события\") { path.removeAll() }\n                }\n            }\n        }\n    }\n}\n\nНавигация по Int требует назначения для Int. String.self не соответствует значениям ссылок; после исправления eventID используется для поиска зала."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни напарнику (устно)",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "У событий 84 и 85 одинаковая подпись «Концерт».\n- Как значение ссылки превращается в страницу?\n- Что означают [] и [84, 85], как вернуться на один шаг или в начало?\n- Чем показ билета через sheet отличается от перехода?",
+  "key": "Ссылка передаёт id, NavigationStack использует navigationDestination для его типа и строит страницу с конкретным значением. [] — корень; [84, 85] — над корнем страницы 84 и 85, сверху 85. Один шаг: при непустом пути removeLast; корень: removeAll. sheet показывается поверх текущей страницы по отдельному Bool и при закрытии не должен менять путь событий."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Покажи билет поверх события",
+  "prompt": "Для детали события 84 создай Toggle «Показать билет» и sheet с текстом «Билет на событие 84». Флаг начинается с false. Билет закрывается жестом, Toggle снова выключен; после закрытия остаёмся на детали. Путь не очищай и не добавляй в него билет.",
+  "code": "Создай самостоятельный EventScreen: eventID = 84, showsTicket = false как локальное состояние, текст события, Toggle и sheet по связи к флагу.",
+  "key": "import SwiftUI\nstruct EventScreen: View {\n    let eventID = 84\n    @State private var showsTicket = false\n    var body: some View {\n        VStack {\n            Text(\"Событие \\(eventID)\")\n            Toggle(\"Показать билет\", isOn: $showsTicket)\n        }\n        .sheet(isPresented: $showsTicket) {\n            Text(\"Билет на событие \\(eventID)\")\n        }\n    }\n}\n\nsheet использует $showsTicket и при закрытии обновляет этот флаг. Деталь остаётся той же: модальное представление не добавляет маршрут в стек."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови корень событий со словарём [86: «Открытая сцена»]. Вместо ссылок нужна кнопка «Из уведомления», которая программно открывает событие 86. Деталь показывает зал либо «Событие удалено» и имеет «В начало», очищающую маршрут. На старте корень, после открытия path == [86], после возврата == []. Не используй sheet для этого перехода.",
+  "key": "import SwiftUI\nstruct EventsScreen: View {\n    @State private var path: [Int] = []\n    private let events = [86: \"Открытая сцена\"]\n    var body: some View {\n        NavigationStack(path: $path) {\n            Button(\"Из уведомления\") { path.append(86) }\n                .navigationDestination(for: Int.self) { eventID in\n                    VStack {\n                        Text(events[eventID] ?? \"Событие удалено\")\n                        Button(\"В начало\") { path.removeAll() }\n                    }\n                }\n        }\n    }\n}\n\nКнопка добавляет id в привязанный к NavigationStack массив. Назначение Int строит деталь; очистка пути возвращает к корню."
+ }
+]

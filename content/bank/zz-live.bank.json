@@ -1,0 +1,312 @@
+[
+ {
+  "id": "live-t01",
+  "topics": [
+   "live",
+   "opt",
+   "coll"
+  ],
+  "type": "Допиши",
+  "title": "01. Первое непустое",
+  "prompt": "Верни первую строку, которая не равна \"\". Пробельная строка не считается пустой по этому контракту. Если такой нет — nil. Сохрани порядок.",
+  "code": "// func firstNonempty(_ values: [String]) -> String?",
+  "key": "func firstNonempty(_ values: [String]) -> String? {\n    for value in values where !value.isEmpty { return value }\n    return nil\n}\nassert(firstNonempty([\"\", \" \", \"A\"]) == \" \")\nassert(firstNonempty([\"\", \"\"]) == nil)\nassert(firstNonempty([]) == nil)\n\nОтсутствие результата — Optional, пробелы не удалены без требования.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "live-t02",
+  "topics": [
+   "live",
+   "flow",
+   "func"
+  ],
+  "type": "Допиши",
+  "title": "02. Сумма положительных",
+  "prompt": "Сложи только значения >0. Числа -1000...1000, длина <=1000. Пустой вход даёт 0.",
+  "code": "// func positiveSum(_ values: [Int]) -> Int",
+  "key": "func positiveSum(_ values: [Int]) -> Int {\n    var total = 0\n    for value in values where value > 0 { total += value }\n    return total\n}\nassert(positiveSum([-1, 0, 2, 3]) == 5)\nassert(positiveSum([]) == 0)\nassert(positiveSum([-3, -1]) == 0)\n\nГраница >0 исключает ноль; сумма безопасна в ограниченном входе.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "live-t03",
+  "topics": [
+   "live",
+   "opt",
+   "skel"
+  ],
+  "type": "Допиши",
+  "title": "03. Максимум без нуля по умолчанию",
+  "prompt": "Верни максимум либо nil для пустого входа. Отрицательные числа допустимы; нельзя начать best=0.",
+  "code": "// func maximum(_ values: [Int]) -> Int?",
+  "key": "func maximum(_ values: [Int]) -> Int? {\n    guard var best = values.first else { return nil }\n    for value in values.dropFirst() { best = max(best, value) }\n    return best\n}\nassert(maximum([-5, -2]) == -2)\nassert(maximum([]) == nil)\nassert(maximum([7]) == 7)\n\nПервый элемент — допустимая база; пустое не маскируется числом.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "live-t04",
+  "topics": [
+   "live",
+   "setdict",
+   "coll"
+  ],
+  "type": "Допиши",
+  "title": "04. Уникальные в исходном порядке",
+  "prompt": "Убери повторные Int, оставив первое появление. Не возвращай Array(Set(values)), его порядок не является нужным контрактом.",
+  "code": "// func stableUnique(_ values: [Int]) -> [Int]",
+  "key": "func stableUnique(_ values: [Int]) -> [Int] {\n    var seen: Set<Int> = []\n    var result: [Int] = []\n    for value in values where seen.insert(value).inserted {\n        result.append(value)\n    }\n    return result\n}\nassert(stableUnique([3, 1, 3, 2, 1]) == [3, 1, 2])\nassert(stableUnique([]) == [])\n\nSet отвечает на «видели», массив сохраняет порядок.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "live-t05",
+  "topics": [
+   "live",
+   "setdict"
+  ],
+  "type": "Допиши",
+  "title": "05. Частоты идентификаторов",
+  "prompt": "Посчитай число появлений каждого Int в словаре. Ноль и отрицательные допустимы. Пустой вход — пустой словарь.",
+  "code": "// func frequencies(_ values: [Int]) -> [Int: Int]",
+  "key": "func frequencies(_ values: [Int]) -> [Int: Int] {\n    var result: [Int: Int] = [:]\n    for value in values { result[value, default: 0] += 1 }\n    return result\n}\nassert(frequencies([2, -1, 2, 0]) == [2: 2, -1: 1, 0: 1])\nassert(frequencies([]).isEmpty)\n\nКлюч — значение, а счётчик не зависит от его позиции.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "live-t06",
+  "topics": [
+   "live",
+   "ptr",
+   "setdict"
+  ],
+  "type": "Допиши",
+  "title": "06. Анаграммы по Character",
+  "prompt": "Сравни две строки как набор Character с частотами, регистр и пробелы значимы. Swift использует каноническое равенство Character; это не сравнение байтов.",
+  "code": "// func areAnagrams(_ first: String, _ second: String) -> Bool",
+  "key": "func areAnagrams(_ first: String, _ second: String) -> Bool {\n    var counts: [Character: Int] = [:]\n    for character in first { counts[character, default: 0] += 1 }\n    for character in second { counts[character, default: 0] -= 1 }\n    return counts.values.allSatisfy { $0 == 0 }\n}\nassert(areAnagrams(\"👨‍👩‍👧‍👦аб\", \"ба👨‍👩‍👧‍👦\"))\nassert(!areAnagrams(\"а\", \"аа\"))\nassert(!areAnagrams(\"А\", \"а\"))\nassert(areAnagrams(\"\", \"\"))\n\nРазная длина или лишний Character оставляют ненулевую частоту.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "live-t07",
+  "topics": [
+   "live",
+   "ptr"
+  ],
+  "type": "Допиши",
+  "title": "07. Слияние двух отсортированных",
+  "prompt": "Даны два неубывающих массива Int. Получи общий отсортированный массив со всеми повторами через два указателя.",
+  "code": "// func merged(_ first: [Int], _ second: [Int]) -> [Int]",
+  "key": "func merged(_ first: [Int], _ second: [Int]) -> [Int] {\n    var a = 0, b = 0\n    var result: [Int] = []\n    while a < first.count && b < second.count {\n        if first[a] <= second[b] {\n            result.append(first[a])\n            a += 1\n        } else {\n            result.append(second[b])\n            b += 1\n        }\n    }\n    result.append(contentsOf: first[a...])\n    result.append(contentsOf: second[b...])\n    return result\n}\nassert(merged([1, 4], [2, 4]) == [1, 2, 4, 4])\nassert(merged([], []) == [])\nassert(merged([1], []) == [1])\n\nПосле исчерпания одного массива другой остаток уже упорядочен.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "live-t08",
+  "topics": [
+   "live",
+   "ptr",
+   "coll"
+  ],
+  "type": "Допиши",
+  "title": "08. Порядок слов наоборот",
+  "prompt": "Слова разделены одним или несколькими обычными пробелами U+0020. Разверни порядок слов, выдай один пробел между ними; содержимое слов не разворачивай. Таб — часть слова.",
+  "code": "// func reversedWords(_ text: String) -> String",
+  "key": "func reversedWords(_ text: String) -> String {\n    text.split(separator: \" \").reversed().joined(separator: \" \")\n}\nassert(reversedWords(\"  я пишу Swift  \") == \"Swift пишу я\")\nassert(reversedWords(\" \").isEmpty)\nassert(reversedWords(\"А👨‍👩‍👧‍👦 Б\") == \"Б А👨‍👩‍👧‍👦\")\n\nsplit выбирает договорённый разделитель, нормализуется только промежуток.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "live-t09",
+  "topics": [
+   "live",
+   "ptr"
+  ],
+  "type": "Допиши",
+  "title": "09. Палиндром буквально",
+  "prompt": "Проверь строку по Character с учётом регистра и пробелов. Пустое true. Нужны встречные указатели.",
+  "code": "// func palindrome(_ text: String) -> Bool",
+  "key": "func palindrome(_ text: String) -> Bool {\n    let values = Array(text)\n    var left = 0, right = values.count - 1\n    while left < right {\n        if values[left] != values[right] { return false }\n        left += 1\n        right -= 1\n    }\n    return true\n}\nassert(palindrome(\"топот\"))\nassert(palindrome(\"👨‍👩‍👧‍👦а👨‍👩‍👧‍👦\"))\nassert(palindrome(\"\"))\nassert(!palindrome(\"Топот\"))\n\nНе меняем нормализацию молча; граница защищает пустой вход.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "live-t10",
+  "topics": [
+   "live",
+   "ptr"
+  ],
+  "type": "Допиши",
+  "title": "10. Два разных индекса",
+  "prompt": "Массив отсортирован, числа/target -1000...1000. Верни два разных индекса с суммой target или nil. Если пар несколько, допустима любая.",
+  "code": "// func twoSum(_ values: [Int], target: Int) -> (Int, Int)?",
+  "key": "func twoSum(_ values: [Int], target: Int) -> (Int, Int)? {\n    var left = 0, right = values.count - 1\n    while left < right {\n        let sum = values[left] + values[right]\n        if sum == target { return (left, right) }\n        if sum < target { left += 1 } else { right -= 1 }\n    }\n    return nil\n}\nlet pair = twoSum([1, 3, 4, 8], target: 7)\nassert(pair?.0 == 1 && pair?.1 == 2)\nassert(twoSum([3], target: 6) == nil)\nassert(twoSum([], target: 6) == nil)\n\nСортировка доказывает сдвиг; один элемент не участвует дважды.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "live-t11",
+  "topics": [
+   "live",
+   "ptr",
+   "func"
+  ],
+  "type": "Допиши",
+  "title": "11. Стабильно перенеси нули",
+  "prompt": "В inout-массиве перемести нули в конец, сохранив порядок остальных и общий размер.",
+  "code": "// func zeroTail(_ values: inout [Int])",
+  "key": "func zeroTail(_ values: inout [Int]) {\n    var write = 0\n    for read in values.indices where values[read] != 0 {\n        values[write] = values[read]\n        write += 1\n    }\n    for index in write..<values.count { values[index] = 0 }\n}\nvar values = [0, 2, 0, 1]\nzeroTail(&values)\nassert(values == [2, 1, 0, 0])\nvar empty: [Int] = []\nzeroTail(&empty)\nassert(empty.isEmpty)\n\nУказатель записи не догоняет непрочитанную часть.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "live-t12",
+  "topics": [
+   "live",
+   "ptr"
+  ],
+  "type": "Допиши",
+  "title": "12. Уникальный префикс",
+  "prompt": "В отсортированном inout-массиве собери уникальный префикс и верни его длину. Хвост может оставаться произвольным; не возвращай весь массив как ответ.",
+  "code": "// func uniquePrefix(_ values: inout [Int]) -> Int",
+  "key": "func uniquePrefix(_ values: inout [Int]) -> Int {\n    guard !values.isEmpty else { return 0 }\n    var write = 1\n    for read in 1..<values.count where values[read] != values[write - 1] {\n        values[write] = values[read]\n        write += 1\n    }\n    return write\n}\nvar values = [1, 1, 2, 3, 3]\nlet count = uniquePrefix(&values)\nassert(Array(values.prefix(count)) == [1, 2, 3])\nvar empty: [Int] = []\nassert(uniquePrefix(&empty) == 0)\n\nОтвет — длина и префикс, размер storage не обязан измениться.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "live-t13",
+  "topics": [
+   "live",
+   "ptr",
+   "setdict"
+  ],
+  "type": "Допиши",
+  "title": "13. Самое длинное окно без повторов",
+  "prompt": "Верни длину самой длинной непрерывной подстроки без повторных Character. Не переставляй символы. Пустое 0. Дополнительный словарь разрешён.",
+  "code": "// func longestDistinct(_ text: String) -> Int",
+  "key": "func longestDistinct(_ text: String) -> Int {\n    let values = Array(text)\n    var last: [Character: Int] = [:]\n    var left = 0, best = 0\n    for right in values.indices {\n        if let previous = last[values[right]], previous >= left {\n            left = previous + 1\n        }\n        last[values[right]] = right\n        best = max(best, right - left + 1)\n    }\n    return best\n}\nassert(longestDistinct(\"abba\") == 2)\nassert(longestDistinct(\"👨‍👩‍👧‍👦а👨‍👩‍👧‍👦б\") == 3)\nassert(longestDistinct(\"\") == 0)\n\nleft не двигается назад; повтор вне текущего окна не сужает его.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "live-t14",
+  "topics": [
+   "live",
+   "coll",
+   "flow"
+  ],
+  "type": "Допиши",
+  "title": "14. Скобки закрываются в порядке",
+  "prompt": "Строка содержит только ()[]{}. Проверь правильную вложенность, пустая true. Для любых других Character верни false.",
+  "code": "// func balanced(_ text: String) -> Bool",
+  "key": "func balanced(_ text: String) -> Bool {\n    let pairs: [Character: Character] = [\")\": \"(\", \"]\": \"[\", \"}\": \"{\"]\n    var stack: [Character] = []\n    for character in text {\n        if \"([{\".contains(character) {\n            stack.append(character)\n        } else if let opening = pairs[character] {\n            guard stack.popLast() == opening else { return false }\n        } else { return false }\n    }\n    return stack.isEmpty\n}\nassert(balanced(\"([]){}\"))\nassert(!balanced(\"([)]\"))\nassert(!balanced(\"(\"))\nassert(balanced(\"\"))\nassert(!balanced(\"a\"))\n\nПоследняя открытая скобка должна закрываться первой.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "live-t15",
+  "topics": [
+   "live",
+   "hof",
+   "coll"
+  ],
+  "type": "Допиши",
+  "title": "15. Рейтинг со стабильным правилом",
+  "prompt": "У ScoreRow уникальный id. Верни id по убыванию points, при равенстве — по возрастанию id. Идентичность записи — id, а не позиция в массиве.",
+  "code": "struct ScoreRow { let id: Int; let points: Int }",
+  "key": "struct ScoreRow { let id: Int; let points: Int }\nfunc ranking(_ values: [ScoreRow]) -> [Int] {\n    values.sorted { a, b in\n        if a.points == b.points { return a.id < b.id }\n        return a.points > b.points\n    }.map { $0.id }\n}\nassert(ranking([ScoreRow(id: 3, points: 8),\n                ScoreRow(id: 1, points: 8),\n                ScoreRow(id: 2, points: 9)]) == [2, 1, 3])\nassert(ranking([]).isEmpty)\n\nВторой ключ делает равные баллы детерминированными без зависимости от sort stability.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "live-t16",
+  "topics": [
+   "live",
+   "err",
+   "opt"
+  ],
+  "type": "Допиши",
+  "title": "16. Не теряй неверное число",
+  "prompt": "Преобразуй строки в Int и сложи; при первой непарсируемой строке брось ParseError.invalid с её значением. Числа по контракту -1000...1000, строк <=1000. Не используй compactMap: он молча отбросит неверные строки.",
+  "code": "enum ParseError: Error, Equatable { case invalid(String) }",
+  "key": "enum ParseError: Error, Equatable { case invalid(String) }\nfunc parsedSum(_ values: [String]) throws -> Int {\n    var total = 0\n    for value in values {\n        guard let number = Int(value) else { throw ParseError.invalid(value) }\n        total += number\n    }\n    return total\n}\nlet sum = try parsedSum([\"2\", \"-1\"])\nassert(sum == 1)\ndo {\n    _ = try parsedSum([\"2\", \"abc\", \"3\"])\n    assertionFailure(\"Ожидалась ошибка\")\n} catch { assert(error as? ParseError == .invalid(\"abc\")) }\nlet empty = try parsedSum([])\nassert(empty == 0)\n\nНевалидный ввод не превращается в незаметно неполный результат.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "live-t17",
+  "topics": [
+   "live",
+   "bigo",
+   "hof"
+  ],
+  "type": "Допиши",
+  "title": "17. Одно пропущенное число",
+  "prompt": "n=1...1000, вход содержит все уникальные числа 1...n, кроме одного. Верни недостающее число; для n=1 вход пуст. Проверять неверные входы не требуется.",
+  "code": "// func missingNumber(_ values: [Int], n: Int) -> Int",
+  "key": "func missingNumber(_ values: [Int], n: Int) -> Int {\n    let expected = n * (n + 1) / 2\n    return expected - values.reduce(0, +)\n}\nassert(missingNumber([1, 4, 2], n: 4) == 3)\nassert(missingNumber([], n: 1) == 1)\nassert(missingNumber([2, 3], n: 3) == 1)\n\nСумма корректна только по заданному контракту уникальности и диапазона; числовая граница предотвращает переполнение.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "live-t18",
+  "topics": [
+   "live",
+   "coll",
+   "eq"
+  ],
+  "type": "Допиши",
+  "title": "18. Обнови запись по id и версии",
+  "prompt": "RecordSnapshot имеет уникальный id в local. Обновления могут повторяться; применяй только большую revision, равная revision означает одинаковое содержимое. Новые id добавь, ответ отсортируй по id.",
+  "code": "struct RecordSnapshot: Equatable {\n    let id: Int\n    let revision: Int\n    let text: String\n}",
+  "key": "struct RecordSnapshot: Equatable {\n    let id: Int\n    let revision: Int\n    let text: String\n}\nfunc applyUpdates(\n    _ updates: [RecordSnapshot], local: [RecordSnapshot]\n) -> [RecordSnapshot] {\n    var index = Dictionary(uniqueKeysWithValues: local.map { ($0.id, $0) })\n    for value in updates {\n        if let old = index[value.id], old.revision >= value.revision {\n            continue\n        }\n        index[value.id] = value\n    }\n    return index.values.sorted { $0.id < $1.id }\n}\nlet original = RecordSnapshot(id: 1, revision: 2, text: \"Новое\")\nlet old = RecordSnapshot(id: 1, revision: 1, text: \"Старое\")\nlet extra = RecordSnapshot(id: 2, revision: 1, text: \"Другое\")\nlet result = applyUpdates([old, extra, extra], local: [original])\nassert(result == [original, extra])\n\nПозиция не заменяет id, старая версия не откатывает запись.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "live-t19",
+  "topics": [
+   "live",
+   "clos"
+  ],
+  "type": "Найди ошибку",
+  "title": "19. Отложенные замыкания читают одно поле",
+  "prompt": "Код печатает [2,2], а нужны значения i на момент добавления: [0,1]. Исправь захват; никаких потоков и тайминга нет.",
+  "code": "var callbacks: [() -> Int] = []\nvar i = 0\nwhile i < 2 {\n    callbacks.append { i }\n    i += 1\n}\nprint(callbacks.map { $0() })",
+  "key": "var callbacks: [() -> Int] = []\nvar i = 0\nwhile i < 2 {\n    callbacks.append { [snapshot = i] in snapshot }\n    i += 1\n}\nassert(callbacks.map { $0() } == [0, 1])\n\nЗахват значения отделяет каждое замыкание от позднего изменения общей var.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "live-t20",
+  "topics": [
+   "live",
+   "proto",
+   "tests"
+  ],
+  "type": "Допиши",
+  "title": "20. Проверь внешний вызов",
+  "prompt": "submit(id:store:) не вызывает store для id<=0, для положительного вызывает save ровно один раз с тем же id. Напиши шпион и проверки 0, -1, 7; сеть не нужна.",
+  "code": "protocol IDSaving { func save(id: Int) }",
+  "key": "protocol IDSaving { func save(id: Int) }\nfinal class IDSpy: IDSaving {\n    var ids: [Int] = []\n    func save(id: Int) { ids.append(id) }\n}\nfunc submit(id: Int, store: any IDSaving) {\n    guard id > 0 else { return }\n    store.save(id: id)\n}\nlet spy = IDSpy()\nsubmit(id: 0, store: spy)\nsubmit(id: -1, store: spy)\nassert(spy.ids.isEmpty)\nsubmit(id: 7, store: spy)\nassert(spy.ids == [7])\n\nТочный журнал проверяет и аргумент, и число обращений; contains не обнаружит двойной вызов.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "live-b1",
+  "topics": [
+   "live"
+  ],
+  "type": "Устно",
+  "title": "Обещание суммы",
+  "prompt": "Функцию total проверили только положительными числами. Что спросить о диапазоне и пустом, и почему нельзя считать любой Int безопасным? Предложи одну правку контракта вместо молчаливого &+.",
+  "code": "func total(_ values: [Int]) -> Int {\n    values.reduce(0, +)\n}",
+  "key": "Уточнить максимально допустимые числа и длину, а также 0 для пустого. Сумма произвольных Int может переполниться; либо ограничить вход, либо вернуть явную ошибку/результат безопасной арифметики. &+ меняет результат на переполненный и не выполняет обычное обещание суммы.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "live-b2",
+  "topics": [
+   "live"
+  ],
+  "type": "Устно",
+  "title": "Оптимизация потеряла порядок",
+  "prompt": "Что нарушил candidate и какое короткое решение сохранило бы требование? Не предсказывай конкретный порядок Set.",
+  "code": "let ids = [3, 1, 3]\nlet candidate = Array(Set(ids))\n// Условие требует первое появление и исходный порядок.",
+  "key": "Array(Set(ids)) удалил повторы, но не гарантировал порядок первого появления [3,1]. Использовать seen и result, добавляя значение только при первом insert; сравнивать итоговый массив, не Set. Оптимизация должна сохранять контракт.",
+  "added": "2026-10-20"
+ },
+ {
+  "id": "live-b3",
+  "topics": [
+   "live"
+  ],
+  "type": "Устно",
+  "title": "Одного зелёного теста мало",
+  "prompt": "Предложи ещё три разных входа для hasZero и объясни, какой вопрос проверяет каждый. Не переписывай функцию.",
+  "code": "func hasZero(_ values: [Int]) -> Bool {\n    values.contains(0)\n}\n// Показан только тест [1,0,2] -> true.",
+  "key": "[]→false проверяет отсутствие элементов, [1,2]→false — отсутствие совпадений, [0]→true — один элемент на границе. Можно добавить ноль в конце, чтобы проверить завершение после полного прохода. Тесты выбираются по поведению, не по числу строк функции.",
+  "added": "2026-10-20"
+ }
+]

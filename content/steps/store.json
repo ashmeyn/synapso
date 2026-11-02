@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Выбор или отсутствие",
+  "prompt": "Назови четыре строки. Какие два случая дают одинаковый bool, но разный object?",
+  "code": "import Foundation\nlet defaults = UserDefaults(suiteName: \"dev.synapso.lesson.store\")!\ndefaults.removePersistentDomain(forName: \"dev.synapso.lesson.store\")\nprint(defaults.bool(forKey: \"compactEntries\"))\nprint(defaults.object(forKey: \"compactEntries\") == nil)\ndefaults.set(false, forKey: \"compactEntries\")\nprint(defaults.bool(forKey: \"compactEntries\"))\nprint(defaults.object(forKey: \"compactEntries\") == nil)\ndefaults.removePersistentDomain(forName: \"dev.synapso.lesson.store\")",
+  "key": "false\ntrue\nfalse\nfalse\n\nВ отсутствие ключа bool равен false, но object — nil. Сохранённый false даёт тот же bool, однако объект существует."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Заполни запись секрета",
+  "prompt": "Заполни проверку дубликата и вызов обновления только value data. Новый токен не сохраняй в UserDefaults.",
+  "code": "import Foundation\nimport Security\nfunc saveSessionToken(_ token: String) -> OSStatus {\n    let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,\n        kSecAttrService as String: \"dev.synapso.journal\",\n        kSecAttrAccount as String: \"session\"]\n    var item = query\n    item[kSecValueData as String] = Data(token.utf8)\n    let status = SecItemAdd(item as CFDictionary, nil)\n    if /* статус дубликата */ {\n        let changes = [kSecValueData as String: Data(token.utf8)]\n        return /* обнови существующую запись */\n    }\n    return status\n}",
+  "key": "import Foundation\nimport Security\nfunc saveSessionToken(_ token: String) -> OSStatus {\n    let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,\n        kSecAttrService as String: \"dev.synapso.journal\",\n        kSecAttrAccount as String: \"session\"]\n    var item = query\n    item[kSecValueData as String] = Data(token.utf8)\n    let status = SecItemAdd(item as CFDictionary, nil)\n    if status == errSecDuplicateItem {\n        let changes = [kSecValueData as String: Data(token.utf8)]\n        return SecItemUpdate(query as CFDictionary, changes as CFDictionary)\n    }\n    return status\n}\n\nПервое добавление может дать успех, существующая запись требует update. Возвращаем реальный статус последнего шага."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Прочитай токен",
+  "prompt": "Напиши readSessionToken() throws -> String?: запрашивай Data для того же service/account; notFound возвращает nil, другой отказ бросает StorageError.keychain. Успешные байты проверь как UTF-8.",
+  "code": "import Foundation\nimport Security\nenum StorageError: Error { case keychain(OSStatus), invalidToken }\n// Напиши функцию чтения",
+  "key": "import Foundation\nimport Security\nenum StorageError: Error { case keychain(OSStatus), invalidToken }\nfunc readSessionToken() throws -> String? {\n    let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,\n        kSecAttrService as String: \"dev.synapso.journal\",\n        kSecAttrAccount as String: \"session\",\n        kSecReturnData as String: true,\n        kSecMatchLimit as String: kSecMatchLimitOne]\n    var result: CFTypeRef?\n    let status = SecItemCopyMatching(query as CFDictionary, &result)\n    if status == errSecItemNotFound { return nil }\n    guard status == errSecSuccess else { throw StorageError.keychain(status) }\n    guard let data = result as? Data, let token = String(data: data, encoding: .utf8)\n    else { throw StorageError.invalidToken }\n    return token\n}\n\nОтсутствие — nil. Отказ системной операции и повреждённые байты — разные ошибки; токен не выводится в лог."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Файл не появился",
+  "prompt": "Этот свежий временный каталог отсутствует. Что напечатается и какую подготовку нужно добавить?",
+  "code": "import Foundation\nfunc saveDraft(_ text: String, in directory: URL) throws {\n    let file = directory.appendingPathComponent(\"draft.txt\")\n    try Data(text.utf8).write(to: file, options: .atomic)\n}\nlet directory = FileManager.default.temporaryDirectory\n    .appendingPathComponent(UUID().uuidString)\ndefer { try? FileManager.default.removeItem(at: directory) }\ndo {\n    try saveDraft(\"Прогулка у реки\", in: directory)\n    let file = directory.appendingPathComponent(\"draft.txt\")\n    let text = try String(contentsOf: file, encoding: .utf8)\n    print(text)\n} catch { print(\"Не сохранено\") }",
+  "key": "import Foundation\nfunc saveDraft(_ text: String, in directory: URL) throws {\n    try FileManager.default.createDirectory(\n        at: directory, withIntermediateDirectories: true)\n    let file = directory.appendingPathComponent(\"draft.txt\")\n    try Data(text.utf8).write(to: file, options: .atomic)\n}\nlet directory = FileManager.default.temporaryDirectory\n    .appendingPathComponent(UUID().uuidString)\ndefer { try? FileManager.default.removeItem(at: directory) }\ndo {\n    try saveDraft(\"Прогулка у реки\", in: directory)\n    let file = directory.appendingPathComponent(\"draft.txt\")\n    let text = try String(contentsOf: file, encoding: .utf8)\n    print(text)\n} catch { print(\"Не сохранено\") }\n\nДо правки — «Не сохранено», после — «Прогулка у реки». .atomic не создаёт отсутствующий родительский каталог."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни выбор",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Журнал хранит настройку, черновик и session token.\nПочему не складываем всё в UserDefaults?\nКак различаем дубликат при записи и отсутствие при чтении Keychain?\nКогда показываем успех и возможны ли частично сохранённые данные?",
+  "key": "UserDefaults подходит для маленьких несекретных настроек, файл — для черновика, Keychain — для токена. Дубликат при add ведёт к update; notFound при чтении даёт nil, другие статусы требуют обработки. Общий успех только после нужных шагов, но эти хранилища не образуют одну транзакцию."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Отсутствие значит включено",
+  "prompt": "Новое поле expandedEditor по умолчанию true, но явный false должен сохраниться. Напиши функцию через object(forKey:) и as? Bool; обычный bool(forKey:) не отличает отсутствие.",
+  "code": "import Foundation\nlet defaults = UserDefaults(suiteName: \"dev.synapso.lesson.store.expanded\")!\ndefaults.removePersistentDomain(forName: \"dev.synapso.lesson.store.expanded\")\nfunc expanded(_ defaults: UserDefaults) -> Bool {\n    // отсутствие → true, сохранённый Bool → его значение\n}\nprint(expanded(defaults))\ndefaults.set(false, forKey: \"expandedEditor\")\nprint(expanded(defaults))\ndefaults.removePersistentDomain(forName: \"dev.synapso.lesson.store.expanded\")",
+  "key": "import Foundation\nlet defaults = UserDefaults(suiteName: \"dev.synapso.lesson.store.expanded\")!\ndefaults.removePersistentDomain(forName: \"dev.synapso.lesson.store.expanded\")\nfunc expanded(_ defaults: UserDefaults) -> Bool {\n    let stored = defaults.object(forKey: \"expandedEditor\") as? Bool\n    return stored ?? true\n}\nprint(expanded(defaults))\ndefaults.set(false, forKey: \"expandedEditor\")\nprint(expanded(defaults))\ndefaults.removePersistentDomain(forName: \"dev.synapso.lesson.store.expanded\")\n\nВывод true, false. Проверяем существующее типизированное значение, а не подменяем выбор регистрацией false."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "По памяти сохрани заголовок «Сегодня» в heading.txt и прочитай его. Напиши saveHeading(_:in:) с созданием каталога и .atomic. Используй свежий временный каталог только для проверки, удали его через defer; покажи текст или «Не сохранено». Назови подходящий постоянный каталог рабочего журнала.",
+  "key": "import Foundation\nfunc saveHeading(_ text: String, in directory: URL) throws {\n    try FileManager.default.createDirectory(\n        at: directory, withIntermediateDirectories: true)\n    let file = directory.appendingPathComponent(\"heading.txt\")\n    try Data(text.utf8).write(to: file, options: .atomic)\n}\nlet directory = FileManager.default.temporaryDirectory\n    .appendingPathComponent(UUID().uuidString)\ndefer { try? FileManager.default.removeItem(at: directory) }\ndo {\n    try saveHeading(\"Сегодня\", in: directory)\n    let file = directory.appendingPathComponent(\"heading.txt\")\n    let text = try String(contentsOf: file, encoding: .utf8)\n    print(text)\n} catch { print(\"Не сохранено\") }\n\nПечатается «Сегодня». Рабочий внутренний черновик можно хранить в Application Support; временный каталог служит лишь проверке."
+ }
+]

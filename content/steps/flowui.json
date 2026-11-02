@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Предскажи рассинхрон",
+  "prompt": "Нажали «Добавить» один раз. Назови точный текст на экране и причину; print нет.",
+  "code": "import SwiftUI\nstruct CartScreen: View {\n    @State private var quantity = 1\n    @State private var total = 300\n    var body: some View {\n        VStack {\n            Text(\"Количество: \\(quantity), сумма: \\(total)\")\n            Button(\"Добавить\") { quantity += 1 }\n        }\n    }\n}",
+  "key": "«Количество: 2, сумма: 300». quantity изменился, а независимый @State total остался прежним. Сумму нужно вычислять из количества."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Убери вторую цифру",
+  "prompt": "Заполни вычисление total и передачу текущего количества. Остальные части уже готовы.",
+  "code": "import SwiftUI\nstruct CartItem {\n    let id = 18\n    var quantity = 1\n    var total: Int { /* сумма из количества */ }\n}\nstruct CartScreen: View {\n    @State private var item = CartItem()\n    var body: some View {\n        VStack {\n            Text(\"Сумма: \\(item.total) ₽\").padding(12).background(Color.blue)\n            QuantityControl(quantity: /* число для ребёнка */) {\n                guard item.quantity < 3 else { return }\n                item.quantity += 1\n            }\n            Button(\"Сбросить\") { item.quantity = 0 }\n        }\n    }\n}\nstruct QuantityControl: View {\n    let quantity: Int\n    let onAdd: () -> Void\n    var body: some View {\n        Button(\"Добавить: \\(quantity)\", action: onAdd).disabled(quantity >= 3)\n    }\n}",
+  "key": "import SwiftUI\nstruct CartItem {\n    let id = 18\n    var quantity = 1\n    var total: Int { quantity * 300 }\n}\nstruct CartScreen: View {\n    @State private var item = CartItem()\n    var body: some View {\n        VStack {\n            Text(\"Сумма: \\(item.total) ₽\").padding(12).background(Color.blue)\n            QuantityControl(quantity: item.quantity) {\n                guard item.quantity < 3 else { return }\n                item.quantity += 1\n            }\n            Button(\"Сбросить\") { item.quantity = 0 }\n        }\n    }\n}\nstruct QuantityControl: View {\n    let quantity: Int\n    let onAdd: () -> Void\n    var body: some View {\n        Button(\"Добавить: \\(quantity)\", action: onAdd).disabled(quantity >= 3)\n    }\n}\n\ntotal вычисляется из item.quantity. Дочерний блок получает значение, а не собственное состояние количества."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Верни действие владельцу",
+  "prompt": "Самостоятельно допиши вызов QuantityControl с действием: добавлять можно до 3. Сохрани проверку в действии и отключение только кнопки ребёнка.",
+  "code": "import SwiftUI\nstruct CartItem {\n    let id = 18\n    var quantity = 1\n    var total: Int { quantity * 300 }\n}\nstruct CartScreen: View {\n    @State private var item = CartItem()\n    var body: some View {\n        VStack {\n            Text(\"Сумма: \\(item.total) ₽\").padding(12).background(Color.blue)\n            // Передай число и действие с проверкой предела.\n            Button(\"Сбросить\") { item.quantity = 0 }\n        }\n    }\n}\nstruct QuantityControl: View {\n    let quantity: Int\n    let onAdd: () -> Void\n    var body: some View {\n        Button(\"Добавить: \\(quantity)\", action: onAdd).disabled(quantity >= 3)\n    }\n}",
+  "key": "import SwiftUI\nstruct CartItem {\n    let id = 18\n    var quantity = 1\n    var total: Int { quantity * 300 }\n}\nstruct CartScreen: View {\n    @State private var item = CartItem()\n    var body: some View {\n        VStack {\n            Text(\"Сумма: \\(item.total) ₽\").padding(12).background(Color.blue)\n            QuantityControl(quantity: item.quantity) {\n                guard item.quantity < 3 else { return }\n                item.quantity += 1\n            }\n            Button(\"Сбросить\") { item.quantity = 0 }\n        }\n    }\n}\nstruct QuantityControl: View {\n    let quantity: Int\n    let onAdd: () -> Void\n    var body: some View {\n        Button(\"Добавить: \\(quantity)\", action: onAdd).disabled(quantity >= 3)\n    }\n}\n\nДействие меняет item у владельца после проверки предела. Ребёнок вызывает onAdd и показывает доступность кнопки; общей суммы у него нет."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Верни доступный сброс",
+  "prompt": "После двух добавлений сумма 900 и вся корзина отключена, включая «Сбросить». Исправь область disabled. Заодно сделай фон плашки суммы вместе с отступом.",
+  "code": "import SwiftUI\nstruct CartItem {\n    let id = 18\n    var quantity = 1\n    var total: Int { quantity * 300 }\n}\nstruct CartScreen: View {\n    @State private var item = CartItem()\n    var body: some View {\n        VStack {\n            Text(\"Сумма: \\(item.total) ₽\").background(Color.blue).padding(12)\n            QuantityControl(quantity: item.quantity) {\n                guard item.quantity < 3 else { return }\n                item.quantity += 1\n            }\n            Button(\"Сбросить\") { item.quantity = 0 }\n        }.disabled(item.quantity >= 3)\n    }\n}\nstruct QuantityControl: View {\n    let quantity: Int\n    let onAdd: () -> Void\n    var body: some View {\n        Button(\"Добавить: \\(quantity)\", action: onAdd).disabled(quantity >= 3)\n    }\n}",
+  "key": "import SwiftUI\nstruct CartItem {\n    let id = 18\n    var quantity = 1\n    var total: Int { quantity * 300 }\n}\nstruct CartScreen: View {\n    @State private var item = CartItem()\n    var body: some View {\n        VStack {\n            Text(\"Сумма: \\(item.total) ₽\").padding(12).background(Color.blue)\n            QuantityControl(quantity: item.quantity) {\n                guard item.quantity < 3 else { return }\n                item.quantity += 1\n            }\n            Button(\"Сбросить\") { item.quantity = 0 }\n        }\n    }\n}\nstruct QuantityControl: View {\n    let quantity: Int\n    let onAdd: () -> Void\n    var body: some View {\n        Button(\"Добавить: \\(quantity)\", action: onAdd).disabled(quantity >= 3)\n    }\n}\n\nОбщий disabled удалён; ограничение остаётся на «Добавить». padding перед background включает отступ в область синего фона; сброс с 3 даёт 0 и сумму 0."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни напарнику (устно)",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Корзина книги 18: количество у владельца, сумма вычисляется, дочерняя кнопка вызывает onAdd.\n- Какие данные идут вниз и что возвращается наверх?\n- Почему total не хранится отдельным State?\n- Что сломает disabled на VStack и что меняет порядок padding/background?",
+  "key": "Вниз идёт текущее количество, наверх — вызов переданного действия; запись выполняет владелец item. total зависит от quantity, поэтому вычисление не допускает расхождения двух хранимых чисел. disabled на общем VStack отключит и сброс. padding перед background даёт фон с отступом; background перед padding оставляет отступ вне фона."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Передай выбор доставки",
+  "prompt": "Новое поле express: Bool начинается с false. При одной книге сумма 300, включение экспресс-доставки добавляет 100, выключение убирает доплату. Собери дочерний DeliveryControl с Toggle и связью к флагу владельца; отдельный State total запрещён. Здесь вместо команды используем прямое редактирование через Binding.",
+  "code": "Создай CartItem с id 18, quantity = 1, express = false, вычисляемым total. CartScreen хранит item и показывает сумму. DeliveryControl получает связь к express и показывает Toggle «Экспресс +100». Подсказка: express ? 100 : 0 даёт 100 при true и 0 при false.",
+  "key": "import SwiftUI\nstruct CartItem {\n    let id = 18\n    var quantity = 1\n    var express = false\n    var total: Int { quantity * 300 + (express ? 100 : 0) }\n}\nstruct CartScreen: View {\n    @State private var item = CartItem()\n    var body: some View {\n        VStack {\n            Text(\"Сумма: \\(item.total) ₽\")\n            DeliveryControl(express: $item.express)\n        }\n    }\n}\nstruct DeliveryControl: View {\n    @Binding var express: Bool\n    var body: some View {\n        Toggle(\"Экспресс +100\", isOn: $express)\n    }\n}\n\nToggle пишет через Binding в item.express у владельца. Включение даёт 400, выключение возвращает 300; ребёнок не хранит отдельный флаг или сумму."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Книга 18, quantity = 2. Восстанови экран со скидкой: новое поле coupon начинается с false; цена экземпляра 300 без скидки и 250 со скидкой. Родитель показывает вычисляемую сумму. Отдельный CouponControl получает текущий признак и действие «Применить скидку», после применения эта кнопка отключается. Начальная сумма 600, затем 500; повторная команда не меняет 500. Не храни сумму отдельно и не создавай дочернюю копию признака.",
+  "key": "import SwiftUI\nstruct CartItem {\n    let id = 18\n    var quantity = 2\n    var coupon = false\n    var total: Int { quantity * (coupon ? 250 : 300) }\n}\nstruct CartScreen: View {\n    @State private var item = CartItem()\n    var body: some View {\n        VStack {\n            Text(\"Сумма: \\(item.total) ₽\")\n            CouponControl(applied: item.coupon) { item.coupon = true }\n        }\n    }\n}\nstruct CouponControl: View {\n    let applied: Bool\n    let onApply: () -> Void\n    var body: some View {\n        Button(\"Применить скидку\", action: onApply).disabled(applied)\n    }\n}\n\nСумма вычисляется из количества и coupon. Действие устанавливает true, поэтому повторный вызов не накапливает скидку; disabled относится к кнопке, а не ко всему экрану."
+ }
+]

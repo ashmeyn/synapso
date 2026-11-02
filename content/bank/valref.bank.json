@@ -1,0 +1,35 @@
+[
+ {
+  "id": "valref-b1",
+  "topics": [
+   "valref"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Пресеты фотокамеры",
+  "prompt": "Два пресета имеют одинаковые поля, третий — ссылка на первый. Что показывает === и почему предметный id не решает вопрос идентичности?",
+  "code": "final class CameraPreset {\n    let id: Int\n    var exposure: Int\n    init(id: Int, exposure: Int) {\n        self.id = id\n        self.exposure = exposure\n    }\n}\nlet first = CameraPreset(id: 4, exposure: 1)\nlet second = CameraPreset(id: 4, exposure: 1)\nlet alias = first\nprint(first === second)\nprint(first === alias)",
+  "key": "false\ntrue\n\nДва инициализатора создали два экземпляра; alias ссылается на first. === не сравнивает поля."
+ },
+ {
+  "id": "valref-b2",
+  "topics": [
+   "valref"
+  ],
+  "type": "Допиши",
+  "title": "Оформление ручки синтезатора",
+  "prompt": "Константная ссылка должна разрешить radius = 16, а id менять нельзя. Допиши правку только разрешённого свойства и объясни два разных let.",
+  "code": "final class KnobStyle {\n    let id = 3\n    var radius = 8\n}\nlet style = KnobStyle()\n// Измени допустимое свойство\n// style.id = 9 — намерение запрещено: id имеет let\nprint(style.radius)",
+  "key": "final class KnobStyle {\n    let id = 3\n    var radius = 8\n}\nlet style = KnobStyle()\nstyle.radius = 16\n// style.id = 9 — намерение запрещено: id имеет let\nprint(style.radius)\n\nПечатается 16. let style фиксирует ссылку, let id фиксирует собственное свойство; var radius изменяемо."
+ },
+ {
+  "id": "valref-b3",
+  "topics": [
+   "valref"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Реплики телесуфлёра",
+  "prompt": "Прогнозируй размер двух массивов и текст первого элемента оригинала. Почему добавление и изменение элемента имеют разную границу?",
+  "code": "final class Cue {\n    let id: Int\n    var text: String\n    init(id: Int, text: String) { self.id = id; self.text = text }\n}\nlet original = [Cue(id: 7, text: \"Начало\")]\nvar copy = original\ncopy.append(Cue(id: 8, text: \"Финал\"))\ncopy[0].text = \"Вступление\"\nprint(original.count)\nprint(copy.count)\nprint(original[0].text)",
+  "key": "1\n2\nВступление\n\nНабор элементов массива изменился только у copy, но обе коллекции держат один Cue с id 7."
+ }
+]

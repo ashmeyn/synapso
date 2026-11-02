@@ -1,0 +1,35 @@
+[
+ {
+  "id": "debug-b1",
+  "topics": [
+   "debug"
+  ],
+  "type": "Найди ошибку",
+  "title": "Страница учебника",
+  "prompt": "Данные LLDB в комментариях — учебное условие, не настоящий transcript. Индекс 1 при count=1 недопустим. Исправь pageTitle для всех недопустимых индексов, включая отрицательный; верни «Нет страницы», сохрани нормальное чтение.",
+  "code": "struct ManualPage { let id: Int; let title: String }\nfunc pageTitle(_ values: [ManualPage], index: Int) -> String {\n    values[index].title\n}\nlet values = [ManualPage(id: 5, title: \"Введение\")]\n// Учебные данные остановки перед values[index]:\n// frame variable index -> index = 1\n// p values.count -> 1\n// bt: pageTitle <- showManual <- tapNext\n// Следующая строка упадёт:\n// print(pageTitle(values, index: 1))",
+  "key": "struct ManualPage { let id: Int; let title: String }\nfunc pageTitle(_ values: [ManualPage], index: Int) -> String {\n    guard values.indices.contains(index) else { return \"Нет страницы\" }\n    return values[index].title\n}\nlet values = [ManualPage(id: 5, title: \"Введение\")]\nassert(pageTitle(values, index: 1) == \"Нет страницы\")\nassert(pageTitle(values, index: -1) == \"Нет страницы\")\nassert(pageTitle(values, index: 0) == \"Введение\")\n\nСтек указывает вызов, locals дают конкретный вход. indices.contains проверяет нижнюю и верхнюю границы; exception breakpoint не является универсальной ловушкой Swift trap."
+ },
+ {
+  "id": "debug-b2",
+  "topics": [
+   "debug"
+  ],
+  "type": "Перепиши",
+  "title": "Декоративный тост перекрыл кнопку",
+  "prompt": "Экран формы: прозрачный overlay декоративный, дочерних кнопок у него нет. Учебное дерево показывает его поверх button. Сделай его неучаствующим в касаниях и проверь ручной hitTest на (40,30). Не меняй порядок view и не скрывай кнопку.",
+  "code": "import UIKit\nfinal class ToastOverlay: UIView {}\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 200, height: 100))\nlet button = UIButton(frame: CGRect(x: 20, y: 20, width: 60, height: 30))\nlet overlay = ToastOverlay(frame: root.bounds)\nroot.addSubview(button)\nroot.addSubview(overlay)\n// View Hierarchy: overlay выше button, оба видимы.\n// overlay прозрачен, но hitTest выбирает его.",
+  "key": "import UIKit\nfinal class ToastOverlay: UIView {}\nlet root = UIView(frame: CGRect(x: 0, y: 0, width: 200, height: 100))\nlet button = UIButton(frame: CGRect(x: 20, y: 20, width: 60, height: 30))\nlet overlay = ToastOverlay(frame: root.bounds)\nroot.addSubview(button)\nroot.addSubview(overlay)\n// View Hierarchy: overlay выше button, оба видимы.\n// overlay прозрачен, но hitTest выбирает его.\noverlay.isUserInteractionEnabled = false\nassert(root.hitTest(CGPoint(x: 40, y: 30), with: nil) === button)\n\nПолностью декоративный overlay не участвует в hit-testing. Прозрачный фон сам по себе не отключает взаимодействие; исправление проверяется идентичностью найденной кнопки."
+ },
+ {
+  "id": "debug-b3",
+  "topics": [
+   "debug"
+  ],
+  "type": "Найди ошибку",
+  "title": "Код анкеты попал в общий лог",
+  "prompt": "responseCode — личный код ответа анкеты. Исправь политику приватности интерполяции, сохрани answerCount и category. Не предсказывай, как конкретная среда покажет скрытое значение.",
+  "code": "import os\nlet logger = Logger(subsystem: \"dev.synapso.demo\", category: \"Survey\")\nlet responseCode = \"PRIVATE-123\"\nlet answerCount = 2\nlogger.info(\"Код \\(responseCode, privacy: .public), число \\(answerCount)\")",
+  "key": "import os\nlet logger = Logger(subsystem: \"dev.synapso.demo\", category: \"Survey\")\nlet responseCode = \"PRIVATE-123\"\nlet answerCount = 2\nlogger.info(\"Код \\(responseCode, privacy: .private), число \\(answerCount)\")\n\nЯвная private сообщает системе правило обработки значения. Формат отображения и доступ к приватным данным зависят от среды, поэтому точный текст лога не утверждаем."
+ }
+]

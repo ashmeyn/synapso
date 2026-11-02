@@ -1,0 +1,35 @@
+[
+ {
+  "id": "dead-b1",
+  "topics": [
+   "dead"
+  ],
+  "type": "Перепиши",
+  "title": "Текст водяного знака",
+  "prompt": "Есть уже полученный неизменяемый id. Убери обратный sync на owner: в renderer вызови чистый watermark(id:) напрямую, затем передай текст через main.async. Не читай общее состояние чужой очереди.",
+  "code": "import Dispatch\nfunc watermark(id: Int) -> String { \"mark-\\(id)\" }\nfunc render(done: @escaping (String) -> Void) {\n    let owner = DispatchQueue(label: \"stamp.owner\")\n    let renderer = DispatchQueue(label: \"stamp.render\")\n    owner.sync {\n        let id = 4\n        renderer.sync {\n            owner.sync { done(watermark(id: id)) }\n        }\n    }\n}",
+  "key": "import Dispatch\nfunc watermark(id: Int) -> String { \"mark-\\(id)\" }\nfunc render(done: @escaping (String) -> Void) {\n    let owner = DispatchQueue(label: \"stamp.owner\")\n    let renderer = DispatchQueue(label: \"stamp.render\")\n    owner.async {\n        let id = 4\n        renderer.async {\n            let text = watermark(id: id)\n            DispatchQueue.main.async { done(text) }\n        }\n    }\n}\n\nCallback получает mark-4. Снимок Int достаточен чистому расчёту; обратный запрос на owner не нужен."
+ },
+ {
+  "id": "dead-b2",
+  "topics": [
+   "dead"
+  ],
+  "type": "Найди ошибку",
+  "title": "Каталог размеров обуви",
+  "prompt": "addNext вызывается снаружи очереди, но внутри своего sync-блока зовёт публичный largest(), который снова делает queue.sync на ту же serial-очередь. Найди скрытое ожидание себя и исправь: внутри блока посчитай максимум напрямую по sizes, публичный largest() оставь для внешних вызовов. После addNext ожидается 40.",
+  "code": "import Dispatch\nfinal class ShoeCatalog {\n    private let queue = DispatchQueue(label: \"shoe.catalog\")\n    private var sizes = [38, 39]\n    func largest() -> Int { queue.sync { sizes.max() ?? 0 } }\n    func addNext() {\n        queue.sync { sizes.append(largest() + 1) }\n    }\n}\nlet catalog = ShoeCatalog()\ncatalog.addNext()\nprint(catalog.largest())",
+  "key": "import Dispatch\nfinal class ShoeCatalog {\n    private let queue = DispatchQueue(label: \"shoe.catalog\")\n    private var sizes = [38, 39]\n    func largest() -> Int { queue.sync { sizes.max() ?? 0 } }\n    func addNext() {\n        queue.sync {\n            let next = (sizes.max() ?? 0) + 1\n            sizes.append(next)\n        }\n    }\n}\nlet catalog = ShoeCatalog()\ncatalog.addNext()\nprint(catalog.largest())\n\nВывод 40. Исходник ждал собственную очередь через вызов публичного метода — цикл не виден по одной строке sync, его выдаёт только граф вызовов. Внутри блока очередь уже владеет sizes, поэтому повторная постановка не нужна."
+ },
+ {
+  "id": "dead-b3",
+  "topics": [
+   "dead"
+  ],
+  "type": "Перепиши",
+  "title": "Пара ресурсов редактора мозаики",
+  "prompt": "Оба пути должны всегда брать palette, затем tiles. Перепиши secondPath на такой порядок и unlock в обратном. Исходные функции показывают риск при конкурентном вызове; не запускай их одновременно для надежды получить нужный тайминг.",
+  "code": "import Foundation\nlet palette = NSLock()\nlet tiles = NSLock()\nfunc firstPath() {\n    palette.lock(); tiles.lock()\n    print(\"Первый путь\")\n    tiles.unlock(); palette.unlock()\n}\nfunc secondPath() {\n    tiles.lock(); palette.lock()\n    print(\"Второй путь\")\n    palette.unlock(); tiles.unlock()\n}",
+  "key": "import Foundation\nlet palette = NSLock()\nlet tiles = NSLock()\nfunc firstPath() {\n    palette.lock(); tiles.lock()\n    print(\"Первый путь\")\n    tiles.unlock(); palette.unlock()\n}\nfunc secondPath() {\n    palette.lock(); tiles.lock()\n    print(\"Второй путь\")\n    tiles.unlock(); palette.unlock()\n}\n\nОба пути имеют одинаковый порядок захвата. Исправлена возможность palette → tiles → palette в графе ожиданий, без обещания безопасности неизвестных других путей."
+ }
+]

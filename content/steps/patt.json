@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Делегат исчез",
+  "prompt": "Предскажи две строки. Recorder остаётся жив, внешняя ссылка log удаляется.",
+  "code": "struct Recording { let id: Int; let title: String }\nprotocol RecordingDelegate: AnyObject {\n    func recordingFinished(_ value: Recording)\n}\nfinal class Recorder {\n    weak var delegate: (any RecordingDelegate)?\n    func finish(_ value: Recording) { delegate?.recordingFinished(value) }\n}\nfinal class RecordLog: RecordingDelegate {\n    var ids: [Int] = []\n    func recordingFinished(_ value: Recording) { ids.append(value.id) }\n}\nlet recorder = Recorder()\nvar log: RecordLog? = RecordLog()\nrecorder.delegate = log\nrecorder.finish(Recording(id: 21, title: \"Прогулка\"))\nprint(log?.ids ?? [])\nlog = nil\nprint(recorder.delegate == nil)\nrecorder.finish(Recording(id: 22, title: \"Идея\"))",
+  "key": "[21]\ntrue\n\nЗапись дошла до живого делегата. После удаления последнего владельца weak стал nil; второе событие не доставлено."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Фабричный метод",
+  "prompt": "Напиши RecordingText с PlainText/MarkdownText, ExportJob.makeText и export. MarkdownJob переопределяет только makeText. Через переменную ExportJob с MarkdownJob получи # Прогулка; через обычный ExportJob — Прогулка. Не добавляй kind-switch в клиент.",
+  "code": "struct Recording { let id: Int; let title: String }",
+  "key": "struct Recording { let id: Int; let title: String }\nprotocol RecordingText { func text(_ value: Recording) -> String }\nstruct PlainText: RecordingText {\n    func text(_ value: Recording) -> String { value.title }\n}\nstruct MarkdownText: RecordingText {\n    func text(_ value: Recording) -> String { \"# \\(value.title)\" }\n}\nclass ExportJob {\n    func makeText() -> any RecordingText { PlainText() }\n    func export(_ value: Recording) -> String { makeText().text(value) }\n}\nfinal class MarkdownJob: ExportJob {\n    override func makeText() -> any RecordingText { MarkdownText() }\n}\nlet value = Recording(id: 21, title: \"Прогулка\")\nlet job: ExportJob = MarkdownJob()\nassert(job.export(value) == \"# Прогулка\")\nassert(ExportJob().export(value) == \"Прогулка\")\n\nWorkflow использует фабричный метод, выбор продукта вынесен в override creator."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Подписка со stop",
+  "prompt": "Напиши LibraryBadge для локального NotificationCenter: start, stop, token, ids. Слабый callback получает Int id из userInfo; deinit снимает регистрацию. После start опубликуй 21, после stop — 22. Ожидается только [21].",
+  "code": "import Foundation\nextension Notification.Name {\n    static let recordingSaved = Notification.Name(\"recordingSaved\")\n}\n// TODO: LibraryBadge",
+  "key": "import Foundation\nextension Notification.Name {\n    static let recordingSaved = Notification.Name(\"recordingSaved\")\n}\nfinal class LibraryBadge {\n    let center: NotificationCenter\n    private var token: NSObjectProtocol?\n    private(set) var ids: [Int] = []\n    init(center: NotificationCenter) { self.center = center }\n    func start() {\n        stop()\n        token = center.addObserver(\n            forName: .recordingSaved, object: nil, queue: nil\n        ) { [weak self] note in\n            guard let id = note.userInfo?[\"id\"] as? Int else { return }\n            self?.ids.append(id)\n        }\n    }\n    func stop() {\n        if let token { center.removeObserver(token) }\n        token = nil\n    }\n    deinit { stop() }\n}\nlet center = NotificationCenter()\nlet badge = LibraryBadge(center: center)\nbadge.start()\ncenter.post(name: .recordingSaved, object: nil, userInfo: [\"id\": 21])\nbadge.stop()\ncenter.post(name: .recordingSaved, object: nil, userInfo: [\"id\": 22])\nassert(badge.ids == [21])\n\nremoveObserver вызывается для сохранённого токена; слабый захват решает другую задачу."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Сильный delegate замкнул граф",
+  "prompt": "Последний вывод false: LibraryController хранит recorder, а delegate удерживает controller обратно. Исправь объявление ссылки, оставив протокол AnyObject. После controller=nil probe должен стать nil.",
+  "code": "struct Recording { let id: Int; let title: String }\nprotocol RecordingDelegate: AnyObject {\n    func recordingFinished(_ value: Recording)\n}\nfinal class Recorder {\n    var delegate: (any RecordingDelegate)?\n    func finish(_ value: Recording) { delegate?.recordingFinished(value) }\n}\nfinal class LibraryController: RecordingDelegate {\n    let recorder = Recorder()\n    init() { recorder.delegate = self }\n    func recordingFinished(_ value: Recording) { }\n}\nvar controller: LibraryController? = LibraryController()\nweak var probe = controller\ncontroller = nil\nprint(probe == nil)",
+  "key": "struct Recording { let id: Int; let title: String }\nprotocol RecordingDelegate: AnyObject {\n    func recordingFinished(_ value: Recording)\n}\nfinal class Recorder {\n    weak var delegate: (any RecordingDelegate)?\n    func finish(_ value: Recording) { delegate?.recordingFinished(value) }\n}\nfinal class LibraryController: RecordingDelegate {\n    let recorder = Recorder()\n    init() { recorder.delegate = self }\n    func recordingFinished(_ value: Recording) { }\n}\nvar controller: LibraryController? = LibraryController()\nweak var probe = controller\ncontroller = nil\nprint(probe == nil)\n\nВывод: true. Сильное обратное ребро заменено слабым; recorder больше не удерживает свой владелец."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни паттерны",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Когда выбираешь delegate и когда observer? Кто удерживает регистрацию и что снимает токен? Чем фабричный метод отличается от init со switch и от singleton?",
+  "key": "delegate сообщает конкретному адресату через контракт и обычно слабую обратную ссылку; observer даёт независимым слушателям отдельные регистрации. Центр удерживает block-регистрацию, removeObserver завершает её; token нужен для управления. Фабричный метод отделяет создание продукта от workflow и здесь переопределяется creator-подклассом. Singleton — глобальное время жизни/доступ, а не способ изолировать создание для теста; зависимость лучше передать через контракт."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Повторный start не удваивает событие",
+  "prompt": "На LibraryBadge вызови start дважды, затем опубликуй 21: должен быть один id. stop, публикация 22: список не меняется. Если убрать stop в начале start, две регистрации получат одно событие. Не маскируй дубль через Set в ids.",
+  "code": "import Foundation\nextension Notification.Name {\n    static let recordingSaved = Notification.Name(\"recordingSaved\")\n}\nfinal class LibraryBadge {\n    let center: NotificationCenter\n    private var token: NSObjectProtocol?\n    private(set) var ids: [Int] = []\n    init(center: NotificationCenter) { self.center = center }\n    func start() {\n        // TODO: снять прежнюю регистрацию\n        token = center.addObserver(\n            forName: .recordingSaved, object: nil, queue: nil\n        ) { [weak self] note in\n            guard let id = note.userInfo?[\"id\"] as? Int else { return }\n            self?.ids.append(id)\n        }\n    }\n    func stop() {\n        if let token { center.removeObserver(token) }\n        token = nil\n    }\n    deinit { stop() }\n}",
+  "key": "import Foundation\nextension Notification.Name {\n    static let recordingSaved = Notification.Name(\"recordingSaved\")\n}\nfinal class LibraryBadge {\n    let center: NotificationCenter\n    private var token: NSObjectProtocol?\n    private(set) var ids: [Int] = []\n    init(center: NotificationCenter) { self.center = center }\n    func start() {\n        stop()\n        token = center.addObserver(\n            forName: .recordingSaved, object: nil, queue: nil\n        ) { [weak self] note in\n            guard let id = note.userInfo?[\"id\"] as? Int else { return }\n            self?.ids.append(id)\n        }\n    }\n    func stop() {\n        if let token { center.removeObserver(token) }\n        token = nil\n    }\n    deinit { stop() }\n}\nlet center = NotificationCenter()\nlet badge = LibraryBadge(center: center)\nbadge.start()\nbadge.start()\ncenter.post(name: .recordingSaved, object: nil, userInfo: [\"id\": 21])\nassert(badge.ids == [21])\nbadge.stop()\ncenter.post(name: .recordingSaved, object: nil, userInfo: [\"id\": 22])\nassert(badge.ids == [21])\n\nУправляется число регистраций, не постфактум очищаются одинаковые результаты."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови другую фабрику — preview карточки Recording. RecordingPreview.label возвращает строку; CompactPreview — title, DetailPreview — id: title. PreviewCreator.preview вызывает makePreview, DetailCreator переопределяет создание. Через PreviewCreator с DetailCreator для 21 Прогулка проверь 21: Прогулка, без switch формата.",
+  "key": "struct Recording { let id: Int; let title: String }\nprotocol RecordingPreview { func label(_ value: Recording) -> String }\nstruct CompactPreview: RecordingPreview {\n    func label(_ value: Recording) -> String { value.title }\n}\nstruct DetailPreview: RecordingPreview {\n    func label(_ value: Recording) -> String { \"\\(value.id): \\(value.title)\" }\n}\nclass PreviewCreator {\n    func makePreview() -> any RecordingPreview { CompactPreview() }\n    func preview(_ value: Recording) -> String { makePreview().label(value) }\n}\nfinal class DetailCreator: PreviewCreator {\n    override func makePreview() -> any RecordingPreview { DetailPreview() }\n}\nlet creator: PreviewCreator = DetailCreator()\nassert(creator.preview(Recording(id: 21, title: \"Прогулка\")) == \"21: Прогулка\")\n\nНовый продукт — представление карточки, а не формат экспорта. Сценарий вызывает переопределяемый фабричный метод."
+ }
+]

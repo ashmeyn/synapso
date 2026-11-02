@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Два запуска",
+  "prompt": "Предскажи точный вывод. Какая запись связывает два вызова?",
+  "code": "var accumulated = 0\nfunc total(_ seconds: [Int]) -> Int {\n    let _ = seconds.map { value in\n        accumulated += value\n        return value\n    }\n    return accumulated\n}\nprint(total([40, 20]))\nprint(total([40, 20]))",
+  "key": "60\n120\n\n`accumulated` остаётся снаружи функции и не сбрасывается; цепочка с `map` имеет побочный эффект."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Одно правило",
+  "prompt": "Заполни TODO: верни длительность от 0 до 30. Не меняй внешние значения.",
+  "code": "func capped(_ seconds: Int) -> Int {\n    // TODO\n}\nprint(capped(40))\nprint(capped(-5))",
+  "key": "func capped(_ seconds: Int) -> Int {\n    min(max(seconds, 0), 30)\n}\nprint(capped(40))\nprint(capped(-5))\n\nВывод: 30 и 0. Функция зависит только от `seconds`."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Самостоятельный расчёт",
+  "prompt": "Напиши previewSeconds: выбери selected, примени capped, сложи секунды. Исходный массив не меняй. Вызови на clips и пустом массиве.",
+  "code": "struct Clip {\n    let id: Int\n    let seconds: Int\n    let selected: Bool\n}\nlet clips = [\n    Clip(id: 31, seconds: 40, selected: true),\n    Clip(id: 32, seconds: 90, selected: false),\n    Clip(id: 33, seconds: 20, selected: true)\n]\nfunc capped(_ seconds: Int) -> Int {\n    min(max(seconds, 0), 30)\n}",
+  "key": "struct Clip {\n    let id: Int\n    let seconds: Int\n    let selected: Bool\n}\nfunc capped(_ seconds: Int) -> Int {\n    min(max(seconds, 0), 30)\n}\nfunc previewSeconds(_ clips: [Clip]) -> Int {\n    clips.filter { $0.selected }\n        .map { capped($0.seconds) }\n        .reduce(0, +)\n}\nlet clips = [\n    Clip(id: 31, seconds: 40, selected: true),\n    Clip(id: 32, seconds: 90, selected: false),\n    Clip(id: 33, seconds: 20, selected: true)\n]\nprint(previewSeconds(clips))\nprint(previewSeconds([]))\n\nВывод: 50 и 0. Отбор не меняет исходный выбор, сумма начинается с нуля."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Убери скрытую память",
+  "prompt": "Второй запуск показывает 120 вместо 60. Исправь total без сброса глобальной переменной перед вызовом. Покажи два одинаковых результата.",
+  "code": "var accumulated = 0\nfunc total(_ seconds: [Int]) -> Int {\n    let _ = seconds.map { value in\n        accumulated += value\n        return value\n    }\n    return accumulated\n}\nprint(total([40, 20]))\nprint(total([40, 20]))",
+  "key": "func total(_ seconds: [Int]) -> Int {\n    seconds.reduce(0, +)\n}\nprint(total([40, 20]))\nprint(total([40, 20]))\n\nОба запуска дают 60. Удалена внешняя переменная, а не замаскирован её эффект сбросом."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни решение",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Что делает расчёт чистым? Почему let не всегда делает объект неизменяемым? Как экран получает функцию короткого предпросмотра?",
+  "key": "Расчёт читает только входы, не меняет наблюдаемое внешнее состояние и возвращает одинаковый ответ на одинаковых входах. let с классом фиксирует ссылку, но не запрещает менять свойства объекта. makeCap(limit:) возвращает функцию с неизменяемым пределом, её можно передать дальше как правило."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Два режима одного экрана",
+  "prompt": "Измени previewSeconds: принимай transform: (Int) -> Int. Напиши makeCap(limit:), где limit неотрицателен. Для тех же выбранных роликов режим 15 должен дать 30, режим 30 — 50.",
+  "code": "struct Clip {\n    let id: Int\n    let seconds: Int\n    let selected: Bool\n}\nlet clips = [\n    Clip(id: 31, seconds: 40, selected: true),\n    Clip(id: 32, seconds: 90, selected: false),\n    Clip(id: 33, seconds: 20, selected: true)\n]",
+  "key": "struct Clip {\n    let id: Int\n    let seconds: Int\n    let selected: Bool\n}\nfunc previewSeconds(\n    _ clips: [Clip], transform: (Int) -> Int\n) -> Int {\n    clips.filter { $0.selected }\n        .map { transform($0.seconds) }\n        .reduce(0, +)\n}\nfunc makeCap(limit: Int) -> (Int) -> Int {\n    { min(max($0, 0), limit) }\n}\nlet clips = [\n    Clip(id: 31, seconds: 40, selected: true),\n    Clip(id: 32, seconds: 90, selected: false),\n    Clip(id: 33, seconds: 20, selected: true)\n]\nprint(previewSeconds(clips, transform: makeCap(limit: 15)))\nprint(previewSeconds(clips, transform: makeCap(limit: 30)))\n\nВывод: 30 и 50. Настройка приходит в функцию значением, режимы не используют общий изменяемый предел."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови Clip с неизменяемыми id, seconds, selected и changingSeconds(_:to:), возвращающую новый ролик. Отрицательные секунды замени на 0, сохрани id и selected. На ролике 31 с 40 секундами и selected=true передай −5; выведи длительности исходного и нового ролика, затем id нового.",
+  "key": "struct Clip {\n    let id: Int\n    let seconds: Int\n    let selected: Bool\n}\nfunc changingSeconds(_ clip: Clip, to seconds: Int) -> Clip {\n    Clip(id: clip.id, seconds: max(0, seconds), selected: clip.selected)\n}\nlet old = Clip(id: 31, seconds: 40, selected: true)\nlet updated = changingSeconds(old, to: -5)\nprint(old.seconds, updated.seconds, updated.id)\n\nВывод: 40 0 31. Возвращено новое значение; исходный ролик не изменён."
+ }
+]

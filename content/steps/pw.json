@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Прочитай два пути записи",
+  "prompt": "У Clamped с обычным wrappedValue, без проекции, начальный 150 ограничивается. Затем запиши -5 и 70. Назови три строки.",
+  "code": "@propertyWrapper\nstruct Clamped {\n    private var value: Int\n    init(wrappedValue: Int) { value = min(100, max(0, wrappedValue)) }\n    var wrappedValue: Int {\n        get { value }\n        set { value = min(100, max(0, newValue)) }\n    }\n}\nstruct SoundSettings { @Clamped var volume = 150 }\nvar settings = SoundSettings()\nprint(settings.volume)\nsettings.volume = -5; print(settings.volume)\nsettings.volume = 70; print(settings.volume)",
+  "key": "100\n0\n70"
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Напиши основу wrapper",
+  "prompt": "Заполни ограничение в init и setter. Пока проекции нет; нужна типобезопасная громкость 0...100.",
+  "code": "@propertyWrapper\nstruct Clamped {\n    private var value: Int\n    init(wrappedValue: Int) { value = /* Ограничь начальное */ }\n    var wrappedValue: Int {\n        get { value }\n        set { value = /* Ограничь запись */ }\n    }\n}",
+  "key": "@propertyWrapper\nstruct Clamped {\n    private var value: Int\n    init(wrappedValue: Int) { value = min(100, max(0, wrappedValue)) }\n    var wrappedValue: Int {\n        get { value }\n        set { value = min(100, max(0, newValue)) }\n    }\n}\n\nНачальное 150 даёт 100, последующая запись -5 даёт 0."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Добавь проекцию запроса",
+  "prompt": "Самостоятельно напиши Clamped с value, limited и projectedValue Bool. В init и каждой записи limited равен тому, отличается ли сохранённое число от запроса.",
+  "code": "// Напиши Clamped с projectedValue",
+  "key": "@propertyWrapper\nstruct Clamped {\n    private var value: Int\n    private var limited: Bool\n    init(wrappedValue: Int) {\n        value = min(100, max(0, wrappedValue))\n        limited = value != wrappedValue\n    }\n    var wrappedValue: Int {\n        get { value }\n        set {\n            value = min(100, max(0, newValue))\n            limited = value != newValue\n        }\n    }\n    var projectedValue: Bool { limited }\n}\nstruct SoundSettings { @Clamped var volume = 50 }\nvar settings = SoundSettings()\nsettings.volume = 150\nprint(settings.volume, settings.$volume)\nsettings.volume = 70\nprint(settings.volume, settings.$volume)\n\nВывод 100 true и 70 false; флаг относится к последнему запросу, а не ко всей истории."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Измени исходную обёртку",
+  "prompt": "change меняет только copy и теряет результат. Исправь метод через volume = requested. Не меняй Clamped на class ради обхода ошибки.",
+  "code": "@propertyWrapper\nstruct Clamped {\n    private var value: Int\n    private var limited: Bool\n    init(wrappedValue: Int) {\n        value = min(100, max(0, wrappedValue))\n        limited = value != wrappedValue\n    }\n    var wrappedValue: Int {\n        get { value }\n        set {\n            value = min(100, max(0, newValue))\n            limited = value != newValue\n        }\n    }\n    var projectedValue: Bool { limited }\n}\nstruct SoundSettings {\n    @Clamped var volume = 50\n    mutating func change(_ requested: Int) {\n        var copy = _volume\n        copy.wrappedValue = requested\n    }\n}\nvar settings = SoundSettings()\nsettings.change(150)\nprint(settings.volume, settings.$volume)",
+  "key": "@propertyWrapper\nstruct Clamped {\n    private var value: Int\n    private var limited: Bool\n    init(wrappedValue: Int) {\n        value = min(100, max(0, wrappedValue))\n        limited = value != wrappedValue\n    }\n    var wrappedValue: Int {\n        get { value }\n        set {\n            value = min(100, max(0, newValue))\n            limited = value != newValue\n        }\n    }\n    var projectedValue: Bool { limited }\n}\nstruct SoundSettings {\n    @Clamped var volume = 50\n    mutating func change(_ requested: Int) {\n        volume = requested\n    }\n}\nvar settings = SoundSettings()\nsettings.change(150)\nprint(settings.volume, settings.$volume)\n\nВывод 100 true; изменение проходит через wrappedValue исходного _volume."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни механизм",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Что лежит в _volume? Как volume вызывает wrappedValue? Что означает $ и почему Clamped не заменяет State?",
+  "key": "_volume хранит Clamped; volume делегирует чтение и запись wrappedValue. $volume — projectedValue конкретной обёртки, здесь Bool. SwiftUI State имеет отдельный управляемый жизненный цикл и Binding-проекцию, которого наш wrapper не реализует."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Прими начальный параметр",
+  "prompt": "Напиши SoundSettings.init(startingVolume:) через _volume = Clamped(wrappedValue:). Используй уже объявленный Clamped с проекцией; параметр 150 даёт 100 true.",
+  "code": "@propertyWrapper\nstruct Clamped {\n    private var value: Int\n    private var limited: Bool\n    init(wrappedValue: Int) {\n        value = min(100, max(0, wrappedValue))\n        limited = value != wrappedValue\n    }\n    var wrappedValue: Int {\n        get { value }\n        set {\n            value = min(100, max(0, newValue))\n            limited = value != newValue\n        }\n    }\n    var projectedValue: Bool { limited }\n}\n// Напиши SoundSettings с custom init",
+  "key": "@propertyWrapper\nstruct Clamped {\n    private var value: Int\n    private var limited: Bool\n    init(wrappedValue: Int) {\n        value = min(100, max(0, wrappedValue))\n        limited = value != wrappedValue\n    }\n    var wrappedValue: Int {\n        get { value }\n        set {\n            value = min(100, max(0, newValue))\n            limited = value != newValue\n        }\n    }\n    var projectedValue: Bool { limited }\n}\nstruct SoundSettings {\n    @Clamped var volume: Int\n    init(startingVolume: Int) {\n        _volume = Clamped(wrappedValue: startingVolume)\n    }\n}\nlet settings = SoundSettings(startingVolume: 150)\nprint(settings.volume, settings.$volume)\n\nИнициализация идёт через правило wrapper и сразу сохраняет признак ограничения."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови Clamped с init, setter и Bool-проекцией, затем SoundSettings с двумя отдельными @Clamped свойствами volume = 50 и previewVolume = 20. Запиши -5 только в volume; выведи пары 0 true и 20 false. Начальная запись и последующие присваивания должны ограничиваться.",
+  "key": "@propertyWrapper\nstruct Clamped {\n    private var value: Int\n    private var limited: Bool\n    init(wrappedValue: Int) {\n        value = min(100, max(0, wrappedValue))\n        limited = value != wrappedValue\n    }\n    var wrappedValue: Int {\n        get { value }\n        set {\n            value = min(100, max(0, newValue))\n            limited = value != newValue\n        }\n    }\n    var projectedValue: Bool { limited }\n}\nstruct SoundSettings {\n    @Clamped var volume = 50\n    @Clamped var previewVolume = 20\n}\nvar settings = SoundSettings()\nsettings.volume = -5\nprint(settings.volume, settings.$volume)\nprint(settings.previewVolume, settings.$previewVolume)\n\nДве независимые value-обёртки; запись одного свойства не меняет другое."
+ }
+]

@@ -1,0 +1,35 @@
+[
+ {
+  "id": "uitest-b1",
+  "topics": [
+   "uitest"
+  ],
+  "type": "Допиши",
+  "title": "Крупный текст в каталоге настольных игр",
+  "prompt": "Каталог настольных игр обрабатывает --fixture=games-large как локальный текст с крупным шрифтом. Напиши UI-тест: дождись games.title, сохрани screenshot attachment с keepAlways. В ключе объясни, почему это ещё не snapshot-regression.",
+  "code": "import XCTest",
+  "key": "import XCTest\n@MainActor\nfinal class GamesFontTests: XCTestCase {\n    func testLargeText() {\n        let app = XCUIApplication()\n        app.launchArguments = [\"--ui-testing\", \"--fixture=games-large\"]\n        app.launch()\n        let content = app.staticTexts[\"games.title\"]\n        XCTAssertTrue(content.waitForExistence(timeout: 3))\n        let shot = app.screenshot()\n        let attachment = XCTAttachment(screenshot: shot)\n        attachment.lifetime = .keepAlways\n        add(attachment)\n    }\n}\n\nПолучено диагностическое изображение; без утверждённого эталона и сравнения тест не проверяет визуальную регрессию. Большой шрифт обязан задавать host app, аргумент сам этого не делает."
+ },
+ {
+  "id": "uitest-b2",
+  "topics": [
+   "uitest"
+  ],
+  "type": "Найди ошибку",
+  "title": "Форма подтверждения уже существовала",
+  "prompt": "checkout.state существует до tap с label «Черновик», после сохранения должен стать «Сохранено». Тест проходит без сохранения. Исправь проверку результата, сохрани identifier кнопки и fixture.",
+  "code": "import XCTest\n@MainActor\nfinal class CheckoutTests: XCTestCase {\n    func testConfirm() {\n        let app = XCUIApplication()\n        app.launchArguments = [\"--ui-testing\", \"--fixture=checkout-ready\"]\n        app.launch()\n        let button = app.buttons[\"checkout.confirm\"]\n        guard button.waitForExistence(timeout: 3) else {\n            XCTFail(\"Нет checkout.confirm\")\n            return\n        }\n        button.tap()\n        let state = app.staticTexts[\"checkout.state\"]\n        XCTAssertTrue(state.waitForExistence(timeout: 3))\n    }\n}",
+  "key": "import XCTest\n@MainActor\nfinal class CheckoutTests: XCTestCase {\n    func testConfirm() {\n        let app = XCUIApplication()\n        app.launchArguments = [\"--ui-testing\", \"--fixture=checkout-ready\"]\n        app.launch()\n        let button = app.buttons[\"checkout.confirm\"]\n        guard button.waitForExistence(timeout: 3) else {\n            XCTFail(\"Нет checkout.confirm\")\n            return\n        }\n        button.tap()\n        let state = app.staticTexts[\"checkout.state\"]\n        XCTAssertTrue(waitForText(\"Сохранено\", element: state))\n    }\n}\nfunc waitForText(_ text: String, element: XCUIElement) -> Bool {\n    let predicate = NSPredicate(format: \"label == %@\", text)\n    let expectation = XCTNSPredicateExpectation(\n        predicate: predicate, object: element\n    )\n    return XCTWaiter.wait(for: [expectation], timeout: 3) == .completed\n}\n\nОжидание label отделяет эффект от существования элемента. Успех требует завершённого сохранения, а не наличия прежней строки."
+ },
+ {
+  "id": "uitest-b3",
+  "topics": [
+   "uitest"
+  ],
+  "type": "Допиши",
+  "title": "Подмена только по явному флагу",
+  "prompt": "В конфигураторе сеанса fixture=session-ready должен включаться только вместе с --ui-testing. Напиши чистую SessionConfig.fixture(arguments:), возвращающую ready либо live, и XCTest для обоих аргументов, одного fixture и пустого списка. Это проверка выбора данных, не UI-запуск.",
+  "code": "enum SessionFixture: Equatable { case live, ready }",
+  "key": "enum SessionFixture: Equatable { case live, ready }\nstruct SessionConfig {\n    static func fixture(arguments: [String]) -> SessionFixture {\n        guard arguments.contains(\"--ui-testing\"),\n              arguments.contains(\"--fixture=session-ready\") else {\n            return .live\n        }\n        return .ready\n    }\n}\nimport XCTest\nfinal class ConfigTests: XCTestCase {\n    func testRequiresOptIn() {\n        XCTAssertEqual(SessionConfig.fixture(arguments: [\n            \"--fixture=session-ready\"\n        ]), .live)\n        XCTAssertEqual(SessionConfig.fixture(arguments: [\n            \"--ui-testing\", \"--fixture=session-ready\"\n        ]), .ready)\n        XCTAssertEqual(SessionConfig.fixture(arguments: []), .live)\n    }\n}\n\nКонфигурация требует два условия одновременно. Этот unit-тест проверяет обработчик аргументов; ни одно его утверждение не доказывает работу accessibility-дерева."
+ }
+]

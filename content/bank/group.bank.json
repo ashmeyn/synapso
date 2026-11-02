@@ -1,0 +1,35 @@
+[
+ {
+  "id": "group-b1",
+  "topics": [
+   "group"
+  ],
+  "type": "Найди ошибку",
+  "title": "Две фазы загрузки карты созвездий",
+  "prompt": "Оболочка запускает настоящую работу позже. Перенеси leave в конечный callback localSource; сохрани один enter. localSource синхронно только ставит работу, callback приходит на sourceQueue.",
+  "code": "import Dispatch\nfunc loadStars(done: @escaping () -> Void) {\n    let sourceQueue = DispatchQueue(label: \"stars.source\")\n    let group = DispatchGroup()\n    func localSource(_ completion: @escaping () -> Void) {\n        sourceQueue.async { print(\"Звёзды готовы\"); completion() }\n    }\n    group.enter()\n    localSource { }\n    group.leave()\n    group.notify(queue: .main) { done() }\n}",
+  "key": "import Dispatch\nfunc loadStars(done: @escaping () -> Void) {\n    let sourceQueue = DispatchQueue(label: \"stars.source\")\n    let group = DispatchGroup()\n    func localSource(_ completion: @escaping () -> Void) {\n        sourceQueue.async { print(\"Звёзды готовы\"); completion() }\n    }\n    group.enter()\n    localSource { group.leave() }\n    group.notify(queue: .main) { done() }\n}\n\n«Звёзды готовы» гарантированно до done. В исходнике notify может опередить callback, потому что учёт закончен сразу после запуска."
+ },
+ {
+  "id": "group-b2",
+  "topics": [
+   "group"
+  ],
+  "type": "Допиши",
+  "title": "Пустая очередь карточек птиц",
+  "prompt": "Напиши refreshBirds(ids:done:) по группе. Для пустого ids всё равно должен произойти notify и done; не ставь безусловный enter вне цикла.",
+  "code": "import Dispatch\nfunc refreshBirds(ids: [Int], done: @escaping () -> Void) {\n    // Создай worker/group, цикл enter/leave и notify на main\n}",
+  "key": "import Dispatch\nfunc refreshBirds(ids: [Int], done: @escaping () -> Void) {\n    let worker = DispatchQueue(label: \"birds.cards\")\n    let group = DispatchGroup()\n    for id in ids {\n        group.enter()\n        worker.async { defer { group.leave() }; print(id) }\n    }\n    group.notify(queue: .main) { done() }\n}\n\nПри [] нет печати id, done всё равно приходит асинхронно через main. Пустая партия не оставляет лишний enter."
+ },
+ {
+  "id": "group-b3",
+  "topics": [
+   "group"
+  ],
+  "type": "Перепиши",
+  "title": "Однократный ответ приложения погоды",
+  "prompt": "Источник вызывает finish дважды. Заверши один enter только один раз: защищай finished отдельной serial-очередью. Не используй несинхронизированный Bool и не делай leave после callback ещё раз.",
+  "code": "import Dispatch\nfunc loadForecast(done: @escaping () -> Void) {\n    let group = DispatchGroup()\n    group.enter()\n    let finish = { group.leave() }\n    finish()\n    finish()\n    group.notify(queue: .main) { done() }\n}",
+  "key": "import Dispatch\nfunc loadForecast(done: @escaping () -> Void) {\n    let group = DispatchGroup()\n    let state = DispatchQueue(label: \"forecast.finish\")\n    var finished = false\n    group.enter()\n    let finish = {\n        state.sync {\n            guard !finished else { return }\n            finished = true\n            group.leave()\n        }\n    }\n    finish()\n    finish()\n    group.notify(queue: .main) { done() }\n}\n\ndone приходит один раз для этой регистрации notify. Повторный finish не даёт лишнего leave; вся работа с флагом проходит через state."
+ }
+]

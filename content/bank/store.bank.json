@@ -1,0 +1,35 @@
+[
+ {
+  "id": "store-b1",
+  "topics": [
+   "store"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Единицы в конвертере",
+  "prompt": "Какое значение даёт register и может ли пользователь переопределить его?",
+  "code": "import Foundation\nlet defaults = UserDefaults(suiteName: \"dev.synapso.lesson.units\")!\ndefaults.removePersistentDomain(forName: \"dev.synapso.lesson.units\")\ndefaults.register(defaults: [\"usesMetric\": true])\nprint(defaults.bool(forKey: \"usesMetric\"))\ndefaults.set(false, forKey: \"usesMetric\")\nprint(defaults.bool(forKey: \"usesMetric\"))\ndefaults.removePersistentDomain(forName: \"dev.synapso.lesson.units\")",
+  "key": "true\nfalse\n\nregister задаёт резервное значение; сохранённый выбор false имеет приоритет."
+ },
+ {
+  "id": "store-b2",
+  "topics": [
+   "store"
+  ],
+  "type": "Допиши",
+  "title": "Локальный посадочный талон",
+  "prompt": "Учебный текст талона сохраняется в отдельный временный каталог. Допиши подготовку каталога и атомарную запись; затем прочитай тот же файл.",
+  "code": "import Foundation\nfunc saveBoardingPass(_ text: String, in directory: URL) throws {\n    // Создай каталог, затем запиши текст в boarding-pass.txt\n}\nlet directory = FileManager.default.temporaryDirectory\n    .appendingPathComponent(UUID().uuidString)\ndefer { try? FileManager.default.removeItem(at: directory) }\ndo {\n    try saveBoardingPass(\"Рейс 712 · место 8A\", in: directory)\n    let file = directory.appendingPathComponent(\"boarding-pass.txt\")\n    let text = try String(contentsOf: file, encoding: .utf8)\n    print(text)\n} catch { print(\"Не сохранено\") }",
+  "key": "import Foundation\nfunc saveBoardingPass(_ text: String, in directory: URL) throws {\n    try FileManager.default.createDirectory(\n        at: directory, withIntermediateDirectories: true)\n    let file = directory.appendingPathComponent(\"boarding-pass.txt\")\n    try Data(text.utf8).write(to: file, options: .atomic)\n}\nlet directory = FileManager.default.temporaryDirectory\n    .appendingPathComponent(UUID().uuidString)\ndefer { try? FileManager.default.removeItem(at: directory) }\ndo {\n    try saveBoardingPass(\"Рейс 712 · место 8A\", in: directory)\n    let file = directory.appendingPathComponent(\"boarding-pass.txt\")\n    let text = try String(contentsOf: file, encoding: .utf8)\n    print(text)\n} catch { print(\"Не сохранено\") }\n\nВывод «Рейс 712 · место 8A». В продукте выбирается постоянный каталог и подходящая защита, а здесь данные учебные."
+ },
+ {
+  "id": "store-b3",
+  "topics": [
+   "store"
+  ],
+  "type": "Допиши",
+  "title": "Структурированный черновик дневника",
+  "prompt": "Восстанови encode → атомарная запись → чтение → decode, сохраняя id и text. Тест идёт в новый временный каталог и убирает его. Ошибки проходят через throws и общий catch; JSON вручную не правь.",
+  "code": "import Foundation\nstruct Draft: Codable, Equatable {\n    let id: Int\n    let text: String\n}\nfunc save(_ draft: Draft, in directory: URL) throws {\n    try FileManager.default.createDirectory(\n        at: directory, withIntermediateDirectories: true\n    )\n    let file = directory.appendingPathComponent(\"draft.json\")\n    let bytes = /* закодируй Draft */\n    /* атомарно запиши bytes в file */\n}\nfunc load(from directory: URL) throws -> Draft {\n    let file = directory.appendingPathComponent(\"draft.json\")\n    let bytes = /* прочитай bytes */\n    return /* восстанови Draft */\n}\nlet directory = FileManager.default.temporaryDirectory\n    .appendingPathComponent(UUID().uuidString)\ndefer { try? FileManager.default.removeItem(at: directory) }\ndo {\n    let draft = Draft(id: 7, text: \"Первый день\")\n    try save(draft, in: directory)\n    let restored = try load(from: directory)\n    print(restored.id)\n    print(restored.text)\n    print(restored == draft)\n} catch { print(\"Черновик не восстановлен\") }",
+  "key": "import Foundation\nstruct Draft: Codable, Equatable {\n    let id: Int\n    let text: String\n}\nfunc save(_ draft: Draft, in directory: URL) throws {\n    try FileManager.default.createDirectory(\n        at: directory, withIntermediateDirectories: true\n    )\n    let file = directory.appendingPathComponent(\"draft.json\")\n    let bytes = try JSONEncoder().encode(draft)\n    try bytes.write(to: file, options: .atomic)\n}\nfunc load(from directory: URL) throws -> Draft {\n    let file = directory.appendingPathComponent(\"draft.json\")\n    let bytes = try Data(contentsOf: file)\n    return try JSONDecoder().decode(Draft.self, from: bytes)\n}\nlet directory = FileManager.default.temporaryDirectory\n    .appendingPathComponent(UUID().uuidString)\ndefer { try? FileManager.default.removeItem(at: directory) }\ndo {\n    let draft = Draft(id: 7, text: \"Первый день\")\n    try save(draft, in: directory)\n    let restored = try load(from: directory)\n    print(restored.id)\n    print(restored.text)\n    print(restored == draft)\n} catch { print(\"Черновик не восстановлен\") }\n\nВывод 7, «Первый день», true. Проверяем восстановленные поля, а не порядок ключей JSON."
+ }
+]

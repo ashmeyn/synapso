@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Прочитай выбор режима",
+  "prompt": "Прогони ModeModel вручную: normal, затем tracking. Какой вывод и почему? Это модель, а не реальный RunLoop.",
+  "code": "enum ClockMode { case normal, tracking }\nstruct ModeModel {\n    var common = false\n    var ticks = 0\n    mutating func moveToNextFire(in mode: ClockMode) {\n        if common || mode == .normal { ticks += 1 }\n    }\n}\nvar clock = ModeModel()\nclock.moveToNextFire(in: .normal)\nclock.moveToNextFire(in: .tracking)\nprint(clock.ticks)",
+  "key": "1. Default-only модель обслуживает normal, но не tracking; moveToNextFire объявлен в самой модели."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Зарегистрируй общий режим",
+  "prompt": "Заполни создание Timer без автоматической регистрации и RunLoop.main.add с .common. makeCommonTimer вызывается на главном потоке.",
+  "code": "import Foundation\nfunc makeCommonTimer(tick: @escaping () -> Void) -> Timer {\n    precondition(Thread.isMainThread)\n    let timer = Timer(timeInterval: 3600, repeats: true) { _ in\n        tick()\n    }\n    RunLoop.main.add(timer, forMode: /* Общие режимы */)\n    return timer\n}",
+  "key": "import Foundation\nfunc makeCommonTimer(tick: @escaping () -> Void) -> Timer {\n    precondition(Thread.isMainThread)\n    let timer = Timer(timeInterval: 3600, repeats: true) { _ in\n        tick()\n    }\n    RunLoop.main.add(timer, forMode: .common)\n    return timer\n}\n\nРучной fire проверяет tick; режим .common выбран в регистрации, но ручной вызов не проверяет скролл."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Не держи владельца",
+  "prompt": "Напиши LessonClock с ticks, timer, start и stop: weak-захват, удаление старого таймера, регистрация .common, явный invalidate. Если self уже отсутствует, инвалидируй переданный блоком timer.",
+  "code": "import Foundation\n// Напиши LessonClock",
+  "key": "import Foundation\nfinal class LessonClock {\n    private(set) var ticks = 0\n    private(set) var timer: Timer?\n    func start() {\n        precondition(Thread.isMainThread)\n        stop()\n        let next = Timer(timeInterval: 3600, repeats: true) {\n            [weak self] timer in\n            guard let self else { timer.invalidate(); return }\n            self.ticks += 1\n        }\n        timer = next\n        RunLoop.main.add(next, forMode: .common)\n    }\n    func stop() {\n        precondition(Thread.isMainThread)\n        timer?.invalidate()\n        timer = nil\n    }\n}\n\nДва fire дают 2; stop обнуляет handle и инвалидирует старый Timer."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Замени handle без второго источника",
+  "prompt": "Функция replaceTimer принимает старый handle, но лишь создаёт новый. Добавь invalidation старого до создания нового. Make-функция и проверка главного потока уже даны.",
+  "code": "import Foundation\nfunc makeCommonTimer(tick: @escaping () -> Void) -> Timer {\n    precondition(Thread.isMainThread)\n    let timer = Timer(timeInterval: 3600, repeats: true) { _ in\n        tick()\n    }\n    RunLoop.main.add(timer, forMode: .common)\n    return timer\n}\nfunc replaceTimer(_ old: Timer?, tick: @escaping () -> Void) -> Timer {\n    precondition(Thread.isMainThread)\n    return makeCommonTimer(tick: tick)\n}",
+  "key": "import Foundation\nfunc makeCommonTimer(tick: @escaping () -> Void) -> Timer {\n    precondition(Thread.isMainThread)\n    let timer = Timer(timeInterval: 3600, repeats: true) { _ in\n        tick()\n    }\n    RunLoop.main.add(timer, forMode: .common)\n    return timer\n}\nfunc replaceTimer(_ old: Timer?, tick: @escaping () -> Void) -> Timer {\n    precondition(Thread.isMainThread)\n    old?.invalidate()\n    return makeCommonTimer(tick: tick)\n}\n\nСтарый handle после замены невалиден, новый валиден. Это другой переход жизненного цикла, а не повтор реализации владельца."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни жизненный цикл",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Почему default-only Timer задерживается при tracking? Кто держит владельца? Почему фоновой очереди недостаточно для RunLoop?",
+  "key": "Таймер обслуживается только в поддерживаемом режиме; common объединяет выбранные режимы. RunLoop держит Timer, тот — блок или target; weak разрывает захват self, invalidate снимает обслуживание. Фоновая очередь не запускает постоянный RunLoop потока."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Одно напоминание вместо пульса",
+  "prompt": "Напиши makeReminder с repeats: false и .common; done вызывается один раз, после срабатывания Timer невалиден. Вызовы выполняются на главном потоке.",
+  "code": "import Foundation\n// Напиши makeReminder(done:)",
+  "key": "import Foundation\nfunc makeReminder(done: @escaping () -> Void) -> Timer {\n    precondition(Thread.isMainThread)\n    let timer = Timer(timeInterval: 3600, repeats: false) { _ in done() }\n    RunLoop.main.add(timer, forMode: .common)\n    return timer\n}\n\nРучной fire даёт одно done и isValid == false."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови LessonPulse: повторяющийся Timer в .common, weak-захват; каждый пульс прибавляет 2. Повторный start инвалидирует прошлый Timer, stop инвалидирует текущий и очищает handle. Всё на главном потоке. Два ручных fire дают ticks = 4.",
+  "key": "import Foundation\nfinal class LessonPulse {\n    private(set) var ticks = 0\n    private(set) var timer: Timer?\n    func start() {\n        precondition(Thread.isMainThread)\n        timer?.invalidate()\n        timer = Timer(timeInterval: 3600, repeats: true) {\n            [weak self] timer in\n            guard let self else { timer.invalidate(); return }\n            self.ticks += 2\n        }\n        if let timer { RunLoop.main.add(timer, forMode: .common) }\n    }\n    func stop() {\n        precondition(Thread.isMainThread)\n        timer?.invalidate(); timer = nil\n    }\n}\n\nМеханизм перенесён на другой шаг; проверь teardown и повторный запуск."
+ }
+]

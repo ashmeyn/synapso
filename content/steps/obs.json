@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Предскажи экран",
+  "prompt": "Пользователь заменил строку в поле на «Выходные». Что покажут верхняя надпись и поле? Сколько объектов TripPlan создаёт этот код? Здесь предсказываем экран, print нет.",
+  "code": "import SwiftUI\nfinal class TripPlan: ObservableObject {\n    let id = 72\n    @Published var title = \"Поездка\"\n}\nstruct TripScreen: View {\n    @StateObject private var plan = TripPlan()\n    var body: some View {\n        VStack {\n            Text(plan.title)\n            PlanEditor(plan: plan)\n        }\n    }\n}\nstruct PlanEditor: View {\n    @ObservedObject var plan: TripPlan\n    var body: some View {\n        TextField(\"Название\", text: $plan.title)\n    }\n}",
+  "key": "Надпись и поле показывают «Выходные». Код создаёт один TripPlan у владельца; редактор получает ссылку на него. Поле пишет через Binding к title, @Published сообщает об изменении, подписанные View обновляются."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Назначь роли",
+  "prompt": "Заполни три помеченных места: модель сообщает об изменении title, родитель владеет ею, ребёнок наблюдает переданный объект.",
+  "code": "import SwiftUI\nfinal class TripPlan: ObservableObject {\n    let id = 72\n    /* публикация */ var title = \"Поездка\"\n}\nstruct TripScreen: View {\n    /* владелец */ private var plan = TripPlan()\n    var body: some View {\n        VStack {\n            Text(plan.title)\n            PlanEditor(plan: plan)\n        }\n    }\n}\nstruct PlanEditor: View {\n    /* получатель */ var plan: TripPlan\n    var body: some View {\n        TextField(\"Название\", text: $plan.title)\n    }\n}",
+  "key": "import SwiftUI\nfinal class TripPlan: ObservableObject {\n    let id = 72\n    @Published var title = \"Поездка\"\n}\nstruct TripScreen: View {\n    @StateObject private var plan = TripPlan()\n    var body: some View {\n        VStack {\n            Text(plan.title)\n            PlanEditor(plan: plan)\n        }\n    }\n}\nstruct PlanEditor: View {\n    @ObservedObject var plan: TripPlan\n    var body: some View {\n        TextField(\"Название\", text: $plan.title)\n    }\n}\n\n@Published публикует изменения title. @StateObject хранит модель у владельца, @ObservedObject принимает тот же объект в редакторе."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Собери современную связку",
+  "prompt": "Перепиши весь рабочий вариант для iOS 17 через Observation: модель с @Observable, один владелец и редактирующий ребёнок. Нельзя оставлять ObservableObject, @Published или создавать новый TripPlan у ребёнка.",
+  "code": "import SwiftUI\nfinal class TripPlan: ObservableObject {\n    let id = 72\n    @Published var title = \"Поездка\"\n}\nstruct TripScreen: View {\n    @StateObject private var plan = TripPlan()\n    var body: some View {\n        VStack {\n            Text(plan.title)\n            PlanEditor(plan: plan)\n        }\n    }\n}\nstruct PlanEditor: View {\n    @ObservedObject var plan: TripPlan\n    var body: some View {\n        TextField(\"Название\", text: $plan.title)\n    }\n}",
+  "key": "import SwiftUI\nimport Observation\n@Observable final class TripPlan {\n    let id = 72\n    var title = \"Поездка\"\n}\nstruct TripScreen: View {\n    @State private var plan = TripPlan()\n    var body: some View {\n        VStack {\n            Text(plan.title)\n            PlanEditor(plan: plan)\n        }\n    }\n}\nstruct PlanEditor: View {\n    @Bindable var plan: TripPlan\n    var body: some View {\n        TextField(\"Название\", text: $plan.title)\n    }\n}\n\n@State хранит современную модель у владельца, @Bindable даёт редактору $plan.title. SwiftUI отслеживает чтения свойств @Observable при вычислении body."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Найди второй план",
+  "prompt": "После ввода «Выходные» верхняя надпись остаётся «Поездка». Исправь передачу и свойство редактора, сохранив старую связку ObservableObject.",
+  "code": "import SwiftUI\nfinal class TripPlan: ObservableObject {\n    let id = 72\n    @Published var title = \"Поездка\"\n}\nstruct TripScreen: View {\n    @StateObject private var plan = TripPlan()\n    var body: some View {\n        VStack {\n            Text(plan.title)\n            PlanEditor()\n        }\n    }\n}\nstruct PlanEditor: View {\n    @StateObject private var plan = TripPlan()\n    var body: some View {\n        TextField(\"Название\", text: $plan.title)\n    }\n}",
+  "key": "import SwiftUI\nfinal class TripPlan: ObservableObject {\n    let id = 72\n    @Published var title = \"Поездка\"\n}\nstruct TripScreen: View {\n    @StateObject private var plan = TripPlan()\n    var body: some View {\n        VStack {\n            Text(plan.title)\n            PlanEditor(plan: plan)\n        }\n    }\n}\nstruct PlanEditor: View {\n    @ObservedObject var plan: TripPlan\n    var body: some View {\n        TextField(\"Название\", text: $plan.title)\n    }\n}\n\nРедактор создавал отдельный TripPlan. Он должен получить родительский объект через @ObservedObject; одинаковый id не объединяет два экземпляра."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни напарнику (устно)",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Один план поездки показывается сверху и редактируется снизу.\n- Почему родитель использует StateObject, а ребёнок ObservedObject?\n- Чем наблюдение отличается от Binding к title?\n- Что изменится при переходе на Observable?",
+  "key": "Родитель создаёт план, поэтому @StateObject сохраняет его для идентичности экрана; ребёнок получает готовый объект через @ObservedObject и наблюдает его. Наблюдение сообщает об изменениях для обновления UI; Binding обеспечивает чтение и запись конкретного свойства. Для Observation заменяем ObservableObject и @Published на @Observable, владельца на @State, а редактирующего ребёнка на @Bindable; объект остаётся один."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Подключи отметку сборов",
+  "prompt": "У того же плана вместо заголовка редактируем isPacked: Bool, первоначально false. Допиши современную модель и PackingEditor с Toggle «Вещи собраны». Родитель показывает «Собрано: false» и должен увидеть true после включения.",
+  "code": "Собери самостоятельный файл: import SwiftUI и Observation; TripPlan с id 72 и isPacked; TripScreen — владелец; PackingEditor — редактор. Используй @Observable, @State и @Bindable.",
+  "key": "import SwiftUI\nimport Observation\n@Observable final class TripPlan {\n    let id = 72\n    var isPacked = false\n}\nstruct TripScreen: View {\n    @State private var plan = TripPlan()\n    var body: some View {\n        VStack {\n            Text(\"Собрано: \\(plan.isPacked)\")\n            PackingEditor(plan: plan)\n        }\n    }\n}\nstruct PackingEditor: View {\n    @Bindable var plan: TripPlan\n    var body: some View {\n        Toggle(\"Вещи собраны\", isOn: $plan.isPacked)\n    }\n}\n\nToggle записывает Bool через $plan.isPacked в общий объект. Родитель читает то же свойство, поэтому его надпись отражает включение и выключение."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "С нуля восстанови старую связку для плана 72. Поле participants: Int начинается с 1. Родитель показывает «Участники: 1», отдельный ParticipantsEditor редактирует число через Stepper в диапазоне 1...4. Два увеличения дают 3 у родителя и в Stepper. Уменьшение с 1 и увеличение с 4 через Stepper не меняют значение. Модель создаёт только родитель.",
+  "key": "import SwiftUI\nfinal class TripPlan: ObservableObject {\n    let id = 72\n    @Published var participants = 1\n}\nstruct TripScreen: View {\n    @StateObject private var plan = TripPlan()\n    var body: some View {\n        VStack {\n            Text(\"Участники: \\(plan.participants)\")\n            ParticipantsEditor(plan: plan)\n        }\n    }\n}\nstruct ParticipantsEditor: View {\n    @ObservedObject var plan: TripPlan\n    var body: some View {\n        Stepper(\"Участники: \\(plan.participants)\", value: $plan.participants, in: 1...4)\n    }\n}\n\n@StateObject хранит один план, @ObservedObject передаёт его редактору. @Published сообщает об изменении числа; диапазон Stepper ограничивает его пользовательское управление."
+ }
+]

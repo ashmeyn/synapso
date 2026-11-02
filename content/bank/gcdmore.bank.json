@@ -1,0 +1,35 @@
+[
+ {
+  "id": "gcdmore-b1",
+  "topics": [
+   "gcdmore"
+  ],
+  "type": "Допиши",
+  "title": "Словарь переводов на экране",
+  "prompt": "Добавь update(_:id:done:) через async barrier: сначала запись rows, затем main.async с done. read вызывается снаружи очереди после подтверждения. Нельзя read через sync внутри barrier.",
+  "code": "import Foundation\nfinal class TranslationStore {\n    private let queue = DispatchQueue(\n        label: \"translations\", attributes: .concurrent\n    )\n    private var rows: [Int: String] = [:]\n    func read(id: Int) -> String? { queue.sync { rows[id] } }\n    // Напиши update(_:id:done:)\n}",
+  "key": "import Foundation\nfinal class TranslationStore {\n    private let queue = DispatchQueue(\n        label: \"translations\", attributes: .concurrent\n    )\n    private var rows: [Int: String] = [:]\n    func read(id: Int) -> String? { queue.sync { rows[id] } }\n    func update(_ text: String, id: Int, done: @escaping () -> Void) {\n        queue.async(flags: .barrier) {\n            self.rows[id] = text\n            DispatchQueue.main.async { done() }\n        }\n    }\n}\n\nПосле подтверждения update(\"Дом\", id: 2) read(id: 2) даёт «Дом». Callback выражает окончание async-записи."
+ },
+ {
+  "id": "gcdmore-b2",
+  "topics": [
+   "gcdmore"
+  ],
+  "type": "Найди ошибку",
+  "title": "Разрешение экспорта треков",
+  "prompt": "Первый wait уже держит единственный permit. Второй вернул .timedOut, но код ошибочно signal. Убери это освобождение: probe не должен получить разрешение до отпускания первого. .now не создаёт блокирующее ожидание.",
+  "code": "import Dispatch\nlet slots = DispatchSemaphore(value: 1)\nlet held = slots.wait(timeout: .now())\nlet failed = slots.wait(timeout: .now())\nif failed == .timedOut { slots.signal() }\nlet probe = slots.wait(timeout: .now())\nprint(probe == .success)\nif probe == .success { slots.signal() }\nif held == .success { slots.signal() }",
+  "key": "import Dispatch\nlet slots = DispatchSemaphore(value: 1)\nlet held = slots.wait(timeout: .now())\nlet failed = slots.wait(timeout: .now())\n// Timeout не получил permit, поэтому нечего возвращать.\nlet probe = slots.wait(timeout: .now())\nprint(probe == .success)\nif probe == .success { slots.signal() }\nif held == .success { slots.signal() }\n\nДо правки true, после false. Неуспешный wait не должен увеличивать доступные разрешения."
+ },
+ {
+  "id": "gcdmore-b3",
+  "topics": [
+   "gcdmore"
+  ],
+  "type": "Перепиши",
+  "title": "Публикация макета визитки",
+  "prompt": "prepare отменена до очереди. publish с addDependency всё равно может выполниться. Добавь проверку успешного результата у PageStore: без него печатай «Нет готового макета», не отправляй nil. PageStore здесь безопасный владелец как в уроке.",
+  "code": "import Foundation\nfinal class PageStore {\n    private let queue = DispatchQueue(\n        label: \"album.pages\", attributes: .concurrent\n    )\n    private var rows: [Int: String] = [:]\n    func set(_ text: String, id: Int) {\n        queue.sync(flags: .barrier) { rows[id] = text }\n    }\n    func read(id: Int) -> String? { queue.sync { rows[id] } }\n}\nfunc publishCard(done: @escaping () -> Void) {\n    let store = PageStore()\n    let queue = OperationQueue()\n    let prepare = BlockOperation { store.set(\"Макет\", id: 6) }\n    let publish = BlockOperation { print(store.read(id: 6) as Any) }\n    publish.addDependency(prepare)\n    prepare.cancel()\n    publish.completionBlock = { DispatchQueue.main.async { done() } }\n    queue.addOperations([publish, prepare], waitUntilFinished: false)\n}",
+  "key": "import Foundation\nfinal class PageStore {\n    private let queue = DispatchQueue(\n        label: \"album.pages\", attributes: .concurrent\n    )\n    private var rows: [Int: String] = [:]\n    func set(_ text: String, id: Int) {\n        queue.sync(flags: .barrier) { rows[id] = text }\n    }\n    func read(id: Int) -> String? { queue.sync { rows[id] } }\n}\nfunc publishCard(done: @escaping () -> Void) {\n    let store = PageStore()\n    let queue = OperationQueue()\n    let prepare = BlockOperation { store.set(\"Макет\", id: 6) }\n    let publish = BlockOperation {\n        guard let text = store.read(id: 6) else {\n            print(\"Нет готового макета\"); return\n        }\n        print(text)\n    }\n    publish.addDependency(prepare)\n    prepare.cancel()\n    publish.completionBlock = { DispatchQueue.main.async { done() } }\n    queue.addOperations([publish, prepare], waitUntilFinished: false)\n}\n\nВывод «Нет готового макета», затем done. Finished-зависимость не является доказательством успешного результата."
+ }
+]

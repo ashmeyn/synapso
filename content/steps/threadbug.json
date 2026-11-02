@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Проследи уступание",
+  "prompt": "Назови вывод и повторяемое состояние после каждого раунда. Здесь нет настоящего data race или блокирующего lock.",
+  "code": "var a = true\nvar b = true\nvar completed = 0\nfor _ in 0..<3 {\n    let bothWant = a && b\n    if bothWant { a = false; b = false }\n    if !a && !b { a = true; b = true }\n}\nprint(completed, a, b)",
+  "key": "0 true true. Оба каждый раз уступают и возвращаются в исходное состояние, полезного завершения нет."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Назначь очередность",
+  "prompt": "Заполни сортировку id в process. Центральный планировщик должен обработать 31 прежде 32, а не заставлять оба постоянно уступать.",
+  "code": "func process(ids: [Int]) -> [Int] {\n    var completed: [Int] = []\n    for id in /* Единый порядок */ { completed.append(id) }\n    return completed\n}\nprint(process(ids: [32, 31]))",
+  "key": "func process(ids: [Int]) -> [Int] {\n    var completed: [Int] = []\n    for id in ids.sorted() { completed.append(id) }\n    return completed\n}\nprint(process(ids: [32, 31]))\n\nВывод [31, 32]. Устраняется симметрия политики модели."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Сделай попытку конечной",
+  "prompt": "Самостоятельно напиши claim(availability:maxAttempts:): проверяй не больше положительного бюджета, успех → «Готово», иначе «Отложено». availability — явный список возможностей, не чтение настоящего lock.",
+  "code": "// Напиши claim(availability:maxAttempts:)",
+  "key": "func claim(availability: [Bool], maxAttempts: Int) -> String {\n    guard maxAttempts > 0 else { return \"Отложено\" }\n    for free in availability.prefix(maxAttempts) {\n        if free { return \"Готово\" }\n    }\n    return \"Отложено\"\n}\nprint(claim(availability: [false, false, true], maxAttempts: 2))\n\nДля [false, false, true] и 2 получаем «Отложено», для [false, true] и 2 — «Готово», при бюджете 0 — «Отложено»."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Отпусти ресурс перед расчётом",
+  "prompt": "ExportStore выполняет build под lock, задерживая других. Вынеси build наружу: под lock только String-снимок. Не запускай неправильный вариант с build, который вызывает read: это создало бы повторный захват.",
+  "code": "import Foundation\nfinal class ExportStore {\n    private let lock = NSLock()\n    private var text = \"Черновик\"\n    func export(build: (String) -> String) -> String {\n        lock.lock()\n        let result = build(text)\n        lock.unlock()\n        return result\n    }\n    func read() -> String {\n        lock.lock(); defer { lock.unlock() }\n        return text\n    }\n}",
+  "key": "import Foundation\nfinal class ExportStore {\n    private let lock = NSLock()\n    private var text = \"Черновик\"\n    func export(build: (String) -> String) -> String {\n        lock.lock()\n        let snapshot = text\n        lock.unlock()\n        return build(snapshot)\n    }\n    func read() -> String {\n        lock.lock(); defer { lock.unlock() }\n        return text\n    }\n}\n\nРасчёт получает «Черновик» после unlock. build может безопасно вызвать read; длительная работа больше не удерживает этот lock."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Различи три причины",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Чем livelock отличается от deadlock? Как medium задерживает high через low? Почему низкоприоритетная работа может голодать и что не гарантирует unfair lock?",
+  "key": "При livelock шаги есть, результата нет; при deadlock есть замкнутое ожидание. high зависит от освобождения low, которому medium мешает получить исполнение. Starvation означает отсутствие нужного обслуживания у участника; unfair lock не гарантирует справедливый порядок."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Дай фону бюджет",
+  "prompt": "Напиши plan: из двух массивов по очереди бери один interactive id, затем один background id, пока есть элементы. Это управляемый план модели, не порядок запуска GCD. Проверка [31,32,33] и [40,41].",
+  "code": "// Напиши plan(interactive:background:)",
+  "key": "func plan(interactive: [Int], background: [Int]) -> [Int] {\n    var result: [Int] = []\n    let count = max(interactive.count, background.count)\n    for index in 0..<count {\n        if index < interactive.count { result.append(interactive[index]) }\n        if index < background.count { result.append(background[index]) }\n    }\n    return result\n}\nprint(plan(interactive: [31, 32, 33], background: [40, 41]))\n\nВывод [31, 40, 32, 41, 33]. Обе непустые очереди получают слоты."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови функцию claim с конечным числом попыток. Для [false, true] при бюджете 2 выведи «Готово», для [false, false, true] при бюджете 2 — «Отложено», при бюджете 0 — «Отложено». Не вызывай sleep, не делай бесконечный цикл, не изображай реальный trylock.",
+  "key": "func claim(availability: [Bool], maxAttempts: Int) -> String {\n    guard maxAttempts > 0 else { return \"Отложено\" }\n    for free in availability.prefix(maxAttempts) {\n        if free { return \"Готово\" }\n    }\n    return \"Отложено\"\n}\nprint(claim(availability: [false, true], maxAttempts: 2))\nprint(claim(availability: [false, false, true], maxAttempts: 2))\nprint(claim(availability: [true], maxAttempts: 0))\n\nГотово, Отложено, Отложено. Возврат управления не обещает будущий успех."
+ }
+]

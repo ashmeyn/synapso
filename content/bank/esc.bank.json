@@ -1,0 +1,35 @@
+[
+ {
+  "id": "esc-b1",
+  "topics": [
+   "esc"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Сканирование QR-кода",
+  "prompt": "Какой вывод и почему второй результат не повторяет обработчик?",
+  "code": "final class ScanQueue {\n    private var pending: ((String) -> Void)?\n    func request(_ completion: @escaping (String) -> Void) {\n        pending = completion\n    }\n    func finish(_ text: String) {\n        let completion = pending\n        pending = nil\n        completion?(text)\n    }\n    func cancel() { pending = nil }\n}\nlet queue = ScanQueue()\nqueue.request { print($0) }\nqueue.finish(\"Код распознан\")\nqueue.finish(\"Ещё раз\")",
+  "key": "Код распознан\n\nfinish очистил сохранённый обработчик; второй вызов уже не находит его."
+ },
+ {
+  "id": "esc-b2",
+  "topics": [
+   "esc"
+  ],
+  "type": "Найди ошибку",
+  "title": "Поиск устройства по Bluetooth",
+  "prompt": "Учебная очередь только имитирует завершение поиска. Первый обработчик запускает следующий поиск, но второй ответ теряется. Исправь порядок очистки.",
+  "code": "final class SearchQueue {\n    private var pending: ((String) -> Void)?\n    func request(_ completion: @escaping (String) -> Void) {\n        pending = completion\n    }\n    func finish(_ text: String) {\n        let completion = pending\n        completion?(text)\n        pending = nil\n    }\n    func cancel() { pending = nil }\n}\nlet queue = SearchQueue()\nqueue.request { text in\n    print(text)\n    queue.request { print($0) }\n}\nqueue.finish(\"Первый поиск\")\nqueue.finish(\"Второй поиск\")",
+  "key": "final class SearchQueue {\n    private var pending: ((String) -> Void)?\n    func request(_ completion: @escaping (String) -> Void) {\n        pending = completion\n    }\n    func finish(_ text: String) {\n        let completion = pending\n        pending = nil\n        completion?(text)\n    }\n    func cancel() { pending = nil }\n}\nlet queue = SearchQueue()\nqueue.request { text in\n    print(text)\n    queue.request { print($0) }\n}\nqueue.finish(\"Первый поиск\")\nqueue.finish(\"Второй поиск\")\n\nДо правки печатается только «Первый поиск», после — обе строки. Очистка после callback стирала новый обработчик."
+ },
+ {
+  "id": "esc-b3",
+  "topics": [
+   "esc"
+  ],
+  "type": "Допиши",
+  "title": "Async-адаптер согласия",
+  "prompt": "Источник обязан дать хотя бы один ответ, но может повторить callback. Напиши async-адаптер с withCheckedContinuation, используя ConsentReply для единственного resume. Возвращается первый Bool; повтор игнорируется. Отмена задачи и системный диалог не реализуются.",
+  "code": "import Foundation\nprotocol ConsentSource {\n    func request(_ reply: @escaping (Bool) -> Void)\n}\nstruct LocalConsentSource: ConsentSource {\n    func request(_ reply: @escaping (Bool) -> Void) {\n        reply(true)\n        reply(false)\n    }\n}\nfinal class ConsentReply {\n    private let lock = NSLock()\n    private var pending: CheckedContinuation<Bool, Never>?\n    init(_ continuation: CheckedContinuation<Bool, Never>) {\n        pending = continuation\n    }\n    func resolve(_ accepted: Bool) {\n        lock.lock()\n        let continuation = pending\n        pending = nil\n        lock.unlock()\n        continuation?.resume(returning: accepted)\n    }\n}\nfunc requestConsent(source: any ConsentSource) async -> Bool {\n    // withCheckedContinuation → ConsentReply → request\n}",
+  "key": "import Foundation\nprotocol ConsentSource {\n    func request(_ reply: @escaping (Bool) -> Void)\n}\nstruct LocalConsentSource: ConsentSource {\n    func request(_ reply: @escaping (Bool) -> Void) {\n        reply(true)\n        reply(false)\n    }\n}\nfinal class ConsentReply {\n    private let lock = NSLock()\n    private var pending: CheckedContinuation<Bool, Never>?\n    init(_ continuation: CheckedContinuation<Bool, Never>) {\n        pending = continuation\n    }\n    func resolve(_ accepted: Bool) {\n        lock.lock()\n        let continuation = pending\n        pending = nil\n        lock.unlock()\n        continuation?.resume(returning: accepted)\n    }\n}\nfunc requestConsent(source: any ConsentSource) async -> Bool {\n    await withCheckedContinuation { continuation in\n        let reply = ConsentReply(continuation)\n        source.request { reply.resolve($0) }\n    }\n}\n\nЛокальный источник true/false даст true. ConsentReply забирает continuation под блокировкой и обнуляет до resume; второй вызов не возобновляет её повторно. Если источник никогда не ответит, адаптер зависнет: это отдельное нарушение контракта."
+ }
+]

@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Пройди guard",
+  "prompt": "Предскажи единственную строку print. По условию остановки frame variable id показывает 99, values содержит только 43. Какая строка сохраняет старое состояние?",
+  "code": "struct Locker { let id: Int; let label: String }\nfinal class LockerPanel {\n    let values: [Int: Locker]\n    private(set) var title = \"Не выбрано\"\n    init(values: [Int: Locker]) { self.values = values }\n    func select(id: Int) {\n        guard let value = values[id] else { return }\n        title = value.label\n    }\n}\nlet panel = LockerPanel(values: [43: Locker(id: 43, label: \"Секция А\")])\npanel.select(id: 43)\npanel.select(id: 99)\nprint(panel.title)",
+  "key": "Секция А\n\nguard возвращает управление при отсутствии 99, но не меняет title после успешного выбора 43."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Исправь по данным LLDB",
+  "prompt": "На остановке перед guard: id=99, values=[43:«Секция А»], title=«Секция А». Допиши select: найденная ячейка даёт label, отсутствующая — «Не найдено». Покажи проверки перехода 43→99. Опиши в объяснении условие breakpoint и команду для id.",
+  "code": "struct Locker { let id: Int; let label: String }\nfinal class LockerPanel {\n    let values: [Int: Locker]\n    private(set) var title = \"Не выбрано\"\n    init(values: [Int: Locker]) { self.values = values }\n    func select(id: Int) {\n        guard let value = values[id] else { return }\n        title = value.label\n    }\n}",
+  "key": "struct Locker { let id: Int; let label: String }\nfinal class LockerPanel {\n    let values: [Int: Locker]\n    private(set) var title = \"Не выбрано\"\n    init(values: [Int: Locker]) { self.values = values }\n    func select(id: Int) {\n        guard let value = values[id] else {\n            title = \"Не найдено\"\n            return\n        }\n        title = value.label\n    }\n}\nlet panel = LockerPanel(values: [43: Locker(id: 43, label: \"Секция А\")])\npanel.select(id: 43)\nassert(panel.title == \"Секция А\")\npanel.select(id: 99)\nassert(panel.title == \"Не найдено\")\n\nУсловие breakpoint — id == 99; frame variable id читает вход. Отсутствие теперь явно заменяет title, проверяется переход после успешного выбора."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Пересчитай геометрию",
+  "prompt": "Учебные данные View Hierarchy: контейнер width=320, подпись x=12,y=12,width=0,height=24. Ниже view создавали с width=24, а затем увеличили до 320. Перенеси расчёт в layoutSubviews, сохрани отступы 12 и высоту 24; ширина неотрицательная. Проверь через layoutIfNeeded на явном frame 320×200.",
+  "code": "import UIKit\nfinal class LockerView: UIView {\n    let titleLabel = UILabel()\n    override init(frame: CGRect) {\n        super.init(frame: frame)\n        addSubview(titleLabel)\n        titleLabel.frame = CGRect(x: 12, y: 12,\n                                  width: bounds.width - 24, height: 24)\n    }\n    required init?(coder: NSCoder) { fatalError(\"Кодовый пример\") }\n}",
+  "key": "import UIKit\nfinal class LockerView: UIView {\n    let titleLabel = UILabel()\n    override init(frame: CGRect) {\n        super.init(frame: frame)\n        addSubview(titleLabel)\n    }\n    required init?(coder: NSCoder) { fatalError(\"Кодовый пример\") }\n    override func layoutSubviews() {\n        super.layoutSubviews()\n        titleLabel.frame = CGRect(x: 12, y: 12,\n                                  width: max(0, bounds.width - 24), height: 24)\n    }\n}\nlet panel = LockerView(frame: CGRect(x: 0, y: 0, width: 24, height: 60))\npanel.frame.size = CGSize(width: 320, height: 200)\npanel.setNeedsLayout()\npanel.layoutIfNeeded()\nassert(panel.titleLabel.frame == CGRect(x: 12, y: 12,\n                                       width: 296, height: 24))\n\nРасчёт использует актуальные bounds при layout, а не первоначальный размер. После изменения ширина 296; это ручная проверка геометрии, не запуск Xcode View Hierarchy."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Индекс перестал означать выбор",
+  "prompt": "Учебное наблюдение: до reverse selectedIndex=1 соответствовал id=44, после reverse p values[1].id даёт 43. Пользователь не менял выбор. Исправь хранение выбора по id и обработай удаление выбранной ячейки; проверь оба случая.",
+  "code": "struct Locker { let id: Int; let label: String }\nfinal class LockerList {\n    var values = [Locker(id: 43, label: \"Секция А\"),\n                  Locker(id: 44, label: \"Секция Б\")]\n    var selectedIndex = 1\n    func selectedTitle() -> String { values[selectedIndex].label }\n}\nlet list = LockerList()\nlist.values.reverse()\nprint(list.selectedTitle())",
+  "key": "struct Locker { let id: Int; let label: String }\nfinal class LockerList {\n    var values = [Locker(id: 43, label: \"Секция А\"),\n                  Locker(id: 44, label: \"Секция Б\")]\n    var selectedID = 44\n    func selectedTitle() -> String {\n        values.first { $0.id == selectedID }?.label ?? \"Не найдено\"\n    }\n}\nlet list = LockerList()\nlist.values.reverse()\nassert(list.selectedTitle() == \"Секция Б\")\nlist.values.removeAll { $0.id == 44 }\nassert(list.selectedTitle() == \"Не найдено\")\n\nПозиция изменилась, идентичность нет. Поиск по selectedID сохраняет 44 после перестановки и даёт «Не найдено» после удаления."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни отладку",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Что читаешь в остановленном select и почему не вызываешь select через po? Как различишь нулевую и перекрытую подпись в View Hierarchy? Как выяснишь владельца закрытого экрана и выберешь print либо Logger?",
+  "key": "Читаем id, values и title через locals и выражения; вызов метода из po может изменить состояние. В дереве UI проверяем frame, bounds, visibility и порядок соседей; hitTest отдельно проверяет касания. Для закрытого экрана проверяем законного владельца и входящие сильные рёбра Memory Graph, затем цикл; print годится для временного вывода, Logger — для категорий, уровней и приватности."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Живой статус удержал экран",
+  "prompt": "Теперь feed сообщает свободные ячейки одному StatusPanel. Учебный граф: panel→feed→onChange→panel; после panel=nil witness всё ещё существует. Исправь захват, сохрани обновление free и снятие единственного callback в deinit. Проверь обновление до закрытия и witness после. Добавь Logger с category LockerStatus: при событии записывай число свободных ячеек уровнем debug.",
+  "code": "final class LockerFeed { var onChange: ((Int) -> Void)? }\nfinal class StatusPanel {\n    let feed: LockerFeed\n    var free = 0\n    init(feed: LockerFeed) {\n        self.feed = feed\n        feed.onChange = { value in self.free = value }\n    }\n    deinit { feed.onChange = nil }\n}\nlet feed = LockerFeed()\nvar panel: StatusPanel? = StatusPanel(feed: feed)\nweak var witness = panel\npanel = nil\nprint(witness == nil)",
+  "key": "import os\nfinal class LockerFeed { var onChange: ((Int) -> Void)? }\nfinal class StatusPanel {\n    let feed: LockerFeed\n    var free = 0\n    let logger = Logger(subsystem: \"dev.synapso.demo\",\n                        category: \"LockerStatus\")\n    init(feed: LockerFeed) {\n        self.feed = feed\n        feed.onChange = { [weak self] value in\n            self?.free = value\n            self?.logger.debug(\"Свободно: \\(value)\")\n        }\n    }\n    deinit { feed.onChange = nil }\n}\nlet feed = LockerFeed()\nvar panel: StatusPanel? = StatusPanel(feed: feed)\nweak var witness = panel\nfeed.onChange?(3)\nassert(panel?.free == 3)\npanel = nil\nassert(witness == nil)\nassert(feed.onChange == nil)\n\nweak self не создаёт обратное сильное ребро. После исчезновения последнего внешнего владельца deinit убирает callback; проверки разделяют обновление и время жизни."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "По памяти создай UIKit LockerBadge с дочерней dot размером 8×8. layoutSubviews каждый раз ставит её центр в середину bounds. При размере badge 40×20 центр должен быть (20,10), после изменения на 80×40 — (40,20). Вручную вызови layoutIfNeeded с setNeedsLayout, без окна и ожидания времени.",
+  "key": "import UIKit\nfinal class LockerBadge: UIView {\n    let dot = UIView()\n    override init(frame: CGRect) {\n        super.init(frame: frame)\n        addSubview(dot)\n    }\n    required init?(coder: NSCoder) { fatalError(\"Кодовый пример\") }\n    override func layoutSubviews() {\n        super.layoutSubviews()\n        dot.bounds.size = CGSize(width: 8, height: 8)\n        dot.center = CGPoint(x: bounds.midX, y: bounds.midY)\n    }\n}\nlet badge = LockerBadge(frame: CGRect(x: 0, y: 0, width: 40, height: 20))\nbadge.setNeedsLayout()\nbadge.layoutIfNeeded()\nassert(badge.dot.center == CGPoint(x: 20, y: 10))\nbadge.frame.size = CGSize(width: 80, height: 40)\nbadge.setNeedsLayout()\nbadge.layoutIfNeeded()\nassert(badge.dot.center == CGPoint(x: 40, y: 20))\n\nТот же приём диагностики перенесён с ширины подписи на центр индикатора. Геометрия пересчитывается из актуальных bounds при каждом layout."
+ }
+]

@@ -1,0 +1,35 @@
+[
+ {
+  "id": "mapkit-b1",
+  "topics": [
+   "mapkit"
+  ],
+  "type": "Допиши",
+  "title": "Площадка для прогулки с собакой",
+  "prompt": "Свяжи Map с camera и перемести камеру кнопкой. Выбор метки не нужен. Этот навык разобран в «Камера не является выбором».",
+  "code": "import SwiftUI\nimport MapKit\nstruct DogWalkMap: View {\n    @State private var camera: MapCameraPosition = .automatic\n    private let center = CLLocationCoordinate2D(\n        latitude: 55.75, longitude: 37.61\n    )\n    var body: some View {\n        VStack {\n            Map(position: /* Binding камеры */) {\n                Marker(\"Площадка\", coordinate: center)\n            }\n            Button(\"Показать площадку\") {\n                let span = MKCoordinateSpan(\n                    latitudeDelta: 0.01, longitudeDelta: 0.01\n                )\n                /* Покажи регион с этим center и span */\n            }\n        }\n    }\n}",
+  "key": "import SwiftUI\nimport MapKit\nstruct DogWalkMap: View {\n    @State private var camera: MapCameraPosition = .automatic\n    private let center = CLLocationCoordinate2D(\n        latitude: 55.75, longitude: 37.61\n    )\n    var body: some View {\n        VStack {\n            Map(position: $camera) {\n                Marker(\"Площадка\", coordinate: center)\n            }\n            Button(\"Показать площадку\") {\n                let span = MKCoordinateSpan(\n                    latitudeDelta: 0.01, longitudeDelta: 0.01\n                )\n                camera = .region(.init(center: center, span: span))\n            }\n        }\n    }\n}\n\nКнопка меняет видимый регион, а не выбор точки. Проверено компиляцией; анимация и нажатие требуют UI-проверки."
+ },
+ {
+  "id": "mapkit-b2",
+  "topics": [
+   "mapkit"
+  ],
+  "type": "Допиши",
+  "title": "Остановки автобуса",
+  "prompt": "Источник прислал повтор id 7. Для ForEach оставь первое появление каждого id, сохрани порядок. Одинаковые title разных id оставь.",
+  "code": "import Foundation\nstruct BusStop { let id: Int; let title: String }\nfunc uniqueStops(_ rows: [BusStop]) -> [BusStop] {\n    var seen = Set<Int>()\n    var result: [BusStop] = []\n    // Собери первые появления id в исходном порядке\n    return result\n}\nlet rows = [BusStop(id: 7, title: \"Северная\"),\n    BusStop(id: 7, title: \"Копия\"), BusStop(id: 8, title: \"Северная\")]\nprint(uniqueStops(rows).map { $0.id })",
+  "key": "import Foundation\nstruct BusStop { let id: Int; let title: String }\nfunc uniqueStops(_ rows: [BusStop]) -> [BusStop] {\n    var seen = Set<Int>()\n    var result: [BusStop] = []\n    for row in rows where seen.insert(row.id).inserted {\n        result.append(row)\n    }\n    return result\n}\nlet rows = [BusStop(id: 7, title: \"Северная\"),\n    BusStop(id: 7, title: \"Копия\"), BusStop(id: 8, title: \"Северная\")]\nprint(uniqueStops(rows).map { $0.id })\n\nВывод [7, 8]. Чистим дубли идентичности до построения меток, а не заменяем id названием."
+ },
+ {
+  "id": "mapkit-b3",
+  "topics": [
+   "mapkit"
+  ],
+  "type": "Допиши",
+  "title": "Пункты переработки",
+  "prompt": "Вместо Marker создай Annotation с заданной координатой, символом и понятной accessibilityLabel. Это собственный вид метки.",
+  "code": "import SwiftUI\nimport MapKit\nstruct RecyclingMap: View {\n    private let coordinate = CLLocationCoordinate2D(\n        latitude: 55.75, longitude: 37.61\n    )\n    var body: some View {\n        Map {\n            Annotation(\"Приём стекла\", coordinate: /* координата */) {\n                Image(systemName: \"arrow.3.trianglepath\")\n                    /* понятная подпись для VoiceOver */\n            }\n        }\n    }\n}",
+  "key": "import SwiftUI\nimport MapKit\nstruct RecyclingMap: View {\n    private let coordinate = CLLocationCoordinate2D(\n        latitude: 55.75, longitude: 37.61\n    )\n    var body: some View {\n        Map {\n            Annotation(\"Приём стекла\", coordinate: coordinate) {\n                Image(systemName: \"arrow.3.trianglepath\")\n                    .accessibilityLabel(\"Пункт приёма стекла\")\n            }\n        }\n    }\n}\n\nAnnotation размещает собственный вид на координате; accessibilityLabel объясняет символ. Взаимодействие VoiceOver не проверено."
+ }
+]

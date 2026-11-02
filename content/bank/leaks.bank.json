@@ -1,0 +1,35 @@
+[
+ {
+  "id": "leaks-b1",
+  "topics": [
+   "leaks"
+  ],
+  "type": "Найди ошибку",
+  "title": "Просмотр маршрута эвакуации",
+  "prompt": "Действие закрытия очищает не то свойство. Прочитай связь plan → onInspect → plan и разорви именно её до удаления plan. observer слабый и не держит экземпляр.",
+  "code": "final class EvacuationPlan {\n    var onInspect: (() -> Void)?\n    var onDismiss: (() -> Void)?\n    func prepare() { onInspect = { print(self.floor) } }\n    let floor = 2\n    func close() { onDismiss = nil }\n    deinit { print(\"План освобождён\") }\n}\nvar plan: EvacuationPlan? = EvacuationPlan()\nweak var observer = plan\nplan!.prepare()\nplan!.close()\nplan = nil\nprint(observer == nil)\nobserver?.onInspect = nil",
+  "key": "final class EvacuationPlan {\n    var onInspect: (() -> Void)?\n    var onDismiss: (() -> Void)?\n    func prepare() { onInspect = { print(self.floor) } }\n    let floor = 2\n    func close() { onInspect = nil }\n    deinit { print(\"План освобождён\") }\n}\nvar plan: EvacuationPlan? = EvacuationPlan()\nweak var observer = plan\nplan!.prepare()\nplan!.close()\nplan = nil\nprint(observer == nil)\n\nПосле правки «План освобождён», true. Нужно убрать действительную сильную связь, а не любое поле замыкания."
+ },
+ {
+  "id": "leaks-b2",
+  "topics": [
+   "leaks"
+  ],
+  "type": "Допиши",
+  "title": "Регресс карточки настольной игры",
+  "prompt": "Заполни функцию check, возвращающую Bool освобождения RuleCard после prepare и явного удаления владельца. Вызови три раза и сохрани только Bool-результаты. Не складывай RuleCard в массив теста.",
+  "code": "final class RuleCard {\n    let id = 5\n    var onFlip: (() -> Void)?\n    func prepare() { onFlip = { [weak self] in print(self?.id ?? 0) } }\n    deinit { print(\"Карточка освобождена\") }\n}\nfunc check() -> Bool {\n    // Создай var card, weak observer, вызови prepare, убери card\n    return false\n}\nprint([check(), check(), check()])",
+  "key": "final class RuleCard {\n    let id = 5\n    var onFlip: (() -> Void)?\n    func prepare() { onFlip = { [weak self] in print(self?.id ?? 0) } }\n    deinit { print(\"Карточка освобождена\") }\n}\nfunc check() -> Bool {\n    var card: RuleCard? = RuleCard()\n    weak var observer = card\n    card!.prepare()\n    card = nil\n    return observer == nil\n}\nprint([check(), check(), check()])\n\nТри сообщения «Карточка освобождена», затем [true, true, true]. Проверка не становится владельцем экземпляров."
+ },
+ {
+  "id": "leaks-b3",
+  "topics": [
+   "leaks"
+  ],
+  "type": "Перепиши",
+  "title": "Лента подсказок для оригами",
+  "prompt": "В архиве лежат модели подсказок. После закрытия подсказки её держит архив. Ограничь архив двумя последними моделями через keep(_:), удаляя старейшую, если count больше 2. Проверь освобождение первой по observer; это достижимый рост, не цикл.",
+  "code": "final class FoldTip {\n    let id: Int\n    init(id: Int) { self.id = id }\n    deinit { print(\"Подсказка \\(id) освобождена\") }\n}\nvar history: [FoldTip] = []\nfunc keep(_ tip: FoldTip) { history.append(tip) }\nvar first: FoldTip? = FoldTip(id: 1)\nweak var observer = first\nkeep(first!)\nfirst = nil\nkeep(FoldTip(id: 2))\nkeep(FoldTip(id: 3))\nprint(observer == nil)\nprint(history.count)\nhistory.removeAll()",
+  "key": "final class FoldTip {\n    let id: Int\n    init(id: Int) { self.id = id }\n    deinit { print(\"Подсказка \\(id) освобождена\") }\n}\nvar history: [FoldTip] = []\nfunc keep(_ tip: FoldTip) {\n    history.append(tip)\n    if history.count > 2 { history.removeFirst() }\n}\nvar first: FoldTip? = FoldTip(id: 1)\nweak var observer = first\nkeep(first!)\nfirst = nil\nkeep(FoldTip(id: 2))\nkeep(FoldTip(id: 3))\nprint(observer == nil)\nprint(history.count)\nhistory.removeAll()\n\nДо финальной уборки: «Подсказка 1 освобождена», true, 2. Затем освобождаются оставшиеся подсказки; порядок их deinit не является условием задачи. Ограничен объём достижимой истории."
+ }
+]

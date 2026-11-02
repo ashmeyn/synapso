@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Прочитай готовый результат",
+  "prompt": "loadExhibit вызывают из async-контекста с id 21. Что вернётся? Почему unknown id нельзя считать успешной строкой?",
+  "code": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc loadExhibit(id: Int) async throws -> String {\n    let title = try await fetchTitle(id: id)\n    let minutes = try await fetchMinutes(id: id)\n    return \"\\(title): \\(minutes) мин\"\n}",
+  "key": "Луна: 3 мин. Для неизвестного id возникает ExhibitError.missing; результат нужно получить через try await."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Заполни последовательный вызов",
+  "prompt": "Восстанови try await в loadExhibit. Обе локальные функции уже включены в код.",
+  "code": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc loadExhibit(id: Int) async throws -> String {\n    let title = /* Ошибка и ожидание */ fetchTitle(id: id)\n    let minutes = /* Ошибка и ожидание */ fetchMinutes(id: id)\n    return \"\\(title): \\(minutes) мин\"\n}",
+  "key": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc loadExhibit(id: Int) async throws -> String {\n    let title = try await fetchTitle(id: id)\n    let minutes = try await fetchMinutes(id: id)\n    return \"\\(title): \\(minutes) мин\"\n}\n\nПоследовательные запросы дают «Луна: 3 мин» для id 21."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Запусти независимые запросы",
+  "prompt": "Перепиши loadExhibit с двумя async let и одним try await для пары. Самостоятельно напиши функцию после источников.",
+  "code": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\n// Напиши loadExhibit(id:)",
+  "key": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc loadExhibit(id: Int) async throws -> String {\n    async let title = fetchTitle(id: id)\n    async let minutes = fetchMinutes(id: id)\n    let values = try await (title, minutes)\n    return \"\\(values.0): \\(values.1) мин\"\n}\n\nЗапросы независимы; результат «Луна: 3 мин», порядок их исполнения не обещаем."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Не маскируй отмену",
+  "prompt": "Задача отменена до вызова status(id: 21). Сейчас источник выбрасывает CancellationError, а status возвращает «Нет экспоната». Добавь отдельный catch для отмены и проверку перед применением результата.",
+  "code": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc status(id: Int) async -> String {\n    do {\n        return try await fetchTitle(id: id)\n    } catch {\n        return \"Нет экспоната\"\n    }\n}",
+  "key": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc status(id: Int) async -> String {\n    do {\n        let title = try await fetchTitle(id: id)\n        try Task.checkCancellation()\n        return title\n    } catch is CancellationError {\n        return \"Отменено\"\n    } catch {\n        return \"Нет экспоната\"\n    }\n}\n\nДля отменённой задачи «Отменено», для id 99 «Нет экспоната», для id 21 «Луна»."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни жизненный цикл",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Как completion превращается в результат try await? Почему два async let независимы? Кто отменяет Task и кто проверяет отмену?",
+  "key": "async возвращает результат в ожидающую задачу; try обрабатывает ошибки. async let запускает связанные со scope дочерние задачи для независимых запросов. handle.cancel просит отменить Task; checkCancellation или isCancelled дают коду возможность остановиться."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Запусти из кнопки",
+  "prompt": "Напиши @MainActor ExhibitScreen с text и синхронным start(id:), возвращающим Task<Void, Never>. В Task загрузи через loadExhibit, проверь отмену и обнови text; CancellationError → «Отменено», прочая ошибка → «Нет экспоната».",
+  "code": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc loadExhibit(id: Int) async throws -> String {\n    async let title = fetchTitle(id: id)\n    async let minutes = fetchMinutes(id: id)\n    let values = try await (title, minutes)\n    return \"\\(values.0): \\(values.1) мин\"\n}\n// Добавь модель экрана",
+  "key": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc loadExhibit(id: Int) async throws -> String {\n    async let title = fetchTitle(id: id)\n    async let minutes = fetchMinutes(id: id)\n    let values = try await (title, minutes)\n    return \"\\(values.0): \\(values.1) мин\"\n}\n@MainActor\nfinal class ExhibitScreen {\n    private(set) var text = \"Загрузка\"\n    func start(id: Int) -> Task<Void, Never> {\n        Task {\n            do {\n                let value = try await loadExhibit(id: id)\n                try Task.checkCancellation()\n                text = value\n            } catch is CancellationError {\n                text = \"Отменено\"\n            } catch {\n                text = \"Нет экспоната\"\n            }\n        }\n    }\n}\n\nМодель обновляется в главном акторе. Возвращённый handle позволяет вызывающей стороне отменить именно эту задачу."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови status(id:) и локальный fetchTitle: id 21 даёт «Луна», другой id выбрасывает ExhibitError.missing. Источник и код перед применением результата проверяют отмену. Status возвращает «Отменено» для CancellationError и «Нет экспоната» для ошибки данных.",
+  "key": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc status(id: Int) async -> String {\n    do {\n        let title = try await fetchTitle(id: id)\n        try Task.checkCancellation()\n        return title\n    } catch is CancellationError {\n        return \"Отменено\"\n    } catch {\n        return \"Нет экспоната\"\n    }\n}\n\nПроверь успешный id, отсутствующий id и задачу с уже выставленным флагом отмены."
+ }
+]

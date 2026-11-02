@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Пометка и проход",
+  "prompt": "Предскажи три строки. Начальные layout/display выполнены, журнал очищен. Это реальный standalone CALayer с явными вызовами, не кадр UIKit.",
+  "code": "import QuartzCore\nimport CoreGraphics\nfinal class TraceLayer: CALayer {\n    var events: [String] = []\n    override func layoutSublayers() {\n        super.layoutSublayers()\n        events.append(\"layout\")\n    }\n    override func display() {\n        events.append(\"display\")\n        super.display()\n    }\n}\nlet layer = TraceLayer()\nlayer.bounds = CGRect(x: 0, y: 0, width: 100, height: 40)\nlayer.layoutIfNeeded()\nlayer.displayIfNeeded()\nlayer.events.removeAll()\nlayer.setNeedsLayout()\nprint(layer.needsLayout())\nlayer.layoutIfNeeded()\nprint(layer.needsLayout())\nprint(layer.events)",
+  "key": "true\nfalse\n[\"layout\"]\n\nПометка сделала геометрию dirty, явный проход её обработал один раз."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Проверь две работы",
+  "prompt": "На TraceLayer 100×40 очисти начальный layout/display и журнал. Пометь обе работы, проверь needsLayout/needsDisplay. Явно вызови layoutIfNeeded, затем displayIfNeeded; проверь очищенные флаги и журнал [layout, display].",
+  "code": "import QuartzCore\nimport CoreGraphics\nfinal class TraceLayer: CALayer {\n    var events: [String] = []\n    override func layoutSublayers() {\n        super.layoutSublayers()\n        events.append(\"layout\")\n    }\n    override func display() {\n        events.append(\"display\")\n        super.display()\n    }\n}\n// TODO: слой и ручная проверка",
+  "key": "import QuartzCore\nimport CoreGraphics\nfinal class TraceLayer: CALayer {\n    var events: [String] = []\n    override func layoutSublayers() {\n        super.layoutSublayers()\n        events.append(\"layout\")\n    }\n    override func display() {\n        events.append(\"display\")\n        super.display()\n    }\n}\nlet layer = TraceLayer()\nlayer.bounds = CGRect(x: 0, y: 0, width: 100, height: 40)\nlayer.layoutIfNeeded()\nlayer.displayIfNeeded()\nlayer.events.removeAll()\nlayer.setNeedsLayout()\nlayer.setNeedsDisplay()\nassert(layer.needsLayout())\nassert(layer.needsDisplay())\nlayer.layoutIfNeeded()\nlayer.displayIfNeeded()\nassert(!layer.needsLayout())\nassert(!layer.needsDisplay())\nassert(layer.events == [\"layout\", \"display\"])\n\nФлаги проверены у CALayer. Порядок задан тестом; экранный commit не проверяется."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Обнови custom view",
+  "prompt": "Напиши LevelView с level=20, updateLevel с ограничением 0...100 и setNeedsDisplay только при изменении. В draw нарисуй полоску шириной bounds.width×level/100 через UIGraphics-контекст. Не меняй subviews и не вызывай draw из setter.",
+  "code": "import UIKit\n// TODO: LevelView, updateLevel, draw",
+  "key": "import UIKit\nfinal class LevelView: UIView {\n    private(set) var level = 20\n    func updateLevel(_ value: Int) {\n        let next = min(max(value, 0), 100)\n        guard next != level else { return }\n        level = next\n        setNeedsDisplay()\n    }\n    override func draw(_ rect: CGRect) {\n        guard let context = UIGraphicsGetCurrentContext() else { return }\n        context.setFillColor(UIColor.systemTeal.cgColor)\n        context.fill(CGRect(\n            x: 0, y: 0, width: bounds.width * CGFloat(level) / 100,\n            height: bounds.height\n        ))\n    }\n}\n\nДанные обновлены отдельно от рисования. setNeedsDisplay запрашивает перерисовку, не выполняет её сразу."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Запросили display вместо layout",
+  "prompt": "После подготовки ProgressLayer width=100, percent=20. Меняем percent на 80; ошибочный код оставляет ширину fill=20. Исправь запрос прохода, получи 80. Не вызывай layoutSublayers вручную.",
+  "code": "import QuartzCore\nimport CoreGraphics\nfinal class ProgressLayer: CALayer {\n    let fill = CALayer()\n    var percent = 20\n    var passes = 0\n    override func layoutSublayers() {\n        super.layoutSublayers()\n        passes += 1\n        CATransaction.begin()\n        CATransaction.setDisableActions(true)\n        fill.frame = CGRect(\n            x: 0, y: 0, width: bounds.width * CGFloat(percent) / 100,\n            height: bounds.height\n        )\n        CATransaction.commit()\n    }\n}\nlet layer = ProgressLayer()\nlayer.bounds = CGRect(x: 0, y: 0, width: 100, height: 10)\nlayer.addSublayer(layer.fill)\nlayer.layoutIfNeeded()\nlayer.passes = 0\nlayer.percent = 80\nlayer.setNeedsDisplay()\nlayer.layoutIfNeeded()\nprint(Int(layer.fill.frame.width))",
+  "key": "import QuartzCore\nimport CoreGraphics\nfinal class ProgressLayer: CALayer {\n    let fill = CALayer()\n    var percent = 20\n    var passes = 0\n    override func layoutSublayers() {\n        super.layoutSublayers()\n        passes += 1\n        CATransaction.begin()\n        CATransaction.setDisableActions(true)\n        fill.frame = CGRect(\n            x: 0, y: 0, width: bounds.width * CGFloat(percent) / 100,\n            height: bounds.height\n        )\n        CATransaction.commit()\n    }\n}\nlet layer = ProgressLayer()\nlayer.bounds = CGRect(x: 0, y: 0, width: 100, height: 10)\nlayer.addSublayer(layer.fill)\nlayer.layoutIfNeeded()\nlayer.passes = 0\nlayer.percent = 80\nlayer.setNeedsLayout()\nlayer.layoutIfNeeded()\nprint(Int(layer.fill.frame.width))\n\nВывод: 80. Устарела геометрия дочернего слоя, поэтому нужен setNeedsLayout, а не только display."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни кадр",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Что отличается у setNeedsLayout и layoutIfNeeded? Как setNeedsDisplay связан с draw и commit? Почему работа на main может задержать кадр?",
+  "key": "Пометка делает геометрию dirty, layoutIfNeeded выполняет требуемую раскладку сейчас. Запрос display просит обновить содержимое, draw исполняется в подходящем контексте; commit передаёт обновлённое дерево render server и не равен показу. Тяжёлая работа на main задерживает этапы до дедлайна, а интервал 60/120 Гц не является полным бюджетом одной функции."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Собери изменения",
+  "prompt": "На готовом ProgressLayer после начальной раскладки сбрось passes. Последовательно установи percent=30,50,80 и помечай setNeedsLayout, но не выполняй layout в цикле. Один layoutIfNeeded в конце должен дать passes=1 и width=80.",
+  "code": "import QuartzCore\nimport CoreGraphics\nfinal class ProgressLayer: CALayer {\n    let fill = CALayer()\n    var percent = 20\n    var passes = 0\n    override func layoutSublayers() {\n        super.layoutSublayers()\n        passes += 1\n        CATransaction.begin()\n        CATransaction.setDisableActions(true)\n        fill.frame = CGRect(\n            x: 0, y: 0, width: bounds.width * CGFloat(percent) / 100,\n            height: bounds.height\n        )\n        CATransaction.commit()\n    }\n}\nlet layer = ProgressLayer()\nlayer.bounds = CGRect(x: 0, y: 0, width: 100, height: 10)\nlayer.addSublayer(layer.fill)\nlayer.layoutIfNeeded()\nlayer.passes = 0\n// TODO: три изменения и один проход",
+  "key": "import QuartzCore\nimport CoreGraphics\nfinal class ProgressLayer: CALayer {\n    let fill = CALayer()\n    var percent = 20\n    var passes = 0\n    override func layoutSublayers() {\n        super.layoutSublayers()\n        passes += 1\n        CATransaction.begin()\n        CATransaction.setDisableActions(true)\n        fill.frame = CGRect(\n            x: 0, y: 0, width: bounds.width * CGFloat(percent) / 100,\n            height: bounds.height\n        )\n        CATransaction.commit()\n    }\n}\nlet layer = ProgressLayer()\nlayer.bounds = CGRect(x: 0, y: 0, width: 100, height: 10)\nlayer.addSublayer(layer.fill)\nlayer.layoutIfNeeded()\nlayer.passes = 0\nfor value in [30, 50, 80] {\n    layer.percent = value\n    layer.setNeedsLayout()\n}\nassert(layer.needsLayout())\nlayer.layoutIfNeeded()\nassert(layer.passes == 1)\nassert(layer.fill.frame.width == 80)\n\nПроверяется коалесцирование в явном локальном контексте без RunLoop между изменениями. Это не обещание одного layout за каждый реальный кадр приложения."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови новый custom SeatView: occupied=false, updateOccupied(Bool) помечает display только при изменении. Draw заполняет текущие bounds красным для занятого места, зелёным для свободного. На view 40×40 обнови occupied=true и проверь модель и view.layer.needsDisplay(), не жди рисования.",
+  "key": "import UIKit\nfinal class SeatView: UIView {\n    private(set) var occupied = false\n    func updateOccupied(_ value: Bool) {\n        guard value != occupied else { return }\n        occupied = value\n        setNeedsDisplay()\n    }\n    override func draw(_ rect: CGRect) {\n        guard let context = UIGraphicsGetCurrentContext() else { return }\n        let color: UIColor = occupied ? .systemRed : .systemGreen\n        context.setFillColor(color.cgColor)\n        context.fill(bounds)\n    }\n}\nlet view = SeatView(frame: CGRect(x: 0, y: 0, width: 40, height: 40))\nview.updateOccupied(true)\nassert(view.occupied)\nassert(view.layer.needsDisplay())\n\nНовый элемент меняет пиксели, а не геометрию. Флаг у слоя показывает запрос, не готовый цвет на экране."
+ }
+]

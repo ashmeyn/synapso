@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Предскажи загрузку",
+  "prompt": "Назови точный вывод print. Где выбирается источник и какой экземпляр использует load?",
+  "code": "struct ShoppingItem {\n    let id: Int\n    let title: String\n}\nprotocol ShoppingSource {\n    func items() -> [ShoppingItem]\n}\nstruct FixedShoppingSource: ShoppingSource {\n    let result: [ShoppingItem]\n    func items() -> [ShoppingItem] { result }\n}\nfinal class ShoppingViewModel {\n    private let source: any ShoppingSource\n    var items: [ShoppingItem] = []\n    init(source: any ShoppingSource) { self.source = source }\n    func load() { items = source.items() }\n}\nlet source = FixedShoppingSource(result: [ShoppingItem(id: 7, title: \"Хлеб\")])\nlet viewModel = ShoppingViewModel(source: source)\nviewModel.load()\nprint(viewModel.items.count)",
+  "key": "1\n\nИсточник с одной покупкой выбран снаружи, передан в init и сохранён. load читает именно его результат."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Заполни передачу",
+  "prompt": "Допиши тип свойства и присваивание в init. Не создавай источник внутри потребителя.",
+  "code": "struct ShoppingItem {\n    let id: Int\n    let title: String\n}\nprotocol ShoppingSource {\n    func items() -> [ShoppingItem]\n}\nstruct FixedShoppingSource: ShoppingSource {\n    let result: [ShoppingItem]\n    func items() -> [ShoppingItem] { result }\n}\nfinal class ShoppingViewModel {\n    private let source: /* контракт */\n    var items: [ShoppingItem] = []\n    init(source: any ShoppingSource) { self.source = /* переданный источник */ }\n    func load() { items = source.items() }\n}\nlet source = FixedShoppingSource(result: [ShoppingItem(id: 7, title: \"Хлеб\")])\nlet viewModel = ShoppingViewModel(source: source)\nviewModel.load()\nprint(viewModel.items.count)",
+  "key": "struct ShoppingItem {\n    let id: Int\n    let title: String\n}\nprotocol ShoppingSource {\n    func items() -> [ShoppingItem]\n}\nstruct FixedShoppingSource: ShoppingSource {\n    let result: [ShoppingItem]\n    func items() -> [ShoppingItem] { result }\n}\nfinal class ShoppingViewModel {\n    private let source: any ShoppingSource\n    var items: [ShoppingItem] = []\n    init(source: any ShoppingSource) { self.source = source }\n    func load() { items = source.items() }\n}\nlet source = FixedShoppingSource(result: [ShoppingItem(id: 7, title: \"Хлеб\")])\nlet viewModel = ShoppingViewModel(source: source)\nviewModel.load()\nprint(viewModel.items.count)\n\nany ShoppingSource позволяет принимать разные реализации; init сохраняет переданный параметр."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Убери жёсткий выбор",
+  "prompt": "Переделай ShoppingViewModel так, чтобы вместо внутреннего SavedShoppingSource она принимала источник через init. Передай FixedShoppingSource с покупкой 7 «Хлеб». После load должно быть 1 вместо 0.",
+  "code": "struct ShoppingItem {\n    let id: Int\n    let title: String\n}\nprotocol ShoppingSource {\n    func items() -> [ShoppingItem]\n}\nstruct FixedShoppingSource: ShoppingSource {\n    let result: [ShoppingItem]\n    func items() -> [ShoppingItem] { result }\n}\nstruct SavedShoppingSource: ShoppingSource {\n    func items() -> [ShoppingItem] { [] }\n}\nfinal class ShoppingViewModel {\n    private let source = SavedShoppingSource()\n    var items: [ShoppingItem] = []\n    func load() { items = source.items() }\n}\nlet source = FixedShoppingSource(result: [ShoppingItem(id: 7, title: \"Хлеб\")])\nlet viewModel = ShoppingViewModel()\nviewModel.load()\nprint(viewModel.items.count)",
+  "key": "struct ShoppingItem {\n    let id: Int\n    let title: String\n}\nprotocol ShoppingSource {\n    func items() -> [ShoppingItem]\n}\nstruct FixedShoppingSource: ShoppingSource {\n    let result: [ShoppingItem]\n    func items() -> [ShoppingItem] { result }\n}\nfinal class ShoppingViewModel {\n    private let source: any ShoppingSource\n    var items: [ShoppingItem] = []\n    init(source: any ShoppingSource) { self.source = source }\n    func load() { items = source.items() }\n}\nlet source = FixedShoppingSource(result: [ShoppingItem(id: 7, title: \"Хлеб\")])\nlet viewModel = ShoppingViewModel(source: source)\nviewModel.load()\nprint(viewModel.items.count)\n\nВыбор реализации вынесен в место сборки. Потребитель больше не создаёт SavedShoppingSource сам."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Параметр есть, подстановки нет",
+  "prompt": "Почему print показывает 0 вместо 1? Исправь init, сохранив контракт и вход с «Хлебом».",
+  "code": "struct ShoppingItem {\n    let id: Int\n    let title: String\n}\nprotocol ShoppingSource {\n    func items() -> [ShoppingItem]\n}\nstruct FixedShoppingSource: ShoppingSource {\n    let result: [ShoppingItem]\n    func items() -> [ShoppingItem] { result }\n}\nstruct SavedShoppingSource: ShoppingSource {\n    func items() -> [ShoppingItem] { [] }\n}\nfinal class ShoppingViewModel {\n    private let source: any ShoppingSource\n    var items: [ShoppingItem] = []\n    init(source: any ShoppingSource) { self.source = SavedShoppingSource() }\n    func load() { items = source.items() }\n}\nlet source = FixedShoppingSource(result: [ShoppingItem(id: 7, title: \"Хлеб\")])\nlet viewModel = ShoppingViewModel(source: source)\nviewModel.load()\nprint(viewModel.items.count)",
+  "key": "struct ShoppingItem {\n    let id: Int\n    let title: String\n}\nprotocol ShoppingSource {\n    func items() -> [ShoppingItem]\n}\nstruct FixedShoppingSource: ShoppingSource {\n    let result: [ShoppingItem]\n    func items() -> [ShoppingItem] { result }\n}\nfinal class ShoppingViewModel {\n    private let source: any ShoppingSource\n    var items: [ShoppingItem] = []\n    init(source: any ShoppingSource) { self.source = source }\n    func load() { items = source.items() }\n}\nlet source = FixedShoppingSource(result: [ShoppingItem(id: 7, title: \"Хлеб\")])\nlet viewModel = ShoppingViewModel(source: source)\nviewModel.load()\nprint(viewModel.items.count)\n\ninit игнорировал параметр и создавал другой источник. self.source = source сохраняет именно переданный ответ."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни напарнику (устно)",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Источник списка покупок выбирается снаружи.\n- Что здесь зависимость и что означает DI?\n- Зачем протокол, обязателен ли он для самого факта передачи?\n- Когда источник передавать через init, а когда методу?",
+  "key": "Зависимость — источник записей; DI означает, что потребитель получает его извне вместо самостоятельного выбора. Протокол позволяет одному потребителю принимать разные типы; передача конкретного типа тоже может быть DI. Обязательный источник на время жизни сохраняют через init, источник только одного действия можно передать параметром метода."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Подставь источник одному действию",
+  "prompt": "Создай ShoppingPreview без сохранённого source. Метод count(source:) получает источник на один вызов. Передай сначала пустой FixedShoppingSource, затем с покупкой 8 «Молоко». Выведи 0 и 1.",
+  "code": "struct ShoppingItem {\n    let id: Int\n    let title: String\n}\nprotocol ShoppingSource {\n    func items() -> [ShoppingItem]\n}\nstruct FixedShoppingSource: ShoppingSource {\n    let result: [ShoppingItem]\n    func items() -> [ShoppingItem] { result }\n}\n// Напиши ShoppingPreview и два вызова.",
+  "key": "struct ShoppingItem {\n    let id: Int\n    let title: String\n}\nprotocol ShoppingSource {\n    func items() -> [ShoppingItem]\n}\nstruct FixedShoppingSource: ShoppingSource {\n    let result: [ShoppingItem]\n    func items() -> [ShoppingItem] { result }\n}\nfinal class ShoppingPreview {\n    func count(source: any ShoppingSource) -> Int { source.items().count }\n}\nlet preview = ShoppingPreview()\nprint(preview.count(source: FixedShoppingSource(result: [])))\nprint(preview.count(source: FixedShoppingSource(result: [ShoppingItem(id: 8, title: \"Молоко\")])))\n\nПредпросмотр принимает зависимость в метод и не хранит её между запросами. Оба вызова используют переданный им источник."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Для бюджета того же списка покупок восстанови передачу через init. BudgetSource обещает limit() -> Int. DefaultBudgetSource даёт 100, FixedBudgetSource хранит переданный Int. BudgetViewModel принимает контракт и вычисляет limitText «Лимит: … ₽». Выведи подпись стандартного источника и фиксированного 50. Внутри ViewModel реализации не создаются.",
+  "key": "protocol BudgetSource {\n    func limit() -> Int\n}\nstruct DefaultBudgetSource: BudgetSource {\n    func limit() -> Int { 100 }\n}\nstruct FixedBudgetSource: BudgetSource {\n    let value: Int\n    func limit() -> Int { value }\n}\nfinal class BudgetViewModel {\n    private let source: any BudgetSource\n    init(source: any BudgetSource) { self.source = source }\n    var limitText: String { \"Лимит: \\(source.limit()) ₽\" }\n}\nprint(BudgetViewModel(source: DefaultBudgetSource()).limitText)\nprint(BudgetViewModel(source: FixedBudgetSource(value: 50)).limitText)\n\nViewModel получает источник лимита извне, тип реализации не выбирает. Вывод «Лимит: 100 ₽» и «Лимит: 50 ₽»."
+ }
+]

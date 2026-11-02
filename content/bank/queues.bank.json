@@ -1,0 +1,35 @@
+[
+ {
+  "id": "queues-b1",
+  "topics": [
+   "queues"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Распечатка коллекции наклеек",
+  "prompt": "Назови все допустимые порядки A и B относительно Start, без sleep. Последний sync находится снаружи serial-очереди и ждёт предыдущую работу.",
+  "code": "import Dispatch\nlet queue = DispatchQueue(label: \"stickers.print\")\nprint(\"Start\")\nqueue.async { print(\"A\") }\nprint(\"B\")\nqueue.sync {}",
+  "key": "Start, A, B или Start, B, A.\n\nStart печатается до постановки A. После постановки async не ждёт её, поэтому B и A могут поменяться местами."
+ },
+ {
+  "id": "queues-b2",
+  "topics": [
+   "queues"
+  ],
+  "type": "Перепиши",
+  "title": "Экспорт схемы метро",
+  "prompt": "Нужно сначала построить схему, затем её легенду. Убери ложную зависимость от двух работ concurrent: поставь обе фазы в один WorkItem в нужном порядке, дождись его в локальной проверке.",
+  "code": "import Dispatch\nlet queue = DispatchQueue(label: \"metro.export\", attributes: .concurrent)\nlet map = DispatchWorkItem { print(\"Схема\") }\nlet legend = DispatchWorkItem { print(\"Легенда\") }\nqueue.async(execute: map)\nqueue.async(execute: legend)\nmap.wait()\nlegend.wait()",
+  "key": "import Dispatch\nlet queue = DispatchQueue(label: \"metro.export\", attributes: .concurrent)\nlet export = DispatchWorkItem {\n    print(\"Схема\")\n    print(\"Легенда\")\n}\nqueue.async(execute: export)\nexport.wait()\n\nВывод «Схема», «Легенда». Зависимость выражена внутри одной работы; concurrent других работ этого порядка не меняет."
+ },
+ {
+  "id": "queues-b3",
+  "topics": [
+   "queues"
+  ],
+  "type": "Допиши",
+  "title": "Подпись электронной книги",
+  "prompt": "Для title нужен sync-результат без хранения callback. Восстанови return queue.sync { title } в readTitle(); после setTitle ожидается «Тихий город». Почему async не вернёт String прямо этому вызову?",
+  "code": "import Dispatch\nfinal class BookCaption {\n    private let queue = DispatchQueue(label: \"book.caption\")\n    private var title = \"Без названия\"\n    func setTitle(_ value: String) { queue.sync { title = value } }\n    func readTitle() -> String {\n        // Верни результат sync\n        return \"\"\n    }\n}\nlet caption = BookCaption()\ncaption.setTitle(\"Тихий город\")\nprint(caption.readTitle())",
+  "key": "import Dispatch\nfinal class BookCaption {\n    private let queue = DispatchQueue(label: \"book.caption\")\n    private var title = \"Без названия\"\n    func setTitle(_ value: String) { queue.sync { title = value } }\n    func readTitle() -> String { queue.sync { title } }\n}\nlet caption = BookCaption()\ncaption.setTitle(\"Тихий город\")\nprint(caption.readTitle())\n\nВывод «Тихий город». readTitle возвращает завершённый результат, а не ещё не выполненную async-работу. Методы вызываются снаружи приватной очереди."
+ }
+]

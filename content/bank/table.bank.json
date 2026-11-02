@@ -1,0 +1,35 @@
+[
+ {
+  "id": "table-b1",
+  "topics": [
+   "table"
+  ],
+  "type": "Перепиши",
+  "title": "Пустой список покупок и владелец",
+  "prompt": "Временный ShoppingSource сразу потерян: dataSource слабое. Сохрани источник, удали последнюю позицию, вызови reloadData. Проверь вручную количество 0 и что таблица ссылается на сохранённый источник; не вызывай cellForRowAt для несуществующей строки.",
+  "code": "import UIKit\nstruct ShoppingItem { let id: Int; let title: String }\nfinal class ShoppingSource: NSObject, UITableViewDataSource {\n    var items = [ShoppingItem(id: 81, title: \"Хлеб\")]\n    func tableView(\n        _ tableView: UITableView, numberOfRowsInSection section: Int\n    ) -> Int { items.count }\n    func tableView(\n        _ tableView: UITableView, cellForRowAt indexPath: IndexPath\n    ) -> UITableViewCell {\n        let cell = tableView.dequeueReusableCell(\n            withIdentifier: \"Item\", for: indexPath\n        )\n        cell.textLabel?.text = items[indexPath.row].title\n        return cell\n    }\n}\nlet table = UITableView(\n    frame: CGRect(x: 0, y: 0, width: 320, height: 480)\n)\ntable.register(UITableViewCell.self, forCellReuseIdentifier: \"Item\")\ntable.dataSource = ShoppingSource()\nprint(table.dataSource == nil)",
+  "key": "import UIKit\nstruct ShoppingItem { let id: Int; let title: String }\nfinal class ShoppingSource: NSObject, UITableViewDataSource {\n    var items = [ShoppingItem(id: 81, title: \"Хлеб\")]\n    func tableView(\n        _ tableView: UITableView, numberOfRowsInSection section: Int\n    ) -> Int { items.count }\n    func tableView(\n        _ tableView: UITableView, cellForRowAt indexPath: IndexPath\n    ) -> UITableViewCell {\n        let cell = tableView.dequeueReusableCell(\n            withIdentifier: \"Item\", for: indexPath\n        )\n        cell.textLabel?.text = items[indexPath.row].title\n        return cell\n    }\n}\nlet table = UITableView(\n    frame: CGRect(x: 0, y: 0, width: 320, height: 480)\n)\ntable.register(UITableViewCell.self, forCellReuseIdentifier: \"Item\")\nlet source = ShoppingSource()\ntable.dataSource = source\nsource.items.removeAll()\ntable.reloadData()\nassert(source.tableView(table, numberOfRowsInSection: 0) == 0)\nassert(table.dataSource === source)\n\nИсточник удерживается отдельно, после изменения модели таблица получает reloadData. Контракт пустого массива проверяется количеством, не вызовом несуществующей ячейки."
+ },
+ {
+  "id": "table-b2",
+  "topics": [
+   "table"
+  ],
+  "type": "Найди ошибку",
+  "title": "Выбранное место после сортировки",
+  "prompt": "Сохраняется индекс вместо id. После выбора Юга массив разворачивают, но selectedName должен остаться Юг. Исправь сохранение и поиск по id; допустимо nil, если выбранное место удалено.",
+  "code": "import UIKit\nstruct Place { let id: Int; let name: String }\nfinal class PlacesDelegate: NSObject, UITableViewDelegate {\n    var places = [Place(id: 91, name: \"Север\"), Place(id: 92, name: \"Юг\")]\n    private(set) var selectedID: Int?\n    func tableView(\n        _ tableView: UITableView, didSelectRowAt indexPath: IndexPath\n    ) {\n        selectedID = indexPath.row\n        tableView.deselectRow(at: indexPath, animated: false)\n    }\n    func selectedName() -> String? {\n        selectedID.map { places[$0].name }\n    }\n}\nlet table = UITableView(\n    frame: CGRect(x: 0, y: 0, width: 320, height: 480)\n)\nlet source = PlacesDelegate()\nsource.tableView(table, didSelectRowAt: IndexPath(row: 1, section: 0))\nsource.places.reverse()\nassert(source.selectedName() == \"Юг\")",
+  "key": "import UIKit\nstruct Place { let id: Int; let name: String }\nfinal class PlacesDelegate: NSObject, UITableViewDelegate {\n    var places = [Place(id: 91, name: \"Север\"), Place(id: 92, name: \"Юг\")]\n    private(set) var selectedID: Int?\n    func tableView(\n        _ tableView: UITableView, didSelectRowAt indexPath: IndexPath\n    ) {\n        selectedID = places[indexPath.row].id\n        tableView.deselectRow(at: indexPath, animated: false)\n    }\n    func selectedName() -> String? {\n        places.first { $0.id == selectedID }?.name\n    }\n}\nlet table = UITableView(\n    frame: CGRect(x: 0, y: 0, width: 320, height: 480)\n)\nlet source = PlacesDelegate()\nsource.tableView(table, didSelectRowAt: IndexPath(row: 1, section: 0))\nsource.places.reverse()\nassert(source.selectedName() == \"Юг\")\n\nВыбор сохраняет 92. После reverse имя ищется по id, а не по устаревшей позиции."
+ },
+ {
+  "id": "table-b3",
+  "topics": [
+   "table"
+  ],
+  "type": "Допиши",
+  "title": "Два обновления одного аватара",
+  "prompt": "Для пользователя 101 запущены два запроса. Новый результат приходит первым, старый — последним. Проверка id проходит у обоих. Замени заглушку true сравнением requestVersion: принять только текущую версию. Количество запросов маленькое, переполнение счётчика не рассматриваем. Контекст вызывается на главном потоке.",
+  "code": "import UIKit\nfinal class AvatarCell: UITableViewCell {\n    var representedID: Int?\n    private var requestVersion = 0\n    func newRequest(id: Int) -> (UIImage) -> Void {\n        representedID = id\n        requestVersion += 1\n        let version = requestVersion\n        imageView?.image = nil\n        return { [weak self] image in\n            guard let self, self.representedID == id,\n                  true else { return }\n            self.imageView?.image = image\n        }\n    }\n    override func prepareForReuse() {\n        super.prepareForReuse()\n        representedID = nil\n        requestVersion += 1\n    }\n}\nlet cell = AvatarCell(style: .default, reuseIdentifier: \"Avatar\")\nlet first = cell.newRequest(id: 101)\nlet second = cell.newRequest(id: 101)\nlet oldImage = UIImage()\nlet currentImage = UIImage()\nsecond(currentImage)\nfirst(oldImage)\nassert(cell.imageView?.image === currentImage)",
+  "key": "import UIKit\nfinal class AvatarCell: UITableViewCell {\n    var representedID: Int?\n    private var requestVersion = 0\n    func newRequest(id: Int) -> (UIImage) -> Void {\n        representedID = id\n        requestVersion += 1\n        let version = requestVersion\n        imageView?.image = nil\n        return { [weak self] image in\n            guard let self, self.representedID == id,\n                  self.requestVersion == version else { return }\n            self.imageView?.image = image\n        }\n    }\n    override func prepareForReuse() {\n        super.prepareForReuse()\n        representedID = nil\n        requestVersion += 1\n    }\n}\nlet cell = AvatarCell(style: .default, reuseIdentifier: \"Avatar\")\nlet first = cell.newRequest(id: 101)\nlet second = cell.newRequest(id: 101)\nlet oldImage = UIImage()\nlet currentImage = UIImage()\nsecond(currentImage)\nfirst(oldImage)\nassert(cell.imageView?.image === currentImage)\n\nТекущая обложка сохраняется, потому что первый callback имеет прежнюю версию. prepareForReuse тоже делает ранее созданные callbacks недействительными."
+ }
+]

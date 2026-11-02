@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Предскажи карточку",
+  "prompt": "Назови три строки вывода и объясни, почему subtitle даёт запасной текст.",
+  "code": "import Foundation\nstruct Game: Codable {\n    let id: Int\n    let title: String\n    let playerCount: Int\n    let subtitle: String?\n    enum CodingKeys: String, CodingKey {\n        case id, title, subtitle\n        case playerCount = \"player_count\"\n    }\n}\nlet json = #\"{\"id\":5,\"title\":\"Кодовые имена\",\"player_count\":4,\"subtitle\":null}\"#\nlet data = Data(json.utf8)\ndo {\n    let game = try JSONDecoder().decode(Game.self, from: data)\n    print(game.title)\n    print(game.playerCount)\n    print(game.subtitle ?? \"Без подзаголовка\")\n} catch {\n    print(\"Некорректные данные\")\n}",
+  "key": "Кодовые имена\n4\nБез подзаголовка\n\nsubtitle пришёл null и декодирован как nil. player_count сопоставлен playerCount через CodingKeys."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Допиши ключ и отсутствие",
+  "prompt": "Добавь Optional у subtitle и имя серверного ключа для playerCount.",
+  "code": "import Foundation\nstruct Game: Codable {\n    let id: Int\n    let title: String\n    let playerCount: Int\n    let subtitle: /* тип с допустимым отсутствием */\n    enum CodingKeys: String, CodingKey {\n        case id, title, subtitle\n        case playerCount = /* ключ JSON */\n    }\n}\nlet json = #\"{\"id\":5,\"title\":\"Кодовые имена\",\"player_count\":4,\"subtitle\":null}\"#\nlet data = Data(json.utf8)\ndo {\n    let game = try JSONDecoder().decode(Game.self, from: data)\n    print(game.title)\n    print(game.playerCount)\n    print(game.subtitle ?? \"Без подзаголовка\")\n} catch {\n    print(\"Некорректные данные\")\n}",
+  "key": "import Foundation\nstruct Game: Codable {\n    let id: Int\n    let title: String\n    let playerCount: Int\n    let subtitle: String?\n    enum CodingKeys: String, CodingKey {\n        case id, title, subtitle\n        case playerCount = \"player_count\"\n    }\n}\nlet json = #\"{\"id\":5,\"title\":\"Кодовые имена\",\"player_count\":4,\"subtitle\":null}\"#\nlet data = Data(json.utf8)\ndo {\n    let game = try JSONDecoder().decode(Game.self, from: data)\n    print(game.title)\n    print(game.playerCount)\n    print(game.subtitle ?? \"Без подзаголовка\")\n} catch {\n    print(\"Некорректные данные\")\n}\n\nString? допускает отсутствие/null, а player_count — внешний ключ свойства playerCount."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Проверь два направления",
+  "prompt": "Для данной модели декодируй JSON, закодируй game обратно и восстанови restored. Выведи restored.id и restored.playerCount. Ошибки поймай do/catch; не сравнивай JSON по порядку ключей.",
+  "code": "import Foundation\nstruct Game: Codable {\n    let id: Int\n    let title: String\n    let playerCount: Int\n    let subtitle: String?\n    enum CodingKeys: String, CodingKey {\n        case id, title, subtitle\n        case playerCount = \"player_count\"\n    }\n}\nlet json = #\"{\"id\":5,\"title\":\"Кодовые имена\",\"player_count\":4,\"subtitle\":null}\"#\nlet data = Data(json.utf8)\n// Напиши do/catch с decode, encode и повторным decode.",
+  "key": "import Foundation\nstruct Game: Codable {\n    let id: Int\n    let title: String\n    let playerCount: Int\n    let subtitle: String?\n    enum CodingKeys: String, CodingKey {\n        case id, title, subtitle\n        case playerCount = \"player_count\"\n    }\n}\nlet json = #\"{\"id\":5,\"title\":\"Кодовые имена\",\"player_count\":4,\"subtitle\":null}\"#\nlet data = Data(json.utf8)\ndo {\n    let game = try JSONDecoder().decode(Game.self, from: data)\n    let encoder = JSONEncoder()\n    let encoded = try encoder.encode(game)\n    let restored = try JSONDecoder().decode(Game.self, from: encoded)\n    print(restored.id)\n    print(restored.playerCount)\n} catch { print(\"Некорректные данные\") }\n\nВывод 5 и 4. Codable поддерживает оба направления, а проверка сравнивает восстановленные значения."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Число оказалось строкой",
+  "prompt": "Ответ содержит player_count: \"4\" вместо числа. Исправь локальный тестовый JSON по заявленному контракту, не превращая обязательный Int в String или Optional и не применяя try!.",
+  "code": "import Foundation\nstruct Game: Codable {\n    let id: Int\n    let title: String\n    let playerCount: Int\n    let subtitle: String?\n    enum CodingKeys: String, CodingKey {\n        case id, title, subtitle\n        case playerCount = \"player_count\"\n    }\n}\nlet json = #\"{\"id\":5,\"title\":\"Кодовые имена\",\"player_count\":\"4\",\"subtitle\":null}\"#\nlet data = Data(json.utf8)\ndo {\n    let game = try JSONDecoder().decode(Game.self, from: data)\n    print(game.title)\n    print(game.playerCount)\n    print(game.subtitle ?? \"Без подзаголовка\")\n} catch {\n    print(\"Некорректные данные\")\n}",
+  "key": "import Foundation\nstruct Game: Codable {\n    let id: Int\n    let title: String\n    let playerCount: Int\n    let subtitle: String?\n    enum CodingKeys: String, CodingKey {\n        case id, title, subtitle\n        case playerCount = \"player_count\"\n    }\n}\nlet json = #\"{\"id\":5,\"title\":\"Кодовые имена\",\"player_count\":4,\"subtitle\":null}\"#\nlet data = Data(json.utf8)\ndo {\n    let game = try JSONDecoder().decode(Game.self, from: data)\n    print(game.title)\n    print(game.playerCount)\n    print(game.subtitle ?? \"Без подзаголовка\")\n} catch {\n    print(\"Некорректные данные\")\n}\n\nКонтракт требует JSON-номер. Исправленная фикстура содержит 4 без кавычек; ответ реального сервера с неверным типом нужно отклонить или согласовать изменение схемы."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни напарнику (устно)",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Карточка игры из JSON.\n- Что дают Codable и CodingKeys?\n- Как различаются отсутствие, null и неверный тип?\n- Зачем do/catch и почему round trip не проверяют точной строкой JSON?",
+  "key": "Codable объединяет чтение и запись, CodingKeys связывает свойства с ключами внешнего формата. Optional допускает отсутствие/null, обязательное поле их не допускает; неверный тип не становится допустимым только из-за Optional. do/catch обрабатывает ошибку данных без падения через try!. Round trip проверяет значения восстановленной модели, а не несущественный порядок ключей."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Прочитай режим игры",
+  "prompt": "Создай GameMode: Decodable с id и isCooperative: Bool. JSON {\"id\":5,\"is_cooperative\":true}; сопоставь ключ и выведи признак через do/catch. Значение \"true\" строкой не принимай.",
+  "code": "Напиши самостоятельный пример: import Foundation, GameMode, CodingKeys, Data из тестового JSON и безопасное декодирование.",
+  "key": "import Foundation\nstruct GameMode: Decodable {\n    let id: Int\n    let isCooperative: Bool\n    enum CodingKeys: String, CodingKey {\n        case id\n        case isCooperative = \"is_cooperative\"\n    }\n}\nlet data = Data(#\"{\"id\":5,\"is_cooperative\":true}\"#.utf8)\ndo {\n    let mode = try JSONDecoder().decode(GameMode.self, from: data)\n    print(mode.isCooperative)\n} catch { print(\"Некорректные данные\") }\n\nis_cooperative связан с isCooperative и читается как Bool. Вывод true; строковый \"true\" нарушил бы тип."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови GameCover: Decodable — обязательные id и title, необязательный coverPath из cover_path. JSON {\"id\":5,\"title\":\"Кодовые имена\"} не содержит обложку. Декодируй через do/catch, выведи coverPath либо «Нет обложки». Не подменяй ошибки обязательных полей фиктивными значениями.",
+  "key": "import Foundation\nstruct GameCover: Decodable {\n    let id: Int\n    let title: String\n    let coverPath: String?\n    enum CodingKeys: String, CodingKey {\n        case id, title\n        case coverPath = \"cover_path\"\n    }\n}\nlet data = Data(#\"{\"id\":5,\"title\":\"Кодовые имена\"}\"#.utf8)\ndo {\n    let game = try JSONDecoder().decode(GameCover.self, from: data)\n    print(game.coverPath ?? \"Нет обложки\")\n} catch { print(\"Некорректные данные\") }\n\nОтсутствующий cover_path даёт nil; вывод «Нет обложки». Обязательные id/title всё ещё должны присутствовать с верными типами."
+ }
+]

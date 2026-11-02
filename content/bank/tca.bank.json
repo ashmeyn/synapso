@@ -1,0 +1,38 @@
+[
+ {
+  "id": "tca-b1",
+  "topics": [
+   "tca"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Выбор цвета открытки",
+  "prompt": "Предскажи два значения после replay. Почему исходный выбор не исчез и почему такая последовательность не должна заново выполнять внешние эффекты?",
+  "code": "struct ColorState: Equatable { var selectedID: Int? }\nenum ColorAction { case selected(Int), cleared }\nfunc colorReduce(_ state: ColorState, _ action: ColorAction) -> ColorState {\n    var next = state\n    switch action {\n    case let .selected(id): next.selectedID = id\n    case .cleared: next.selectedID = nil\n    }\n    return next\n}\nlet original = ColorState(selectedID: 4)\nlet replay = [.selected(5), .cleared] as [ColorAction]\nlet result = replay.reduce(original, colorReduce)\nprint(original.selectedID ?? -1)\nprint(result.selectedID ?? -1)",
+  "key": "4\n-1\n\nreduce работает с копией ColorState. selected(5) и cleared дают итоговый nil, original остаётся 4; replay чистых переходов не отправляет внешние операции.",
+  "added": "2026-10-12"
+ },
+ {
+  "id": "tca-b2",
+  "topics": [
+   "tca"
+  ],
+  "type": "Найди ошибку",
+  "title": "Сведения о модели велосипеда",
+  "prompt": "На экране каталога велосипедов сначала requested(12), затем requested(13). received(12,«Старое») пришёл позже и не должен менять text. Исправь reducer по requestedID, проверь старый и актуальный ответ без настоящей сети.",
+  "code": "struct BicycleSpecState { var requestedID = 0; var text = \"\" }\nenum SpecAction { case requested(Int), received(Int, String) }\nfunc specReduce(\n    _ state: BicycleSpecState, _ action: SpecAction\n) -> BicycleSpecState {\n    var next = state\n    switch action {\n    case let .requested(id): next.requestedID = id\n    case let .received(_, text): next.text = text\n    }\n    return next\n}",
+  "key": "struct BicycleSpecState { var requestedID = 0; var text = \"\" }\nenum SpecAction { case requested(Int), received(Int, String) }\nfunc specReduce(\n    _ state: BicycleSpecState, _ action: SpecAction\n) -> BicycleSpecState {\n    var next = state\n    switch action {\n    case let .requested(id): next.requestedID = id\n    case let .received(id, text):\n        guard id == state.requestedID else { return state }\n        next.text = text\n    }\n    return next\n}\nvar state = specReduce(BicycleSpecState(), .requested(12))\nstate = specReduce(state, .requested(13))\nstate = specReduce(state, .received(12, \"Старое\"))\nassert(state.text.isEmpty)\nstate = specReduce(state, .received(13, \"Новое\"))\nassert(state.text == \"Новое\")\n\nПроверка актуальности относится к действию ответа. Поздний результат 12 игнорируется, 13 применяется; отмена здесь не моделируется.",
+  "added": "2026-10-12"
+ },
+ {
+  "id": "tca-b3",
+  "topics": [
+   "tca"
+  ],
+  "type": "Допиши",
+  "title": "Шаги сборки мебели",
+  "prompt": "Напиши родительский AssemblyState со step: StepState и details=false. AssemblyAction.step передаёт действие в готовый stepReduce, toggleDetails меняет только details. Проверь next, затем toggleDetails: index=1, details=true; исходный родитель не меняется. Это композиция reducer, без двух независимых Store.",
+  "code": "struct StepState: Equatable { var index = 0 }\nenum StepAction { case next, reset }\nfunc stepReduce(_ state: StepState, _ action: StepAction) -> StepState {\n    var next = state\n    switch action {\n    case .next: next.index = min(state.index + 1, 2)\n    case .reset: next.index = 0\n    }\n    return next\n}",
+  "key": "struct StepState: Equatable { var index = 0 }\nenum StepAction { case next, reset }\nfunc stepReduce(_ state: StepState, _ action: StepAction) -> StepState {\n    var next = state\n    switch action {\n    case .next: next.index = min(state.index + 1, 2)\n    case .reset: next.index = 0\n    }\n    return next\n}\nstruct AssemblyState: Equatable {\n    var step = StepState()\n    var details = false\n}\nenum AssemblyAction { case step(StepAction), toggleDetails }\nfunc assemblyReduce(\n    _ state: AssemblyState, _ action: AssemblyAction\n) -> AssemblyState {\n    var next = state\n    switch action {\n    case let .step(action): next.step = stepReduce(state.step, action)\n    case .toggleDetails: next.details.toggle()\n    }\n    return next\n}\nlet original = AssemblyState()\nlet advanced = assemblyReduce(original, .step(.next))\nlet opened = assemblyReduce(advanced, .toggleDetails)\nassert(opened.step.index == 1)\nassert(opened.details)\nassert(original == AssemblyState())\n\nРодитель делегирует дочернее действие, сохраняя другие поля. Общий state имеет одного владельца; для ребёнка не создаётся независимая копия Store.",
+  "added": "2026-10-12"
+ }
+]

@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Отправка раньше подготовки",
+  "prompt": "Назови две строки вывода. Почему объявление prepare первым не помогает при таком запуске?",
+  "code": "import Foundation\nlet prepare = BlockOperation { print(\"Подготовка 9\") }\nlet publish = BlockOperation { print(\"Отправка 9\") }\npublish.start()\nprepare.start()",
+  "key": "Отправка 9\nПодготовка 9\n\nЗапуск вручную идёт в обратном порядке; зависимость не задана."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Защити строку страницы",
+  "prompt": "Заполни .concurrent и .barrier в PageStore. Затем сохрани «Черновик» у id 9 и прочитай его; отсутствующий id 99 должен дать nil.",
+  "code": "import Foundation\nfinal class PageStore {\n    private let queue = DispatchQueue(\n        label: \"album.pages\", attributes: /* Читатели */\n    )\n    private var rows: [Int: String] = [:]\n    func set(_ text: String, id: Int) {\n        queue.sync(flags: /* Запись */) { rows[id] = text }\n    }\n    func read(id: Int) -> String? { queue.sync { rows[id] } }\n}\nlet store = PageStore()\nstore.set(\"Черновик\", id: 9)\nprint(store.read(id: 9) ?? \"Нет\")\nprint(store.read(id: 99) == nil)",
+  "key": "import Foundation\nfinal class PageStore {\n    private let queue = DispatchQueue(\n        label: \"album.pages\", attributes: .concurrent\n    )\n    private var rows: [Int: String] = [:]\n    func set(_ text: String, id: Int) {\n        queue.sync(flags: .barrier) { rows[id] = text }\n    }\n    func read(id: Int) -> String? { queue.sync { rows[id] } }\n}\nlet store = PageStore()\nstore.set(\"Черновик\", id: 9)\nprint(store.read(id: 9) ?? \"Нет\")\nprint(store.read(id: 99) == nil)\n\nВывод «Черновик», true. Все доступы проходят через одну private concurrent-очередь."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Напиши ограниченную обработку",
+  "prompt": "Напиши renderPage(id:slots:) с успешным wait и defer signal. Фоновый вызывающий код использует общий DispatchSemaphore(value: 2) для id 9 и 10. Не создавай отдельный semaphore на каждую страницу.",
+  "code": "import Dispatch\n// Напиши renderPage(id:slots:)",
+  "key": "import Dispatch\nfunc renderPage(id: Int, slots: DispatchSemaphore) {\n    slots.wait()\n    defer { slots.signal() }\n    print(\"Страница \\(id)\")\n}\n\nВ фоновой последовательной проверке вывод «Страница 9», «Страница 10». При нескольких вызывающих сторонах один slots ограничивает участок между wait и signal."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Зависимость направлена наоборот",
+  "prompt": "Сейчас prepare зависит от publish, поэтому очередь гарантированно отправляет раньше подготовки. Переверни зависимость, перенеси completionBlock на последнюю publish и сохрани неблокирующую доставку done.",
+  "code": "import Foundation\nfunc publishPage(done: @escaping () -> Void) {\n    let queue = OperationQueue()\n    let prepare = BlockOperation { print(\"Подготовка 9\") }\n    let publish = BlockOperation { print(\"Отправка 9\") }\n    prepare.addDependency(publish)\n    prepare.completionBlock = { DispatchQueue.main.async { done() } }\n    queue.addOperations([publish, prepare], waitUntilFinished: false)\n}",
+  "key": "import Foundation\nfunc publishPage(done: @escaping () -> Void) {\n    let queue = OperationQueue()\n    let prepare = BlockOperation { print(\"Подготовка 9\") }\n    let publish = BlockOperation { print(\"Отправка 9\") }\n    publish.addDependency(prepare)\n    publish.completionBlock = { DispatchQueue.main.async { done() } }\n    queue.addOperations([publish, prepare], waitUntilFinished: false)\n}\n\nПосле исправления «Подготовка 9», «Отправка 9», done. Это queued-зависимость, а не повтор ручного start из ступени 1."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни три роли",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Какие доступы защищает barrier? Что ограничивает semaphore? Что гарантируют dependency и cancel у Operation?",
+  "key": "Barrier эксклюзивен относительно работ своей private concurrent-очереди, если все доступы к состоянию проходят через неё. Semaphore ограничивает допущенные участки и может блокировать вызывающий поток; signal возвращает успешно полученное разрешение. Dependency ждёт завершения операции, но не её успеха. Cancel ставит запрос, который выполняющаяся работа проверяет на границах; зависимые операции не отменяются автоматически."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Отмени превью",
+  "prompt": "Напиши PageOperation с id, main по part 1...3 и guard !isCancelled перед печатью каждой части. Добавь cancelPreview: отменить id 12 до постановки, вывести isCancelled, completionBlock доставляет done на main. Не печатай части отменённого превью.",
+  "code": "import Foundation\n// Напиши PageOperation и cancelPreview(done:)",
+  "key": "import Foundation\nfinal class PageOperation: Operation {\n    let id: Int\n    init(id: Int) { self.id = id; super.init() }\n    override func main() {\n        for part in 1...3 {\n            guard !isCancelled else { return }\n            print(\"\\(id):\\(part)\")\n        }\n    }\n}\nfunc cancelPreview(done: @escaping () -> Void) {\n    let queue = OperationQueue()\n    let preview = PageOperation(id: 12)\n    preview.cancel()\n    print(preview.isCancelled)\n    preview.completionBlock = { DispatchQueue.main.async { done() } }\n    queue.addOperation(preview)\n}\n\nВывод true, затем done; частей превью нет. Для выполняющейся операции guard нужен на каждом шаге; отмена не откатывает предыдущие эффекты."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови PageCounts: private [Int: Int], одна private concurrent-очередь, set(_:id:) через sync barrier и read(id:) через sync. Сохрани число элементов 3 у страницы 12, выведи 3 и проверку отсутствующего id 99 — true. Не открывай словарь наружу и не используй global-очередь как владельца.",
+  "key": "import Foundation\nfinal class PageCounts {\n    private let queue = DispatchQueue(\n        label: \"album.pages\", attributes: .concurrent\n    )\n    private var rows: [Int: Int] = [:]\n    func set(_ count: Int, id: Int) {\n        queue.sync(flags: .barrier) { rows[id] = count }\n    }\n    func read(id: Int) -> Int? { queue.sync { rows[id] } }\n}\nlet counts = PageCounts()\ncounts.set(3, id: 12)\nprint(counts.read(id: 12) ?? 0)\nprint(counts.read(id: 99) == nil)\n\nВывод 3, true. Readers-writers перенесён на числовое состояние страницы."
+ }
+]

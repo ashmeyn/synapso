@@ -1,0 +1,35 @@
+[
+ {
+  "id": "tests-b1",
+  "topics": [
+   "tests"
+  ],
+  "type": "Найди ошибку",
+  "title": "Порядок выкроек в наборе",
+  "prompt": "Экран набора выкроек обещает id в порядке order. Тест проходит и с ошибочной реализацией, возвращающей [8,9]. Исправь только утверждение, сохрани подготовленный вход.",
+  "code": "import XCTest\nstruct CuttingPattern { let id: Int; let order: Int }\nfunc sortedIDs(_ patterns: [CuttingPattern]) -> [Int] {\n    patterns.sorted { $0.order < $1.order }.map { $0.id }\n}\nfinal class PatternTests: XCTestCase {\n    func testOrder() {\n        let patterns = [CuttingPattern(id: 8, order: 2),\n                    CuttingPattern(id: 9, order: 1)]\n        XCTAssertEqual(Set(sortedIDs(patterns)), Set([9, 8]))\n    }\n}",
+  "key": "import XCTest\nstruct CuttingPattern { let id: Int; let order: Int }\nfunc sortedIDs(_ patterns: [CuttingPattern]) -> [Int] {\n    patterns.sorted { $0.order < $1.order }.map { $0.id }\n}\nfinal class PatternTests: XCTestCase {\n    func testOrder() {\n        let patterns = [CuttingPattern(id: 8, order: 2),\n                    CuttingPattern(id: 9, order: 1)]\n        XCTAssertEqual(sortedIDs(patterns), [9, 8])\n    }\n}\n\nSet потерял порядок; сравнение массивов проверяет обещанную последовательность. Перевёрнутый результат теперь приводит к падению."
+ },
+ {
+  "id": "tests-b2",
+  "topics": [
+   "tests"
+  ],
+  "type": "Допиши",
+  "title": "Отмена театрального билета",
+  "prompt": "Для id<=0 отмена не вызывается. Допиши XCTest с TicketSpy для id=0; проверь отсутствие обращений, а не возвращаемое значение Void.",
+  "code": "import XCTest\nprotocol TicketCancelling { func cancel(id: Int) }\nfinal class TicketSpy: TicketCancelling {\n    private(set) var ids: [Int] = []\n    func cancel(id: Int) { ids.append(id) }\n}\nstruct CancelTicket {\n    let source: any TicketCancelling\n    func execute(id: Int) {\n        guard id > 0 else { return }\n        source.cancel(id: id)\n    }\n}",
+  "key": "import XCTest\nprotocol TicketCancelling { func cancel(id: Int) }\nfinal class TicketSpy: TicketCancelling {\n    private(set) var ids: [Int] = []\n    func cancel(id: Int) { ids.append(id) }\n}\nstruct CancelTicket {\n    let source: any TicketCancelling\n    func execute(id: Int) {\n        guard id > 0 else { return }\n        source.cancel(id: id)\n    }\n}\nfinal class TicketTests: XCTestCase {\n    func testInvalidID() {\n        let spy = TicketSpy()\n        CancelTicket(source: spy).execute(id: 0)\n        XCTAssertTrue(spy.ids.isEmpty)\n    }\n}\n\nНегативный контракт проверяется пустым журналом шпиона: действие не должно уйти во внешний сервис."
+ },
+ {
+  "id": "tests-b3",
+  "topics": [
+   "tests"
+  ],
+  "type": "Перепиши",
+  "title": "Ночной режим отопления",
+  "prompt": "Ночной режим начинается с минуты 1320 в сутках 0...1439. Сделай HeatingSchedule с протоколом MinuteReading и фиксированным временем; напиши тест на 1319 и 1320, без Date и sleep.",
+  "code": "struct HeatingSchedule {\n    func isNight(minute: Int) -> Bool { minute >= 1320 }\n}\n// Требуется источник времени, переданный через init.",
+  "key": "import XCTest\nprotocol MinuteReading { var minute: Int { get } }\nstruct FixedMinute: MinuteReading { let minute: Int }\nstruct HeatingSchedule {\n    let clock: any MinuteReading\n    func isNight() -> Bool { clock.minute >= 22 * 60 }\n}\nfinal class HeatingTests: XCTestCase {\n    func testBoundary() {\n        let before = HeatingSchedule(clock: FixedMinute(minute: 1319))\n        let at = HeatingSchedule(clock: FixedMinute(minute: 1320))\n        XCTAssertFalse(before.isNight())\n        XCTAssertTrue(at.isNight())\n    }\n}\n\nВремя стало управляемым входом. Два соседних значения ловят неверный > вместо >= без настоящих часов."
+ }
+]

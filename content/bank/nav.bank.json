@@ -1,0 +1,35 @@
+[
+ {
+  "id": "nav-b1",
+  "topics": [
+   "nav"
+  ],
+  "type": "Найди ошибку",
+  "title": "Экспонат в музее",
+  "prompt": "Кнопка открывает число 7, но назначение зарегистрировано для String. Исправь один тип, сохранив программный переход.",
+  "code": "import SwiftUI\nstruct MuseumScreen: View {\n    @State private var path: [Int] = []\n    var body: some View {\n        NavigationStack(path: $path) {\n            Button(\"Экспонат 7\") { path.append(7) }\n                .navigationDestination(for: String.self) { exhibitID in\n                    Text(\"Экспонат \\(exhibitID)\")\n                }\n        }\n    }\n}",
+  "key": "import SwiftUI\nstruct MuseumScreen: View {\n    @State private var path: [Int] = []\n    var body: some View {\n        NavigationStack(path: $path) {\n            Button(\"Экспонат 7\") { path.append(7) }\n                .navigationDestination(for: Int.self) { exhibitID in\n                    Text(\"Экспонат \\(exhibitID)\")\n                }\n        }\n    }\n}\n\nТип маршрута — Int. После регистрации Int.self стек строит страницу «Экспонат 7» для добавленного id."
+ },
+ {
+  "id": "nav-b2",
+  "topics": [
+   "nav"
+  ],
+  "type": "Допиши",
+  "title": "Ингредиенты рецепта",
+  "prompt": "Добавь sheet по связи к showsIngredients. Временное окно должно показывать ингредиенты рецепта 10, закрытие — возвращать к самому рецепту; новый NavigationStack не нужен.",
+  "code": "import SwiftUI\nstruct RecipeScreen: View {\n    let recipeID = 10\n    @State private var showsIngredients = false\n    var body: some View {\n        Toggle(\"Ингредиенты\", isOn: $showsIngredients)\n            // Прикрепи временное окно с текстом.\n    }\n}",
+  "key": "import SwiftUI\nstruct RecipeScreen: View {\n    let recipeID = 10\n    @State private var showsIngredients = false\n    var body: some View {\n        Toggle(\"Ингредиенты\", isOn: $showsIngredients)\n            .sheet(isPresented: $showsIngredients) {\n                Text(\"Ингредиенты рецепта \\(recipeID)\")\n            }\n    }\n}\n\nsheet привязан к Bool состояния экрана рецепта. После закрытия флаг станет false; основной экран остаётся на месте."
+ },
+ {
+  "id": "nav-b3",
+  "topics": [
+   "nav"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Удалённая книга в библиотеке",
+  "prompt": "Пользователь открывает ссылку, затем жмёт «Библиотека». Что видно в детали и как меняется path? Print нет.",
+  "code": "import SwiftUI\nstruct LibraryScreen: View {\n    @State private var path: [Int] = []\n    private let books = [3: \"Север\"]\n    var body: some View {\n        NavigationStack(path: $path) {\n            NavigationLink(\"Книга\", value: 9)\n                .navigationDestination(for: Int.self) { bookID in\n                    VStack {\n                        Text(books[bookID] ?? \"Книга удалена\")\n                        Button(\"Библиотека\") { path.removeAll() }\n                    }\n                }\n        }\n    }\n}",
+  "key": "После открытия path == [9], деталь показывает «Книга удалена»: ключа 9 нет в books. После кнопки path == [], снова виден корень библиотеки. Отсутствующие данные не приводят к force unwrap."
+ }
+]

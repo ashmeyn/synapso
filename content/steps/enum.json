@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Предскажи подпись",
+  "prompt": "Что напечатают строки? Почему статус ошибки не требует ID сообщения?",
+  "code": "enum UploadStatus {\n    case waiting, sent(messageID: Int), failed(reason: String)\n}\nfunc label(_ status: UploadStatus) -> String {\n    switch status {\n    case .waiting: \"Ждёт\"\n    case .sent(let messageID): \"Сообщение # \\(messageID)\"\n    case .failed(let reason): \"Ошибка: \\(reason)\"\n    }\n}\nprint(label(.sent(messageID: 4)))\nprint(label(.failed(reason: \"Нет сети\")))",
+  "key": "Сообщение # 4 и Ошибка: Нет сети. Associated value принадлежит своему случаю enum: у failed есть причина, а ID сообщения к нему не относится."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Собери состояние",
+  "prompt": "Замени флаги на enum с четырьмя взаимоисключающими случаями. Только отправку несёт ID сообщения, только ошибка — причину.",
+  "code": "// Было: isSent, isFailed, messageID?\nenum UploadStatus {\n    // waiting, uploading, sent, failed\n}",
+  "key": "enum UploadStatus {\n    case waiting\n    case uploading\n    case sent(messageID: Int)\n    case failed(reason: String)\n}\n\nОдно значение enum не может одновременно быть sent и failed. Данные привязаны к тем состояниям, где имеют смысл."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Подпись для экрана",
+  "prompt": "Напиши исчерпывающий switch для всех четырёх состояний без default.",
+  "code": "enum UploadStatus {\n    case waiting, uploading, sent(messageID: Int), failed(reason: String)\n}\nfunc label(for status: UploadStatus) -> String {\n    // Верни подпись для каждого случая.\n}",
+  "key": "func label(for status: UploadStatus) -> String {\n    switch status {\n    case .waiting: return \"Ждёт\"\n    case .uploading: return \"Загружается\"\n    case .sent(let messageID): return \"Сообщение # \\(messageID)\"\n    case .failed(let reason): return \"Ошибка: \\(reason)\"\n    }\n}\n\nswitch покрывает все случаи. Если появится новый статус, компилятор потребует решить, как его показать."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Найди логический баг",
+  "prompt": "Почему отправленный и ошибочный файл показывает «Отправлено»? Перепиши состояние так, чтобы комбинация была невозможна.",
+  "code": "struct Flags { let isSent: Bool; let isFailed: Bool }\nfunc label(_ f: Flags) -> String {\n    if f.isSent { return \"Отправлено\" }\n    if f.isFailed { return \"Ошибка\" }\n    return \"Ждёт\"\n}\nprint(label(Flags(isSent: true, isFailed: true)))",
+  "key": "enum Status { case waiting, sent, failed }\nfunc label(_ status: Status) -> String {\n    switch status {\n    case .waiting: return \"Ждёт\"\n    case .sent: return \"Отправлено\"\n    case .failed: return \"Ошибка\"\n    }\n}\n\nФлаги позволяли противоречивое состояние, и первая ветка скрывала ошибку. Enum оставляет ровно один вариант."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни напарнику (устно)",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Карточка файла.\n1. Почему несколько Bool слабее enum?\n2. Где хранить ID сообщения?\n3. Что даст switch без default при новом case?",
+  "key": "Несколько Bool допускают невозможные сочетания. Associated value хранит номер только у sent. Исчерпывающий switch без default заставит обработать новый case при компиляции, а не оставит старую подпись молча."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Извлеки один случай",
+  "prompt": "Напиши функцию, которая возвращает ID сообщения только для sent, иначе nil. Используй if case let.",
+  "code": "enum UploadStatus {\n    case waiting, sent(messageID: Int), failed(reason: String)\n}\nfunc sentMessageID(_ status: UploadStatus) -> Int? {\n    // if case let ...\n}",
+  "key": "func sentMessageID(_ status: UploadStatus) -> Int? {\n    if case let .sent(messageID) = status { return messageID }\n    return nil\n}\n\nif case let проверяет один шаблон и извлекает его данные. Для остальных вариантов честно возвращаем nil."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Создай enum статуса файла: ожидание, отправка с номером сообщения, ошибка с причиной.\nНапиши подпись через switch без default.",
+  "key": "enum UploadStatus {\n    case waiting, sent(messageID: Int), failed(reason: String)\n}\nfunc label(_ status: UploadStatus) -> String {\n    switch status {\n    case .waiting: return \"Ждёт\"\n    case .sent(let messageID): return \"Сообщение # \\(messageID)\"\n    case .failed(let reason): return \"Ошибка: \\(reason)\"\n    }\n}\n\nКаждое состояние несёт только нужные данные, а switch покрывает все случаи. Сверь код в Swift Playground."
+ }
+]

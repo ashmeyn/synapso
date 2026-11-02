@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Отдели чтение от изменения",
+  "prompt": "Вызови split с новым CompletedCounter. Назови три числа. Доказывает ли наличие actor атомарность нескольких внешних вызовов?",
+  "code": "actor CompletedCounter {\n    private var stored = 0\n    func increment() { stored += 1 }\n    func read() -> Int { stored }\n    func claim(limit: Int) -> Bool {\n        guard stored < limit else { return false }\n        stored += 1\n        return true\n    }\n}\nfunc split(counter: CompletedCounter) async {\n    let a = await counter.read()\n    let b = await counter.read()\n    await counter.increment()\n    await counter.increment()\n    print(a, b, await counter.read())\n}",
+  "key": "0 0 2. Чтения случились до двух increment. Actor сериализует отдельные сегменты, а не превращает цепочку await в транзакцию."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Перенеси владельца",
+  "prompt": "Заполни actor и stored += 1. Здесь только increment и read; ограниченный claim самостоятельно напишешь на следующей ступени.",
+  "code": "/* Владелец */ CompletedCounter {\n    private var stored = 0\n    func increment() { /* Прибавь единицу */ }\n    func read() -> Int { stored }\n}",
+  "key": "actor CompletedCounter {\n    private var stored = 0\n    func increment() { stored += 1 }\n    func read() -> Int { stored }\n}\n\nДва внешних await counter.increment() дают 2 при последующем await counter.read(). Один increment целиком выполняется без await внутри."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Напиши ограниченный переход",
+  "prompt": "У CompletedCounter уже есть private stored, increment и read. Самостоятельно добавь claim(limit:) без await внутри; guard и изменение вместе. Для нового счётчика проверь limit 0, затем два вызова с limit 1.",
+  "code": "actor CompletedCounter {\n    private var stored = 0\n    func increment() { stored += 1 }\n    func read() -> Int { stored }\n    // Напиши claim(limit:)\n}",
+  "key": "actor CompletedCounter {\n    private var stored = 0\n    func increment() { stored += 1 }\n    func read() -> Int { stored }\n    func claim(limit: Int) -> Bool {\n        guard stored < limit else { return false }\n        stored += 1\n        return true\n    }\n}\n\nДля последовательности 0, 1, 1 ответы false, true, false; итог 1."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Исправь reentrancy",
+  "prompt": "before прочитан как 0. confirm вернул true; во время pause внешний increment сделал stored = 1. При limit 1 исходник неверно возвращает true. Перенеси проверку лимита после обоих await и используй текущее stored.",
+  "code": "actor CompletedCounter {\n    private var stored = 0\n    func read() -> Int { stored }\n    func increment() { stored += 1 }\n    func claim(limit: Int, confirm: () async -> Bool,\n               pause: () async -> Void) async -> Bool {\n        let before = stored\n        guard await confirm() else { return false }\n        await pause()\n        guard before < limit else { return false }\n        stored = before + 1\n        return true\n    }\n}",
+  "key": "actor CompletedCounter {\n    private var stored = 0\n    func read() -> Int { stored }\n    func increment() { stored += 1 }\n    func claim(limit: Int, confirm: () async -> Bool,\n               pause: () async -> Void) async -> Bool {\n        guard await confirm() else { return false }\n        await pause()\n        guard stored < limit else { return false }\n        stored += 1\n        return true\n    }\n}\n\nВ заданном чередовании исправление возвращает false, stored остаётся 1. После последнего await проверка и изменение выполняются одним сегментом."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни изоляцию",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Когда требуется внешний await? Что происходит со stored во время паузы? Почему nonisolated не может читать изменяемое состояние?",
+  "key": "Из другого контекста изолированные методы ожидают через await. При приостановке другие actor-операции могут изменить состояние; перед переходом перепроверяем условие. nonisolated не владеет изоляцией актора и может давать независимую справку, но не читать его изменяемое состояние."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Начисли несколько завершений",
+  "prompt": "Добавь add(_:): принимает положительное amount и целиком увеличивает stored без await, возвращает Bool. Ноль и отрицательное значение отвергаются. Добавь nonisolated help() со строкой «Заверши упражнение».",
+  "code": "actor CompletedCounter {\n    private var stored = 0\n    func increment() { stored += 1 }\n    func read() -> Int { stored }\n    func claim(limit: Int) -> Bool {\n        guard stored < limit else { return false }\n        stored += 1\n        return true\n    }\n}\n// Добавь методы внутрь actor",
+  "key": "actor CompletedCounter {\n    private var stored = 0\n    func increment() { stored += 1 }\n    func add(_ amount: Int) -> Bool {\n        guard amount > 0 else { return false }\n        stored += amount\n        return true\n    }\n    nonisolated func help() -> String { \"Заверши упражнение\" }\n    func read() -> Int { stored }\n    func claim(limit: Int) -> Bool {\n        guard stored < limit else { return false }\n        stored += 1\n        return true\n    }\n}\n\nДля add(3), add(0), add(-1): true, false, false; read даёт 3. help вызывается без await."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "По памяти восстанови CompletedCounter с increment, read и claim(limit:), а затем finishExercises: две дочерние async let вызывают increment; дождись обеих и выведи read и claim(limit: 2). Ожидается 2 и false. Не добавляй await между проверкой и изменением.",
+  "key": "actor CompletedCounter {\n    private var stored = 0\n    func increment() { stored += 1 }\n    func read() -> Int { stored }\n    func claim(limit: Int) -> Bool {\n        guard stored < limit else { return false }\n        stored += 1\n        return true\n    }\n}\nfunc finishExercises() async {\n    let counter = CompletedCounter()\n    async let first: Void = counter.increment()\n    async let second: Void = counter.increment()\n    _ = await (first, second)\n    print(await counter.read())\n    print(await counter.claim(limit: 2))\n}\n\nПроверь также новый экземпляр: claim(limit: 0) не меняет 0."
+ }
+]

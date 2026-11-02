@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Запоздавшая версия",
+  "prompt": "Назови две строки. Почему версия другого лота не выигрывает?",
+  "code": "import Foundation\nstruct Quote {\n    let lotID, revision, amount: Int\n}\nstruct LotState {\n    let lotID: Int\n    var revision = 0\n    var amount = 0\n    mutating func apply(_ quote: Quote) {\n        guard quote.lotID == lotID, quote.revision > revision else { return }\n        revision = quote.revision\n        amount = quote.amount\n    }\n}\nlet rows = [\n    Quote(lotID: 9, revision: 1, amount: 100),\n    Quote(lotID: 8, revision: 5, amount: 999),\n    Quote(lotID: 9, revision: 3, amount: 130),\n    Quote(lotID: 9, revision: 2, amount: 110)\n]\nvar state = LotState(lotID: 9)\nfor quote in rows { state.apply(quote) }\nprint(state.amount)\nprint(state.revision)",
+  "key": "130\n3\n\nЛот 8 отсеян до сравнения revision, а старая версия 2 лота 9 не заменяет 3."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Проверь id и свежесть",
+  "prompt": "Заполни два условия guard. Одно выбирает лот, другое — строго более новую версию.",
+  "code": "import Foundation\nstruct Quote {\n    let lotID, revision, amount: Int\n}\nstruct LotState {\n    let lotID: Int\n    var revision = 0\n    var amount = 0\n    mutating func apply(_ quote: Quote) {\n        guard /* нужный id */, /* более новая revision */ else { return }\n        revision = quote.revision\n        amount = quote.amount\n    }\n}\nlet rows = [\n    Quote(lotID: 9, revision: 1, amount: 100),\n    Quote(lotID: 8, revision: 5, amount: 999),\n    Quote(lotID: 9, revision: 3, amount: 130),\n    Quote(lotID: 9, revision: 2, amount: 110)\n]\nvar state = LotState(lotID: 9)\nfor quote in rows { state.apply(quote) }\nprint(state.amount)\nprint(state.revision)",
+  "key": "import Foundation\nstruct Quote {\n    let lotID, revision, amount: Int\n}\nstruct LotState {\n    let lotID: Int\n    var revision = 0\n    var amount = 0\n    mutating func apply(_ quote: Quote) {\n        guard quote.lotID == lotID, quote.revision > revision else { return }\n        revision = quote.revision\n        amount = quote.amount\n    }\n}\nlet rows = [\n    Quote(lotID: 9, revision: 1, amount: 100),\n    Quote(lotID: 8, revision: 5, amount: 999),\n    Quote(lotID: 9, revision: 3, amount: 130),\n    Quote(lotID: 9, revision: 2, amount: 110)\n]\nvar state = LotState(lotID: 9)\nfor quote in rows { state.apply(quote) }\nprint(state.amount)\nprint(state.revision)\n\nВывод 130, 3. Равная версия — повтор, а не основание применить сообщение второй раз."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Напиши весь приём",
+  "prompt": "Напиши follow(source:state:) async throws. При nil закончи, каждый Quote примени после checkCancellation; ошибки не скрывай.",
+  "code": "import Foundation\nstruct Quote {\n    let lotID, revision, amount: Int\n}\nprotocol QuoteSource {\n    func receive() async throws -> Quote?\n}\nstruct LotState {\n    let lotID: Int\n    var revision = 0\n    var amount = 0\n    mutating func apply(_ quote: Quote) {\n        guard quote.lotID == lotID, quote.revision > revision else { return }\n        revision = quote.revision\n        amount = quote.amount\n    }\n}\n// Напиши follow",
+  "key": "import Foundation\nstruct Quote {\n    let lotID, revision, amount: Int\n}\nprotocol QuoteSource {\n    func receive() async throws -> Quote?\n}\nstruct LotState {\n    let lotID: Int\n    var revision = 0\n    var amount = 0\n    mutating func apply(_ quote: Quote) {\n        guard quote.lotID == lotID, quote.revision > revision else { return }\n        revision = quote.revision\n        amount = quote.amount\n    }\n}\nfunc follow(\n    source: any QuoteSource, state: inout LotState\n) async throws {\n    while let quote = try await source.receive() {\n        try Task.checkCancellation()\n        state.apply(quote)\n    }\n}\n\nЦикл получает все доступные значения. Состояние не принимает чужие и старые сообщения."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Цена застыла на первом ответе",
+  "prompt": "Источник отдаёт 9/1/100 и 9/3/130, затем nil. Исправь одноразовый if в follow, сохрани проверки модели.",
+  "code": "import Foundation\nstruct Quote {\n    let lotID, revision, amount: Int\n}\nprotocol QuoteSource {\n    func receive() async throws -> Quote?\n}\nstruct LotState {\n    let lotID: Int\n    var revision = 0\n    var amount = 0\n    mutating func apply(_ quote: Quote) {\n        guard quote.lotID == lotID, quote.revision > revision else { return }\n        revision = quote.revision\n        amount = quote.amount\n    }\n}\nfunc follow(\n    source: any QuoteSource, state: inout LotState\n) async throws {\n    if let quote = try await source.receive() {\n        state.apply(quote)\n    }\n}",
+  "key": "import Foundation\nstruct Quote {\n    let lotID, revision, amount: Int\n}\nprotocol QuoteSource {\n    func receive() async throws -> Quote?\n}\nstruct LotState {\n    let lotID: Int\n    var revision = 0\n    var amount = 0\n    mutating func apply(_ quote: Quote) {\n        guard quote.lotID == lotID, quote.revision > revision else { return }\n        revision = quote.revision\n        amount = quote.amount\n    }\n}\nfunc follow(\n    source: any QuoteSource, state: inout LotState\n) async throws {\n    while let quote = try await source.receive() {\n        try Task.checkCancellation()\n        state.apply(quote)\n    }\n}\n\nДо правки цена 100, после — 130. Следующее сообщение нужно получать новым receive."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни поток",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Экран лота 9 получает полные цены с revision.\nЗачем цикл receive?\nПочему фильтр id стоит перед версией?\nКак выберешь транспорт для двусторонних ставок и только серверных цен?",
+  "key": "receive отдаёт одно сообщение, поэтому повторяем до конца или ошибки. Версии разных лотов не сравниваем: сначала выбираем нужный id. По учебной политике двусторонние ставки используют WebSocket, только серверные цены — SSE; polling и push покрывают другие режимы, а не гарантированно доставляют всю историю."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Выбери по требованию",
+  "prompt": "Самостоятельно напиши transport(for:) по четырём условиям из основы. Выведи варианты в порядке liveBids, priceOnly, occasional, backgroundHint.",
+  "code": "enum Need { case liveBids, priceOnly, occasional, backgroundHint }\nenum Transport { case webSocket, sse, polling, push }\n// Напиши transport\nprint(transport(for: .liveBids))\nprint(transport(for: .priceOnly))\nprint(transport(for: .occasional))\nprint(transport(for: .backgroundHint))",
+  "key": "enum Need { case liveBids, priceOnly, occasional, backgroundHint }\nenum Transport { case webSocket, sse, polling, push }\nfunc transport(for need: Need) -> Transport {\n    switch need {\n    case .liveBids: return .webSocket\n    case .priceOnly: return .sse\n    case .occasional: return .polling\n    case .backgroundHint: return .push\n    }\n}\nprint(transport(for: .liveBids))\nprint(transport(for: .priceOnly))\nprint(transport(for: .occasional))\nprint(transport(for: .backgroundHint))\n\nВывод webSocket, sse, polling, push. Это явно заданная политика выбора, а не подключение к оборудованию."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "По памяти перенеси получателя на остаток товара: StockUpdate(itemID, revision, available), StockSource.receive() async throws -> StockUpdate?, StockState для itemID 7. Принимай все сообщения до nil и только более свежие версии нужного id. Полный available: 7/1/5 → 7/3/2 → 7/2/4 должен оставить 2 и revision 3.",
+  "key": "import Foundation\nstruct StockUpdate {\n    let itemID, revision, available: Int\n}\nprotocol StockSource {\n    func receive() async throws -> StockUpdate?\n}\nstruct StockState {\n    let itemID: Int\n    var revision = 0\n    var available = 0\n    mutating func apply(_ value: StockUpdate) {\n        guard value.itemID == itemID, value.revision > revision else { return }\n        revision = value.revision\n        available = value.available\n    }\n}\nfunc follow(\n    source: any StockSource, state: inout StockState\n) async throws {\n    while let value = try await source.receive() {\n        try Task.checkCancellation()\n        state.apply(value)\n    }\n}\n\nНовый элемент — полный остаток товара. Более позднее старое сообщение не откатывает количество, другая сущность игнорируется."
+ }
+]

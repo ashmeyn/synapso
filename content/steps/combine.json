@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Предскажи позднюю подписку",
+  "prompt": "Что выведет программа и почему первая строка не придёт?",
+  "code": "import Combine\nlet events = PassthroughSubject<String, Never>()\nevents.send(\"Сохранён\")\nlet subscription = events.sink { print($0) }\nevents.send(\"Есть изменения\")\nsubscription.cancel()",
+  "key": "Есть изменения\n\nДо sink подписчика не было; PassthroughSubject не воспроизводит прошлое событие."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Заполни цепочку",
+  "prompt": "Допиши сохранение результата sink и фильтр документа 32.",
+  "code": "import Combine\nstruct DocumentEvent { let documentID: Int; let isSaved: Bool }\nfinal class DocumentMonitor {\n    private var subscription: AnyCancellable?\n    private(set) var message = \"Нет событий\"\n    func start(events: PassthroughSubject<DocumentEvent, Never>) {\n        /* сохранённая подписка */ = events\n            .filter { /* только документ 32 */ }\n            .map { $0.isSaved ? \"Сохранён\" : \"Есть изменения\" }\n            .sink { [weak self] value in self?.message = value }\n    }\n    func stop() { subscription?.cancel(); subscription = nil }\n}\nlet events = PassthroughSubject<DocumentEvent, Never>()\nlet monitor = DocumentMonitor()\nmonitor.start(events: events)\nevents.send(DocumentEvent(documentID: 32, isSaved: false))\nprint(monitor.message)\nmonitor.stop()\nevents.send(DocumentEvent(documentID: 32, isSaved: true))\nprint(monitor.message)",
+  "key": "import Combine\nstruct DocumentEvent { let documentID: Int; let isSaved: Bool }\nfinal class DocumentMonitor {\n    private var subscription: AnyCancellable?\n    private(set) var message = \"Нет событий\"\n    func start(events: PassthroughSubject<DocumentEvent, Never>) {\n        subscription = events\n            .filter { $0.documentID == 32 }\n            .map { $0.isSaved ? \"Сохранён\" : \"Есть изменения\" }\n            .sink { [weak self] value in self?.message = value }\n    }\n    func stop() { subscription?.cancel(); subscription = nil }\n}\nlet events = PassthroughSubject<DocumentEvent, Never>()\nlet monitor = DocumentMonitor()\nmonitor.start(events: events)\nevents.send(DocumentEvent(documentID: 32, isSaved: false))\nprint(monitor.message)\nmonitor.stop()\nevents.send(DocumentEvent(documentID: 32, isSaved: true))\nprint(monitor.message)\n\nAnyCancellable хранится в subscription; фильтр пропускает нужный documentID. После stop новое событие не меняет message."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Напиши наблюдателя",
+  "prompt": "Собери DocumentMonitor: message начинается «Нет событий», start хранит цепочку для документа 32, stop отменяет её. В sink не создавай сильное кольцо. DocumentEvent и хвост проверки даны.",
+  "code": "import Combine\nstruct DocumentEvent { let documentID: Int; let isSaved: Bool }\n// Напиши DocumentMonitor.\nlet events = PassthroughSubject<DocumentEvent, Never>()\nlet monitor = DocumentMonitor()\nmonitor.start(events: events)\nevents.send(DocumentEvent(documentID: 32, isSaved: false))\nprint(monitor.message)\nmonitor.stop()\nevents.send(DocumentEvent(documentID: 32, isSaved: true))\nprint(monitor.message)",
+  "key": "import Combine\nstruct DocumentEvent { let documentID: Int; let isSaved: Bool }\nfinal class DocumentMonitor {\n    private var subscription: AnyCancellable?\n    private(set) var message = \"Нет событий\"\n    func start(events: PassthroughSubject<DocumentEvent, Never>) {\n        subscription = events\n            .filter { $0.documentID == 32 }\n            .map { $0.isSaved ? \"Сохранён\" : \"Есть изменения\" }\n            .sink { [weak self] value in self?.message = value }\n    }\n    func stop() { subscription?.cancel(); subscription = nil }\n}\nlet events = PassthroughSubject<DocumentEvent, Never>()\nlet monitor = DocumentMonitor()\nmonitor.start(events: events)\nevents.send(DocumentEvent(documentID: 32, isSaved: false))\nprint(monitor.message)\nmonitor.stop()\nevents.send(DocumentEvent(documentID: 32, isSaved: true))\nprint(monitor.message)\n\nstart сохраняет фильтр, преобразование и sink в объекте отмены. stop прекращает получение, weak self не удерживает владельца обратно."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Подписка исчезла",
+  "prompt": "В start результат sink отброшен. После выхода send не меняет message. Исправь хранение, оставив stop и фильтр.",
+  "code": "import Combine\nstruct DocumentEvent { let documentID: Int; let isSaved: Bool }\nfinal class DocumentMonitor {\n    private var subscription: AnyCancellable?\n    private(set) var message = \"Нет событий\"\n    func start(events: PassthroughSubject<DocumentEvent, Never>) {\n        _ = events\n            .filter { $0.documentID == 32 }\n            .map { $0.isSaved ? \"Сохранён\" : \"Есть изменения\" }\n            .sink { [weak self] value in self?.message = value }\n    }\n    func stop() { subscription?.cancel(); subscription = nil }\n}\nlet events = PassthroughSubject<DocumentEvent, Never>()\nlet monitor = DocumentMonitor()\nmonitor.start(events: events)\nevents.send(DocumentEvent(documentID: 32, isSaved: false))\nprint(monitor.message)\nmonitor.stop()\nevents.send(DocumentEvent(documentID: 32, isSaved: true))\nprint(monitor.message)",
+  "key": "import Combine\nstruct DocumentEvent { let documentID: Int; let isSaved: Bool }\nfinal class DocumentMonitor {\n    private var subscription: AnyCancellable?\n    private(set) var message = \"Нет событий\"\n    func start(events: PassthroughSubject<DocumentEvent, Never>) {\n        subscription = events\n            .filter { $0.documentID == 32 }\n            .map { $0.isSaved ? \"Сохранён\" : \"Есть изменения\" }\n            .sink { [weak self] value in self?.message = value }\n    }\n    func stop() { subscription?.cancel(); subscription = nil }\n}\nlet events = PassthroughSubject<DocumentEvent, Never>()\nlet monitor = DocumentMonitor()\nmonitor.start(events: events)\nevents.send(DocumentEvent(documentID: 32, isSaved: false))\nprint(monitor.message)\nmonitor.stop()\nevents.send(DocumentEvent(documentID: 32, isSaved: true))\nprint(monitor.message)\n\nОтброшенный AnyCancellable освобождается и отменяет подписку. Сохрани его в свойстве, чтобы наблюдение пережило вызов start."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни напарнику (устно)",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "События сохранения документа 32.\n- Что делают subject, filter, map и sink?\n- Зачем хранить AnyCancellable и почему слабый захват не заменяет cancel?\n- Чем PassthroughSubject отличается от CurrentValueSubject?",
+  "key": "Subject передаёт значения; filter отбирает id, map делает подпись, sink получает её. AnyCancellable сохраняет срок жизни подписки и позволяет отменить её. weak self управляет удержанием владельца, cancel прекращает получение событий. PassthroughSubject передаёт новые события текущим подписчикам; CurrentValueSubject хранит и отдаёт новому подписчику последнее значение."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Следи за выбранным документом",
+  "prompt": "Теперь нужно состояние выбора, не событие сохранения. CurrentValueSubject<Int, Never> начинается с 32; map строит «Документ N». Подпишись, отправь 33, отмени, отправь 34. Вывод должен содержать только «Документ 32» и «Документ 33».",
+  "code": "Напиши самостоятельный пример с import Combine, selected, сохранённой subscription, преобразованием подписи и отменой.",
+  "key": "import Combine\nlet selected = CurrentValueSubject<Int, Never>(32)\nlet subscription = selected\n    .map { \"Документ \\($0)\" }\n    .sink { print($0) }\nselected.send(33)\nsubscription.cancel()\nselected.send(34)\n\nТекущее 32 приходит сразу при подписке, затем приходит 33. После cancel отправка 34 не вызывает sink."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови наблюдатель версии документа 32. RevisionEvent содержит documentID и revision: Int. RevisionMonitor хранит текущую revision = 0 и подписку, start пропускает только id 32 и записывает версию без кольца владения, stop отменяет. Отправь 33/9 и 32/2: выведи 2. Затем stop и 32/3: снова выведи 2.",
+  "key": "import Combine\nstruct RevisionEvent { let documentID: Int; let revision: Int }\nfinal class RevisionMonitor {\n    private var subscription: AnyCancellable?\n    private(set) var revision = 0\n    func start(events: PassthroughSubject<RevisionEvent, Never>) {\n        subscription = events\n            .filter { $0.documentID == 32 }\n            .map { $0.revision }\n            .sink { [weak self] value in self?.revision = value }\n    }\n    func stop() { subscription?.cancel(); subscription = nil }\n}\nlet events = PassthroughSubject<RevisionEvent, Never>()\nlet monitor = RevisionMonitor()\nmonitor.start(events: events)\nevents.send(RevisionEvent(documentID: 33, revision: 9))\nevents.send(RevisionEvent(documentID: 32, revision: 2))\nprint(monitor.revision)\nmonitor.stop()\nevents.send(RevisionEvent(documentID: 32, revision: 3))\nprint(monitor.revision)\n\nОтфильтрованный чужой документ не влияет на revision. После отмены она остаётся последней полученной: обе строки вывода — 2."
+ }
+]

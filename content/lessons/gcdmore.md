@@ -1,0 +1,176 @@
+---
+mission: ОПЕРАЦИЯ 40 · СОБРАТЬ ЭКСПОРТ ФОТОАЛЬБОМА
+scenario: Фотоальбом хранит страницы, ограничивает число тяжёлых обработок и отправляет страницу 9 только после подготовки. Выбери отдельный инструмент для защиты данных, лимита работ и зависимостей с отменой.
+goals:
+- Написать readers-writers-хранилище с private concurrent-очередью и barrier-записью.
+- Ограничить обработку semaphore с балансом permit и понимать блокировку потока.
+- Задать зависимости Operation и обработать cancel как запрос, а не принудительную остановку.
+prereqs:
+- race
+---
+
+## Три ограничения — три инструмента
+
+Назови требование до API: читатели страниц не мешают друг другу, запись должна быть эксклюзивной; тяжёлых обработок не больше двух; отправка идёт после подготовки и поддерживает отмену.
+
+Barrier задаёт границу работ одной очереди, semaphore учитывает разрешения, Operation описывает единицу работы с зависимостями и состоянием отмены. Они не заменяют друг друга и не делают любой общий объект безопасным.
+
+## Пишем в лоб: сначала отправили
+
+Начни с ошибки порядка: подготовка и отправка — две BlockOperation, то есть синхронные работы в объектах Operation. Но в примере их запускают вручную в неправильном порядке.
+
+```swift
+import Foundation
+let prepare = BlockOperation { print("Подготовка 9") }
+let publish = BlockOperation { print("Отправка 9") }
+publish.start()
+prepare.start()
+```
+
+Вывод «Отправка 9», «Подготовка 9». Отправка не дождалась нужной фазы. Положение переменной prepare выше publish в файле не создаёт зависимости; её зададим явно.
+
+## Barrier продолжает дисциплину владельца
+
+Оставь состояние закрытым, как в race, но выбери private concurrent-очередь. read выполняется через неё; запись помечена barrier: ждёт предыдущие работы, выполняется эксклюзивно на этой очереди и задерживает последующие работы до окончания.
+
+```swift
+import Foundation
+final class PageStore {
+    private let queue = DispatchQueue(
+        label: "album.pages", attributes: .concurrent
+    )
+    private var rows: [Int: String] = [:]
+    func set(_ text: String, id: Int) {
+        queue.sync(flags: .barrier) { rows[id] = text }
+    }
+    func read(id: Int) -> String? { queue.sync { rows[id] } }
+}
+```
+
+Гарантия относится к своей concurrent-очереди, не к произвольному global() и не ко всем потокам. Внешний вызов set ждёт завершения записи; read возвращает String-значение, а не изменяемый объект-хранилище. Из методов нельзя повторно sync-вызывать эту же очередь.
+
+## Readers-writers не разрешает обход
+
+Пройди страницу 9: сначала set("Готово", id: 9) через barrier, затем read(id: 9) через ту же очередь. Другая запись не перекроет читателей этой очереди; сами читатели могут перекрываться, но реальная параллельность не гарантирована.
+
+Прямой доступ к rows снаружи или через вторую очередь нарушил бы правило. Barrier не превращает возвращённый элемент-класс в самостоятельную копию; здесь храним String, чтобы снимок не открывал обход владельца.
+
+## Semaphore: не больше двух внутри
+
+Создай DispatchSemaphore(value: 2) и передай один общий slots всем обработчикам. wait получает разрешение или блокирует вызывающий поток до его появления; signal возвращает разрешение.
+
+```swift
+import Dispatch
+func renderPage(id: Int, slots: DispatchSemaphore) {
+    slots.wait()
+    defer { slots.signal() }
+    print("Страница \(id)")
+}
+```
+
+renderPage вызывается из фоновых работ. defer сигналит при выходе после успешного wait. Аналогия: два пропуска в мастерскую; перед работой забираешь один, после возвращаешь. Это лимит допущенных работ, не гарантия двух одновременно исполняющихся потоков. Не блокируй так главный поток и не создавай тысячи ожидающих работ без оценки нагрузки.
+
+## Operation: выражаем порядок
+
+Напиши publish.addDependency(prepare): publish станет готова после завершения prepare. Это порядок выполнения, а не перенос результата и не обещание успешной подготовки.
+
+```swift
+import Foundation
+func publishPage(done: @escaping () -> Void) {
+    let queue = OperationQueue()
+    let prepare = BlockOperation { print("Подготовка 9") }
+    let publish = BlockOperation { print("Отправка 9") }
+    publish.addDependency(prepare)
+    publish.completionBlock = { DispatchQueue.main.async { done() } }
+    queue.addOperations([publish, prepare], waitUntilFinished: false)
+}
+```
+
+Вывод «Подготовка 9», «Отправка 9», затем done. OperationQueue получает обе операции с waitUntilFinished: false; UI не ждёт. completionBlock доставляет завершение на main. Одну Operation не переиспользуют для повторного запуска.
+
+## Cancel: работа должна сотрудничать
+
+Перед каждым небольшим шагом проверь isCancelled. cancel выставляет запрос; он не откатывает уже выполненный шаг и не прерывает произвольный вызов посередине.
+
+```swift
+import Foundation
+final class PageOperation: Operation {
+    let id: Int
+    init(id: Int) { self.id = id; super.init() }
+    override func main() {
+        for part in 1...3 {
+            guard !isCancelled else { return }
+            print("\(id):\(part)")
+        }
+    }
+}
+```
+
+Если отменить до добавления в очередь, тело обычной операции не должно начинать работу. Если отмена пришла во время main, проверки позволяют выйти на следующей границе. Зависимый publish не отменяется автоматически вслед за prepare: завершение зависимости не означает успех. Нужна отдельная проверка результата и политика отмены.
+
+## Итог: ограничения названы явно
+
+Собери локальный экспорт без настоящих изображений. Хранилище защищено barrier; prepare получает permit и возвращает его; publish имеет зависимость и читает готовое значение.
+
+```swift
+import Foundation
+final class PageStore {
+    private let queue = DispatchQueue(
+        label: "album.pages", attributes: .concurrent
+    )
+    private var rows: [Int: String] = [:]
+    func set(_ text: String, id: Int) {
+        queue.sync(flags: .barrier) { rows[id] = text }
+    }
+    func read(id: Int) -> String? { queue.sync { rows[id] } }
+}
+func exportPage(done: @escaping () -> Void) {
+    let store = PageStore()
+    let slots = DispatchSemaphore(value: 2)
+    let queue = OperationQueue()
+    let prepare = BlockOperation {
+        slots.wait(); defer { slots.signal() }
+        store.set("Готово", id: 9)
+    }
+    let publish = BlockOperation { print(store.read(id: 9) ?? "Нет данных") }
+    publish.addDependency(prepare)
+    publish.completionBlock = { DispatchQueue.main.async { done() } }
+    queue.addOperations([publish, prepare], waitUntilFinished: false)
+}
+```
+
+Вывод «Готово», затем done. Здесь одна подготовка не доказывает нагрузочный лимит двух; несколько обработок должны разделять один slots. Для отмены и ошибки добавь политику: проверка isCancelled в своей работе и проверка наличия успешного результата перед отправкой.
+
+## Проверь себя
+
+Объясни отдельно каждую гарантию.
+
+- Почему barrier на global не заменяет private concurrent-владельца rows?
+- Какой поток ждёт в semaphore.wait и когда можно signal?
+- Почему отменённая prepare не означает автоматическую отмену publish?
+
+# ГЛУБЖЕ
+
+## async-запись меняет контракт
+
+Если set станет queue.async(flags: .barrier), метод вернётся после постановки. Для явного подтверждения окончания добавь callback, который ставится после записи.
+
+Не вызывай read через sync внутри barrier той же очереди. Если результат уже есть в блоке, передай снимок напрямую. Все пути чтения и записи по-прежнему обязаны соблюдать одного владельца.
+
+## Timeout не получает permit
+
+Проверь результат wait(timeout:). При .timedOut разрешение не получено; signal «для компенсации» создаёт лишний permit и нарушает лимит. signal соответствует успешному приобретению, а не любому вызову wait.
+
+Если permit нужен на время асинхронной операции, освободи его в настоящем конечном callback, не в defer короткой оболочки, которая лишь запускает работу. Отмена тоже должна закрывать этот контракт ровно один раз.
+
+## Зависимость не проверяет успех
+
+Сначала реши, что должен делать publish, если prepare завершилась ошибкой или была отменена. addDependency ждёт finished-состояния, а не Bool «всё успешно».
+
+Храни успешный результат у безопасного владельца и проверь его перед отправкой. cancelAllOperations посылает запросы отмены, но не является мгновенным уничтожением всех выполняющихся эффектов.
+
+## Синхронная и асинхронная Operation
+
+В этом уроке main выполняет синхронные шаги и возвращается по окончании. Если subclass запускает сеть и сразу возвращается, обычная Operation может считаться завершённой слишком рано.
+
+Асинхронный subclass требует корректного isAsynchronous/isExecuting/isFinished и уведомлений состояния; это отдельная реализация. Не обещай зависимости от настоящего результата, если наблюдаемый finished не совпадает с ним.

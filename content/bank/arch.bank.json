@@ -1,0 +1,35 @@
+[
+ {
+  "id": "arch-b1",
+  "topics": [
+   "arch"
+  ],
+  "type": "Найди ошибку",
+  "title": "Пустые выбранные точки маршрута",
+  "prompt": "После пустого reload на экране осталась прежняя точка. Исправь presenter, чтобы успешный пустой результат тоже отображался. View слабая и удерживается отдельно.",
+  "code": "struct Stop { let id: Int; let title: String }\nprotocol StopsViewing: AnyObject { func render(_ titles: [String]) }\nfinal class StopsScreen: StopsViewing {\n    var titles: [String] = []\n    func render(_ titles: [String]) { self.titles = titles }\n}\nfinal class StopsPresenter {\n    weak var view: (any StopsViewing)?\n    func reload(_ stops: [Stop]) {\n        guard !stops.isEmpty else { return }\n        view?.render(stops.map { $0.title })\n    }\n}\nlet screen = StopsScreen()\nlet presenter = StopsPresenter()\npresenter.view = screen\npresenter.reload([Stop(id: 61, title: \"Выбранная точка\")])\npresenter.reload([])\nprint(screen.titles)",
+  "key": "struct Stop { let id: Int; let title: String }\nprotocol StopsViewing: AnyObject { func render(_ titles: [String]) }\nfinal class StopsScreen: StopsViewing {\n    var titles: [String] = []\n    func render(_ titles: [String]) { self.titles = titles }\n}\nfinal class StopsPresenter {\n    weak var view: (any StopsViewing)?\n    func reload(_ stops: [Stop]) {\n        view?.render(stops.map { $0.title })\n    }\n}\nlet screen = StopsScreen()\nlet presenter = StopsPresenter()\npresenter.view = screen\npresenter.reload([Stop(id: 61, title: \"Выбранная точка\")])\npresenter.reload([])\nassert(screen.titles.isEmpty)\n\nПередача [] очищает старое отображение; guard с return пропускал обновление."
+ },
+ {
+  "id": "arch-b2",
+  "topics": [
+   "arch"
+  ],
+  "type": "Допиши",
+  "title": "Ошибка каталога локальных файлов",
+  "prompt": "FilesRepository.all() throws. В VisibleFiles передай ошибку вызывающему коду, не превращай её в []. FailedFiles бросает unavailable; в контексте должен напечататься Недоступно.",
+  "code": "enum FileError: Error { case unavailable }\nstruct FileItem { let id: Int; let title: String }\nprotocol FilesRepository { func all() throws -> [FileItem] }\nstruct VisibleFiles {\n    let repository: any FilesRepository\n    func execute() throws -> [FileItem] { [] /* TODO */ }\n}\nstruct FailedFiles: FilesRepository {\n    func all() throws -> [FileItem] { throw FileError.unavailable }\n}\nlet useCase = VisibleFiles(repository: FailedFiles())\ndo {\n    _ = try useCase.execute()\n    assertionFailure(\"Ошибка потеряна\")\n} catch FileError.unavailable { print(\"Недоступно\") }",
+  "key": "enum FileError: Error { case unavailable }\nstruct FileItem { let id: Int; let title: String }\nprotocol FilesRepository { func all() throws -> [FileItem] }\nstruct VisibleFiles {\n    let repository: any FilesRepository\n    func execute() throws -> [FileItem] { try repository.all() }\n}\nstruct FailedFiles: FilesRepository {\n    func all() throws -> [FileItem] { throw FileError.unavailable }\n}\nlet useCase = VisibleFiles(repository: FailedFiles())\ndo {\n    _ = try useCase.execute()\n    assertionFailure(\"Ошибка потеряна\")\n} catch FileError.unavailable { print(\"Недоступно\") }\n\nОшибка сохранена как ошибка, не выдана за успешный пустой каталог."
+ },
+ {
+  "id": "arch-b3",
+  "topics": [
+   "arch"
+  ],
+  "type": "Найди ошибку",
+  "title": "Панель аквариума держит свой адаптер",
+  "prompt": "model хранит onChange, screen хранит model. После screen=nil weak probe должен стать nil, даже если model продолжает жить. Исправь захват в init, не очищая callback снаружи.",
+  "code": "final class AquariumModel {\n    var onChange: ((Int) -> Void)?\n    func update(_ value: Int) { onChange?(value) }\n}\nfinal class AquariumScreen {\n    let model: AquariumModel\n    var reading = 0\n    init(model: AquariumModel) {\n        self.model = model\n        model.onChange = { self.reading = $0 }\n    }\n}\nlet model = AquariumModel()\nvar screen: AquariumScreen? = AquariumScreen(model: model)\nweak var probe = screen\nmodel.update(7)\nprint(screen?.reading ?? -1)\nscreen = nil\nprint(probe == nil)",
+  "key": "final class AquariumModel {\n    var onChange: ((Int) -> Void)?\n    func update(_ value: Int) { onChange?(value) }\n}\nfinal class AquariumScreen {\n    let model: AquariumModel\n    var reading = 0\n    init(model: AquariumModel) {\n        self.model = model\n        model.onChange = { [weak self] in self?.reading = $0 }\n    }\n}\nlet model = AquariumModel()\nvar screen: AquariumScreen? = AquariumScreen(model: model)\nweak var probe = screen\nmodel.update(7)\nprint(screen?.reading ?? -1)\nscreen = nil\nprint(probe == nil)\n\nВывод: 7, true. Обратный callback слабый; живой model не удерживает закрытый адаптер."
+ }
+]

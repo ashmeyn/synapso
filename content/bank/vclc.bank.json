@@ -1,0 +1,35 @@
+[
+ {
+  "id": "vclc-b1",
+  "topics": [
+   "vclc"
+  ],
+  "type": "Допиши",
+  "title": "Корневая view компаса",
+  "prompt": "Экран создаётся кодом, без storyboard. Переопредели loadView, создай UIView с чёрным фоном и присвой view. Не вызывай super.loadView для дополнительной загрузки.",
+  "code": "import UIKit\nfinal class CompassController: UIViewController {\n    override func loadView() {\n        // TODO\n    }\n}",
+  "key": "import UIKit\nfinal class CompassController: UIViewController {\n    override func loadView() {\n        let root = UIView()\n        root.backgroundColor = .black\n        view = root\n    }\n}\n\nКорневая view назначена один раз этим методом. UIKit затем вызывает viewDidLoad при загрузке."
+ },
+ {
+  "id": "vclc-b2",
+  "topics": [
+   "vclc"
+  ],
+  "type": "Допиши",
+  "title": "Таймер игры «Найди пару»",
+  "prompt": "Таймер нужен только после завершённого появления. Напиши startTimer с отключением старого timer и weak self; увеличивай ticks. Отключай после исчезновения, очисти в deinit. В ручной проверке используй fire(), не sleep и не ожидание реального времени.",
+  "code": "import UIKit\nfinal class PairGameController: UIViewController {\n    private var timer: Timer?\n    private(set) var ticks = 0\n    // TODO: startTimer, callbacks, deinit\n}",
+  "key": "import UIKit\nfinal class PairGameController: UIViewController {\n    private var timer: Timer?\n    private(set) var ticks = 0\n    func startTimer() {\n        timer?.invalidate()\n        timer = Timer.scheduledTimer(\n            withTimeInterval: 1, repeats: true\n        ) { [weak self] _ in\n            self?.ticks += 1\n        }\n    }\n    override func viewDidAppear(_ animated: Bool) {\n        super.viewDidAppear(animated)\n        startTimer()\n    }\n    override func viewDidDisappear(_ animated: Bool) {\n        super.viewDidDisappear(animated)\n        timer?.invalidate()\n        timer = nil\n    }\n    deinit { timer?.invalidate() }\n}\n\nПосле повторного start старый timer отключён, callback не удерживает контроллер. Ручной fire проверяет обработчик, но не режим run loop и не автоматические UI-события."
+ },
+ {
+  "id": "vclc-b3",
+  "topics": [
+   "vclc"
+  ],
+  "type": "Найди ошибку",
+  "title": "Кнопка билета хранит владельца",
+  "prompt": "Это Foundation-контекст владения, не настоящий UIViewController. Ожидаются Билет, Освобождён, true, но после controller=nil владелец остаётся жив. Исправь захват в connect, не вызывая вручную deinit и не очищая callback снаружи.",
+  "code": "import Foundation\nfinal class TicketController {\n    var didSelect: (() -> Void)?\n    func connect() {\n        didSelect = { self.showTicket() }\n    }\n    func showTicket() { print(\"Билет\") }\n    deinit { print(\"Освобождён\") }\n}\nvar controller: TicketController? = TicketController()\nweak var probe = controller\ncontroller?.connect()\ncontroller?.didSelect?()\ncontroller = nil\nprint(probe == nil)",
+  "key": "import Foundation\nfinal class TicketController {\n    var didSelect: (() -> Void)?\n    func connect() {\n        didSelect = { [weak self] in self?.showTicket() }\n    }\n    func showTicket() { print(\"Билет\") }\n    deinit { print(\"Освобождён\") }\n}\nvar controller: TicketController? = TicketController()\nweak var probe = controller\ncontroller?.connect()\ncontroller?.didSelect?()\ncontroller = nil\nprint(probe == nil)\n\nВывод: Билет, Освобождён, true. Сильное ребро callback → controller разорвано. В настоящем UI дополнительно учитывай другие владельцы, например navigation stack."
+ }
+]

@@ -1,0 +1,35 @@
+[
+ {
+  "id": "rest-b1",
+  "topics": [
+   "rest"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Приостановка абонемента бассейна",
+  "prompt": "Учебный контракт меняет только is_paused через PATCH /memberships/4. Что выведет построение запроса? Сеть не используется.",
+  "code": "import Foundation\nfunc makeMembershipRequest() -> URLRequest? {\n    let address = \"https://api.example.invalid/memberships/4\"\n    guard let url = URL(string: address) else { return nil }\n    var request = URLRequest(url: url)\n    request.httpMethod = \"PATCH\"\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Content-Type\")\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    request.httpBody = Data(#\"{\"is_paused\":true}\"#.utf8)\n    return request\n}\nif let request = makeMembershipRequest() {\n    print(request.httpMethod ?? \"\")\n    print(request.value(forHTTPHeaderField: \"Content-Type\") ?? \"\")\n}",
+  "key": "PATCH\napplication/json\n\nМеняется одно поле существующего ресурса, а не создаётся новый абонемент."
+ },
+ {
+  "id": "rest-b2",
+  "topics": [
+   "rest"
+  ],
+  "type": "Найди ошибку",
+  "title": "Удаление сохранённого места на карте",
+  "prompt": "По контракту удалить /saved-places/12 нужно DELETE без тела. Исправь метод собранного запроса.",
+  "code": "import Foundation\nfunc makeDeleteRequest(placeID: Int) -> URLRequest? {\n    guard placeID > 0 else { return nil }\n    let address = \"https://api.example.invalid/saved-places/\\(placeID)\"\n    guard let url = URL(string: address) else { return nil }\n    var request = URLRequest(url: url)\n    request.httpMethod = \"GET\"\n    return request\n}\nif let request = makeDeleteRequest(placeID: 12) {\n    print(request.httpMethod ?? \"\")\n}",
+  "key": "import Foundation\nfunc makeDeleteRequest(placeID: Int) -> URLRequest? {\n    guard placeID > 0 else { return nil }\n    let address = \"https://api.example.invalid/saved-places/\\(placeID)\"\n    guard let url = URL(string: address) else { return nil }\n    var request = URLRequest(url: url)\n    request.httpMethod = \"DELETE\"\n    return request\n}\nif let request = makeDeleteRequest(placeID: 12) {\n    print(request.httpMethod ?? \"\")\n}\n\nGET предназначен для чтения; DELETE удаляет сохранённое место по его id. Исправленный вывод DELETE."
+ },
+ {
+  "id": "rest-b3",
+  "topics": [
+   "rest"
+  ],
+  "type": "Допиши",
+  "title": "Создание заявки на ремонт",
+  "prompt": "POST /repair-requests получает {\"device_id\":6}. Допиши метод и Content-Type для создания, без сетевого вызова.",
+  "code": "import Foundation\nfunc makeRepairRequest() -> URLRequest? {\n    let address = \"https://api.example.invalid/repair-requests\"\n    guard let url = URL(string: address) else { return nil }\n    var request = URLRequest(url: url)\n    request.httpMethod = /* действие */\n    request.setValue(\"application/json\", forHTTPHeaderField: /* описание тела */)\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    request.httpBody = Data(#\"{\"device_id\":6}\"#.utf8)\n    return request\n}\nif let request = makeRepairRequest() {\n    print(request.httpMethod ?? \"\")\n    print(request.value(forHTTPHeaderField: /* описание тела */) ?? \"\")\n}",
+  "key": "import Foundation\nfunc makeRepairRequest() -> URLRequest? {\n    let address = \"https://api.example.invalid/repair-requests\"\n    guard let url = URL(string: address) else { return nil }\n    var request = URLRequest(url: url)\n    request.httpMethod = \"POST\"\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Content-Type\")\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    request.httpBody = Data(#\"{\"device_id\":6}\"#.utf8)\n    return request\n}\nif let request = makeRepairRequest() {\n    print(request.httpMethod ?? \"\")\n    print(request.value(forHTTPHeaderField: \"Content-Type\") ?? \"\")\n}\n\nСоздание отправляется POST к коллекции с JSON Content-Type. Вывод POST и application/json."
+ }
+]

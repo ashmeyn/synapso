@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Общий экземпляр",
+  "prompt": "Назови две строки и объясни, сколько RouteDraft-объектов создано.",
+  "code": "final class RouteDraft {\n    let id: Int\n    var title: String\n    init(id: Int, title: String) { self.id = id; self.title = title }\n}\nlet original = RouteDraft(id: 12, title: \"Утро\")\nlet draft = original\ndraft.title = \"Вечер\"\nprint(original.title)\nprint(original === draft)",
+  "key": "Вечер\ntrue\n\nСоздан один экземпляр; присваивание копирует ссылку, поэтому две переменные наблюдают общий title."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Верни новое значение",
+  "prompt": "Заполни локальную копию и верни её после изменения. Тип уже struct.",
+  "code": "struct RouteDraft {\n    let id: Int\n    var title: String\n}\nfunc renamed(_ route: RouteDraft, to title: String) -> RouteDraft {\n    // Создай локальный var из route\n    draft.title = title\n    // Верни изменённое значение\n}\nlet original = RouteDraft(id: 12, title: \"Утро\")\nlet draft = renamed(original, to: \"Вечер\")\nprint(original.title)\nprint(draft.title)",
+  "key": "struct RouteDraft {\n    let id: Int\n    var title: String\n}\nfunc renamed(_ route: RouteDraft, to title: String) -> RouteDraft {\n    var draft = route\n    draft.title = title\n    return draft\n}\nlet original = RouteDraft(id: 12, title: \"Утро\")\nlet draft = renamed(original, to: \"Вечер\")\nprint(original.title)\nprint(draft.title)\n\nВывод «Утро», «Вечер». Изменение возвращено явно, исходное значение не переписано."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Измени общий объект",
+  "prompt": "Напиши retitle(_:to:) для RouteDraft-класса и вызови её с alias. original и alias оставь let. Покажи изменение исходного title и общую идентичность через ===. Объясни, почему inout здесь не нужен.",
+  "code": "final class RouteDraft {\n    let id: Int\n    var title: String\n    init(id: Int, title: String) { self.id = id; self.title = title }\n}\n// Напиши функцию retitle\nlet original = RouteDraft(id: 12, title: \"Утро\")\nlet alias = original\n// Измени объект через alias\nprint(original.title)\nprint(original === alias)",
+  "key": "final class RouteDraft {\n    let id: Int\n    var title: String\n    init(id: Int, title: String) { self.id = id; self.title = title }\n}\nfunc retitle(_ draft: RouteDraft, to title: String) {\n    draft.title = title\n}\nlet original = RouteDraft(id: 12, title: \"Утро\")\nlet alias = original\nretitle(alias, to: \"Вечер\")\nprint(original.title)\nprint(original === alias)\n\nВывод «Вечер», true. let сохраняет ссылку в переменной, но разрешает изменение var title её объекта. Функция не заменяет ссылку вызывающей стороны, поэтому inout не требуется."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Копия оказалась ссылкой",
+  "prompt": "Исправь RouteDraft на значение, сохрани id/title. Для значения используй var draft; вместо === выведи original.title и draft.title.",
+  "code": "final class RouteDraft {\n    let id: Int\n    var title: String\n    init(id: Int, title: String) { self.id = id; self.title = title }\n}\nlet original = RouteDraft(id: 12, title: \"Утро\")\nlet draft = original\ndraft.title = \"Вечер\"\nprint(original.title)\nprint(original === draft)",
+  "key": "struct RouteDraft {\n    let id: Int\n    var title: String\n}\nlet original = RouteDraft(id: 12, title: \"Утро\")\nvar draft = original\ndraft.title = \"Вечер\"\nprint(original.title)\nprint(draft.title)\n\nПосле правки «Утро», «Вечер». === больше не нужен: это оператор идентичности классов."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни границу",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Редактор имеет оригинал и черновик плана. Что копирует присваивание struct и class? Почему let класса разрешает изменение var-свойства? Как влияет class-свойство внутри struct?",
+  "key": "struct передаёт значение, class — ссылку на общий экземпляр. let ссылки запрещает переприсваивание этой переменной, но не изменение доступного var-свойства объекта. Class-свойство структуры остаётся ссылкой: изменение вложенного объекта может быть общим."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Сделай участников независимыми",
+  "prompt": "Сейчас original.participants тоже получает 2. Исправь Participants на значение и разреши его изменение в draft. Оригинальные title и count должны остаться «Утро» и 1.",
+  "code": "final class Participants {\n    var count = 1\n}\nstruct RouteDraft {\n    let id: Int\n    var title: String\n    let participants: Participants\n}\nlet original = RouteDraft(\n    id: 12, title: \"Утро\", participants: Participants()\n)\nvar draft = original\ndraft.title = \"Вечер\"\ndraft.participants.count = 2\nprint(original.title)\nprint(original.participants.count)",
+  "key": "struct Participants {\n    var count = 1\n}\nstruct RouteDraft {\n    let id: Int\n    var title: String\n    var participants: Participants\n}\nlet original = RouteDraft(\n    id: 12, title: \"Утро\", participants: Participants()\n)\nvar draft = original\ndraft.title = \"Вечер\"\ndraft.participants.count = 2\nprint(original.title)\nprint(original.participants.count)\n\nВывод «Утро», 1. Вложенный счётчик теперь имеет значение, а не общую идентичность класса."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "По памяти создай RouteNote с id и text как struct. Функция annotated(_:to:) возвращает новое значение с текстом «Взять камеру»; исходное «Без заметки» не меняется. Покажи оба текста. Затем объясни, что изменится, если вложенное поле станет ссылкой на class.",
+  "key": "struct RouteNote {\n    let id: Int\n    var text: String\n}\nfunc annotated(_ route: RouteNote, to text: String) -> RouteNote {\n    var draft = route\n    draft.text = text\n    return draft\n}\nlet original = RouteNote(id: 12, text: \"Без заметки\")\nlet draft = annotated(original, to: \"Взять камеру\")\nprint(original.text)\nprint(draft.text)\n\nВывод «Без заметки», «Взять камеру». Ссылка внутри модели потребует отдельного решения о совместном изменении."
+ }
+]

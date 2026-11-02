@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Предскажи две строки",
+  "prompt": "Назови точный вывод двух print и объясни отсутствие второй записи в DemoAudioSource.",
+  "code": "protocol AudioSource {\n    var label: String { get }\n    func title(for trackID: Int) -> String?\n}\nstruct DownloadedAudioSource: AudioSource {\n    let label = \"На устройстве\"\n    let tracks = [1: \"Начало\", 2: \"Практика\"]\n    func title(for trackID: Int) -> String? { tracks[trackID] }\n}\nstruct DemoAudioSource: AudioSource {\n    let label = \"Демо\"\n    func title(for trackID: Int) -> String? {\n        trackID == 1 ? \"Пример\" : nil\n    }\n}\nfunc rowText(source: any AudioSource, trackID: Int) -> String {\n    let title = source.title(for: trackID) ?? \"Недоступно\"\n    return \"\\(source.label): \\(title)\"\n}\nprint(rowText(source: DownloadedAudioSource(), trackID: 2))\nprint(rowText(source: DemoAudioSource(), trackID: 2))",
+  "key": "На устройстве: Практика\nДемо: Недоступно\n\nDemoAudioSource возвращает nil для id 2. rowText подставляет «Недоступно», не проверяя конкретный тип источника."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Допиши контракт",
+  "prompt": "Заполни чтение подписи в протоколе и тип параметра rowText. Функция должна принимать обе реализации.",
+  "code": "protocol AudioSource {\n    var label: String { /* режим доступа */ }\n    func title(for trackID: Int) -> String?\n}\nstruct DownloadedAudioSource: AudioSource {\n    let label = \"На устройстве\"\n    let tracks = [1: \"Начало\", 2: \"Практика\"]\n    func title(for trackID: Int) -> String? { tracks[trackID] }\n}\nstruct DemoAudioSource: AudioSource {\n    let label = \"Демо\"\n    func title(for trackID: Int) -> String? {\n        trackID == 1 ? \"Пример\" : nil\n    }\n}\nfunc rowText(source: /* общий контракт */, trackID: Int) -> String {\n    let title = source.title(for: trackID) ?? \"Недоступно\"\n    return \"\\(source.label): \\(title)\"\n}\nprint(rowText(source: DownloadedAudioSource(), trackID: 2))\nprint(rowText(source: DemoAudioSource(), trackID: 2))",
+  "key": "protocol AudioSource {\n    var label: String { get }\n    func title(for trackID: Int) -> String?\n}\nstruct DownloadedAudioSource: AudioSource {\n    let label = \"На устройстве\"\n    let tracks = [1: \"Начало\", 2: \"Практика\"]\n    func title(for trackID: Int) -> String? { tracks[trackID] }\n}\nstruct DemoAudioSource: AudioSource {\n    let label = \"Демо\"\n    func title(for trackID: Int) -> String? {\n        trackID == 1 ? \"Пример\" : nil\n    }\n}\nfunc rowText(source: any AudioSource, trackID: Int) -> String {\n    let title = source.title(for: trackID) ?? \"Недоступно\"\n    return \"\\(source.label): \\(title)\"\n}\nprint(rowText(source: DownloadedAudioSource(), trackID: 2))\nprint(rowText(source: DemoAudioSource(), trackID: 2))\n\nget достаточно для чтения label. any AudioSource позволяет передать любой явно соответствующий этому контракту источник."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Напиши второй источник",
+  "prompt": "Сохрани протокол и общую функцию. Реализуй DemoAudioSource самостоятельно: label «Демо», только id 1 имеет «Пример», остальные дают nil.",
+  "code": "protocol AudioSource {\n    var label: String { get }\n    func title(for trackID: Int) -> String?\n}\nstruct DownloadedAudioSource: AudioSource {\n    let label = \"На устройстве\"\n    let tracks = [1: \"Начало\", 2: \"Практика\"]\n    func title(for trackID: Int) -> String? { tracks[trackID] }\n}\n// Напиши DemoAudioSource с двумя требованиями.\nfunc rowText(source: any AudioSource, trackID: Int) -> String {\n    let title = source.title(for: trackID) ?? \"Недоступно\"\n    return \"\\(source.label): \\(title)\"\n}\nprint(rowText(source: DownloadedAudioSource(), trackID: 2))\nprint(rowText(source: DemoAudioSource(), trackID: 2))",
+  "key": "protocol AudioSource {\n    var label: String { get }\n    func title(for trackID: Int) -> String?\n}\nstruct DownloadedAudioSource: AudioSource {\n    let label = \"На устройстве\"\n    let tracks = [1: \"Начало\", 2: \"Практика\"]\n    func title(for trackID: Int) -> String? { tracks[trackID] }\n}\nstruct DemoAudioSource: AudioSource {\n    let label = \"Демо\"\n    func title(for trackID: Int) -> String? {\n        trackID == 1 ? \"Пример\" : nil\n    }\n}\nfunc rowText(source: any AudioSource, trackID: Int) -> String {\n    let title = source.title(for: trackID) ?? \"Недоступно\"\n    return \"\\(source.label): \\(title)\"\n}\nprint(rowText(source: DownloadedAudioSource(), trackID: 2))\nprint(rowText(source: DemoAudioSource(), trackID: 2))\n\nДемоисточник выполняет те же требования своим алгоритмом. Его отсутствие записи имеет тот же смысл nil, что и в загруженном каталоге."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Верни смысл отсутствия",
+  "prompt": "Источник возвращает пустую строку для отсутствующего id 2. Вместо «Недоступно» получается строка «Демо: ». Исправь реализацию, не меняя контракт и rowText.",
+  "code": "protocol AudioSource {\n    var label: String { get }\n    func title(for trackID: Int) -> String?\n}\nstruct DownloadedAudioSource: AudioSource {\n    let label = \"На устройстве\"\n    let tracks = [1: \"Начало\", 2: \"Практика\"]\n    func title(for trackID: Int) -> String? { tracks[trackID] }\n}\nstruct DemoAudioSource: AudioSource {\n    let label = \"Демо\"\n    func title(for trackID: Int) -> String? {\n        trackID == 1 ? \"Пример\" : \"\"\n    }\n}\nfunc rowText(source: any AudioSource, trackID: Int) -> String {\n    let title = source.title(for: trackID) ?? \"Недоступно\"\n    return \"\\(source.label): \\(title)\"\n}\nprint(rowText(source: DownloadedAudioSource(), trackID: 2))\nprint(rowText(source: DemoAudioSource(), trackID: 2))",
+  "key": "protocol AudioSource {\n    var label: String { get }\n    func title(for trackID: Int) -> String?\n}\nstruct DownloadedAudioSource: AudioSource {\n    let label = \"На устройстве\"\n    let tracks = [1: \"Начало\", 2: \"Практика\"]\n    func title(for trackID: Int) -> String? { tracks[trackID] }\n}\nstruct DemoAudioSource: AudioSource {\n    let label = \"Демо\"\n    func title(for trackID: Int) -> String? {\n        trackID == 1 ? \"Пример\" : nil\n    }\n}\nfunc rowText(source: any AudioSource, trackID: Int) -> String {\n    let title = source.title(for: trackID) ?? \"Недоступно\"\n    return \"\\(source.label): \\(title)\"\n}\nprint(rowText(source: DownloadedAudioSource(), trackID: 2))\nprint(rowText(source: DemoAudioSource(), trackID: 2))\n\nПустая строка — существующее значение String, поэтому ?? её не заменяет. Контракт обозначает отсутствие через nil; возвращаем nil для неизвестного id."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни напарнику (устно)",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Одна строка аудиоурока работает с загруженным и демонстрационным каталогами.\n- Что обещает AudioSource и зачем any в параметре?\n- Почему let label подходит к get, а let rate не подошёл бы к get set?\n- Почему для неизвестной записи возвращаем nil, а не пустую строку?",
+  "key": "AudioSource обещает читаемую подпись и метод title(for:) с возможным отсутствием строки. any скрывает конкретный соответствующий тип, сохраняя доступ к требованиям. get требует чтение, поэтому let подходит; get set дополнительно требует запись, которую let не позволяет. nil обозначает отсутствие и включает запасной текст через ??; пустая строка существует и не включает его."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Разреши изменение скорости",
+  "prompt": "Добавь отдельный контракт PlaybackSettings со свойством rate: Double для чтения и записи. Реализуй AudioSettings со скоростью 1.0, сохрани как var settings: any PlaybackSettings, установи 1.5 и выведи значение. Не меняй контракт каталога.",
+  "code": "Напиши протокол, структуру и три строки использования. Настройка изменяемая; вызывающий код работает через контракт.",
+  "key": "protocol PlaybackSettings {\n    var rate: Double { get set }\n}\nstruct AudioSettings: PlaybackSettings {\n    var rate = 1.0\n}\nvar settings: any PlaybackSettings = AudioSettings()\nsettings.rate = 1.5\nprint(settings.rate)\n\nget set обещает запись, поэтому rate в реализации и settings как хранилище структуры объявлены var. Консоль выводит 1.5."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Для того же аудиоурока сделай источники текста расшифровки. TranscriptSource обещает читаемую label и text(for trackID: Int) -> String?. DownloadedTranscriptSource: «На устройстве», id 1 → «Первый урок». DemoTranscriptSource: «Демо», id 1 → «Короткий пример». Прочие id отсутствуют. Общая transcriptText принимает контракт и строит «подпись: текст» либо «подпись: Недоступно». Выведи загруженный id 1, демо id 1, демо id 9.",
+  "key": "protocol TranscriptSource {\n    var label: String { get }\n    func text(for trackID: Int) -> String?\n}\nstruct DownloadedTranscriptSource: TranscriptSource {\n    let label = \"На устройстве\"\n    let texts = [1: \"Первый урок\"]\n    func text(for trackID: Int) -> String? { texts[trackID] }\n}\nstruct DemoTranscriptSource: TranscriptSource {\n    let label = \"Демо\"\n    func text(for trackID: Int) -> String? { trackID == 1 ? \"Короткий пример\" : nil }\n}\nfunc transcriptText(source: any TranscriptSource, trackID: Int) -> String {\n    \"\\(source.label): \\(source.text(for: trackID) ?? \"Недоступно\")\"\n}\nprint(transcriptText(source: DownloadedTranscriptSource(), trackID: 1))\nprint(transcriptText(source: DemoTranscriptSource(), trackID: 1))\nprint(transcriptText(source: DemoTranscriptSource(), trackID: 9))\n\nОбе реализации соответствуют одному контракту, общая функция не знает их устройство. Вывод: «На устройстве: Первый урок», «Демо: Короткий пример», «Демо: Недоступно»."
+ }
+]

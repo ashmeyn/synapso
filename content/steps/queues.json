@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Порядок serial",
+  "prompt": "Назови три строки вывода. Почему async не меняет порядок двух задач serial-очереди, а последний sync находится снаружи неё?",
+  "code": "import Dispatch\nlet queue = DispatchQueue(label: \"levels.export\")\nqueue.async { print(\"Уровень 7\") }\nqueue.async { print(\"Уровень 8\") }\nqueue.sync {}\nprint(\"Готово\")",
+  "key": "Уровень 7\nУровень 8\nГотово\n\nОдин отправитель поставил работы на serial-очередь в этом порядке. Внешний sync ждёт предыдущие работы перед сообщением «Готово»."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Выбери ожидание",
+  "prompt": "Заполни sync, если «После» должно печататься только после «Экспорт 7». Затем объясни допустимые порядки при async; не обещай, что он всегда печатает работу последней.",
+  "code": "import Dispatch\nlet queue = DispatchQueue(label: \"levels.export\")\nprint(\"До\")\nqueue./* Выбери метод */ { print(\"Экспорт 7\") }\nprint(\"После\")",
+  "key": "import Dispatch\nlet queue = DispatchQueue(label: \"levels.export\")\nprint(\"До\")\nqueue.sync { print(\"Экспорт 7\") }\nprint(\"После\")\n\nВывод «До», «Экспорт 7», «После». При async после «До» допустимы оба порядка оставшихся сообщений: вызывающий код не ждёт окончание работы."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Напиши возврат результата",
+  "prompt": "Самостоятельно напиши encodeLevel(id:) -> String и получи результат через queue.sync. Ожидается строка level-7; без async-записи в общую переменную.",
+  "code": "import Dispatch\nlet queue = DispatchQueue(label: \"levels.export\")\n// Напиши помощник, sync и вывод результата",
+  "key": "import Dispatch\nlet queue = DispatchQueue(label: \"levels.export\")\nfunc encodeLevel(id: Int) -> String { \"level-\\(id)\" }\nlet result = queue.sync { encodeLevel(id: 7) }\nprint(result)\n\nВывод level-7. sync завершает тело и возвращает его значение до следующей строки."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Очередь ждёт себя",
+  "prompt": "Исправь вложенный sync на текущую serial-очередь: вынеси печать «Экспорт 7» в encodeLevel() и вызови напрямую из внешнего блока. Сохрани порядок «Начало», экспорт, «Конец». Не запускай исходный блок как успешный пример.",
+  "code": "import Dispatch\nlet queue = DispatchQueue(label: \"levels.export\")\nqueue.sync {\n    print(\"Начало\")\n    queue.sync { print(\"Экспорт 7\") }\n    print(\"Конец\")\n}",
+  "key": "import Dispatch\nlet queue = DispatchQueue(label: \"levels.export\")\nfunc encodeLevel() { print(\"Экспорт 7\") }\nqueue.sync {\n    print(\"Начало\")\n    encodeLevel()\n    print(\"Конец\")\n}\n\nПосле исправления «Начало», «Экспорт 7», «Конец». Внутреннего ожидания собственной очереди больше нет; исходник содержит deadlock или его диагностику Dispatch."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни оси",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Что меняет serial/concurrent? Что меняет sync/async? Почему вложенный sync на текущую serial-очередь ошибочен?",
+  "key": "serial исключает перекрытие своих работ, concurrent допускает его; из этого не следует конкретный поток или порядок окончания конкурентных задач. sync ждёт отправленную работу и может вернуть результат, async не ждёт её окончания. Вложенный sync на текущую serial-очередь ждёт работу, которую нельзя начать до завершения самого ожидающего блока."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Разреши независимый экспорт",
+  "prompt": "Сделай очередь concurrent: оба WorkItem уже независимы и отправляются до wait. Запиши гарантии для пяти сообщений. Потом замени очередь на serial и запиши её точный порядок. Не добавляй sleep для получения нужного вывода.",
+  "code": "import Dispatch\nlet queue = DispatchQueue(\n    label: \"levels.export\",\n    attributes: /* Выбери атрибут */\n)\nlet first = DispatchWorkItem {\n    print(\"7:начало\")\n    print(\"7:конец\")\n}\nlet second = DispatchWorkItem {\n    print(\"8:начало\")\n    print(\"8:конец\")\n}\nqueue.async(execute: first)\nqueue.async(execute: second)\nfirst.wait()\nsecond.wait()\nprint(\"Готово\")",
+  "key": "import Dispatch\nlet queue = DispatchQueue(label: \"levels.export\", attributes: .concurrent)\nlet first = DispatchWorkItem {\n    print(\"7:начало\")\n    print(\"7:конец\")\n}\nlet second = DispatchWorkItem {\n    print(\"8:начало\")\n    print(\"8:конец\")\n}\nqueue.async(execute: first)\nqueue.async(execute: second)\nfirst.wait()\nsecond.wait()\nprint(\"Готово\")\n\nConcurrent: каждый «начало» раньше своего «конец», «Готово» последнее; относительный порядок двух работ не задан. Serial при таком отправителе: 7:начало, 7:конец, 8:начало, 8:конец, Готово."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови по памяти custom serial-очередь экспорта и encodeManifest(count:) -> String, возвращающую manifest-2 для count 2. Получи строку через sync и выведи её после возврата. Отдельно назови, что нужно изменить, если вызывающий код не должен ждать завершения: async требует другого контракта доставки результата.",
+  "key": "import Dispatch\nlet queue = DispatchQueue(label: \"levels.export\")\nfunc encodeManifest(count: Int) -> String { \"manifest-\\(count)\" }\nlet result = queue.sync { encodeManifest(count: 2) }\nprint(result)\n\nВывод manifest-2. Для ожидания и прямого возврата выбран sync; async не подменяет возвращаемое значение синхронной строки."
+ }
+]

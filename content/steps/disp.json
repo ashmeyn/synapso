@@ -1,0 +1,51 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Прочитай ловушку",
+  "prompt": "Назови две строки. Почему одинаковое имя detail у TripNotice не меняет вызов через any Notice?",
+  "code": "protocol Notice { func title() -> String }\nextension Notice { func detail() -> String { \"Общее\" } }\nstruct TripNotice: Notice {\n    func title() -> String { \"Поездка\" }\n    func detail() -> String { \"Платформа 3\" }\n}\nlet concrete = TripNotice()\nlet erased: any Notice = concrete\nprint(concrete.detail())\nprint(erased.detail())",
+  "key": "Платформа 3\nОбщее\n\ndetail отсутствует в требованиях Notice; через existential выбирается версия из extension."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Переопредели class-метод",
+  "prompt": "Заполни override у TripRenderer; переменная renderer остаётся NoticeRenderer.",
+  "code": "class NoticeRenderer {\n    func render() -> String { \"Общее уведомление\" }\n}\nclass TripRenderer: NoticeRenderer {\n    /* Переопределение */ func render() -> String { \"Поездка\" }\n}\nlet renderer: NoticeRenderer = TripRenderer()\nprint(renderer.render())",
+  "key": "class NoticeRenderer {\n    func render() -> String { \"Общее уведомление\" }\n}\nclass TripRenderer: NoticeRenderer {\n    override func render() -> String { \"Поездка\" }\n}\nlet renderer: NoticeRenderer = TripRenderer()\nprint(renderer.render())\n\nВывод «Поездка»: объект подкласса определяет реализацию overridable-метода."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Вызови требование generic-телом",
+  "prompt": "После объявленных Notice и TripNotice напиши heading<N: Notice>, которая возвращает title(). Не делай cast к TripNotice.",
+  "code": "protocol Notice { func title() -> String }\nextension Notice { func detail() -> String { \"Общее\" } }\nstruct TripNotice: Notice {\n    func title() -> String { \"Поездка\" }\n    func detail() -> String { \"Платформа 3\" }\n}\n// Напиши heading",
+  "key": "protocol Notice { func title() -> String }\nextension Notice { func detail() -> String { \"Общее\" } }\nstruct TripNotice: Notice {\n    func title() -> String { \"Поездка\" }\n    func detail() -> String { \"Платформа 3\" }\n}\nfunc heading<N: Notice>(_ notice: N) -> String { notice.title() }\nprint(heading(TripNotice()))\n\nВывод «Поездка». Тело использует требование title."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Включи detail в контракт",
+  "prompt": "Добавь func detail() -> String в Notice; оставь default и реализацию TripNotice. Две строки должны стать «Платформа 3».",
+  "code": "protocol Notice { func title() -> String }\nextension Notice { func detail() -> String { \"Общее\" } }\nstruct TripNotice: Notice {\n    func title() -> String { \"Поездка\" }\n    func detail() -> String { \"Платформа 3\" }\n}\nlet concrete = TripNotice()\nlet erased: any Notice = concrete\nprint(concrete.detail())\nprint(erased.detail())",
+  "key": "protocol Notice {\n    func title() -> String\n    func detail() -> String\n}\nextension Notice { func detail() -> String { \"Общее\" } }\nstruct TripNotice: Notice {\n    func title() -> String { \"Поездка\" }\n    func detail() -> String { \"Платформа 3\" }\n}\nlet concrete = TripNotice()\nlet erased: any Notice = concrete\nprint(concrete.detail())\nprint(erased.detail())\n\nЧерез existential теперь выбирается witness требования, а не extension-only helper."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни выбор",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Когда цель выбирается статически? Для чего vtable и witness table? Что означает @objc dynamic и чего не обещает final?",
+  "key": "Прямые известные и extension-only вызовы не требуют выбора переопределения. Vtable описывает class-методы, witness table — соответствие протокольным требованиям. @objc dynamic задаёт Objective-C динамическое поведение; final запрещает override, но не гарантирует конкретного ускорения."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Проверь private helper",
+  "prompt": "В NoticeFrame frame вызывает private mark. В подклассе TripFrame есть своё mark, без override. Напиши классы и выведи frame.mark(), затем frame.frame().",
+  "code": "// Напиши NoticeFrame и TripFrame",
+  "key": "class NoticeFrame {\n    private func mark() -> String { \"База\" }\n    func frame() -> String { mark() }\n}\nclass TripFrame: NoticeFrame {\n    func mark() -> String { \"Поездка\" }\n}\nlet frame = TripFrame()\nprint(frame.mark())\nprint(frame.frame())\n\nВывод «Поездка», «База»: private helper базы не переопределён."
+ },
+ {
+  "id": "s7",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Восстанови Notice с требованиями title/detail и default detail. Напиши DelayNotice со значениями «Задержка» и «10 минут», сохрани в any Notice и выведи оба требования. Extension-only helper использовать нельзя.",
+  "key": "protocol Notice {\n    func title() -> String\n    func detail() -> String\n}\nextension Notice { func detail() -> String { \"Общее\" } }\nstruct TripNotice: Notice {\n    func title() -> String { \"Поездка\" }\n    func detail() -> String { \"Платформа 3\" }\n}\nstruct DelayNotice: Notice {\n    func title() -> String { \"Задержка\" }\n    func detail() -> String { \"10 минут\" }\n}\nlet notice: any Notice = DelayNotice()\nprint(notice.title())\nprint(notice.detail())\n\nВывод «Задержка», «10 минут»; требование маршрутизирует конкретную реализацию."
+ }
+]
