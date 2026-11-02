@@ -8,10 +8,21 @@ Data shape (what the engine reads from __DATA__):
   tasks, cases, ref = base/*.json
   bank         = base/bank.json + content/bank/*.bank.json in file-name order (zz-live goes last on purpose)
 """
-import glob, html, json, os, re, sys
+import glob, html, json, os, re, shutil, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 P = lambda *a: os.path.join(ROOT, *a)
+
+# Icons: engine/icons/icon.svg is the source; the PNGs are rendered from it (see engine/icons/README.md).
+ICON_FILES = ['icon.svg', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png']
+ICON_TAGS = ('<link rel="icon" type="image/svg+xml" href="icon.svg">\n'
+             '<link rel="apple-touch-icon" href="apple-touch-icon.png">\n'
+             '<link rel="manifest" href="manifest.webmanifest">\n')
+MANIFEST = {'name': 'Synapso', 'short_name': 'Synapso', 'lang': 'ru', 'start_url': './', 'scope': './',
+            'display': 'standalone', 'background_color': '#050607', 'theme_color': '#050607',
+            'icons': [{'src': 'icon-192.png', 'sizes': '192x192', 'type': 'image/png'},
+                      {'src': 'icon-512.png', 'sizes': '512x512', 'type': 'image/png'},
+                      {'src': 'icon.svg', 'sizes': 'any', 'type': 'image/svg+xml'}]}
 
 
 def inline(s):
@@ -111,7 +122,10 @@ def main():
     # artifact.html: raw page for the claude.ai lab artifact (the host adds <!doctype>/<html>/<body> itself)
     # index.html: full document for GitHub Pages (without <!doctype> the browser falls back to quirks mode)
     open(P('dist', 'artifact.html'), 'w').write(out)
-    open(P('dist', 'index.html'), 'w').write('<!doctype html>\n<html lang="ru">\n<head>\n' + out.replace('<div', '</head>\n<body>\n<div', 1) + '\n</body>\n</html>\n')
+    open(P('dist', 'index.html'), 'w').write('<!doctype html>\n<html lang="ru">\n<head>\n' + out.replace('<title>', ICON_TAGS + '<title>', 1).replace('<div', '</head>\n<body>\n<div', 1) + '\n</body>\n</html>\n')
+    # Pages only: home-screen icon, favicon and manifest next to index.html (the lab artifact has the host's own icon)
+    for f in ICON_FILES: shutil.copyfile(P('engine', 'icons', f), P('dist', f))
+    with open(P('dist', 'manifest.webmanifest'), 'w') as fh: json.dump(MANIFEST, fh, ensure_ascii=False, indent=1)
     n_lessons = sum(1 for c in d['content'].values() if 'lesson' in c)
     print(f'built dist/index.html · {len(d["content"])} topics · {n_lessons} lessons · {len(d["bank"])} bank tasks · {len(out)//1024} KB')
     if '--check' in sys.argv:

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Synapso icon: a small synapse constellation, monochrome + cyan, on the app background -->
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#2DE2E6" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#2DE2E6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="bg" cx="50%" cy="42%" r="70%">
+      <stop offset="0" stop-color="#0B1114"/>
+      <stop offset="1" stop-color="#050607"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <g transform="translate(256 256) scale(1.25) translate(-267 -257)">
+  <g stroke="#C4CACF" stroke-opacity=".35" stroke-width="5" fill="none" stroke-linecap="round">
+    <path d="M150 196 L232 150 L330 168 L384 246 L344 338 L246 364 L160 312 Z"/>
+    <path d="M232 150 L262 258 L330 168 M262 258 L384 246 M262 258 L246 364 M150 196 L262 258 L160 312"/>
+  </g>
+  <g stroke="#2DE2E6" stroke-width="7" fill="none" stroke-linecap="round">
+    <path d="M150 196 L262 258 L344 338"/>
+  </g>
+  <g fill="#F2F4F5">
+    <circle cx="150" cy="196" r="15"/>
+    <circle cx="232" cy="150" r="12"/>
+    <circle cx="330" cy="168" r="14"/>
+    <circle cx="384" cy="246" r="11"/>
+    <circle cx="246" cy="364" r="13"/>
+    <circle cx="160" cy="312" r="11"/>
+  </g>
+  <circle cx="344" cy="338" r="16" fill="#2DE2E6"/>
+  <circle cx="262" cy="258" r="88" fill="url(#glow)"/>
+  <circle cx="262" cy="258" r="24" fill="#2DE2E6"/>
+  <circle cx="262" cy="258" r="10" fill="#F2F4F5"/>
+  </g>
+</svg>
