@@ -5,7 +5,7 @@
 const fs = require('fs');
 const { OUT } = require('./lib');
 
-const SUITES = { phone: './phone', desktop: './desktop', honest: './honest', smoke: './smoke' };
+const SUITES = { phone: './phone', desktop: './desktop', honest: './honest', answers: './answers', smoke: './smoke' };
 
 (async () => {
   const pick = process.argv.slice(2).filter(a => SUITES[a]);

@@ -9,6 +9,7 @@ Data shape (what the engine reads from __DATA__):
                  check   = questions (HTML) from the first list of «## Проверь себя»
                  answers = items of the optional «## Ответы к «Проверь себя»» section (same order as check;
                            not part of base; key absent while the lesson has no answers)
+  steps[i]     = {id, title, prompt, code, key, points?}; points = 3–5 required items (HTML) for keys > 25 lines
   tasks, cases, ref = base/*.json
   bank         = base/bank.json + content/bank/*.bank.json in file-name order (zz-live goes last on purpose)
 """
@@ -117,6 +118,10 @@ def load(name):
     return json.load(open(P('content', 'base', name + '.json')))
 
 
+LONG_KEY = 25  # a key longer than this needs «points»: 3–5 required items the learner grades against
+LONG_WITHOUT_POINTS = []
+
+
 def build_data():
     d = {k: load(k) for k in ('content', 'tasks', 'bank', 'cases', 'ref')}
     for path in sorted(glob.glob(P('content', 'lessons', '*.md'))):
@@ -128,7 +133,17 @@ def build_data():
     for sp in sorted(glob.glob(P('content', 'steps', '*.json'))):
         sid = os.path.basename(sp)[:-5]
         if sid in d['content']:
-            d['content'][sid]['steps'] = json.load(open(sp))
+            steps = json.load(open(sp))
+            for s in steps:
+                lines = s['key'].count('\n') + 1
+                if 'points' in s:
+                    pts = s['points']
+                    if not (isinstance(pts, list) and 3 <= len(pts) <= 5 and all(isinstance(x, str) and x.strip() for x in pts)):
+                        raise SystemExit(f'steps {sid}/{s["id"]}: points must be a list of 3–5 non-empty strings')
+                    s['points'] = [inline(x) for x in pts]
+                elif lines > LONG_KEY:
+                    LONG_WITHOUT_POINTS.append(f'{sid}/{s["id"]}')
+            d['content'][sid]['steps'] = steps
     have = {b['id'] for b in d['bank']}
     for bp in sorted(glob.glob(P('content', 'bank', '*.bank.json'))):
         for x in json.load(open(bp)):
@@ -154,6 +169,8 @@ def main():
     for f in ICON_FILES: shutil.copyfile(P('engine', 'icons', f), P('dist', f))
     with open(P('dist', 'manifest.webmanifest'), 'w') as fh: json.dump(MANIFEST, fh, ensure_ascii=False, indent=1)
     n_lessons = sum(1 for c in d['content'].values() if 'lesson' in c)
+    if LONG_WITHOUT_POINTS:
+        print(f'warning: {len(LONG_WITHOUT_POINTS)} keys longer than {LONG_KEY} lines have no points')
     print(f'built dist/index.html · {len(d["content"])} topics · {n_lessons} lessons · {len(d["bank"])} bank tasks · {len(out)//1024} KB')
     if '--check' in sys.argv:
         ref = json.load(open(sys.argv[sys.argv.index('--check') + 1]))
