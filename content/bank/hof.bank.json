@@ -18,7 +18,7 @@
   ],
   "type": "Предскажи вывод",
   "title": "Ближайшая аптека",
-  "prompt": "Что напечатают четыре строки? Почему первая и третья строки отвечают на разные вопросы?",
+  "prompt": "Что напечатают четыре строки? Почему вторая и третья строки отвечают на разные вопросы?",
   "code": "struct Pharmacy {\n    let name: String\n    let meters: Int\n    let isOpen: Bool\n}\nlet list = [Pharmacy(name: \"Вита\", meters: 900, isOpen: true),\n            Pharmacy(name: \"Здоровье\", meters: 300, isOpen: false),\n            Pharmacy(name: \"Ригла\", meters: 450, isOpen: true)]\nlet nearest = list.min { $0.meters < $1.meters }\nlet nearestOpen = list.filter { $0.isOpen }.min { $0.meters < $1.meters }\nlet firstOpen = list.first { $0.isOpen }\nlet nextDoor = list.filter { $0.meters < 100 }.min { $0.meters < $1.meters }\nprint(nearest?.name ?? \"—\")\nprint(nearestOpen?.name ?? \"—\")\nprint(firstOpen?.name ?? \"—\")\nprint(nextDoor?.name ?? \"—\")",
   "key": "Здоровье\nРигла\nВита\n—\n\nmin(by:) ищет наименьший элемент по правилу сравнения: ближе всех «Здоровье», хотя она закрыта. Сначала filter открытых, потом min — «Ригла». first(where:) берёт первую подходящую в порядке массива, а не ближайшую — «Вита». После пустого фильтра min возвращает nil, и ?? показывает «—». Все три функции возвращают Optional: подходящего элемента может не быть.",
   "added": "2026-11-02"
@@ -29,10 +29,10 @@
    "hof"
   ],
   "type": "Устно",
-  "title": "map, compactMap и flatMap в плеере",
-  "prompt": "Объясни как на собеседовании разницу между map, compactMap и flatMap: что вернёт каждая строка и сколько в результате элементов.",
-  "code": "let albums = [[\"Intro\", \"Rain\"], [\"Sun\"]]\nlet durations = [\"3:10\", \"—\", \"4:05\"]\n// seconds(_:) превращает \"3:10\" в 190, иначе nil: (String) -> Int?\n// a) albums.map { $0.count }\n// b) albums.flatMap { $0 }\n// c) durations.map(seconds)\n// d) durations.compactMap(seconds)",
-  "key": "map превращает каждый элемент в одно новое значение и сохраняет число элементов: a) [2, 1]. flatMap ждёт от замыкания коллекцию и склеивает результаты в один массив: b) [\"Intro\", \"Rain\", \"Sun\"]. c) map с функцией, которая возвращает Int?, даёт [Int?]: [190, nil, 245]. compactMap выбрасывает nil и разворачивает остальное: d) [190, 245] — элементов меньше, и потеря «—» никак не видна. Раньше flatMap тоже умел убирать nil; в Swift 4.1 эту роль отдали compactMap, чтобы названия не путались.",
+  "title": "map и flatMap в плеере",
+  "prompt": "Объясни как на собеседовании разницу между map и flatMap: что вернёт каждая строка, какой у неё тип и когда нужен flatMap.",
+  "code": "let albums = [[\"Intro\", \"Rain\"], [\"Sun\"]]\n// a) albums.map { $0.map { $0.uppercased() } }\n// b) albums.flatMap { $0 }\n// c) Array(albums.joined())\nlet raw: String? = \"42\"\n// d) raw.map { Int($0) }\n// e) raw.flatMap { Int($0) }",
+  "key": "map превращает каждый элемент в одно значение и сохраняет форму: a) [[\"INTRO\", \"RAIN\"], [\"SUN\"]] — по-прежнему массив альбомов. flatMap ждёт от замыкания коллекцию и склеивает результаты в один уровень: b) [\"Intro\", \"Rain\", \"Sun\"]. c) даёт то же: flatMap — это map плюс «расплющить», а joined() расплющивает уже готовые вложенные массивы. У Optional то же правило: d) замыкание возвращает Int?, и map заворачивает его ещё раз — Int?? (Optional(Optional(42))); e) flatMap не добавляет второй слой — Int? со значением 42. Убрать nil из массива — уже задача compactMap, а не flatMap.",
   "added": "2026-11-02"
  }
 ]
