@@ -52,7 +52,9 @@ func parse(_ line: String) throws -> (String, Int) {
     guard parts.count == 2 else { throw EventImportError.wrongFormat }
     let name = String(parts[0])
     guard !name.isEmpty else { throw EventImportError.emptyName }
-    guard let minutes = Int(parts[1]) else { throw EventImportError.invalidDuration }
+    guard let minutes = Int(parts[1]) else {
+        throw EventImportError.invalidDuration
+    }
     return (name, minutes)
 }
 ```
@@ -95,7 +97,9 @@ func parse(_ line: String) throws -> (String, Int) {
     guard parts.count == 2 else { throw EventImportError.wrongFormat }
     let name = String(parts[0])
     guard !name.isEmpty else { throw EventImportError.emptyName }
-    guard let minutes = Int(parts[1]) else { throw EventImportError.invalidDuration }
+    guard let minutes = Int(parts[1]) else {
+        throw EventImportError.invalidDuration
+    }
     return (name, minutes)
 }
 func importLine(_ text: String) -> String {

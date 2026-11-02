@@ -36,7 +36,10 @@ func slowCounts(_ notifications: [AppNotification]) -> [Int: Int] {
     for notification in notifications where notification.isUnread {
         var count = 0
         for candidate in notifications {
-            if candidate.isUnread && candidate.sectionID == notification.sectionID { count += 1 }
+            if candidate.isUnread
+                && candidate.sectionID == notification.sectionID {
+                count += 1
+            }
         }
         result[notification.sectionID] = count
     }
@@ -67,7 +70,9 @@ print(largeN * largeN) // 10000
 func unreadCounts(_ notifications: [AppNotification]) -> [Int: Int] {
     var result: [Int: Int] = [:]
     for notification in notifications {
-        if notification.isUnread { result[notification.sectionID, default: 0] += 1 }
+        if notification.isUnread {
+            result[notification.sectionID, default: 0] += 1
+        }
     }
     return result
 }
@@ -124,7 +129,9 @@ struct AppNotification {
 func unreadCounts(_ notifications: [AppNotification]) -> [Int: Int] {
     var result: [Int: Int] = [:]
     for notification in notifications {
-        if notification.isUnread { result[notification.sectionID, default: 0] += 1 }
+        if notification.isUnread {
+            result[notification.sectionID, default: 0] += 1
+        }
     }
     return result
 }

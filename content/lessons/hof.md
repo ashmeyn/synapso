@@ -89,14 +89,19 @@ func totalAmount(for transfers: [Transfer]) -> Int? {
 ## Что отдаём экрану
 
 ```swift
-struct Transfer { let recipient: String; let amountText: String; let posted: Bool }
+struct Transfer {
+    let recipient: String
+    let amountText: String
+    let posted: Bool
+}
 struct TransferSummary { let recipients: [String]; let totalAmount: Int }
 func summary(for transfers: [Transfer]) -> TransferSummary? {
     let posted = transfers.filter { $0.posted }
     let recipients = posted.map { $0.recipient }
     let amounts = posted.compactMap { Int($0.amountText) }
     guard amounts.count == posted.count else { return nil }
-    return TransferSummary(recipients: recipients, totalAmount: amounts.reduce(0, +))
+    return TransferSummary(recipients: recipients,
+                           totalAmount: amounts.reduce(0, +))
 }
 ```
 

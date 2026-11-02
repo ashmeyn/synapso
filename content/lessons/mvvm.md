@@ -135,7 +135,9 @@ import Observation
 struct Parcel {
     let id: String
     let status: String
-    func findStatus(for number: String) -> String? { number == id ? status : nil }
+    func findStatus(for number: String) -> String? {
+        number == id ? status : nil
+    }
 }
 @Observable final class TrackingViewModel {
     var number = ""

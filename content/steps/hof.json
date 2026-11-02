@@ -3,7 +3,7 @@
   "id": "s1",
   "title": "Ступень 1. Предскажи сводку",
   "prompt": "Что окажется в recipients и amounts? Что вернёт reduce?",
-  "code": "struct Transfer { let recipient: String; let amountText: String; let posted: Bool }\nlet transfers = [Transfer(recipient: \"Анна\", amountText: \"180\", posted: true),\n             Transfer(recipient: \"Олег\", amountText: \"abc\", posted: true),\n             Transfer(recipient: \"Мария\", amountText: \"90\", posted: false)]\nlet posted = transfers.filter { $0.posted }\nlet recipients = posted.map { $0.recipient }\nlet amounts = posted.compactMap { Int($0.amountText) }\nprint(recipients, amounts, amounts.reduce(0, +))",
+  "code": "struct Transfer {\n    let recipient: String\n    let amountText: String\n    let posted: Bool\n}\nlet transfers = [Transfer(recipient: \"Анна\", amountText: \"180\", posted: true),\n             Transfer(recipient: \"Олег\", amountText: \"abc\", posted: true),\n             Transfer(recipient: \"Мария\", amountText: \"90\", posted: false)]\nlet posted = transfers.filter { $0.posted }\nlet recipients = posted.map { $0.recipient }\nlet amounts = posted.compactMap { Int($0.amountText) }\nprint(recipients, amounts, amounts.reduce(0, +))",
   "key": "recipients = [\"Анна\", \"Олег\"], amounts = [180], сумма = 180. compactMap выбросил плохую сумму; для истории операций это опасная потеря проведённого перевода."
  },
  {
@@ -25,7 +25,7 @@
   "title": "Ступень 4. Найди ошибку",
   "prompt": "Почему код сообщает 180 вместо ошибки? Исправь его, не выбрасывая проведённый перевод молча.",
   "code": "let posted = transfers.filter { $0.posted }\nlet totalAmount = posted.compactMap { Int($0.amountText) }.reduce(0, +)\nprint(totalAmount)",
-  "key": "struct Transfer { let recipient: String; let amountText: String; let posted: Bool }\nlet transfers = [Transfer(recipient: \"Анна\", amountText: \"180\", posted: true),\n             Transfer(recipient: \"Олег\", amountText: \"abc\", posted: true)]\nlet posted = transfers.filter { $0.posted }\nlet amounts = posted.compactMap { Int($0.amountText) }\nlet totalAmount: Int? = amounts.count == posted.count ? amounts.reduce(0, +) : nil\n\ncompactMap удалил nil от строки \"abc\"; без проверки отчёт занижен. Optional результата заставляет экран показать проблему."
+  "key": "struct Transfer {\n    let recipient: String\n    let amountText: String\n    let posted: Bool\n}\nlet transfers = [Transfer(recipient: \"Анна\", amountText: \"180\", posted: true),\n             Transfer(recipient: \"Олег\", amountText: \"abc\", posted: true)]\nlet posted = transfers.filter { $0.posted }\nlet amounts = posted.compactMap { Int($0.amountText) }\nlet totalAmount: Int? = amounts.count == posted.count\n    ? amounts.reduce(0, +) : nil\n\ncompactMap удалил nil от строки \"abc\"; без проверки отчёт занижен. Optional результата заставляет экран показать проблему."
  },
  {
   "id": "s5",

@@ -7,7 +7,7 @@
   "type": "Предскажи вывод",
   "title": "Настройки: включили и выключили",
   "prompt": "Сначала пользователь включил Toggle, затем нажал родительскую кнопку «Выключить». Какой текст и какое положение переключателя увидит на каждом шаге? Здесь предсказываем экран, не консоль. В условии Text запись условие ? A : B выбирает A при true и B при false.",
-  "code": "import SwiftUI\nstruct SettingsScreen: View {\n    @State private var notifications = false\n    var body: some View {\n        VStack {\n            Text(notifications ? \"Уведомления включены\" : \"Уведомления выключены\")\n            NotificationsSwitch(isEnabled: $notifications)\n            Button(\"Выключить\") { notifications = false }\n        }\n    }\n}\nstruct NotificationsSwitch: View {\n    @Binding var isEnabled: Bool\n    var body: some View {\n        Toggle(\"Уведомления\", isOn: $isEnabled)\n    }\n}",
+  "code": "import SwiftUI\nstruct SettingsScreen: View {\n    @State private var notifications = false\n    var body: some View {\n        VStack {\n            Text(notifications ? \"Уведомления включены\"\n                              : \"Уведомления выключены\")\n            NotificationsSwitch(isEnabled: $notifications)\n            Button(\"Выключить\") { notifications = false }\n        }\n    }\n}\nstruct NotificationsSwitch: View {\n    @Binding var isEnabled: Bool\n    var body: some View {\n        Toggle(\"Уведомления\", isOn: $isEnabled)\n    }\n}",
   "key": "Вначале: «Уведомления выключены», Toggle выключен. После включения: «Уведомления включены», Toggle включён. После кнопки: «Уведомления выключены», Toggle выключен. Дочерний переключатель пишет через Binding в notifications; кнопка родителя меняет тот же источник."
  },
  {

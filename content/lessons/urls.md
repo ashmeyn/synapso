@@ -56,8 +56,10 @@ invalidID — наша проверка входа, notHTTP — ответ не 
 
 ```swift
 func decodeChapter(data: Data, response: URLResponse) throws -> Chapter {
-    guard let http = response as? HTTPURLResponse else { throw LoadError.notHTTP }
-    guard http.statusCode == 200 else { throw LoadError.status(http.statusCode) }
+    guard let http = response as? HTTPURLResponse
+    else { throw LoadError.notHTTP }
+    guard http.statusCode == 200
+    else { throw LoadError.status(http.statusCode) }
     return try JSONDecoder().decode(Chapter.self, from: data)
 }
 ```
@@ -104,8 +106,10 @@ enum LoadError: Error {
     case status(Int)
 }
 func decodeChapter(data: Data, response: URLResponse) throws -> Chapter {
-    guard let http = response as? HTTPURLResponse else { throw LoadError.notHTTP }
-    guard http.statusCode == 200 else { throw LoadError.status(http.statusCode) }
+    guard let http = response as? HTTPURLResponse
+    else { throw LoadError.notHTTP }
+    guard http.statusCode == 200
+    else { throw LoadError.status(http.statusCode) }
     return try JSONDecoder().decode(Chapter.self, from: data)
 }
 func loadChapter(
