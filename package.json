@@ -8,7 +8,8 @@
     "test": "node tests/run.js",
     "test:smoke": "node tests/run.js smoke",
     "test:phone": "node tests/run.js phone",
-    "test:desktop": "node tests/run.js desktop"
+    "test:desktop": "node tests/run.js desktop",
+    "test:honest": "node tests/run.js honest"
   },
   "devDependencies": {
     "playwright": "1.63.0"
