@@ -27,7 +27,7 @@ jobs:
       - name: Keep only the site
         run: |
           mkdir -p site
-          cp dist/index.html site/index.html
+          cp dist/index.html dist/manifest.webmanifest dist/icon.svg dist/*.png site/
           touch site/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
