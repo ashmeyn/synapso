@@ -11,21 +11,40 @@
   "title": "Ступень 2. Проверь id и свежесть",
   "prompt": "Заполни два условия guard. Одно выбирает лот, другое — строго более новую версию.",
   "code": "import Foundation\nstruct Quote {\n    let lotID, revision, amount: Int\n}\nstruct LotState {\n    let lotID: Int\n    var revision = 0\n    var amount = 0\n    mutating func apply(_ quote: Quote) {\n        guard /* нужный id */, /* более новая revision */ else { return }\n        revision = quote.revision\n        amount = quote.amount\n    }\n}\nlet rows = [\n    Quote(lotID: 9, revision: 1, amount: 100),\n    Quote(lotID: 8, revision: 5, amount: 999),\n    Quote(lotID: 9, revision: 3, amount: 130),\n    Quote(lotID: 9, revision: 2, amount: 110)\n]\nvar state = LotState(lotID: 9)\nfor quote in rows { state.apply(quote) }\nprint(state.amount)\nprint(state.revision)",
-  "key": "import Foundation\nstruct Quote {\n    let lotID, revision, amount: Int\n}\nstruct LotState {\n    let lotID: Int\n    var revision = 0\n    var amount = 0\n    mutating func apply(_ quote: Quote) {\n        guard quote.lotID == lotID, quote.revision > revision else { return }\n        revision = quote.revision\n        amount = quote.amount\n    }\n}\nlet rows = [\n    Quote(lotID: 9, revision: 1, amount: 100),\n    Quote(lotID: 8, revision: 5, amount: 999),\n    Quote(lotID: 9, revision: 3, amount: 130),\n    Quote(lotID: 9, revision: 2, amount: 110)\n]\nvar state = LotState(lotID: 9)\nfor quote in rows { state.apply(quote) }\nprint(state.amount)\nprint(state.revision)\n\nВывод 130, 3. Равная версия — повтор, а не основание применить сообщение второй раз."
+  "key": "import Foundation\nstruct Quote {\n    let lotID, revision, amount: Int\n}\nstruct LotState {\n    let lotID: Int\n    var revision = 0\n    var amount = 0\n    mutating func apply(_ quote: Quote) {\n        guard quote.lotID == lotID, quote.revision > revision else { return }\n        revision = quote.revision\n        amount = quote.amount\n    }\n}\nlet rows = [\n    Quote(lotID: 9, revision: 1, amount: 100),\n    Quote(lotID: 8, revision: 5, amount: 999),\n    Quote(lotID: 9, revision: 3, amount: 130),\n    Quote(lotID: 9, revision: 2, amount: 110)\n]\nvar state = LotState(lotID: 9)\nfor quote in rows { state.apply(quote) }\nprint(state.amount)\nprint(state.revision)\n\nВывод 130, 3. Равная версия — повтор, а не основание применить сообщение второй раз.",
+  "points": [
+   "Первое условие `quote.lotID == lotID`: чужой лот 8/5/999 отбрасывается до сравнения версий.",
+   "Второе условие `quote.revision > revision` — строго больше: равная версия — повтор, а не новое состояние.",
+   "Порядок в guard: сначала id, потом revision — версии разных лотов не сравниваются.",
+   "Вывод 130 и 3: запоздавшая 9/2/110 не откатывает цену."
+  ]
  },
  {
   "id": "s3",
   "title": "Ступень 3. Напиши весь приём",
   "prompt": "Напиши follow(source:state:) async throws. При nil закончи, каждый Quote примени после checkCancellation; ошибки не скрывай.",
   "code": "import Foundation\nstruct Quote {\n    let lotID, revision, amount: Int\n}\nprotocol QuoteSource {\n    func receive() async throws -> Quote?\n}\nstruct LotState {\n    let lotID: Int\n    var revision = 0\n    var amount = 0\n    mutating func apply(_ quote: Quote) {\n        guard quote.lotID == lotID, quote.revision > revision else { return }\n        revision = quote.revision\n        amount = quote.amount\n    }\n}\n// Напиши follow",
-  "key": "import Foundation\nstruct Quote {\n    let lotID, revision, amount: Int\n}\nprotocol QuoteSource {\n    func receive() async throws -> Quote?\n}\nstruct LotState {\n    let lotID: Int\n    var revision = 0\n    var amount = 0\n    mutating func apply(_ quote: Quote) {\n        guard quote.lotID == lotID, quote.revision > revision else { return }\n        revision = quote.revision\n        amount = quote.amount\n    }\n}\nfunc follow(\n    source: any QuoteSource, state: inout LotState\n) async throws {\n    while let quote = try await source.receive() {\n        try Task.checkCancellation()\n        state.apply(quote)\n    }\n}\n\nЦикл получает все доступные значения. Состояние не принимает чужие и старые сообщения."
+  "key": "import Foundation\nstruct Quote {\n    let lotID, revision, amount: Int\n}\nprotocol QuoteSource {\n    func receive() async throws -> Quote?\n}\nstruct LotState {\n    let lotID: Int\n    var revision = 0\n    var amount = 0\n    mutating func apply(_ quote: Quote) {\n        guard quote.lotID == lotID, quote.revision > revision else { return }\n        revision = quote.revision\n        amount = quote.amount\n    }\n}\nfunc follow(\n    source: any QuoteSource, state: inout LotState\n) async throws {\n    while let quote = try await source.receive() {\n        try Task.checkCancellation()\n        state.apply(quote)\n    }\n}\n\nЦикл получает все доступные значения. Состояние не принимает чужие и старые сообщения.",
+  "points": [
+   "Сигнатура `func follow(source: any QuoteSource, state: inout LotState) async throws`.",
+   "`while let quote = try await source.receive()` — получение до `nil`, а не один `if let`.",
+   "`try Task.checkCancellation()` внутри цикла, перед `state.apply(quote)`.",
+   "Ошибка источника выходит через `throws`: без `try?`, глушащего `catch` и скрытого повтора.",
+   "Фильтр id и версии остаётся в `apply`: `follow` его не дублирует и не обходит."
+  ]
  },
  {
   "id": "s4",
   "title": "Ступень 4. Цена застыла на первом ответе",
   "prompt": "Источник отдаёт 9/1/100 и 9/3/130, затем nil. Исправь одноразовый if в follow, сохрани проверки модели.",
   "code": "import Foundation\nstruct Quote {\n    let lotID, revision, amount: Int\n}\nprotocol QuoteSource {\n    func receive() async throws -> Quote?\n}\nstruct LotState {\n    let lotID: Int\n    var revision = 0\n    var amount = 0\n    mutating func apply(_ quote: Quote) {\n        guard quote.lotID == lotID, quote.revision > revision else { return }\n        revision = quote.revision\n        amount = quote.amount\n    }\n}\nfunc follow(\n    source: any QuoteSource, state: inout LotState\n) async throws {\n    if let quote = try await source.receive() {\n        state.apply(quote)\n    }\n}",
-  "key": "import Foundation\nstruct Quote {\n    let lotID, revision, amount: Int\n}\nprotocol QuoteSource {\n    func receive() async throws -> Quote?\n}\nstruct LotState {\n    let lotID: Int\n    var revision = 0\n    var amount = 0\n    mutating func apply(_ quote: Quote) {\n        guard quote.lotID == lotID, quote.revision > revision else { return }\n        revision = quote.revision\n        amount = quote.amount\n    }\n}\nfunc follow(\n    source: any QuoteSource, state: inout LotState\n) async throws {\n    while let quote = try await source.receive() {\n        try Task.checkCancellation()\n        state.apply(quote)\n    }\n}\n\nДо правки цена 100, после — 130. Следующее сообщение нужно получать новым receive."
+  "key": "import Foundation\nstruct Quote {\n    let lotID, revision, amount: Int\n}\nprotocol QuoteSource {\n    func receive() async throws -> Quote?\n}\nstruct LotState {\n    let lotID: Int\n    var revision = 0\n    var amount = 0\n    mutating func apply(_ quote: Quote) {\n        guard quote.lotID == lotID, quote.revision > revision else { return }\n        revision = quote.revision\n        amount = quote.amount\n    }\n}\nfunc follow(\n    source: any QuoteSource, state: inout LotState\n) async throws {\n    while let quote = try await source.receive() {\n        try Task.checkCancellation()\n        state.apply(quote)\n    }\n}\n\nДо правки цена 100, после — 130. Следующее сообщение нужно получать новым receive.",
+  "points": [
+   "`if let` заменён на `while let quote = try await source.receive()` — на каждое сообщение новый `receive`.",
+   "`try Task.checkCancellation()` перед `state.apply(quote)`.",
+   "`LotState.apply` не изменён: guard по id и строго более новой revision сохранён.",
+   "Итог: до правки 100, после — 130; цикл заканчивается на `nil`."
+  ]
  },
  {
   "id": "s5",
@@ -46,6 +65,13 @@
   "title": "Проверка по памяти",
   "prompt": "Без подсказок и без урока. Верно — отметь тему.",
   "code": "По памяти перенеси получателя на остаток товара: StockUpdate(itemID, revision, available), StockSource.receive() async throws -> StockUpdate?, StockState для itemID 7. Принимай все сообщения до nil и только более свежие версии нужного id. Полный available: 7/1/5 → 7/3/2 → 7/2/4 должен оставить 2 и revision 3.",
-  "key": "import Foundation\nstruct StockUpdate {\n    let itemID, revision, available: Int\n}\nprotocol StockSource {\n    func receive() async throws -> StockUpdate?\n}\nstruct StockState {\n    let itemID: Int\n    var revision = 0\n    var available = 0\n    mutating func apply(_ value: StockUpdate) {\n        guard value.itemID == itemID, value.revision > revision else { return }\n        revision = value.revision\n        available = value.available\n    }\n}\nfunc follow(\n    source: any StockSource, state: inout StockState\n) async throws {\n    while let value = try await source.receive() {\n        try Task.checkCancellation()\n        state.apply(value)\n    }\n}\n\nНовый элемент — полный остаток товара. Более позднее старое сообщение не откатывает количество, другая сущность игнорируется."
+  "key": "import Foundation\nstruct StockUpdate {\n    let itemID, revision, available: Int\n}\nprotocol StockSource {\n    func receive() async throws -> StockUpdate?\n}\nstruct StockState {\n    let itemID: Int\n    var revision = 0\n    var available = 0\n    mutating func apply(_ value: StockUpdate) {\n        guard value.itemID == itemID, value.revision > revision else { return }\n        revision = value.revision\n        available = value.available\n    }\n}\nfunc follow(\n    source: any StockSource, state: inout StockState\n) async throws {\n    while let value = try await source.receive() {\n        try Task.checkCancellation()\n        state.apply(value)\n    }\n}\n\nНовый элемент — полный остаток товара. Более позднее старое сообщение не откатывает количество, другая сущность игнорируется.",
+  "points": [
+   "`struct StockUpdate { let itemID, revision, available: Int }` и `StockSource.receive() async throws -> StockUpdate?`.",
+   "`StockState.apply`: `guard value.itemID == itemID, value.revision > revision else { return }`, затем замена `revision` и `available` целиком.",
+   "`follow(source: any StockSource, state: inout StockState) async throws` с `while let value = try await source.receive()`.",
+   "`try Task.checkCancellation()` перед `state.apply(value)`.",
+   "Итог 7/1/5 → 7/3/2 → 7/2/4: `available` 2, `revision` 3."
+  ]
  }
 ]

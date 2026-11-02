@@ -117,6 +117,12 @@ func prepareFade(layer: CALayer, to target: Float) -> CABasicAnimation {
 - Чем model отличается от presentation и почему toValue не меняет модель?
 - Почему обычная запись у самостоятельного CALayer и view.layer может анимироваться по-разному?
 
+## Ответы к «Проверь себя»
+
+- `masksToBounds = true` обрезает всё за границей слоя, а внешняя тень живёт именно там, поэтому на одном слое скругление с обрезкой и тень мешают друг другу. Как в рамке с подсветкой из урока, делишь роли: `outer` с `masksToBounds = false` и `shadowOpacity` даёт тень, `content` с `cornerRadius = 12` и `masksToBounds = true` обрезает контент, и `outer.addSublayer(content)`. Поднимать `shadowOpacity` наугад бесполезно: дело в правиле обрезки, а не в силе тени.
+- Model хранит целевые значения, а `presentation()` — то, что видно сейчас посреди перехода; он Optional и менять его не нужно. `CABasicAnimation` с `toValue = 0.9` лишь описывает временный показ перехода, а `layer.opacity` так и остаётся 0.3, и после снятия анимации экран вернётся к модели. Поэтому сначала без implicit action пишешь `layer.opacity = target`, потом готовишь анимацию от старого значения и только затем `add`; `fillMode = .forwards` с `isRemovedOnCompletion = false` модель не чинят.
+- У самостоятельного `CALayer` запись анимируемого свойства может запустить implicit action: его находят правила слоя и текущая транзакция. Поведением `view.layer` управляет сама view, поэтому обычная запись вне UIView animation-блока там обычно не анимируется. Для мгновенной записи самостоятельного слоя оборачиваешь её в `CATransaction.begin()`, `setDisableActions(true)`, запись, `commit()`; явно добавленный `CABasicAnimation` это не отключает.
+
 # ГЛУБЖЕ
 
 ## Иерархия слоёв и владение
