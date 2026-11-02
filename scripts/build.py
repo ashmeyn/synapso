@@ -5,6 +5,10 @@
 
 Data shape (what the engine reads from __DATA__):
   content[id]  = base/content.json[id] + lesson (parsed from content/lessons/<id>.md) + steps (content/steps/<id>.json)
+  lesson       = {prereqs, mission, scenario, goals, base, deeper, check, answers?}
+                 check   = questions (HTML) from the first list of «## Проверь себя»
+                 answers = items of the optional «## Ответы к «Проверь себя»» section (same order as check;
+                           not part of base; key absent while the lesson has no answers)
   tasks, cases, ref = base/*.json
   bank         = base/bank.json + content/bank/*.bank.json in file-name order (zz-live goes last on purpose)
 """
@@ -34,7 +38,11 @@ def inline(s):
     return s
 
 
-def parse_md(text):
+CHECK_H = 'Проверь себя'
+ANSWERS_H = 'Ответы к «Проверь себя»'
+
+
+def parse_md(text, name='?'):
     fm = {}
     if text.startswith('---'):
         _, head, text = text.split('---', 2)
@@ -46,6 +54,7 @@ def parse_md(text):
                 key, val = line.split(':', 1); key = key.strip(); val = val.strip()
                 if val: fm[key] = inline(val)
     layers = {'base': [], 'deeper': []}; layer = 'base'; sec = None
+    check_sec = answers_sec = None
     lines = text.splitlines(); i = 0; para = []
 
     def flush():
@@ -59,7 +68,16 @@ def parse_md(text):
         if ln.startswith('# '):
             flush(); layer = 'deeper'; sec = None
         elif ln.startswith('## '):
-            flush(); sec = {'h': inline(ln[3:].strip()), 'body': []}; layers[layer].append(sec)
+            flush(); h = ln[3:].strip(); sec = {'h': inline(h), 'body': []}
+            if h == ANSWERS_H:
+                if layer != 'base':
+                    raise SystemExit(f'lesson {name}: «## {ANSWERS_H}» must be in the base layer, before # ГЛУБЖЕ')
+                if check_sec is None:
+                    raise SystemExit(f'lesson {name}: «## {ANSWERS_H}» without a «## {CHECK_H}» section before it')
+                answers_sec = sec  # kept out of base: shown only on the «Выгрузка» screen
+            else:
+                layers[layer].append(sec)
+                if h == CHECK_H and layer == 'base': check_sec = sec
         elif ln.startswith('```'):
             flush(); code = []; i += 1
             while i < len(lines) and not lines[i].startswith('```'):
@@ -81,9 +99,18 @@ def parse_md(text):
             para.append(ln.strip())
         i += 1
     flush()
-    return {'prereqs': [re.sub(r'<[^>]+>', '', x) for x in fm.get('prereqs', [])], 'mission': fm.get('mission', ''),
-            'scenario': fm.get('scenario', ''), 'goals': fm.get('goals', []),
-            'base': layers['base'], 'deeper': layers['deeper']}
+    out = {'prereqs': [re.sub(r'<[^>]+>', '', x) for x in fm.get('prereqs', [])], 'mission': fm.get('mission', ''),
+           'scenario': fm.get('scenario', ''), 'goals': fm.get('goals', []),
+           'base': layers['base'], 'deeper': layers['deeper']}
+    if check_sec is not None:
+        out['check'] = next((b['items'] for b in check_sec['body'] if b['t'] == 'ul'), [])
+    if answers_sec is not None:
+        answers = [x for b in answers_sec['body'] if b['t'] == 'ul' for x in b['items']]
+        if len(answers) != len(out['check']):
+            raise SystemExit(f'lesson {name}: «{ANSWERS_H}» has {len(answers)} items, '
+                             f'«{CHECK_H}» has {len(out["check"])} questions (must be equal, same order)')
+        out['answers'] = answers
+    return out
 
 
 def load(name):
@@ -96,7 +123,7 @@ def build_data():
         tid = os.path.basename(path)[:-3]
         if tid not in d['content']:
             raise SystemExit(f'lesson {tid}: no such topic in content/base/content.json (add it there first)')
-        d['content'][tid]['lesson'] = parse_md(open(path).read())
+        d['content'][tid]['lesson'] = parse_md(open(path).read(), tid)
         d['content'][tid].pop('theory', None)
     for sp in sorted(glob.glob(P('content', 'steps', '*.json'))):
         sid = os.path.basename(sp)[:-5]

@@ -612,6 +612,35 @@ html, html *{cursor:none!important}
 .assess .q{font-size:var(--fs-ui);color:var(--ink-2);width:100%}
 .ghostbtn{min-height:44px;padding:0 20px;border:1px solid #2A3238;font-family:var(--f-mono);font-size:var(--fs-ui);letter-spacing:.04em;color:var(--ink-2)}
 .ghostbtn:hover{border-color:var(--ink-2);color:var(--ink)}
+/* honest status: 3-level grade, «не знаю — покажи», blind review, «Выгрузка» (static, no animation) */
+.rung.part .dot{border-color:var(--ink-2);border-style:dashed;color:var(--ink)}
+.textbtn.dunno{color:var(--dim)}
+.textbtn.dunno:hover{color:var(--ink-2)}
+.textbtn[hidden]{display:none}
+.s7note{margin:0 0 12px;font-family:var(--f-mono);font-size:var(--fs-label);letter-spacing:.04em;color:var(--cyan);display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px}
+.s7note .textbtn{min-height:28px;color:var(--cyan)}
+.prevans{margin:6px 0 4px}
+.prevans .textbtn{min-height:32px}
+.out{display:flex;flex-direction:column;gap:18px;max-width:68ch}
+.out-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 20px;font-family:var(--f-mono);font-size:var(--fs-ui);letter-spacing:.04em;color:var(--muted);border-bottom:1px solid var(--line);padding-bottom:10px}
+.out-h b{color:var(--cyan);font-weight:600}
+.out-h .textbtn{min-height:32px}
+.out-tip{margin:0;font-family:var(--f-read);font-size:var(--fs-label);line-height:1.55;color:var(--dim)}
+.out-q{margin:0;font-family:var(--f-read);font-weight:600;font-size:var(--fs-read);line-height:1.6;color:var(--ink);text-transform:none;letter-spacing:0}
+.out-q code,.out-a code{font-family:var(--f-code);color:var(--cyan);font-variant-ligatures:none}
+.out .answer textarea{min-height:120px}
+.out .row-actions[hidden]{display:none}
+.out-a{font-family:var(--f-read);font-size:var(--fs-read);line-height:1.6;color:#D5DADE;border-left:1px solid var(--cyan);padding:4px 0 4px 16px}
+.out-a.none{border-left-color:var(--line-2);color:var(--ink-2)}
+.out-a .ch-list{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.out-miss{display:block;font-family:var(--f-mono);font-size:var(--fs-label);letter-spacing:.04em;color:var(--muted)}
+.out-sum{display:flex;flex-wrap:wrap;gap:8px 28px;font-family:var(--f-mono);font-size:var(--fs-ui);letter-spacing:.04em;color:var(--muted)}
+.out-sum b{color:var(--ink);font-size:var(--fs-read)}
+.out-acts{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;margin-top:6px}
+.t-foot .cta small{margin-left:10px;font-size:var(--fs-label);opacity:.75}
+html.phone .out{gap:14px}
+html.phone .out .row-actions{gap:10px 20px}
+html.phone .out .assess{gap:12px 16px}
 
 /* tasks */
 .task{border-top:1px solid var(--line);padding:22px 0}
@@ -2147,7 +2176,22 @@ const hot = new Uint8Array(N);
 let IMPORTED = store.get("pm.imported", {}), KNOWN = store.get("pm.known", {}), SKIP = store.get("pm.skip", {});
 let checkMode = null, forceStep = -1;
 function topicProgress(id){ const c=DATA.content[id]; const steps=c?c.steps:[]; const p=progressOf(id); return {ok:steps.filter(x=>p[x.id]==="ok").length, total:steps.length, p, steps}; }
-function statusOf(id){ if(!DATA.content[id]) return "dark"; const pr=topicProgress(id); if(pr.ok>=5 || IMPORTED[id]==="done" || KNOWN[id]) return "done"; if(pr.ok>0 || Object.keys(pr.p).length || IMPORTED[id]==="prog") return "prog"; return "none"; }
+/* honest status (02.11): a topic is "done" only after step 7 recalled from memory (pm.recall.<id>) AND the «Выгрузка»
+   (pm.out.<id>) passed. Topics that were done by the old rule (5 of 7 steps / «Уже знаю» / old import) are kept once
+   as pm.legacy (migration marker pm.honest); their next SRS review goes through the honest path. */
+let LEGACY = store.get("pm.legacy", {});
+function recallOf(id){ return store.get("pm.recall."+id, null); }   /* {at, v:"ok"|"part"|"no", pass:ts|0} — step 7 by memory */
+function outOf(id){ return store.get("pm.out."+id, null); }         /* {at, g:[...], v, pass:ts|0} — «Выгрузка» */
+function gradesOf(id){ return store.get("pm.grade."+id, {}); }       /* {s1:"ok"|"part"|"no", ...} — 3-level self-grade */
+function honestDone(id){ const r=recallOf(id), o=outOf(id); return !!(r && r.pass && o && o.pass); }
+function migrateHonest(){
+  if(store.get("pm.honest", null)) return;
+  const L=store.get("pm.legacy", {}), now=Date.now();
+  Object.keys(DATA.content).forEach(id=>{ const pr=topicProgress(id); if(pr.ok>=5 || KNOWN[id] || IMPORTED[id]==="done") L[id]=store.get("pm.doneAt."+id,0)||now; });
+  LEGACY=L; store.set("pm.legacy", L); store.set("pm.honest", {v:1, at:now});
+}
+migrateHonest();
+function statusOf(id){ if(!DATA.content[id]) return "dark"; if(LEGACY[id] || honestDone(id)) return "done"; const pr=topicProgress(id); if(pr.ok>0 || Object.keys(pr.p).length || IMPORTED[id]==="prog" || recallOf(id) || outOf(id)) return "prog"; return "none"; }
 const DAY=86400000, SRS_DAYS=[1,3,7,14,30,60];
 function srsOf(id){
   let r=store.get("pm.srs."+id,null);
@@ -2155,14 +2199,24 @@ function srsOf(id){
     r = p.s7==="ok" ? {stage:1, due:at+SRS_DAYS[1]*DAY, lapses:0} : {stage:0, due:at+20*3600*1000, lapses:0}; store.set("pm.srs."+id, r); }
   return r;
 }
-function isDue(id){ if(statusOf(id)!=="done") return false; const r=srsOf(id); return !!r && r.due<=Date.now(); }
+function isDue(id){
+  if(statusOf(id)!=="done"){ const r=store.get("pm.srs."+id,null); const o=outOf(id); return !!r && r.due<=Date.now() && !!o && o.v!=="ok"; } /* «нет» in Выгрузка before the topic is done: come back tomorrow */
+  const r=srsOf(id); return !!r && r.due<=Date.now(); }
+function srsHold(id){ const r=srsOf(id)||{stage:0,lapses:0}; r.due=Date.now()+DAY; store.set("pm.srs."+id, r); }
+/* one self-grade into the existing SRS: recalled → next rung, partly → same rung tomorrow, no → reset, tomorrow */
+function srsGrade(id, v){ v==="ok" ? srsPass(id) : v==="part" ? srsHold(id) : srsFail(id); }
+const GATE_CHARS=12, GATE_WORDS=6;
+function plural(n, f){ const a=n%10, b=n%100; return f[(a===1&&b!==11)?0:(a>=2&&a<=4&&(b<10||b>=20))?1:2]; }
+/* how much is still missing before the key may open: written answers need 12 non-space characters, oral ones 6 words */
+function answerLeft(v, oral){ const s=String(v||""); return oral ? Math.max(0, GATE_WORDS-(s.match(/[\p{L}\p{N}_]{2,}/gu)||[]).length) : Math.max(0, GATE_CHARS-s.replace(/\s/g,"").length); }
+function gateText(v, oral){ const n=answerLeft(v, oral); return n ? "Ключ откроется после ответа · ещё "+n+" "+(oral?plural(n,["слово","слова","слов"]):plural(n,["знак","знака","знаков"])) : ""; }
 function srsPass(id){ fxLog("SRS","NODE://"+id.toUpperCase()+" · ПОВТОР ЗАСЧИТАН"); const r=srsOf(id)||{stage:0,lapses:0}; r.stage=Math.min(SRS_DAYS.length-1, r.stage+1); r.due=Date.now()+SRS_DAYS[r.stage]*DAY; store.set("pm.srs."+id, r); }
 function srsFail(id){ fxLog("SRS","NODE://"+id.toUpperCase()+" · ЛЕСЕНКА СБРОШЕНА"); const r=srsOf(id)||{stage:0,lapses:0}; r.stage=0; r.lapses=(r.lapses||0)+1; r.due=Date.now()+DAY; store.set("pm.srs."+id, r); }
 function logErr(id, q, note){ const list=store.get("pm.err."+id,[]); list.unshift({at:Date.now(), q:String(q).slice(0,400), note:String(note||"").slice(0,600)}); store.set("pm.err."+id, list.slice(0,20)); }
 function fmtDate(ts){ const d=new Date(ts); return String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0"); }
 function whenLabel(ts){ const d=Math.round((ts-Date.now())/DAY); return d<=0?"СЕГОДНЯ":d===1?"ЗАВТРА":"ЧЕРЕЗ "+d+" ДН."; }
 function computeStatuses(){
-  topics.forEach(t=>{ t.status=statusOf(t.id); t.due=isDue(t.id); });
+  topics.forEach(t=>{ t.status=statusOf(t.id); t.due=isDue(t.id); t.legacy = t.status==="done" && !honestDone(t.id) && !!LEGACY[t.id]; });
   let nx = topics.findIndex(t=>t.due); if(nx<0) nx = topics.findIndex(t=>t.status==="prog"); if(nx<0) nx = topics.findIndex(t=>t.status==="none" && !SKIP[t.id]); if(nx<0) nx = topics.findIndex(t=>t.status==="none"); if(nx<0) nx=0;
   curIdx = nx; topics.forEach((t,i)=>{ t.cur = i===curIdx; });
   routeAt = topics.findIndex(t=>t.status!=="done" && t.status!=="dark"); if(routeAt<0) routeAt = topics.length-1;
@@ -2463,7 +2517,7 @@ const LVL={J:"JUNIOR",M:"MIDDLE",S:"SENIOR"};
 function statusLabel(t){ return t.due ? "ПОВТОРИТЬ" : t.cur ? (t.status==="none"?"СЛЕДУЮЩАЯ":"ТЕКУЩАЯ") : STATUS[t.status]; }
 function metaHTML(t){
   const pr=topicProgress(t.id);
-  return `<span class="${t.cur||t.due?"st-cur":""}" style="color:${(t.status==="none"||t.status==="dark")&&!t.cur?"var(--muted)":"var(--ink)"}">${statusLabel(t)}</span>${pr.total?`<span><b>${pr.ok}</b>/${pr.total} СТУПЕНЕЙ</span>`:""}<span><b>${LVL[t.lvl]}</b></span><span>~<b>${t.min}</b> МИН</span>`;
+  return `<span class="${t.cur||t.due?"st-cur":""}" style="color:${(t.status==="none"||t.status==="dark")&&!t.cur?"var(--muted)":"var(--ink)"}">${statusLabel(t)}</span>${pr.total?`<span><b>${pr.ok}</b>/${pr.total} СТУПЕНЕЙ</span>`:""}${t.legacy?`<span title="Засчитано по старому правилу: ступень 7 и Выгрузка по памяти ещё впереди — на ближайшем повторе">СТАРЫЙ ЗАЧЁТ</span>`:""}<span><b>${LVL[t.lvl]}</b></span><span>~<b>${t.min}</b> МИН</span>`;
 }
 function linkList(ul, i, onPick){
   ul.textContent="";
@@ -2582,7 +2636,7 @@ function renderPList(){
     const idx=topics.map((t,i)=>i).filter(i=>topics[i].b===bi), dn=idx.filter(i=>topics[i].status==="done").length, open=plOpen.has(bi);
     h+=`<div class="pl-br${open?" open":""}${bi===ct.b?" here":""}"><button type="button" class="pl-bh" data-b="${bi}" aria-expanded="${open}"><span class="pl-bc">${br.code}</span><span class="pl-bn">${esc(br.name)}</span><span class="pl-bd"><b>${dn}</b> / ${idx.length}</span><i class="pl-chev" aria-hidden="true">▸</i></button><ol class="pl-ts">`;
     idx.forEach(i=>{ const t=topics[i], st=t.due?"due":t.cur?"cur":t.status, pr=topicProgress(t.id);
-      const extra = t.status==="prog" && pr.total ? ` · ${pr.ok}/${pr.total}` : "";
+      const extra = t.status==="prog" && pr.total ? ` · ${pr.ok}/${pr.total}` : t.legacy ? " · старый зачёт" : "";
       h+=`<li><button type="button" class="pl-t st-${st}" data-i="${i}"><span class="pl-n">${String(i+1).padStart(2,"0")}</span><span class="pl-tt">${esc(t.title)}${t.sub?`<small>${esc(t.sub)}</small>`:""}</span><span class="pl-st">${statusLabel(t)}${extra}</span></button></li>`; });
     h+=`</ol></div>`;
   });
@@ -2623,11 +2677,14 @@ function progressOf(id){ return store.get("pm.steps."+id, {}); }
 function showCheckResult(ok){
   const t=topics[current], nx=nextIdx(current), box=document.querySelector("#pane-practice .p-side");
   const html = ok
-    ? `<div class="chk-res ok"><b>Засчитано.</b> Тема отмечена как знакомая, первый повтор — через ${SRS_DAYS[1]} дня. Ступени 1–6 остаются открыты, если захочешь потренироваться.${nx>=0?`<button type="button" class="cta" id="chkNext">ДАЛЬШЕ · ${esc(topics[nx].title)} ▸</button>`:""}</div>`
+    ? (statusOf(t.id)==="done"
+      ? `<div class="chk-res ok"><b>Засчитано.</b> Ступень 7 и Выгрузка пройдены по памяти — тема освоена, первый повтор — через ${SRS_DAYS[1]} дня. Ступени 1–6 остаются открыты, если захочешь потренироваться.${nx>=0?`<button type="button" class="cta" id="chkNext">ДАЛЬШЕ · ${esc(topics[nx].title)} ▸</button>`:""}</div>`
+      : `<div class="chk-res ok"><b>Ступень 7 по памяти засчитана.</b> Чтобы тема стала освоенной, осталась Выгрузка — вопросы «Проверь себя» без текста урока.<button type="button" class="cta" id="chkOut">К ВЫГРУЗКЕ ▸</button></div>`)
     : `<div class="chk-res"><b>Пока не вышло — и это нормально.</b> Значит, тему стоит пройти: начни с теории, она короткая. Ошибка записана в журнал.<button type="button" class="cta" id="chkTheory">К ТЕОРИИ ▸</button></div>`;
   if(box) box.innerHTML = html;
   if($("chkNext")) $("chkNext").addEventListener("click",()=>openTopic(nx, "theory"));
   if($("chkTheory")) $("chkTheory").addEventListener("click",()=>setTab("theory"));
+  if($("chkOut")) $("chkOut").addEventListener("click",()=>openOut());
 }
 function refreshTopicNav(i){
   const t=topics[i], pv=prevIdx(i), nx=nextIdx(i), el=$("tNav"); if(!el) return;
@@ -2667,8 +2724,10 @@ function doOpen(i, tab){
   if(t.due){ const k7=steps.findIndex(s=>s.id==="s7"); if(k7>=0){ stepIdx=k7; bankIdx=-1; } }
   if(checkMode && checkMode!==t.id) checkMode=null;
   if(forceStep>=0){ stepIdx=Math.min(forceStep, Math.max(0,steps.length-1)); bankIdx=-1; forceStep=-1; }
+  if(t.due && t.status!=="done" && tab!=="cheat" && tab!=="tasks") tab="out";   /* a failed «Выгрузка» is due: start there */
   refreshTopicNav(i);
-  renderTheory(); renderCheat(); renderPractice(); renderTasks();
+  outSt=null; renderTheory(); renderCheat(); renderPractice(); renderTasks();
+  if(tab==="out"){ renderOut(); tab="theory"; }
   setTab(tab || "theory");
   focusOn(i); burst(i, 8);
   setMode("topic");
@@ -2681,6 +2740,7 @@ function setTab(name){
   ["theory","cheat","practice","tasks"].forEach(n=>$("tab-"+n).setAttribute("aria-selected", n===name));
   $("navTopic").classList.toggle("on", mode==="topic" && name!=="tasks");
   $("navTasks").classList.toggle("on", mode==="topic" && name==="tasks");
+  if(name==="theory" && outSt && outSt.saved){ outSt=null; renderTheory(); }   /* a finished «Выгрузка» summary does not linger */
   const show=()=>{
     ["theory","cheat","practice","tasks"].forEach(n=>{ $("pane-"+n).hidden = n!==name; });
     $("winBody").scrollTop=0;
@@ -2829,12 +2889,13 @@ function lessonHTML(L){
 function renderTheory(){
   const t=topics[current], c=DATA.content[t.id], pane=$("pane-theory");
   const nextIdx = topics.findIndex(x=>x.b===t.b && x.k===t.k+1);
-  const L = c && c.lesson, nDeep = L ? L.deeper.length : 0;
+  const L = c && c.lesson, nDeep = L ? L.deeper.length : 0, outPass = !!(outOf(t.id)||{}).pass;
   pane.innerHTML = `<div class="theory${L?" lesson":""}">${c ? (L ? lessonHTML(L) : c.theory) : `<p class="empty">Теория для этой темы ещё не написана. Она появится по тому же шаблону: что это, почему так устроено, последствия и аналогия.</p>`}</div>
     <button type="button" class="more" id="tMore" hidden></button>
     <div class="t-foot">
       ${nDeep ? `<button class="deepBtn" type="button" id="toDeep"><span>ГЛУБЖЕ ▾</span><small>${nDeep} ${nDeep<5?"РАЗДЕЛА":"РАЗДЕЛОВ"} · ДЛЯ СОБЕСА И MIDDLE</small></button>` : ""}
-      ${c && c.steps.length ? `<button class="cta" type="button" id="toPractice">ЗАПУСТИТЬ ПРАКТИКУ ▸</button>` : ""}
+      ${outQs(t.id).length ? (outPass ? `<button class="ghostbtn" type="button" id="toOut">ВЫГРУЗКА ✓ · ПРОЙТИ ЕЩЁ РАЗ</button>` : `<button class="cta" type="button" id="toOut">ВЫГРУЗКА ▸ <small>${outQs(t.id).length} ${plural(outQs(t.id).length,["ВОПРОС","ВОПРОСА","ВОПРОСОВ"])} ПО ПАМЯТИ</small></button>`) : ""}
+      ${c && c.steps.length ? `<button class="${outPass||!outQs(t.id).length?"cta":"ghostbtn"}" type="button" id="toPractice">ЗАПУСТИТЬ ПРАКТИКУ ▸</button>` : ""}
       <div class="sect"><h3>СВЯЗИ</h3><ul class="links" id="tLinks"></ul></div>
       ${nextIdx>=0 ? `<div class="sect"><h3>ДАЛЬШЕ В ВЕТКЕ</h3><ul class="links"><li><button type="button" id="tNext"><span>${esc(topics[nextIdx].title)}</span><em>→</em></button></li></ul></div>` : ""}
     </div>`;
@@ -2847,9 +2908,93 @@ function renderTheory(){
   updateMore();
   linkList($("tLinks"), current, j=>openTopic(j));
   if($("toPractice")) $("toPractice").addEventListener("click",()=>setTab("practice"));
+  if($("toOut")) $("toOut").addEventListener("click",()=>openOut());
   if($("tNext")) $("tNext").addEventListener("click",()=>openTopic(nextIdx));
 }
 
+/* ---------- «Выгрузка»: the lesson text is closed, the «Проверь себя» questions one by one, answer → reveal → self-grade ---------- */
+let outSt=null;   /* {id, k, g:[grades], dunno, shown} — current run of the screen */
+function outQs(id){ const L=(DATA.content[id]||{}).lesson; if(!L) return [];
+  if(L.check) return L.check;
+  const sec=L.base.find(x=>/^Проверь себя/.test(x.h)), ul=sec && sec.body.find(n=>n.t==="ul"); return ul ? ul.items : []; }
+function htmlText(h){ const d=document.createElement("div"); d.innerHTML=h; return d.textContent; }
+function openOut(){ if(current<0) return; outSt=null; renderOut(); if(activeTab!=="theory") setTab("theory"); else $("winBody").scrollTop=0; }
+function outVerdict(g){ return g.includes("no") ? "no" : g.length && g.every(x=>x==="ok") ? "ok" : "part"; }   /* passed only when every answer was recalled */
+function renderOut(){
+  const t=topics[current], id=t.id, qs=outQs(id), L=(DATA.content[id]||{}).lesson||{}, pane=$("pane-theory");
+  stopTyping(); thBlocks=[]; thShown=0;
+  if(!outSt || outSt.id!==id) outSt={id, k:0, g:[], dunno:false, shown:false};
+  const S=outSt, n=qs.length;
+  if(S.k>=n){ renderOutDone(t, S); return; }
+  const drafts=store.get("pm.outAns."+id, []), draft=S.shown ? (drafts[S.k]||"") : "";
+  pane.innerHTML = `<div class="out" id="out">
+    <div class="out-h"><span>ВЫГРУЗКА · ВОПРОС <b>${S.k+1}</b> / ${n}</span><button type="button" class="textbtn" id="outBack">← К УРОКУ</button></div>
+    <p class="out-tip">Текст урока закрыт. Вытащи ответ из головы: напиши его или ответь про себя. Потом открой ответ и честно оцени.</p>
+    <h2 class="out-q">${qs[S.k]}</h2>
+    <div class="answer"><label for="outAns">ТВОЙ ОТВЕТ</label><div class="ed"><textarea id="outAns" class="prose" spellcheck="false" placeholder="Своими словами: что → почему → последствия">${esc(draft)}</textarea></div>
+      <div class="row-actions" id="outActs">
+        <button type="button" class="cta" id="outShow" disabled>ПОКАЗАТЬ ОТВЕТ</button>
+        <button type="button" class="textbtn" id="outSilent">ОТВЕТИЛ ПРО СЕБЯ</button>
+        <button type="button" class="textbtn dunno" id="outDunno">НЕ ЗНАЮ — ПОКАЖИ</button>
+        <span class="gate" id="outGate">${gateText("", true)}</span>
+      </div></div>
+    <div id="outKey"></div></div>`;
+  const ta=$("outAns"), btn=$("outShow"), gate=$("outGate");
+  const upd=()=>{ const left=answerLeft(ta.value, true); btn.disabled=left>0; gate.textContent=gateText(ta.value, true); };
+  ta.addEventListener("input", upd); upd();
+  $("outBack").addEventListener("click",()=>{ outSt=null; renderTheory(); $("winBody").scrollTop=0; });
+  const reveal=dunno=>{
+    S.shown=true; S.dunno=dunno;
+    if(ta.value.trim()){ const d=store.get("pm.outAns."+id, []); d[S.k]=ta.value; store.set("pm.outAns."+id, d); }
+    ta.readOnly=true; $("outActs").hidden=true;
+    const a=L.answers && L.answers[S.k], ch=DATA.ref.cheat[id];
+    const ansHTML = a ? `<div class="out-a">${a}</div>`
+      : `<div class="out-a none"><span class="out-miss">ЭТАЛОННЫЙ ОТВЕТ ЕЩЁ НЕ НАПИСАН · СВЕРЬСЯ СО ШПАРГАЛКОЙ ТЕМЫ</span>${ch&&ch.length?`<ol class="ch-list">${ch.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:`<p>Шпаргалки тоже нет — сверься с уроком после оценки.</p>`}</div>`;
+    $("outKey").innerHTML = ansHTML + (dunno
+      ? `<div class="assess"><span class="q">Записано: «нет». Разбери ответ — вопрос вернётся завтра.</span><button type="button" class="cta" id="outNext">${S.k+1<n?"СЛЕДУЮЩИЙ ВОПРОС ▸":"ИТОГ ▸"}</button></div>`
+      : `<div class="assess"><span class="q">Насколько ты вспомнил это сам?</span><button type="button" class="cta" data-g="ok">ВСПОМНИЛ</button><button type="button" class="ghostbtn" data-g="part">ЧАСТИЧНО</button><button type="button" class="ghostbtn" data-g="no">НЕТ</button></div>`);
+    if(dunno){ S.g[S.k]="no"; $("outNext").addEventListener("click",()=>{ S.k++; S.shown=false; renderOut(); $("winBody").scrollTop=0; }); }
+    $("outKey").querySelectorAll("[data-g]").forEach(b=>b.addEventListener("click",()=>{ S.g[S.k]=b.dataset.g; S.k++; S.shown=false; renderOut(); $("winBody").scrollTop=0; }));
+    const kb=$("outKey"); if(kb.scrollIntoView) kb.scrollIntoView({block:"nearest"});
+  };
+  btn.addEventListener("click",()=>reveal(false));
+  $("outSilent").addEventListener("click",()=>reveal(false));
+  $("outDunno").addEventListener("click",()=>reveal(true));
+}
+function renderOutDone(t, S){
+  const id=t.id, qs=outQs(id), g=S.g.slice(0, qs.length), v=outVerdict(g), now=Date.now();
+  if(!S.saved){ S.saved=true;
+    const old=outOf(id)||{}, wasDue=t.due;
+    store.set("pm.out."+id, {at:now, g, v, pass: v==="ok" ? (old.pass||now) : (old.pass||0)});
+    g.forEach((x,k)=>{ if(x!=="ok") logErr(id, "Выгрузка: "+htmlText(qs[k]), x==="no" ? "Не вспомнил — вопрос вернётся завтра." : "Вспомнил частично — сверь с ответом."); });
+    const r=store.get("pm.srs."+id, null);
+    if(v==="no") srsFail(id);
+    else if(v==="ok" && !LEGACY[id] && !(recallOf(id)||{}).pass){ try{ localStorage.removeItem("pm.srs."+id); }catch(e){} }   /* not done yet: off the ladder, it starts when the topic is done */
+    else if(r && (wasDue || r.due<=now)) srsGrade(id, v);
+    if(pendingRun===dayKey()){ pendingRun=null; finishRunDay(); }
+    fxLog(v==="ok"?"OK":"FAIL", "NODE://"+id.toUpperCase()+" · ВЫГРУЗКА "+(v==="ok"?"ЗАСЧИТАНА":v==="part"?"ЧАСТИЧНО":"· ПОВТОР ЗАВТРА"));
+    v==="ok" ? sfx.ok() : sfx.no();
+    refreshProgress(); refreshTopicNav(current); setPracticeSup(id);
+    if(v==="ok") burst(current, 14);
+  }
+  const cnt=k=>g.filter(x=>x===k).length, done=statusOf(id)==="done", rec=recallOf(id);
+  const msg = v==="ok"
+    ? (done ? `<b>Засчитано.</b> Ступень 7 и Выгрузка пройдены по памяти — тема освоена. Повтор придёт сам по лесенке.`
+            : `<b>Выгрузка засчитана.</b> Для статуса «освоено» осталась ступень 7 по памяти${rec&&rec.v?" — в прошлый раз она не засчитана":""}.`)
+    : v==="part" ? `<b>Пока не засчитано.</b> «Частично» — это ещё не воспроизведение. Перечитай слабые места и пройди Выгрузку снова.`
+    : `<b>Не вспомнил — это нормально.</b> Повтор поставлен на завтра, вопросы записаны в журнал ошибок (вкладка «Шпаргалка»).`;
+  $("pane-theory").innerHTML = `<div class="out" id="out">
+    <div class="out-h"><span>ВЫГРУЗКА · ИТОГ</span><button type="button" class="textbtn" id="outBack">← К УРОКУ</button></div>
+    <div class="out-sum"><span>ВСПОМНИЛ <b>${cnt("ok")}</b></span><span>ЧАСТИЧНО <b>${cnt("part")}</b></span><span>НЕТ <b>${cnt("no")}</b></span></div>
+    <div class="chk-res${v==="ok"?" ok":""}">${msg}
+      <div class="out-acts">${(DATA.content[id]||{}).steps && DATA.content[id].steps.length && !(done && v==="ok") ? `<button type="button" class="cta" id="outPractice">${rec&&rec.pass?"К ПРАКТИКЕ ▸":"К СТУПЕНИ 7 ▸"}</button>` : ""}
+      ${v!=="ok" ? `<button type="button" class="ghostbtn" id="outAgain">ПРОЙТИ ЕЩЁ РАЗ</button>` : ""}
+      ${done && v==="ok" && nextIdx(current)>=0 ? `<button type="button" class="cta" id="outNextT">ДАЛЬШЕ · ${esc(topics[nextIdx(current)].title)} ▸</button>` : ""}</div></div></div>`;
+  $("outBack").addEventListener("click",()=>{ outSt=null; renderTheory(); $("winBody").scrollTop=0; });
+  if($("outAgain")) $("outAgain").addEventListener("click",()=>openOut());
+  if($("outNextT")) $("outNextT").addEventListener("click",()=>openTopic(nextIdx(current),"theory"));
+  if($("outPractice")) $("outPractice").addEventListener("click",()=>{ const st=DATA.content[id].steps; if(!(rec&&rec.pass)){ const k7=st.findIndex(x=>x.id==="s7"); if(k7>=0){ stepIdx=k7; bankIdx=-1; } } renderPractice(); setTab("practice"); });
+}
 
 /* ---------- answer editor: auto-pairs, indent, tab, highlight, key sounds ---------- */
 function attachEditor(ta, hlEl, opts){
@@ -3007,18 +3152,26 @@ function renderPractice(){
   if(!c || !c.steps.length){ pane.innerHTML=`<p class="empty">Практика для этой темы ещё не написана.</p>`; return; }
   const prog=progressOf(t.id), steps=c.steps, bank=bankFor(t.id), inBank = bankIdx>=0 && bankIdx<bank.length;
   const s = inBank ? bank[bankIdx] : steps[stepIdx];
-  const ladder = steps.map((st,k)=>{ const cls=[prog[st.id]==="ok"?"ok":prog[st.id]==="no"?"no":"", k===stepIdx?"on":""].join(" ");
+  const grades=gradesOf(t.id);
+  const ladder = steps.map((st,k)=>{ const cls=[prog[st.id]==="ok"?"ok":grades[st.id]==="part"?"part":prog[st.id]==="no"?"no":"", k===stepIdx?"on":""].join(" ");
     return `<button type="button" class="rung ${inBank?cls.replace("on",""):cls}" data-step="${k}" aria-label="${esc(st.title)}"><span class="dot">${k+1}</span><span class="lbl">${esc(short(st.title))}</span></button>`; }).join("")
     + (bank.length ? `<button type="button" class="rung bankrung ${inBank?"on":""}" id="bankRung" aria-label="Банк задач"><span class="dot">+${bank.length}</span><span class="lbl">БАНК</span></button>` : "");
-  const ansKey = inBank ? "pm.bankAns."+s.id : "pm.ans."+t.id+"."+s.id;
-  const saved = store.get(ansKey, "");
+  /* blind recall: an SRS review or the «Уже знаю» check of step 7 starts from an empty field (own draft key pm.rans.<id>);
+     the previous answer (pm.ans.<id>.s7) can be shown only after the key */
+  const blind = !inBank && s.id==="s7" && (t.due || checkMode===t.id);
+  const ansKey = inBank ? "pm.bankAns."+s.id : blind ? "pm.rans."+t.id : "pm.ans."+t.id+"."+s.id;
+  const saved = store.get(ansKey, ""), prevAns = blind ? store.get("pm.ans."+t.id+".s7", "") : "";
   const oral = inBank ? s.type==="Устно" : s.id==="s5";
+  const rec = recallOf(t.id), outP = !!(outOf(t.id)||{}).pass;
+  const s7note = !inBank && s.id==="s7" && !blind && rec && rec.pass && !outP && outQs(t.id).length
+    ? `<div class="s7note">Ступень 7 по памяти засчитана · для «освоено» осталась Выгрузка <button type="button" class="textbtn" id="s7out">К ВЫГРУЗКЕ ▸</button></div>` : "";
   const bst = inBank ? bankStat(s.id) : null;
   pane.innerHTML = `<div class="ladder">${ladder}</div>
     <div class="p-code">${s.code ? terminal(s.code, inBank ? "Задача из банка "+(bankIdx+1)+" из "+bank.length : "Задача "+(stepIdx+1)+" из "+steps.length, "", {plain: oral || proseCode(s.code)}) : ""}</div>
     <div class="split" id="split" role="separator" aria-orientation="vertical" tabindex="0" title="Потяни — изменить ширину · двойной клик — авто"></div>
     <div class="p-side">
       ${inBank ? `<div class="bank-h"><span class="bt">${esc(s.type.toUpperCase())}${s.mins?" · "+s.mins+" МИН":""}</span><span>${bst.ok?"РЕШЕНО ×"+bst.ok:bst.no?"НЕ ВЫШЛО ×"+bst.no:"НОВАЯ"}</span><span class="bnav"><button type="button" class="textbtn" id="bankPrev">◂</button><button type="button" class="textbtn" id="bankNext">ДРУГАЯ ▸</button></span></div>` : ""}
+      ${s7note}${blind ? `<div class="s7note">${t.due?"ПОВТОР ВСЛЕПУЮ":"ПРОВЕРКА ПО ПАМЯТИ"} · поле пустое, ключ закрыт — прошлый ответ покажу после сверки</div>` : ""}
       <h2 class="step-title">${esc(inBank ? s.title : short(s.title))}</h2>
       <p class="prompt">${esc(s.prompt)}</p>
       <div class="answer">
@@ -3026,8 +3179,9 @@ function renderPractice(){
         <div class="ed" id="ed"><pre class="ed-hl" id="edHl" aria-hidden="true" hidden></pre><textarea id="ans" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" placeholder="${oral ? "Объясни, как на собесе: что → почему → последствия" : "> пиши по памяти"}">${esc(saved)}</textarea></div>
         ${oral ? `<div class="ed-tip"><button type="button" class="textbtn" id="keySnd"></button></div>` : `<div class="ed-tip"><span class="ed-keys">Tab — отступ · скобки закрываются сами · Ctrl+Enter — ключ</span> <button type="button" class="textbtn" id="keySnd"></button></div>`}
         <div class="row-actions">
-          <button type="button" class="textbtn" id="showKey" ${saved.trim().length>=2?"":"disabled"}>ПОКАЗАТЬ КЛЮЧ</button>
-          <span class="gate" id="gate">${saved.trim().length>=2?"":"Ключ откроется после твоего ответа"}</span>
+          <button type="button" class="textbtn" id="showKey" ${answerLeft(saved,oral)?"disabled":""}>ПОКАЗАТЬ КЛЮЧ</button>
+          <button type="button" class="textbtn dunno" id="dunno">НЕ ЗНАЮ — ПОКАЖИ</button>
+          <span class="gate" id="gate">${gateText(saved,oral)}</span>
         </div>
       </div>
       <div id="keyBox"></div>
@@ -3091,8 +3245,13 @@ function renderPractice(){
     bar.addEventListener("mousedown",e=>{ if(e.target.closest("button")) e.preventDefault(); });
     bar.addEventListener("click",e=>{ const b=e.target.closest("button"); if(b) act(b); });
   })();
-  ta.addEventListener("input",()=>{ store.set(ansKey, ta.value); const ok=ta.value.trim().length>=2; kb.disabled=!ok; gate.textContent= ok ? "" : "Ключ откроется после твоего ответа"; });
-  kb.addEventListener("click",()=>{
+  ta.addEventListener("input",()=>{ if(blind && kb.dataset.open) return; store.set(ansKey, ta.value); if(kb.dataset.open) return; kb.disabled=answerLeft(ta.value,oral)>0; gate.textContent=gateText(ta.value,oral); });
+  if($("s7out")) $("s7out").addEventListener("click",()=>openOut());
+  $("dunno").addEventListener("click",()=>{ if(kb.dataset.open) return; showKeyNow(true); });
+  kb.addEventListener("click",()=>{ if(!kb.disabled) showKeyNow(false); });
+  function showKeyNow(dunno){
+    kb.dataset.open="1"; $("dunno").hidden=true; kb.hidden=true;
+    if(blind) store.set(ansKey, "");   /* the key has been seen: the next review starts empty again */
     const pc=document.querySelector("#pane-practice .p-code"), wide=pc && pc.querySelector(".term") && $("winBody").classList.contains("fit") && !narrow();
     let keyTerm;
     if(wide){
@@ -3103,41 +3262,54 @@ function renderPractice(){
       pc.addEventListener("click",e=>{ const bt=e.target.closest(".kswap"); if(!bt) return; pc.querySelectorAll(".term").forEach(x=>x.style.display = x.dataset.v===bt.dataset.to ? "" : "none"); requestAnimationFrame(fitCode); sfx.hover && sfx.hover(1,1); });
       $("keyBox").innerHTML = "";
     } else { $("keyBox").innerHTML = terminal(s.key, "Ключ", "сверь со своим ответом", {plain:true, key:true}); keyTerm=$("keyBox").querySelector(".term"); }
-    $("keyBox").insertAdjacentHTML("beforeend",
-      `<div class="assess"><span class="q">Совпало с тем, что ты написал сам?</span>
-        <button type="button" class="cta" id="okBtn">СПРАВИЛСЯ</button>
-        <button type="button" class="ghostbtn" id="noBtn">ПОКА НЕТ</button></div>`);
+    $("keyBox").insertAdjacentHTML("beforeend", (prevAns.trim() ? `<div class="prevans"><button type="button" class="textbtn" id="prevBtn">ПОКАЗАТЬ ПРОШЛЫЙ ОТВЕТ</button><div id="prevBox"></div></div>` : "") + (dunno
+      ? `<div class="assess"><span class="q">Записано: «пока нет». Разбери ключ${!inBank&&s.id==="s7"?" — ступень 7 вернётся на повторе":""}.</span><button type="button" class="cta" id="nextBtn">${inBank?"ДРУГАЯ ЗАДАЧА ▸":stepIdx<steps.length-1?"СЛЕДУЮЩАЯ СТУПЕНЬ ▸":"ГОТОВО"}</button></div>`
+      : `<div class="assess"><span class="q">Сверь с ключом: насколько ты вспомнил это сам?</span>
+        <button type="button" class="cta" id="okBtn">ВСПОМНИЛ</button>
+        <button type="button" class="ghostbtn" id="partBtn">ЧАСТИЧНО</button>
+        <button type="button" class="ghostbtn" id="noBtn">НЕТ</button></div>`));
     kb.disabled=true; gate.textContent="";
     fitCode(); typeSeq([{el:keyTerm.querySelector(".term-b"), cps:420}]);
-    $("okBtn").addEventListener("click",()=>mark("ok")); $("noBtn").addEventListener("click",()=>mark("no"));
-  });
-  function mark(v, silent){
+    if($("prevBtn")) $("prevBtn").addEventListener("click",()=>{ $("prevBox").innerHTML=terminal(prevAns, "Прошлый ответ", "до этого повтора", {plain:oral || proseCode(prevAns)}); $("prevBtn").hidden=true; });
+    if(dunno){ const res=mark("no", false, true); if(res==="check") return;
+      $("nextBtn").addEventListener("click",()=>{ if(inBank){ store.set(ansKey, ""); bankIdx=pickBank(t.id, s.id); } else if(stepIdx<steps.length-1) stepIdx++; renderPractice(); startTyping("practice"); }); return; }
+    $("okBtn").addEventListener("click",()=>mark("ok")); $("partBtn").addEventListener("click",()=>mark("part")); $("noBtn").addEventListener("click",()=>mark("no"));
+  }
+  /* v: "ok" вспомнил · "part" частично · "no" нет. pm.steps keeps its old ok/no format (part → no), the 3 levels go to pm.grade.<id>.
+     stay: record only, keep the key on screen (the «не знаю — покажи» path) */
+  function mark(v, silent, stay){
     if(pendingRun===dayKey()){ pendingRun=null; finishRunDay(); }
     if(inBank){
       fxLog(v==="ok"?"OK":"FAIL", "BANK://"+s.id.toUpperCase()+(v==="ok"?" · РЕШЕНО":" · В ЖУРНАЛ")); const st=bankStat(s.id); st[v==="ok"?"ok":"no"]++; st.last=Date.now(); store.set("pm.bank."+s.id, st);
-      if(v==="ok"){ burst(current, 12); sfx.ok(); } else { sfx.no(); } if(v!=="ok") logErr(t.id, s.title+": "+s.prompt, "Банк задач: не вышло — разобрать по ключу.");
+      if(v==="ok"){ burst(current, 12); sfx.ok(); } else { sfx.no(); } if(v!=="ok") logErr(t.id, s.title+": "+s.prompt, v==="part" ? "Банк задач: частично — сверить с ключом." : "Банк задач: не вышло — разобрать по ключу.");
+      if(stay) return;
       store.set(ansKey, ""); bankIdx=pickBank(t.id, s.id); renderPractice(); startTyping("practice"); return;
     }
     if(silent){ const p=progressOf(t.id); p[s.id]=v; store.set("pm.steps."+t.id, p); refreshProgress();
       setPracticeSup(t.id);
       const r=document.querySelector('.rung[data-step="'+stepIdx+'"]'); if(r){ r.classList.toggle("ok",v==="ok"); r.classList.toggle("no",v==="no"); }
       return; }
-    if(t.due && s.id==="s7"){ v==="ok" ? srsPass(t.id) : srsFail(t.id); }
+    const gr=gradesOf(t.id); gr[s.id]=v; store.set("pm.grade."+t.id, gr);
+    if(s.id==="s7"){ const r0=recallOf(t.id)||{}; store.set("pm.recall."+t.id, {at:Date.now(), v, pass: v==="ok" ? (r0.pass||Date.now()) : (r0.pass||0)}); }
+    if(blind){ if(v==="ok" && ta.value.trim()) store.set("pm.ans."+t.id+".s7", ta.value); store.set(ansKey, ""); }
+    if(t.due && s.id==="s7") srsGrade(t.id, v);
+    v = v==="ok" ? "ok" : "no";   /* pm.steps stays ok/no */
     if(checkMode===t.id && s.id==="s7"){
       checkMode=null;
       if(v==="ok"){ KNOWN[t.id]=Date.now(); store.set("pm.known",KNOWN); delete SKIP[t.id]; store.set("pm.skip",SKIP); fxLog("OK","NODE://"+t.id.toUpperCase()+" · ЗНАНИЕ ПОДТВЕРЖДЕНО"); }
       const p0=progressOf(t.id); p0[s.id]=v; store.set("pm.steps."+t.id, p0);
       if(v==="ok"){ burst(current, 18); sfx.step(stepIdx, true); } else { sfx.no(); logErr(t.id, short(s.title)+": "+s.prompt, "Проверка «уже знаю» не прошла — пройти тему с теории."); }
       refreshProgress(); refreshTopicNav(current);
-      showCheckResult(v==="ok"); return;
+      showCheckResult(v==="ok"); return "check";
     }
-    if(v==="no") logErr(t.id, short(s.title)+": "+s.prompt, "Самооценка: пока не справился.");
+    if(v==="no") logErr(t.id, short(s.title)+": "+s.prompt, gr[s.id]==="part" ? "Самооценка: частично — сверить с ключом." : "Самооценка: пока не справился.");
     const p=progressOf(t.id); p[s.id]=v; store.set("pm.steps."+t.id, p);
     if(v==="ok") burst(current, 14);
     if(v==="ok"){ const pp=progressOf(t.id); const okAfter=steps.filter(st=>pp[st.id]==="ok" || st.id===s.id).length; sfx.step(stepIdx, okAfter>=steps.length || (t.due && s.id==="s7")); } else sfx.no();
     fxLog(v==="ok"?"OK":"FAIL", "NODE://"+t.id.toUpperCase()+" · STEP "+(stepIdx+1)+(v==="ok"?" PASSED":" · В ЖУРНАЛ"));
     refreshProgress();
     setPracticeSup(t.id);
+    if(stay){ const r=document.querySelector('.rung[data-step="'+stepIdx+'"]'); if(r){ r.classList.remove("ok"); r.classList.add("no"); } return; }
     if(stepIdx < steps.length-1) stepIdx++;
     renderPractice(); startTyping("practice");
   }
@@ -3273,8 +3445,8 @@ function renderRun(){
   $("runShow").addEventListener("click",()=>{ stopTyping();
     $("runTip").outerHTML=`<div class="run-a">${esc(c.a)}</div>`;
     $("runActs").innerHTML=`<button type="button" class="cta" id="runYes">ПОМНЮ</button><button type="button" class="ghostbtn" id="runNo">НЕ ВСПОМНИЛ</button>`;
-    $("runYes").addEventListener("click",()=>{ sfx.ok(); if(c.kind==="review") srsPass(t.id); runRes.push(true); flash[c.i]=1.6; burst(c.i,10); refreshProgress(); runIdx++; renderRun(); });
-    $("runNo").addEventListener("click",()=>{ sfx.no(); if(t.status==="done") srsFail(t.id); if(c.kind!=="warm") logErr(t.id, c.q, "Ран: не вспомнил. Ответ: "+c.a); runRes.push(false); refreshProgress(); runIdx++; renderRun(); });
+    $("runYes").addEventListener("click",()=>{ sfx.ok(); if(c.kind==="review" && honestDone(t.id)) srsPass(t.id); runRes.push(true); flash[c.i]=1.6; burst(c.i,10); refreshProgress(); runIdx++; renderRun(); });
+    $("runNo").addEventListener("click",()=>{ sfx.no(); if(t.status==="done" || (c.kind==="review" && store.get("pm.srs."+t.id,null))) srsFail(t.id); if(c.kind!=="warm") logErr(t.id, c.q, "Ран: не вспомнил. Ответ: "+c.a); runRes.push(false); refreshProgress(); runIdx++; renderRun(); });
   });
 }
 $("runBtn").addEventListener("click",openRun);
@@ -3455,7 +3627,7 @@ const DEVICE_KEYS=new Set(["pm.font","pm.codefont","pm.sfx","pm.volAmb","pm.volF
 let lastSnapshot=null;
 function progressKeys(){ const r=[]; try{ for(let k=0;k<localStorage.length;k++){ const key=localStorage.key(k); if(key && key.startsWith("pm.") && !DEVICE_KEYS.has(key)) r.push(key); } }catch(e){} return r; }
 function takeSnapshot(){ const o={}; progressKeys().forEach(k=>{ try{ o[k]=localStorage.getItem(k); }catch(e){} }); return o; }
-function reloadState(){ IMPORTED=store.get("pm.imported",{}); KNOWN=store.get("pm.known",{}); SKIP=store.get("pm.skip",{}); refreshProgress(); refreshRun(); refreshBackupNote(); }
+function reloadState(){ IMPORTED=store.get("pm.imported",{}); KNOWN=store.get("pm.known",{}); SKIP=store.get("pm.skip",{}); LEGACY=store.get("pm.legacy",{}); migrateHonest(); outSt=null; refreshProgress(); refreshRun(); refreshBackupNote(); }
 function restoreSnapshot(snap){ progressKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); Object.entries(snap).forEach(([k,v])=>{ try{ localStorage.setItem(k,v); }catch(e){} }); reloadState(); }
 function topicCount(map){ return Object.keys(map).filter(k=>k.indexOf("pm.steps.")===0 && map[k] && map[k]!=="{}").length; }
 function checkImport(obj){
@@ -3501,6 +3673,7 @@ $("importFile").addEventListener("change",async e=>{
     Object.entries(st).forEach(([id,v])=>{ if(idIndex[id]==null||!v) return; if(v.s===2){ map[id]="done"; d++; } else if(v.s===1 || (v.ans&&Object.keys(v.ans).length)){ map[id]="prog"; pg++; } });
     if(!Object.keys(map).length){ note.textContent="ЭТО НЕ ФАЙЛ ПРОГРЕССА · НИЧЕГО НЕ ИЗМЕНЕНО"; e.target.value=""; return; }
     IMPORTED=map; store.set("pm.imported", map);
+    LEGACY=store.get("pm.legacy",{}); Object.keys(map).forEach(id=>{ if(map[id]==="done" && !LEGACY[id]) LEGACY[id]=Date.now(); }); store.set("pm.legacy", LEGACY);   /* old board: grandfathered like other old progress */
     Object.keys(map).forEach(id=>{ if(map[id]==="done" && !store.get("pm.doneAt."+id,0)) store.set("pm.doneAt."+id, Date.now()); });
     refreshProgress(); note.textContent = "ИМПОРТ: "+d+" ОСВОЕНО · "+pg+" В ПРОЦЕССЕ";
     topics.forEach((t,i)=>{ if(map[t.id]) flash[i]=1.6; });
