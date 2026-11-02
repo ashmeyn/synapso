@@ -1,0 +1,38 @@
+[
+ {
+  "id": "skel-b1",
+  "topics": [
+   "skel"
+  ],
+  "type": "Допиши",
+  "title": "Уроки на вечер",
+  "prompt": "Приложение для учёбы предлагает уроки по порядку. Верни, сколько первых уроков помещается в свободные минуты: идём по списку и останавливаемся на первом, который уже не влезает. Сначала сигнатура и примеры, потом каркас.",
+  "code": "// minutes — длительности уроков по порядку, все > 0\n// budget — свободные минуты, >= 0\n// [20, 30, 15], budget 50 → 2\n// [60, 10], budget 50 → 0",
+  "key": "func lessonsThatFit(_ minutes: [Int], budget: Int) -> Int {\n    var used = 0\n    var count = 0\n    for lesson in minutes {\n        if used + lesson > budget { break }\n        used += lesson\n        count += 1\n    }\n    return count\n}\nassert(lessonsThatFit([20, 30, 15], budget: 50) == 2)\nassert(lessonsThatFit([60, 10], budget: 50) == 0)\nassert(lessonsThatFit([25, 25], budget: 50) == 2)\nassert(lessonsThatFit([], budget: 50) == 0)\n\nРезультат — число, поэтому место результата — счётчик, а не массив. Нужен второй аккумулятор used: решение по уроку зависит от уже потраченных минут. break завершает проход на первом уроке, который не влезает: [60, 10] даёт 0, хотя 10 поместилось бы, — так требует «по порядку». Точное равенство влезает: 25 + 25 = 50.",
+  "added": "2026-11-02"
+ },
+ {
+  "id": "skel-b2",
+  "topics": [
+   "skel"
+  ],
+  "type": "Найди ошибку",
+  "title": "Серия дней медитации",
+  "prompt": "Экран статистики показывает самую длинную серию дней подряд с медитацией. Для этой недели нужна серия 3, а код печатает другое число. Найди и почини.",
+  "code": "func longestStreak(_ days: [Bool]) -> Int {\n    var best = 0\n    for didMeditate in days {\n        var current = 0\n        if didMeditate {\n            current += 1\n            best = max(best, current)\n        } else {\n            current = 0\n        }\n    }\n    return best\n}\nprint(longestStreak([true, true, false, true, true, true]))",
+  "key": "func longestStreak(_ days: [Bool]) -> Int {\n    var best = 0\n    var current = 0\n    for didMeditate in days {\n        if didMeditate {\n            current += 1\n            best = max(best, current)\n        } else {\n            current = 0\n        }\n    }\n    return best\n}\n\nКод печатает 1: current объявлен внутри цикла и обнуляется на каждом дне, поэтому серия не растёт. Аккумулятор, который живёт между шагами, объявляют до прохода; внутри цикла — только работа с одним днём. Теперь ветка else действительно обрывает серию, вывод 3. Края: [] → 0, все false → 0, все true → длина массива.",
+  "added": "2026-11-02"
+ },
+ {
+  "id": "skel-b3",
+  "topics": [
+   "skel"
+  ],
+  "type": "Устно",
+  "title": "С чего начать на live coding",
+  "prompt": "Задача на собеседовании: «Верни категорию расходов с наибольшей суммой». Объясни вслух, как на собеседовании: что ты спросишь и запишешь до тела функции и какой каркас выберешь.",
+  "code": "struct Expense {\n    let category: String\n    let amount: Int\n}\n// func topCategory(_ expenses: [Expense]) -> ???\n// Пример: Еда 300, Такси 500, Еда 400 → ?",
+  "key": "Сначала контракт: что вернуть для пустого списка (значит, String?), как решать ничью (например, первая по алфавиту), бывают ли отрицательные суммы-возвраты. Записываю пример: Еда 300 + 400 = 700 больше Такси 500 → «Еда»; ответ не «Такси», хотя это самая крупная одна трата. Сигнатура: topCategory(_ expenses: [Expense]) -> String?. Каркас: место результата — словарь сумм [String: Int], проход по расходам, шаг — totals[category, default: 0] += amount, ответ после прохода — категория с наибольшей суммой по правилу ничьей. Называю сложность O(n) и проверки: пустой список, одна запись, ничья.",
+  "added": "2026-11-02"
+ }
+]

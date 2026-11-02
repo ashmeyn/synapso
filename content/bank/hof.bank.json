@@ -1,0 +1,38 @@
+[
+ {
+  "id": "hof-b1",
+  "topics": [
+   "hof"
+  ],
+  "type": "Перепиши",
+  "title": "Чек-лист в поездку",
+  "prompt": "Перепиши оба цикла без var и ручного аккумулятора. Каждая строка должна отвечать на вопрос экрана: какие тяжёлые вещи ещё не упакованы и всё ли уже упаковано.",
+  "code": "struct PackItem {\n    let name: String\n    let grams: Int\n    let packed: Bool\n}\nlet items = [PackItem(name: \"Ботинки\", grams: 900, packed: false),\n             PackItem(name: \"Зарядка\", grams: 120, packed: false),\n             PackItem(name: \"Куртка\", grams: 700, packed: true)]\nvar heavyLeft: [String] = []\nfor item in items {\n    if !item.packed && item.grams >= 500 {\n        heavyLeft.append(item.name.uppercased())\n    }\n}\nvar allPacked = true\nfor item in items where !item.packed { allPacked = false }",
+  "key": "let heavyLeft = items\n    .filter { !$0.packed && $0.grams >= 500 }\n    .map { $0.name.uppercased() }\nlet allPacked = items.allSatisfy { $0.packed }\nprint(heavyLeft, allPacked)\n\nfilter отвечает «какие вещи оставить», map — «что показать». Сначала фильтр, потом map: заглавные строки строим только для нужных вещей. allSatisfy даёт true, только если условие верно для всех элементов, а на пустом списке — true: упаковывать нечего. Вывод: [\"БОТИНКИ\"] false.",
+  "added": "2026-11-02"
+ },
+ {
+  "id": "hof-b2",
+  "topics": [
+   "hof"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Ближайшая аптека",
+  "prompt": "Что напечатают четыре строки? Почему первая и третья строки отвечают на разные вопросы?",
+  "code": "struct Pharmacy {\n    let name: String\n    let meters: Int\n    let isOpen: Bool\n}\nlet list = [Pharmacy(name: \"Вита\", meters: 900, isOpen: true),\n            Pharmacy(name: \"Здоровье\", meters: 300, isOpen: false),\n            Pharmacy(name: \"Ригла\", meters: 450, isOpen: true)]\nlet nearest = list.min { $0.meters < $1.meters }\nlet nearestOpen = list.filter { $0.isOpen }.min { $0.meters < $1.meters }\nlet firstOpen = list.first { $0.isOpen }\nlet nextDoor = list.filter { $0.meters < 100 }.min { $0.meters < $1.meters }\nprint(nearest?.name ?? \"—\")\nprint(nearestOpen?.name ?? \"—\")\nprint(firstOpen?.name ?? \"—\")\nprint(nextDoor?.name ?? \"—\")",
+  "key": "Здоровье\nРигла\nВита\n—\n\nmin(by:) ищет наименьший элемент по правилу сравнения: ближе всех «Здоровье», хотя она закрыта. Сначала filter открытых, потом min — «Ригла». first(where:) берёт первую подходящую в порядке массива, а не ближайшую — «Вита». После пустого фильтра min возвращает nil, и ?? показывает «—». Все три функции возвращают Optional: подходящего элемента может не быть.",
+  "added": "2026-11-02"
+ },
+ {
+  "id": "hof-b3",
+  "topics": [
+   "hof"
+  ],
+  "type": "Устно",
+  "title": "map, compactMap и flatMap в плеере",
+  "prompt": "Объясни как на собеседовании разницу между map, compactMap и flatMap: что вернёт каждая строка и сколько в результате элементов.",
+  "code": "let albums = [[\"Intro\", \"Rain\"], [\"Sun\"]]\nlet durations = [\"3:10\", \"—\", \"4:05\"]\n// seconds(_:) превращает \"3:10\" в 190, иначе nil: (String) -> Int?\n// a) albums.map { $0.count }\n// b) albums.flatMap { $0 }\n// c) durations.map(seconds)\n// d) durations.compactMap(seconds)",
+  "key": "map превращает каждый элемент в одно новое значение и сохраняет число элементов: a) [2, 1]. flatMap ждёт от замыкания коллекцию и склеивает результаты в один массив: b) [\"Intro\", \"Rain\", \"Sun\"]. c) map с функцией, которая возвращает Int?, даёт [Int?]: [190, nil, 245]. compactMap выбрасывает nil и разворачивает остальное: d) [190, 245] — элементов меньше, и потеря «—» никак не видна. Раньше flatMap тоже умел убирать nil; в Swift 4.1 эту роль отдали compactMap, чтобы названия не путались.",
+  "added": "2026-11-02"
+ }
+]

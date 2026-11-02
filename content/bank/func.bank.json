@@ -1,0 +1,38 @@
+[
+ {
+  "id": "func-b1",
+  "topics": [
+   "func"
+  ],
+  "type": "Найди ошибку",
+  "title": "Скорость видеоурока",
+  "prompt": "Скорость воспроизведения хранится в процентах, допустимо 50...200. Код не собирается. Найди причину и почини, не меняя сигнатуру.",
+  "code": "func clampedSpeed(_ percent: Int) -> Int {\n    if percent < 50 { percent = 50 }\n    if percent > 200 { percent = 200 }\n    return percent\n}\nprint(clampedSpeed(30), clampedSpeed(125), clampedSpeed(250))",
+  "key": "func clampedSpeed(_ percent: Int) -> Int {\n    var result = percent\n    if result < 50 { result = 50 }\n    if result > 200 { result = 200 }\n    return result\n}\nprint(clampedSpeed(30), clampedSpeed(125), clampedSpeed(250))\n\nПараметр функции — константа: присвоить percent нельзя (cannot assign to value: 'percent' is a 'let' constant). Заводим локальную var и меняем её. inout здесь не нужен: вызывающему нужен результат, а не изменение его переменной. Вывод: 50 125 200. Короче то же самое: min(max(percent, 50), 200).",
+  "added": "2026-11-02"
+ },
+ {
+  "id": "func-b2",
+  "topics": [
+   "func"
+  ],
+  "type": "Допиши",
+  "title": "Средний балл квиза",
+  "prompt": "Экран итогов квиза. Допиши average(of:): принимает любое число оценок через запятую и возвращает среднее как Double. Вызов без оценок тоже допустим — тогда nil.",
+  "code": "// func average(of scores: ...) -> Double?\n// average(of: 8, 9, 10) → 9.0\n// average(of: 7, 8)     → 7.5\n// average()             → nil",
+  "key": "func average(of scores: Int...) -> Double? {\n    guard !scores.isEmpty else { return nil }\n    return Double(scores.reduce(0, +)) / Double(scores.count)\n}\nassert(average(of: 8, 9, 10) == 9.0)\nassert(average(of: 7, 8) == 7.5)\nassert(average(of: 7) == 7.0)\nassert(average() == nil)\n\nInt... внутри функции — массив [Int], поэтому есть isEmpty, count и reduce. Вызов без аргументов разрешён, значит ноль оценок — честный nil, а не деление на ноль. В Double переводим до деления: целочисленное 15 / 2 дало бы 7. Готовый массив в вариативный параметр не передать — если оценки уже лежат в [Int], функция принимает массив.",
+  "added": "2026-11-02"
+ },
+ {
+  "id": "func-b3",
+  "topics": [
+   "func"
+  ],
+  "type": "Устно",
+  "title": "Поделиться фото: имя функции",
+  "prompt": "Объясни как на собеседовании: как Swift различает эти функции, что входит в полное имя функции и почему вместо третьей копии лучше значение по умолчанию.",
+  "code": "struct Photo { let id: Int }\nfunc share(_ photo: Photo) -> Bool { true }\nfunc share(_ photo: Photo, to album: String) -> Bool { true }\n// Коллега добавляет третью функцию share(_:to:caption:)\n// и копирует в неё тело второй.",
+  "key": "Полное имя функции — базовое имя плюс метки: share(_:) и share(_:to:) — разные функции, это перегрузка. В месте вызова компилятор выбирает вариант по меткам и типам аргументов. Третья копия дублирует тело: правило поменяют в одной и забудут в другой. Лучше одна функция share(_:to:caption:) с caption: String? = nil — короткий вызов остаётся коротким. Если же оставить и share(_:to:), и новую с дефолтом, вызов share(photo, to: \"Отпуск\") подходит обеим; компилятор молча выберет функцию без дефолта, и читателю это неочевидно.",
+  "added": "2026-11-02"
+ }
+]
