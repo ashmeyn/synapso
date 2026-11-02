@@ -116,6 +116,12 @@ print(settings.volume, settings.$volume)
 - Почему изменение copy не изменило volume?
 - Почему $volume здесь Bool, а $state может быть Binding?
 
+## Ответы к «Проверь себя»
+
+- `value` лежит внутри скрытого `private` свойства `_volume` типа `Clamped`, которое компилятор создаёт за `@Clamped var volume`. Само `volume` своего хранения не имеет: оно читает и пишет `_volume.wrappedValue` — окно выдачи перед ящиком с механизмом. Поэтому у каждого свойства с `@Clamped` своя обёртка со своими `value` и `limited`.
+- `Clamped` — struct, поэтому `var copy = _volume` создаёт отдельное значение, а не ссылку на хранилище. Setter `copy.wrappedValue = requested` ограничивает и сохраняет число в копии, а `_volume` остаётся прежним, и `volume` после `change(150)` равен 50. Чинится обычным путём `volume = requested` или явным присваиванием изменённой копии назад в `_volume`.
+- `$volume` — это `projectedValue` обёртки, и его тип задаёт автор: у `Clamped` это `var projectedValue: Bool { limited }`, признак последнего ограничения. `@State` объявляет свою проекцию типа Binding, `@Published` — publisher. Знак `$` лишь открывает `projectedValue`, Binding он не обещает.
+
 # ГЛУБЖЕ
 
 ## Инициализация через backing storage
