@@ -2663,7 +2663,7 @@ function doOpen(i, tab){
   const tasks = tasksFor(t.id); $("supTasks").textContent = tasks.length ? String(tasks.length) : "";
   const firstOpen = steps.findIndex(s=>prog[s.id]!=="ok");
   stepIdx = firstOpen<0 ? 0 : firstOpen; bankIdx=-1;
-  if(firstOpen<0 && nb) bankIdx = pickBank(t.id);
+  if(firstOpen<0 && bankFor(t.id).length) bankIdx = pickBank(t.id);
   if(t.due){ const k7=steps.findIndex(s=>s.id==="s7"); if(k7>=0){ stepIdx=k7; bankIdx=-1; } }
   if(checkMode && checkMode!==t.id) checkMode=null;
   if(forceStep>=0){ stepIdx=Math.min(forceStep, Math.max(0,steps.length-1)); bankIdx=-1; forceStep=-1; }

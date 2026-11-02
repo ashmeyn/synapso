@@ -84,6 +84,18 @@ async function run() {
     await page.waitForTimeout(300);
     await s.check('run modal closes', await page.isHidden('#run'));
 
+    // a topic with every step passed still opens (it lands on the bank instead of a step)
+    await page.evaluate(() => {
+      const d = JSON.parse(document.getElementById('data').textContent);
+      for (const [id, c] of Object.entries(d.content)) if (c.steps && c.steps.length)
+        localStorage.setItem('pm.steps.' + id, JSON.stringify(Object.fromEntries(c.steps.map(x => [x.id, 'ok']))));
+    });
+    await page.reload();
+    await page.waitForSelector('#plist', { state: 'visible', timeout: 15000 });
+    await page.locator('#plist .pl-br.open .pl-t').first().tap();
+    const doneOpen = await page.waitForFunction(() => document.getElementById('main').classList.contains('is-topic'), null, { timeout: 5000 }).then(() => true, () => false);
+    await s.check('topic with all steps passed opens', doneOpen, errors.slice(0, 3));
+
     await s.check('no page errors', errors.length === 0, errors.slice(0, 5));
   } catch (e) {
     await s.check('phone run crashed', false, String(e && e.stack || e).split('\n').slice(0, 3).join(' | '));
