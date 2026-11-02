@@ -144,6 +144,8 @@ def build_data():
                 elif lines > LONG_KEY:
                     LONG_WITHOUT_POINTS.append(f'{sid}/{s["id"]}')
             d['content'][sid]['steps'] = steps
+    if LONG_WITHOUT_POINTS:
+        raise SystemExit(f'keys longer than {LONG_KEY} lines need «points» (3–5 items): ' + ', '.join(LONG_WITHOUT_POINTS))
     have = {b['id'] for b in d['bank']}
     for bp in sorted(glob.glob(P('content', 'bank', '*.bank.json'))):
         for x in json.load(open(bp)):
@@ -169,8 +171,6 @@ def main():
     for f in ICON_FILES: shutil.copyfile(P('engine', 'icons', f), P('dist', f))
     with open(P('dist', 'manifest.webmanifest'), 'w') as fh: json.dump(MANIFEST, fh, ensure_ascii=False, indent=1)
     n_lessons = sum(1 for c in d['content'].values() if 'lesson' in c)
-    if LONG_WITHOUT_POINTS:
-        print(f'warning: {len(LONG_WITHOUT_POINTS)} keys longer than {LONG_KEY} lines have no points')
     print(f'built dist/index.html · {len(d["content"])} topics · {n_lessons} lessons · {len(d["bank"])} bank tasks · {len(out)//1024} KB')
     if '--check' in sys.argv:
         ref = json.load(open(sys.argv[sys.argv.index('--check') + 1]))

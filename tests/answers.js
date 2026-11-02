@@ -19,11 +19,9 @@ async function dataChecks(s) {
       if (st.key.split('\n').length > 25 && !(st.points && st.points.length >= 3 && st.points.length <= 5)) noPts.push(id + '/' + st.id);
     }
   }
-  const strict = process.env.ANSWERS_STRICT === '1';  // TODO(чат 2б): строго, когда все 75 тем заполнены
-  const rep = strict ? s.check.bind(s) : async (l, ok, d) => { if (!ok) s.warn(l + ' -> ' + JSON.stringify(d)); else s.passed++; };
-  await rep('every lesson has answers to «Проверь себя»', !noAns.length, noAns);
+  await s.check('every lesson has answers to «Проверь себя»', !noAns.length, noAns);
   await s.check('answers count = questions count', !badAns.length, badAns);
-  await rep('every key > 25 lines has 3–5 points', !noPts.length, noPts);
+  await s.check('every key > 25 lines has 3–5 points', !noPts.length, noPts);
 }
 
 async function ui(name, ctxOpts, hash, drv) {
