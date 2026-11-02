@@ -13,10 +13,9 @@
   "code": "import SwiftUI\nimport MapKit\nstruct Fountain: Identifiable {\n    let id: Int\n    let title: String\n    let coordinate: CLLocationCoordinate2D\n}\nstruct RefillMap: View {\n    let points: [Fountain]\n    @State private var selectedID: Int?\n    private var chosenPoint: Fountain? {\n        points.first { $0.id == selectedID }\n    }\n    var body: some View {\n        VStack {\n            Map(selection: /* Binding */) {\n                ForEach(points) { point in\n                    Marker(point.title, coordinate: point.coordinate)\n                        .tag(/* id */)\n                }\n            }\n            Text(chosenPoint?.title ?? \"Выбери точку\")\n        }\n    }\n}",
   "key": "import SwiftUI\nimport MapKit\nstruct Fountain: Identifiable {\n    let id: Int\n    let title: String\n    let coordinate: CLLocationCoordinate2D\n}\nstruct RefillMap: View {\n    let points: [Fountain]\n    @State private var selectedID: Int?\n    private var chosenPoint: Fountain? {\n        points.first { $0.id == selectedID }\n    }\n    var body: some View {\n        VStack {\n            Map(selection: $selectedID) {\n                ForEach(points) { point in\n                    Marker(point.title, coordinate: point.coordinate)\n                        .tag(point.id)\n                }\n            }\n            Text(chosenPoint?.title ?? \"Выбери точку\")\n        }\n    }\n}\n\nВыбранный tag записывается в selectedID. Текст вычисляется из соответствующей модели.",
   "points": [
-   "`Map(selection: $selectedID)` — Binding через `$` к `@State private var selectedID: Int?`.",
+   "`Map(selection: $selectedID)` — Binding через `$` к `@State private var selectedID: Int?`, а не само значение `selectedID`.",
    "`.tag(point.id)` у каждого `Marker`: тип `Int` совпадает с `Int?` состояния.",
-   "Tag — id, а не `point.title` и не индекс: при двух «У входа» выбор 52 записывает именно 52.",
-   "Текст берётся из `chosenPoint` (`points.first { $0.id == selectedID }`) с запасным «Выбери точку»."
+   "Tag — id, а не `point.title` и не индекс: при двух «У входа» выбор 52 записывает именно 52, и подпись берётся из точки 52."
   ]
  },
  {

@@ -41,7 +41,7 @@
   "key": "import Foundation\nstruct Quote {\n    let lotID, revision, amount: Int\n}\nprotocol QuoteSource {\n    func receive() async throws -> Quote?\n}\nstruct LotState {\n    let lotID: Int\n    var revision = 0\n    var amount = 0\n    mutating func apply(_ quote: Quote) {\n        guard quote.lotID == lotID, quote.revision > revision else { return }\n        revision = quote.revision\n        amount = quote.amount\n    }\n}\nfunc follow(\n    source: any QuoteSource, state: inout LotState\n) async throws {\n    while let quote = try await source.receive() {\n        try Task.checkCancellation()\n        state.apply(quote)\n    }\n}\n\nДо правки цена 100, после — 130. Следующее сообщение нужно получать новым receive.",
   "points": [
    "`if let` заменён на `while let quote = try await source.receive()` — на каждое сообщение новый `receive`.",
-   "`try Task.checkCancellation()` перед `state.apply(quote)`.",
+   "Внутри цикла каждое значение применяется через `state.apply(quote)`, без `break` после первого.",
    "`LotState.apply` не изменён: guard по id и строго более новой revision сохранён.",
    "Итог: до правки 100, после — 130; цикл заканчивается на `nil`."
   ]

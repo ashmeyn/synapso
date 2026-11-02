@@ -49,9 +49,9 @@
   "key": "import Foundation\nextension Notification.Name {\n    static let recordingSaved = Notification.Name(\"recordingSaved\")\n}\nfinal class LibraryBadge {\n    let center: NotificationCenter\n    private var token: NSObjectProtocol?\n    private(set) var ids: [Int] = []\n    init(center: NotificationCenter) { self.center = center }\n    func start() {\n        stop()\n        token = center.addObserver(\n            forName: .recordingSaved, object: nil, queue: nil\n        ) { [weak self] note in\n            guard let id = note.userInfo?[\"id\"] as? Int else { return }\n            self?.ids.append(id)\n        }\n    }\n    func stop() {\n        if let token { center.removeObserver(token) }\n        token = nil\n    }\n    deinit { stop() }\n}\nlet center = NotificationCenter()\nlet badge = LibraryBadge(center: center)\nbadge.start()\nbadge.start()\ncenter.post(name: .recordingSaved, object: nil, userInfo: [\"id\": 21])\nassert(badge.ids == [21])\nbadge.stop()\ncenter.post(name: .recordingSaved, object: nil, userInfo: [\"id\": 22])\nassert(badge.ids == [21])\n\nУправляется число регистраций, не постфактум очищаются одинаковые результаты.",
   "points": [
    "Первой строкой `start()` стоит `stop()`: прежняя регистрация снимается до нового `addObserver`.",
+   "`ids` остаётся массивом без `Set`: управляется число регистраций, а не чистятся дубли постфактум.",
    "Двойной `start()` и публикация 21 дают `badge.ids == [21]`, а не `[21, 21]`.",
-   "После `stop()` публикация 22 список не меняет: `badge.ids == [21]`.",
-   "`ids` остаётся массивом без `Set`: управляется число регистраций, а не чистятся дубли постфактум."
+   "Проверка: после `stop()` публикация 22 список не меняет — `badge.ids == [21]`."
   ]
  },
  {

@@ -15,8 +15,8 @@
   "points": [
    "`let (data, response) = try await session.data(for: request)` — сессия из параметра, а не `.shared` напрямую.",
    "`try` без `?` и `!`: сетевая ошибка (`URLError`) уходит наверх, а не глушится.",
-   "`response` не выбрасывается через `_`: пара целиком уходит в `return try decodeChapter(data: data, response: response)`.",
-   "Статус 200 проверяется в `decodeChapter` до `JSONDecoder`, поэтому 503 не станет главой."
+   "`response` не выбрасывается через `_`: пара целиком уходит в `decodeChapter(data: data, response: response)`.",
+   "`return try decodeChapter(...)` без `try?`: `LoadError.status` и `DecodingError` тоже доходят до вызывающего кода."
   ]
  },
  {

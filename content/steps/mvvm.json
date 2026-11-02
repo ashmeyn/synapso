@@ -13,10 +13,10 @@
   "code": "import SwiftUI\nimport Observation\nstruct Parcel {\n    let id, status: String\n    func findStatus(for number: String) -> String? {\n        number == id ? status : nil\n    }\n}\n@Observable final class TrackingViewModel {\n    var number = \"\"\n    var message = \"Введите номер\"\n    private let parcel = Parcel(id: \"PK42\", status: \"В пути\")\n    func search() {\n        let status = /* вызов Parcel */ ?? \"Не найдено\"\n        message = number.isEmpty ? \"Введите номер\" : status\n    }\n}\nstruct TrackingScreen: View {\n    @State private var viewModel = TrackingViewModel()\n    var body: some View {\n        VStack {\n            TextField(\"Номер\", text: /* связь к черновику */)\n            Button(\"Проверить\") { viewModel.search() }\n            Text(viewModel.message)\n        }\n    }\n}",
   "key": "import SwiftUI\nimport Observation\nstruct Parcel {\n    let id, status: String\n    func findStatus(for number: String) -> String? {\n        number == id ? status : nil\n    }\n}\n@Observable final class TrackingViewModel {\n    var number = \"\"\n    var message = \"Введите номер\"\n    private let parcel = Parcel(id: \"PK42\", status: \"В пути\")\n    func search() {\n        let status = parcel.findStatus(for: number) ?? \"Не найдено\"\n        message = number.isEmpty ? \"Введите номер\" : status\n    }\n}\nstruct TrackingScreen: View {\n    @State private var viewModel = TrackingViewModel()\n    var body: some View {\n        VStack {\n            TextField(\"Номер\", text: $viewModel.number)\n            Button(\"Проверить\") { viewModel.search() }\n            Text(viewModel.message)\n        }\n    }\n}\n\nПоле пишет в number у ViewModel; search берёт текущий черновик и присваивает новый ответ при каждом вызове.",
   "points": [
-   "В `search()`: `let status = parcel.findStatus(for: number) ?? \"Не найдено\"` — правило вызывается у Model.",
-   "`nil` от Model превращает в «Не найдено» ViewModel через `??`.",
-   "Поле связано с черновиком: `TextField(\"Номер\", text: $viewModel.number)`.",
-   "`message = number.isEmpty ? \"Введите номер\" : status` присваивается при каждом поиске."
+   "В `search()`: `parcel.findStatus(for: number)` перед `?? \"Не найдено\"` — правило вызывается у Model.",
+   "Model получает текущий черновик `number` ViewModel, а не строку `\"PK42\"`.",
+   "Поле связано с черновиком через `$`: `TextField(\"Номер\", text: $viewModel.number)`.",
+   "Проверка: PK42 → «В пути», пусто → «Введите номер», XX → «Не найдено»."
   ]
  },
  {
@@ -41,8 +41,8 @@
   "key": "import SwiftUI\nimport Observation\nstruct Parcel {\n    let id, status: String\n    func findStatus(for number: String) -> String? {\n        number == id ? status : nil\n    }\n}\n@Observable final class TrackingViewModel {\n    var number = \"\"\n    var message = \"Введите номер\"\n    private let parcel = Parcel(id: \"PK42\", status: \"В пути\")\n    func search() {\n        let status = parcel.findStatus(for: number) ?? \"Не найдено\"\n        message = number.isEmpty ? \"Введите номер\" : status\n    }\n}\nstruct TrackingScreen: View {\n    @State private var viewModel = TrackingViewModel()\n    var body: some View {\n        VStack {\n            TextField(\"Номер\", text: $viewModel.number)\n            Button(\"Проверить\") { viewModel.search() }\n            Text(viewModel.message)\n        }\n    }\n}\n\nПроверка в search пропускала пустую строку и сохраняла старый ответ. search должен присвоить подсказку при пустом вводе, а иначе представить статус Model или его отсутствие.",
   "points": [
    "Ошибка: `guard !number.isEmpty else { return }` выходит, не трогая `message`, и старое «В пути» остаётся.",
-   "`guard` с ранним выходом удалён: `search()` присваивает `message` при любом вводе.",
-   "Пустой ввод получает `\"Введите номер\"` через `number.isEmpty ? \"Введите номер\" : status`.",
+   "При пустом вводе `search()` всё равно присваивает `message = \"Введите номер\"` — ранний выход без записи убран.",
+   "Непустой ввод: `parcel.findStatus(for: number) ?? \"Не найдено\"`.",
    "Маршрут PK42 → поиск → пусто → поиск даёт «В пути», затем «Введите номер»."
   ]
  },

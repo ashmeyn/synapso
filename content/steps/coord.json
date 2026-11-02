@@ -63,7 +63,7 @@
    "`protocol BoxDelegate: AnyObject { func boxDidFinish() }`.",
    "`BoxController`: `weak var delegate: (any BoxDelegate)?` и `done()` вызывает `delegate?.boxDidFinish()`.",
    "`BoxCoordinator: Coordinator, BoxDelegate`: в `start()` `controller.delegate = self` и push; `boxDidFinish()` вызывает `onFinish?()`.",
-   "`MoveCoordinator` прежний: append, `[weak self, weak child]`, `removeAll { $0 === child }`.",
+   "`delegate` слабый, поэтому `controller.delegate = self` не замыкает цикл coordinator → controller → coordinator; callback `onDone` больше не нужен.",
    "Проверка через `navigator.screens[0].done()`; вывод `1 1`, `0`, `true`."
   ]
  },

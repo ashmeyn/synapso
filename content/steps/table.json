@@ -15,7 +15,7 @@
   "points": [
    "`numberOfRowsInSection` возвращает `games.count`, а не число-заглушку.",
    "`register(GameCell.self, forCellReuseIdentifier: \"Game\")` — тот же identifier, что в dequeue.",
-   "`register` стоит до первого вызова dataSource.",
+   "`register` стоит до первого `dequeueReusableCell` (до любого `cellForRowAt`).",
    "`table.dataSource = source`, и `source` живёт в своей переменной: dataSource слабый.",
    "Проверка: строк ровно 2."
   ]

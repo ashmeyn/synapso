@@ -14,8 +14,8 @@
   "key": "import SwiftUI\nstruct CartItem {\n    let id = 18\n    var quantity = 1\n    var total: Int { quantity * 300 }\n}\nstruct CartScreen: View {\n    @State private var item = CartItem()\n    var body: some View {\n        VStack {\n            Text(\"Сумма: \\(item.total) ₽\").padding(12).background(Color.blue)\n            QuantityControl(quantity: item.quantity) {\n                guard item.quantity < 3 else { return }\n                item.quantity += 1\n            }\n            Button(\"Сбросить\") { item.quantity = 0 }\n        }\n    }\n}\nstruct QuantityControl: View {\n    let quantity: Int\n    let onAdd: () -> Void\n    var body: some View {\n        Button(\"Добавить: \\(quantity)\", action: onAdd).disabled(quantity >= 3)\n    }\n}\n\ntotal вычисляется из item.quantity. Дочерний блок получает значение, а не собственное состояние количества.",
   "points": [
    "`var total: Int { quantity * 300 }` — сумма вычисляется, отдельного хранимого `total` нет.",
-   "Ребёнку передаётся `QuantityControl(quantity: item.quantity)` — текущее значение из владельца.",
-   "У `QuantityControl` нет своего `@State` для количества: только `let quantity`.",
+   "Ребёнку передаётся `QuantityControl(quantity: item.quantity)` — число из владельца, а не весь `item` и не `$item.quantity`.",
+   "Сумма читается только из количества: при 2 — 600, при 3 — 900.",
    "После сброса `item.quantity = 0` сумма сама становится 0."
   ]
  },
