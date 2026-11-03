@@ -66,7 +66,8 @@ const phoneUi = {
     await page.waitForFunction(() => document.getElementById('main').classList.contains('is-topic'), null, { timeout: 5000 });
     await page.waitForTimeout(300);
   },
-  async revealTheory(page) { for (let k = 0; k < 40 && await page.isVisible('#tMore'); k++) { await page.tap('#tMore'); await page.waitForTimeout(40); } },
+  // phone theory is an episode: flip to the finale card (where «Выгрузка» lives)
+  async revealTheory(page) { for (let k = 0; k < 40 && await page.isVisible('#epNext'); k++) { await page.tap('#epNext'); await page.waitForTimeout(40); } },
 };
 const desktopUi = {
   async ready(page) { await page.waitForSelector('#inStart', { state: 'visible', timeout: 20000 }); await page.click('#inStart'); await page.waitForTimeout(900); },

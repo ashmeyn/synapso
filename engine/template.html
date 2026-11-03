@@ -877,6 +877,38 @@ html.phone .t-nav{gap:6px;align-items:stretch;min-height:0;padding-top:6px}
 html.phone .tn-b{flex:1 1 0;min-width:0;max-width:none;min-height:44px;margin:0;padding:6px 10px;border:1px solid var(--line-2);font-size:13px;line-height:1.3;text-align:left;white-space:normal;overflow:visible;text-overflow:clip}
 html.phone .tn-b.nx{flex:1.5 1 0;margin-left:0}
 html.phone .tn-b:not(.know):not(.nx){flex:0 0 auto}
+/* «Эпизод» (phone lesson): header + dots, a horizontal scroll-snap track of full-height cards, nav buttons.
+   The window body does not scroll while the episode is shown: each card scrolls vertically on its own. */
+html.phone #winBody:has(> #pane-theory:not([hidden]) > .ep){overflow:hidden;display:flex;flex-direction:column;padding:0}
+html.phone #winBody:has(> #pane-theory:not([hidden]) > .ep) > #pane-theory{flex:1;min-height:0;display:flex;flex-direction:column;padding:0}
+html.phone .ep{flex:1;min-height:0;display:flex;flex-direction:column}
+html.phone .ep-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:10px 16px 0;font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;color:var(--muted)}
+html.phone .ep.bonus .ep-k{color:var(--cyan)}
+html.phone .ep-n{color:var(--ink-2)}
+html.phone .ep-dots{display:flex;gap:2px;padding:0 10px;border-bottom:1px solid var(--line)}
+html.phone .ep-dots button{flex:1 1 0;min-width:0;height:28px;display:flex;align-items:center;justify-content:center;padding:0 2px}
+html.phone .ep-dots i{display:block;width:100%;max-width:28px;height:3px;background:#1F262B}
+html.phone .ep-dots button.past i{background:#3A6C6F}
+html.phone .ep-dots button.on i{background:var(--cyan)}
+html.phone .ep-track{flex:1;min-height:0;display:flex;flex-direction:row;gap:0;max-width:none;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch;outline:none}
+html.phone .ep-track::-webkit-scrollbar{display:none}
+html.phone .ep-track > .ep-card{flex:0 0 100%;width:100%;min-width:0;max-height:none;margin:0;padding:18px 16px 28px;border:0;opacity:1;overflow-x:hidden;overflow-y:auto;overscroll-behavior-y:contain;scroll-snap-align:start;scroll-snap-stop:always;cursor:auto}
+html.phone .ep-track > .ep-card.mission{border:0;padding:22px 18px 28px}
+html.phone .ep-card .lcode{max-width:none;overscroll-behavior-x:contain}
+html.phone .ep-card ul:not(.links){padding-left:20px}
+html.phone .ep-end h3{font-family:var(--f-mono);font-size:13px;letter-spacing:.06em;color:var(--cyan)}
+html.phone .ep-track .ep-tip{margin:0 0 14px;padding:0;border:0;color:var(--ink-2)}
+html.phone .ep-acts{display:flex;flex-direction:column;gap:12px;margin:6px 0 26px}
+html.phone .ep-acts > button{align-self:stretch;min-height:52px;justify-content:center;text-align:center}
+html.phone .ep-acts .deepBtn{flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;padding:8px 16px;text-align:left}
+html.phone .ep-acts .cta small{display:block;margin:2px 0 0;font-size:12px;opacity:.75}
+html.phone .ep-end .sect{margin-top:18px}
+html.phone .ep-end .sect h3{margin:0 0 8px;font-size:12px;color:var(--muted)}
+html.phone .ep-nav{display:flex;gap:8px;padding:8px 12px calc(8px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:#0A0D10}
+html.phone .ep-nav #epPrev{flex:0 0 64px;min-height:48px;padding:0;font-size:18px}
+html.phone .ep-nav #epPrev:disabled{opacity:.35}
+html.phone .ep-nav #epNext{flex:1;align-self:stretch;min-height:48px}
+html.phone .ep-nav #epNext[hidden]{display:none}
 </style>
 
 <div class="xcur" id="cur" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b><span id="curTxt"></span></div>
@@ -2895,6 +2927,7 @@ function renderTheory(){
   const t=topics[current], c=DATA.content[t.id], pane=$("pane-theory");
   const nextIdx = topics.findIndex(x=>x.b===t.b && x.k===t.k+1);
   const L = c && c.lesson, nDeep = L ? L.deeper.length : 0, outPass = !!(outOf(t.id)||{}).pass;
+  if(PHONE && L){ renderEpisode(t, c, L, nextIdx); return; }   /* phone: the lesson is a stack of cards («Эпизод») */
   pane.innerHTML = `<div class="theory${L?" lesson":""}">${c ? (L ? lessonHTML(L) : c.theory) : `<p class="empty">Теория для этой темы ещё не написана. Она появится по тому же шаблону: что это, почему так устроено, последствия и аналогия.</p>`}</div>
     <button type="button" class="more" id="tMore" hidden></button>
     <div class="t-foot">
@@ -2915,6 +2948,60 @@ function renderTheory(){
   if($("toPractice")) $("toPractice").addEventListener("click",()=>setTab("practice"));
   if($("toOut")) $("toOut").addEventListener("click",()=>openOut());
   if($("tNext")) $("tNext").addEventListener("click",()=>openTopic(nextIdx));
+}
+
+/* ---------- PHONE «Эпизод»: the lesson as a stack of cards, one ## section per screen ----------
+   Swipe = native CSS scroll-snap on .ep-track (no JS animation, no rAF); buttons and dots jump by scrollLeft.
+   The current card is read on "scroll" events only. ГЛУБЖЕ is a separate bonus episode opened from the last card.
+   Position lives in memory (epPos), so «← К УРОКУ» from «Выгрузка» or a tab switch returns to the same card. */
+const epPos={};   /* id -> {deep, k} */
+function renderEpisode(t, c, L, nextI){
+  const id=t.id, pane=$("pane-theory"), P=epPos[id]||(epPos[id]={deep:false, k:0});
+  const deep=P.deep && L.deeper.length>0; if(!deep) P.deep=false;
+  stopTyping(); thBlocks=[]; thShown=0;
+  const nDeep=L.deeper.length, qn=outQs(id).length, outPass=!!(outOf(id)||{}).pass;
+  const body=list=>list.map(n=> n.t==="p" ? `<p>${n.html}</p>` : n.t==="ul" ? `<ul>${n.items.map(x=>`<li>${x}</li>`).join("")}</ul>` : n.t==="note" ? `<div class="lnote">${n.html}</div>` : `<pre class="lcode"><code>${hl(n.code)}</code></pre>`).join("");
+  const sec=(x,k)=>`<section class="ep-card tb${deep?" deep":""}${/^Аналогия/.test(x.h)?" analogy":""}${/^Проверь себя/.test(x.h)?" check":""}"><h3><i>${deep?"+":""}${String(k+1).padStart(2,"0")}</i>${x.h}</h3>${body(x.body)}</section>`;
+  const cards=[];
+  if(!deep && L.mission) cards.push(`<section class="ep-card tb mission"><div class="m-k">${L.mission}</div>${L.scenario?`<h2>${L.scenario}</h2>`:""}${L.goals.length?`<div class="m-g"><span>ПОСЛЕ МИССИИ ТЫ СМОЖЕШЬ</span><ul>${L.goals.map(g=>`<li>${g}</li>`).join("")}</ul></div>`:""}</section>`);
+  (deep ? L.deeper : L.base).forEach((x,k)=>cards.push(sec(x,k)));
+  const outBtn = qn ? (outPass ? `<button class="ghostbtn" type="button" id="toOut">ВЫГРУЗКА ✓ · ПРОЙТИ ЕЩЁ РАЗ</button>` : `<button class="cta" type="button" id="toOut">ВЫГРУЗКА ▸ <small>${qn} ${plural(qn,["ВОПРОС","ВОПРОСА","ВОПРОСОВ"])} ПО ПАМЯТИ</small></button>`) : "";
+  cards.push(`<section class="ep-card ep-end"><h3>${deep?"КОНЕЦ БОНУСА":"КОНЕЦ ЭПИЗОДА"}</h3>
+    <p class="ep-tip">${qn ? "Текст урока закроется. Вытащи главное из головы — так тема и запоминается." : "Закрепи урок практикой: ответ — по памяти, потом сверка."}</p>
+    <div class="ep-acts">${outBtn}
+      ${c.steps && c.steps.length ? `<button class="${outPass||!qn?"cta":"ghostbtn"}" type="button" id="toPractice">ЗАПУСТИТЬ ПРАКТИКУ ▸</button>` : ""}
+      ${!deep && nDeep ? `<button class="deepBtn" type="button" id="toDeep"><span>БОНУС · ГЛУБЖЕ ▸</span><small>${nDeep} ${nDeep<5?"РАЗДЕЛА":"РАЗДЕЛОВ"} · ДЛЯ СОБЕСА И MIDDLE</small></button>` : ""}
+      ${deep ? `<button class="textbtn" type="button" id="epBase">← К ОСНОВНОМУ ЭПИЗОДУ</button>` : ""}</div>
+    <div class="sect"><h3>СВЯЗИ</h3><ul class="links" id="tLinks"></ul></div>
+    ${nextI>=0 ? `<div class="sect"><h3>ДАЛЬШЕ В ВЕТКЕ</h3><ul class="links"><li><button type="button" id="tNext"><span>${esc(topics[nextI].title)}</span><em>→</em></button></li></ul></div>` : ""}</section>`);
+  const n=cards.length; P.k=Math.max(0, Math.min(P.k, n-1));
+  pane.innerHTML = `<div class="ep${deep?" bonus":""}" id="ep">
+    <div class="ep-h"><span class="ep-k">${deep?"БОНУС · ГЛУБЖЕ":"ЭПИЗОД"}</span><span class="ep-n" id="epN"></span></div>
+    <div class="ep-dots" id="epDots">${cards.map((_,k)=>`<button type="button" data-k="${k}" aria-label="${k===n-1?"Финал":"Карточка "+(k+1)}"><i></i></button>`).join("")}</div>
+    <div class="ep-track theory lesson" id="epTrack" tabindex="-1">${cards.join("")}</div>
+    <div class="ep-nav"><button type="button" class="ghostbtn" id="epPrev" aria-label="Назад">◂</button><button type="button" class="cta" id="epNext">ДАЛЬШЕ ▸</button></div></div>`;
+  const track=$("epTrack"), dots=[...$("epDots").children];
+  const paint=()=>{
+    dots.forEach((d,k)=>{ d.classList.toggle("on", k===P.k); d.classList.toggle("past", k<P.k); if(k===P.k) d.setAttribute("aria-current","step"); else d.removeAttribute("aria-current"); });
+    $("epN").textContent = String(P.k+1).padStart(2,"0")+" / "+String(n).padStart(2,"0");
+    $("epPrev").disabled = P.k===0 && !deep;   /* in the bonus, ◂ on the first card returns to the base finale */
+    const last=P.k>=n-1; $("epNext").hidden=last; $("epNext").textContent = P.k===n-2 ? "ФИНАЛ ▸" : "ДАЛЬШЕ ▸";
+  };
+  const go=k=>{ P.k=Math.max(0, Math.min(k, n-1)); paint(); if(track.clientWidth) track.scrollTo({left:P.k*track.clientWidth, behavior:"auto"}); };
+  track.addEventListener("scroll",()=>{ const w=track.clientWidth; if(!w) return; const k=Math.round(track.scrollLeft/w); if(k!==P.k && k>=0 && k<n){ P.k=k; paint(); } },{passive:true});
+  /* the pane may be hidden while rendering (openTopic), and the phone may rotate: snap back to the current card on resize */
+  if(window.ResizeObserver){ const ro=new ResizeObserver(()=>{ if(!track.isConnected){ ro.disconnect(); return; } if(track.clientWidth) track.scrollLeft=P.k*track.clientWidth; }); ro.observe(track); }
+  dots.forEach(d=>d.addEventListener("click",()=>go(+d.dataset.k)));
+  $("epPrev").addEventListener("click",()=>{ if(deep && P.k===0){ epPos[id]={deep:false, k:1e9}; renderEpisode(t, c, L, nextI); } else go(P.k-1); });
+  $("epNext").addEventListener("click",()=>go(P.k+1));
+  track.addEventListener("keydown",e=>{ if(e.key==="ArrowRight"){ e.preventDefault(); go(P.k+1); } if(e.key==="ArrowLeft"){ e.preventDefault(); go(P.k-1); } });
+  paint(); go(P.k);
+  linkList($("tLinks"), current, j=>openTopic(j));
+  if($("toPractice")) $("toPractice").addEventListener("click",()=>setTab("practice"));
+  if($("toOut")) $("toOut").addEventListener("click",()=>openOut());
+  if($("tNext")) $("tNext").addEventListener("click",()=>openTopic(nextI));
+  if($("toDeep")) $("toDeep").addEventListener("click",()=>{ epPos[id]={deep:true, k:0}; renderEpisode(t, c, L, nextI); });
+  if($("epBase")) $("epBase").addEventListener("click",()=>{ epPos[id]={deep:false, k:1e9};   /* back to the base finale (k is clamped) */ renderEpisode(t, c, L, nextI); });
 }
 
 /* ---------- «Выгрузка»: the lesson text is closed, the «Проверь себя» questions one by one, answer → reveal → self-grade ---------- */

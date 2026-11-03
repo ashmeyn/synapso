@@ -47,10 +47,10 @@ async function run() {
       await s.check(`tab ${n} visible within viewport`, inViewport(r, VW, VH), r);
     }
 
-    // theory: reveal a few blocks
-    for (let k = 0; k < 3; k++) if (await page.isVisible('#tMore')) { await page.tap('#tMore'); await page.waitForTimeout(150); }
-    const shown = await page.evaluate(() => document.querySelectorAll('#pane-theory .tb:not(.locked)').length);
-    await s.check('theory reveals blocks on tap', shown >= 2, shown);
+    // theory: the lesson is an episode (stack of cards, see episode.js); flip a few cards
+    for (let k = 0; k < 3; k++) if (await page.isVisible('#epNext')) { await page.tap('#epNext'); await page.waitForTimeout(150); }
+    const shown = await page.evaluate(() => { const d = [...document.querySelectorAll('#epDots button')]; return d.findIndex(x => x.classList.contains('on')); });
+    await s.check('theory episode flips cards on tap', shown === 3, shown);
     await noHScroll('theory');
     await quiet('theory');
 
