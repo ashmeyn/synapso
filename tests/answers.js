@@ -62,7 +62,8 @@ async function ui(name, ctxOpts, hash, drv) {
 const phoneUi = {
   async ready(page) { await page.waitForSelector('#plist', { state: 'visible', timeout: 15000 }); },
   async open(page, id) {
-    await page.evaluate(i => { const b = document.querySelector(`#plist .pl-t[data-i="${i}"]`); b.closest('.pl-br').classList.add('open'); b.click(); }, IDX[id].i);
+    await page.evaluate(i => { const b = document.querySelector(`#plist .pl-t[data-i="${i}"]`); b.closest('.pl-br').classList.add('open'); b.click();
+      const any = b.parentNode.querySelector('.pl-any'); if (any) any.click(); }, IDX[id].i);   // a topic in fog expands first: «открыть всё равно»
     await page.waitForFunction(() => document.getElementById('main').classList.contains('is-topic'), null, { timeout: 5000 });
     await page.waitForTimeout(300);
   },
