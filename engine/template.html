@@ -216,6 +216,9 @@ button:disabled{cursor:not-allowed}
 .sh-r{display:flex;gap:12px;align-items:center;pointer-events:auto}
 .runBtn{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 16px;background:var(--cyan);color:var(--on-cyan);font-family:var(--f-mono);font-size:var(--fs-ui);letter-spacing:.06em;clip-path:var(--step-corner);box-shadow:0 0 22px rgba(45,226,230,.25)}
 .runBtn small{font-size:var(--fs-label);opacity:.75}
+.mixBtn{display:flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid var(--cyan);background:rgba(6,9,11,.8);color:var(--cyan);font-family:var(--f-mono);font-size:var(--fs-ui);letter-spacing:.06em;white-space:nowrap}
+.mixBtn:hover{background:rgba(45,226,230,.1)}
+.run-ans{display:flex;flex-direction:column;gap:14px}
 .run{position:absolute;inset:0;z-index:20;display:grid;place-items:center;background:rgba(3,5,6,.72);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
 .run[hidden]{display:none}
 .run-w{width:min(760px,calc(100% - 64px));max-height:calc(100% - 64px);display:flex;flex-direction:column;background:#06090B;border:1px solid var(--line-2);box-shadow:0 30px 90px rgba(0,0,0,.8);animation:cardIn .4s var(--ease) both}
@@ -244,6 +247,8 @@ button:disabled{cursor:not-allowed}
 .errs li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px 12px;align-items:start;padding:9px 0;border-top:1px solid var(--line-2)}
 .errs .eq{display:block;font-family:var(--f-read);font-size:var(--fs-read);line-height:1.4;color:var(--ink-2)}
 .errs .en{display:block;margin-top:4px;font-family:var(--f-read);font-size:var(--fs-ui);line-height:1.45;color:var(--muted)}
+.errs .eb{display:block;margin-top:6px;font-family:var(--f-mono);font-size:var(--fs-label);letter-spacing:.04em;color:var(--cyan)}
+.errs .eb.off{color:var(--dim)}
 .errs .ed{font-family:var(--f-mono);font-size:var(--fs-label);color:var(--dim);padding-top:3px}
 .errs .ex{width:26px;height:26px;color:var(--dim);border:1px solid var(--line-2);font-size:var(--fs-label)}
 .errs .ex:hover{color:var(--cyan);border-color:var(--cyan)}
@@ -819,7 +824,10 @@ html.phone .pl-cont:active{background:rgba(45,226,230,.12)}
 html.phone .pl-cont .k{font-family:var(--f-mono);font-size:13px;letter-spacing:.06em;color:var(--cyan)}
 html.phone .pl-cont .t{font-family:var(--f-title);font-size:24px;line-height:1.15;color:var(--ink);overflow-wrap:break-word;max-width:100%}
 html.phone .pl-cont .s{font-family:var(--f-mono);font-size:12px;letter-spacing:.04em;color:var(--muted)}
-html.phone .pl-acts{display:flex;gap:8px}
+html.phone .pl-acts{display:flex;flex-wrap:wrap;gap:8px}
+html.phone .pl-top .pl-acts .runBtn{flex-basis:100%}
+html.phone .pl-acts .mixBtn{flex:1 1 auto;justify-content:center;min-height:46px;font-size:14px}
+html.phone .pl-top .streak{font-size:12px}
 html.phone .pl-acts .runBtn{flex:1 1 auto;min-width:0;min-height:46px;justify-content:center;font-size:14px;white-space:nowrap;overflow:hidden}
 html.phone .pl-acts .srchBtn{display:flex;flex:none;align-items:center;justify-content:center;min-height:46px;padding:0 16px;border:1px solid var(--line-2);background:#07090B;font-family:var(--f-mono);font-size:14px;letter-spacing:.04em;color:var(--ink-2)}
 html.phone .pl-prog{display:flex;align-items:center;gap:12px;font-family:var(--f-mono);font-size:12px;letter-spacing:.04em;color:var(--muted)}
@@ -909,7 +917,7 @@ html.phone .tn-b:not(.know):not(.nx){flex:0 0 auto}
     <div id="brain" class="noanim" role="region" aria-label="Карта знаний: 60 тем в 8 ветках">
       <canvas id="c"></canvas>
       <div class="overlay" id="overlay">
-        <div class="stagehead"><span>КАРТА ЗНАНИЙ · <b id="stCount">0</b> / <span class="tTot">60</span> · <span class="kbd">CTRL K</span> ПОИСК</span><span class="sh-r"><button type="button" class="srchBtn" id="srchBtn">ПОИСК</button><button type="button" class="runBtn" id="runBtn"></button><button type="button" class="contBtn" id="contBtn"></button></span></div>
+        <div class="stagehead"><span>КАРТА ЗНАНИЙ · <b id="stCount">0</b> / <span class="tTot">60</span> · <span class="kbd">CTRL K</span> ПОИСК</span><span class="sh-r"><button type="button" class="srchBtn" id="srchBtn">ПОИСК</button><button type="button" class="runBtn" id="runBtn"></button><button type="button" class="mixBtn" id="mixBtn" aria-label="Смешанная тренировка">⇄ ТРЕНИРОВКА</button><button type="button" class="contBtn" id="contBtn"></button></span></div>
         <svg class="route" id="route" aria-hidden="true"><polyline id="rDone" points=""/><polyline id="rNext" points=""/></svg>
         <div class="marker" id="marker"></div>
         <div class="tip" id="tip"></div>
@@ -940,7 +948,7 @@ html.phone .tn-b:not(.know):not(.nx){flex:0 0 auto}
 
     <div class="run" id="run" hidden role="dialog" aria-modal="true" aria-label="Ран 5 минут">
       <div class="run-w">
-        <div class="run-h"><span><i></i>RUN.EXE · 5 МИН</span><span id="runStep"></span><button type="button" class="card-x" id="runClose" aria-label="Закрыть">×</button></div>
+        <div class="run-h"><span id="runTitle"><i></i>RUN.EXE · 5 МИН</span><span id="runStep"></span><button type="button" class="card-x" id="runClose" aria-label="Закрыть">×</button></div>
         <div class="run-bar"><i id="runBar"></i></div>
         <div class="run-b" id="runBody"></div>
       </div>
@@ -2218,6 +2226,37 @@ function gateText(v, oral){ const n=answerLeft(v, oral); return n ? "Ключ о
 function srsPass(id){ fxLog("SRS","NODE://"+id.toUpperCase()+" · ПОВТОР ЗАСЧИТАН"); const r=srsOf(id)||{stage:0,lapses:0}; r.stage=Math.min(SRS_DAYS.length-1, r.stage+1); r.due=Date.now()+SRS_DAYS[r.stage]*DAY; store.set("pm.srs."+id, r); }
 function srsFail(id){ fxLog("SRS","NODE://"+id.toUpperCase()+" · ЛЕСЕНКА СБРОШЕНА"); const r=srsOf(id)||{stage:0,lapses:0}; r.stage=0; r.lapses=(r.lapses||0)+1; r.due=Date.now()+DAY; store.set("pm.srs."+id, r); }
 function logErr(id, q, note){ const list=store.get("pm.err."+id,[]); list.unshift({at:Date.now(), q:String(q).slice(0,400), note:String(note||"").slice(0,600)}); store.set("pm.err."+id, list.slice(0,20)); }
+/* ---------- errors come back (pm.back, pm.err stays as is): an item graded «нет» returns to the daily run on day 1 and day 3 after the miss;
+   two «вспомнил» in a row on its due day close it. pm.back = {"<k>:<topic>:<ref>": {t, k, ref, q?, a?, eq, at, ok, next, done?}}
+   k: "s" step · "b" bank task · "o" «Проверь себя» question (ref = index) · "q" run card (q/a kept, ref = hash). eq = the pm.err text it matches. */
+const BACK_DAYS=[1,3];
+function dayStart(ts){ const d=new Date(ts); d.setHours(0,0,0,0); return d.getTime(); }
+function addDays(ts, n){ const d=new Date(dayStart(ts)); d.setDate(d.getDate()+n); return d.getTime(); }
+function daysTo(ts){ return Math.round((dayStart(ts)-dayStart(Date.now()))/DAY); }
+function strHash(s){ let h=5381; s=String(s); for(let i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))|0; return (h>>>0).toString(36); }
+function backAll(){ const m=store.get("pm.back",{}); return m && typeof m==="object" && !Array.isArray(m) ? m : {}; }
+function backSave(all){ const now=Date.now(); let ks=Object.keys(all).filter(k=>!all[k].done || now-all[k].done<30*DAY);
+  if(ks.length>300) ks=ks.sort((a,b)=>(all[b].at||0)-(all[a].at||0)).slice(0,300);
+  const out={}; ks.forEach(k=>out[k]=all[k]); store.set("pm.back", out); }
+function backKey(k, t, ref){ return k+":"+t+":"+ref; }
+function backFail(k, t, ref, eq, q, a){ const all=backAll(), key=backKey(k,t,ref), now=Date.now(), old=all[key]||{};
+  const e={t, k, ref, eq:String(eq||old.eq||"").slice(0,400), at:now, ok:0, next:addDays(now, BACK_DAYS[0])};
+  if(k==="q"){ e.q=String(q!=null?q:old.q||"").slice(0,400); e.a=String(a!=null?a:old.a||"").slice(0,1200); }
+  all[key]=e; backSave(all); return key; }
+/* a «вспомнил» counts only on the day the item is due (a quick re-try right after the miss does not close it) */
+function backPass(key){ const all=backAll(), e=all[key], now=Date.now(); if(!e || e.done || e.next>now) return false;
+  e.ok=(e.ok||0)+1; if(e.ok>=BACK_DAYS.length) e.done=now; else e.next=Math.max(addDays(e.at, BACK_DAYS[e.ok]), addDays(now,1));
+  backSave(all); fxLog("BACK", e.done ? "ОШИБКА ЗАКРЫТА · ВСПОМНИЛ ДВАЖДЫ" : "ОШИБКА ВЕРНЁТСЯ ЕЩЁ РАЗ"); return true; }
+function backDueList(){ const now=Date.now(); return Object.entries(backAll()).filter(([k,e])=>!e.done && e.next<=now && DATA.content[e.t]).sort((a,b)=>a[1].next-b[1].next); }
+function backFor(t, eq){ let best=null; Object.values(backAll()).forEach(e=>{ if(e.t===t && e.eq===eq && (!best || e.at>best.at)) best=e; }); return best; }
+function backLabel(e){
+  if(!e) return "";
+  if(e.done) return "ЗАКРЫТА · ВСПОМНИЛ 2 РАЗА ПОДРЯД";
+  const d=daysTo(e.next), when = d<=0 ? "СЕГОДНЯ В РАНЕ" : d===1 ? "ЗАВТРА" : "ЧЕРЕЗ "+d+" "+plural(d,["ДЕНЬ","ДНЯ","ДНЕЙ"]);
+  return "ВЕРНЁТСЯ "+when+" · "+(e.ok||0)+" / "+BACK_DAYS.length; }
+const stepEq = s => short(s.title)+": "+s.prompt;
+const bankEq = s => s.title+": "+s.prompt;
+const outEq = q => "Выгрузка: "+htmlText(q);
 function fmtDate(ts){ const d=new Date(ts); return String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0"); }
 function whenLabel(ts){ const d=Math.round((ts-Date.now())/DAY); return d<=0?"СЕГОДНЯ":d===1?"ЗАВТРА":"ЧЕРЕЗ "+d+" ДН."; }
 function computeStatuses(){
@@ -2619,7 +2658,8 @@ function plistBuild(){
   plEl=document.createElement("section"); plEl.id="plist"; plEl.className="plist"; plEl.hidden=true; plEl.setAttribute("aria-label","Список тем");
   plEl.innerHTML=`<div class="pl-top"><button type="button" class="pl-cont" id="plCont"></button><div class="pl-acts" id="plActs"></div><div class="pl-prog" id="plProg"></div></div><div class="pl-brs" id="plBrs"></div>`;
   mainEl.appendChild(plEl);
-  const acts=$("plActs"); ["runBtn","srchBtn"].forEach(id=>{ const b=$(id); if(b) acts.appendChild(b); });
+  const acts=$("plActs"); ["runBtn","mixBtn","srchBtn"].forEach(id=>{ const b=$(id); if(b) acts.appendChild(b); });
+  const sk=$("streak"); if(sk) $("plProg").before(sk);   /* phone: the streak lives in the list header, not in the ≡ menu */
   const tc=$("tab-cheat"); if(tc){ tc.textContent="Шпарг."; tc.setAttribute("aria-label","Шпаргалка"); }
   plEl.addEventListener("click",e=>{
     if(e.target.closest(".pl-cont")){ const t=topics[curIdx], pr=topicProgress(t.id); plScroll=plEl.scrollTop; doOpen(curIdx, (pr.ok>0||t.due||Object.keys(pr.p).length)?"practice":"theory"); return; }
@@ -3289,6 +3329,7 @@ function renderPractice(){
     if(inBank){
       fxLog(v==="ok"?"OK":"FAIL", "BANK://"+s.id.toUpperCase()+(v==="ok"?" · РЕШЕНО":" · В ЖУРНАЛ")); const st=bankStat(s.id); st[v==="ok"?"ok":"no"]++; st.last=Date.now(); store.set("pm.bank."+s.id, st);
       if(v==="ok"){ burst(current, 12); sfx.ok(); } else { sfx.no(); } if(v!=="ok") logErr(t.id, s.title+": "+s.prompt, v==="part" ? "Банк задач: частично — сверить с ключом." : "Банк задач: не вышло — разобрать по ключу.");
+      if(v==="no") backFail("b", t.id, s.id, bankEq(s)); else if(v==="ok") backPass(backKey("b", t.id, s.id));
       if(stay) return;
       store.set(ansKey, ""); bankIdx=pickBank(t.id, s.id); renderPractice(); startTyping("practice"); return;
     }
@@ -3297,6 +3338,7 @@ function renderPractice(){
       const r=document.querySelector('.rung[data-step="'+stepIdx+'"]'); if(r){ r.classList.toggle("ok",v==="ok"); r.classList.toggle("no",v==="no"); }
       return; }
     const gr=gradesOf(t.id); gr[s.id]=v; store.set("pm.grade."+t.id, gr);
+    if(v==="no") backFail("s", t.id, s.id, stepEq(s)); else if(v==="ok") backPass(backKey("s", t.id, s.id));   /* «нет» comes back in the run on day 1 and 3 */
     if(s.id==="s7"){ const r0=recallOf(t.id)||{}; store.set("pm.recall."+t.id, {at:Date.now(), v, pass: v==="ok" ? (r0.pass||Date.now()) : (r0.pass||0)}); }
     if(blind){ if(v==="ok" && ta.value.trim()) store.set("pm.ans."+t.id+".s7", ta.value); store.set(ansKey, ""); }
     if(t.due && s.id==="s7") srsGrade(t.id, v);
@@ -3330,7 +3372,7 @@ function renderCheat(){
   const errs=store.get("pm.err."+t.id,[]);
   $("tab-cheat").hidden = !(ch||one||fol.length||cmp.length||ln.length||errs.length);
   const qa=(q,a)=>`<button type="button" class="qa" aria-expanded="false"><span class="q">${esc(q)}</span><span class="a" hidden>${esc(a)}</span></button>`;
-  const errHTML = errs.length ? `<h5 class="ch-h err-h">ТВОИ ОШИБКИ · ${errs.length}</h5><ul class="errs">${errs.map((e,k)=>`<li><div><span class="eq">${esc(e.q)}</span>${e.note?`<span class="en">${esc(e.note)}</span>`:""}</div><span class="ed">${fmtDate(e.at)}</span><button type="button" class="ex" data-k="${k}" title="Разобрался — убрать">✓</button></li>`).join("")}</ul>` : "";
+  const errHTML = errs.length ? `<h5 class="ch-h err-h">ТВОИ ОШИБКИ · ${errs.length}</h5><ul class="errs">${errs.map((e,k)=>`<li><div><span class="eq">${esc(e.q)}</span>${e.note?`<span class="en">${esc(e.note)}</span>`:""}${(b=>b?`<span class="eb${b.done?" off":""}">${backLabel(b)}</span>`:`<span class="eb off">В РАН НЕ ВЕРНЁТСЯ · ОЦЕНКА НЕ «НЕТ»</span>`)(backFor(t.id, e.q))}</div><span class="ed">${fmtDate(e.at)}</span><button type="button" class="ex" data-k="${k}" title="Разобрался — убрать">✓</button></li>`).join("")}</ul>` : "";
   const left = errHTML + (ch?`<h5 class="ch-h">ШПАРГАЛКА</h5><ol class="ch-list">${ch.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:"")
     + cmp.map(c=>`<h5 class="ch-h">СРАВНЕНИЕ · ${esc(c.t)}</h5><table class="ch-cmp"><thead><tr><th></th><th>${esc(c.a)}</th><th>${esc(c.b)}</th></tr></thead><tbody>${c.rows.map(r=>`<tr><th>${esc(r[0])}</th><td>${esc(r[1])}</td><td>${esc(r[2])}</td></tr>`).join("")}</tbody></table>`).join("");
   const right = ((one||fol.length)?`<p class="ch-tip">Сначала ответь вслух, потом кликни — проверь себя.</p>`:"")
@@ -3410,6 +3452,7 @@ function pickQ(id){ const R=DATA.ref, f=R.follow[id]||[], one=R.one[id]; const p
   return pool.length ? pool[(Math.random()*pool.length)|0] : null; }
 function buildRun(){
   const cards=[], used=new Set();
+  backDueList().slice(0,3).forEach(([key,e])=>{ const i=idIndex[e.t], it={k:e.k, t:e.t, ref:e.ref, q:e.q, a:e.a}; if(i==null || !itemView(it)) return; cards.push({kind:"back", i, it, bkey:key, ok:e.ok||0}); });
   dueList().slice(0,2).forEach(i=>{ const q=pickQ(topics[i].id); if(q){ cards.push({kind:"review", i, q:q[0], a:q[1]}); used.add(i); } });
   const pool=topics.map((t,i)=>i).filter(i=>!used.has(i) && (topics[i].status==="done"||topics[i].status==="prog") && pickQ(topics[i].id));
   while(cards.length<2 && pool.length){ const i=pool.splice((Math.random()*pool.length)|0,1)[0]; const q=pickQ(topics[i].id); cards.push({kind:"recall", i, q:q[0], a:q[1]}); used.add(i); }
@@ -3421,13 +3464,86 @@ function buildRun(){
     else { const done=topics.map((t,i)=>i).filter(i=>topics[i].status==="done" && bankFor(topics[i].id).length); if(done.length){ const i=done[(Math.random()*done.length)|0]; const b=pickBank(topics[i].id); cards.push({kind:"step", i, k:-1, bank:b, s:bankFor(topics[i].id)[b]}); } } }
   return cards;
 }
+/* one recall card from a stored item (error return in the run, mixed training): question → answer → ПОМНЮ / НЕ ВСПОМНИЛ */
+function itemView(it){
+  const c=DATA.content[it.t]||{};
+  if(it.k==="s"){ const k=(c.steps||[]).findIndex(x=>x.id===it.ref), s=k>=0 && c.steps[k]; if(!s) return null;
+    return {label:"СТУПЕНЬ "+(k+1), h:esc(short(s.title)), p:s.prompt, code:s.code, oral:s.id==="s5", key:s.key, points:s.points, eq:stepEq(s)}; }
+  if(it.k==="b"){ const s=DATA.bank.find(x=>x.id===it.ref); if(!s) return null;
+    return {label:"ЗАДАЧА БАНКА · "+String(s.type||"").toUpperCase(), h:esc(s.title), p:s.prompt, code:s.code, oral:s.type==="Устно", key:s.key, points:s.points, eq:bankEq(s)}; }
+  if(it.k==="o"){ const L=c.lesson||{}, q=outQs(it.t)[it.ref], a=L.answers && L.answers[it.ref]; if(!q) return null;
+    return {label:"ПРОВЕРЬ СЕБЯ", h:q, ans:a?`<div class="out-a">${a}</div>`:"", eq:outEq(q)}; }
+  if(it.k==="q") return it.q ? {label:"ВОПРОС ИЗ РАНА", h:esc(it.q), ans:`<div class="run-a">${esc(it.a||"")}</div>`, eq:it.q} : null;
+  return null;
+}
+function itemAnswer(v){
+  if(v.ans!=null) return v.ans || `<div class="run-a">Эталонного ответа нет — сверься со шпаргалкой темы.</div>`;
+  const pts = v.points && v.points.length ? `<div class="kpoints"><div class="kp-h">СВЕРЬ ПО ПУНКТАМ · ВСЕ ОБЯЗАТЕЛЬНЫ</div><ol>${v.points.map(p=>`<li>${p}</li>`).join("")}</ol></div>` : "";
+  return pts + (v.key ? terminal(v.key, "Ключ", "сверь со своим ответом", {plain:true, key:true}) : "");
+}
+/* mixed training: 5–10 cards from topics in progress or done (steps, bank, «Проверь себя», open errors), topics interleaved round-robin,
+   topics due in SRS go first and add a card each; the topic name stays hidden until the answer. No streak, no SRS move. */
+const MIX_MIN=5, MIX_MAX=10;
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function mixPool(){
+  const by=new Map(), add=(id,it)=>{ if(!by.has(id)) by.set(id,[]); by.get(id).push(it); };
+  topics.forEach(t=>{ const id=t.id, c=DATA.content[id]; if(!c || (t.status!=="done" && t.status!=="prog")) return;
+    const p=progressOf(id), done=t.status==="done", L=c.lesson||{};
+    (c.steps||[]).forEach(s=>{ if(done || p[s.id]) add(id, {k:"s", t:id, ref:s.id}); });
+    bankFor(id).forEach(b=>{ if(done || bankStat(b.id).last) add(id, {k:"b", t:id, ref:b.id}); });
+    if(done || outOf(id)) outQs(id).forEach((q,k)=>{ if(L.answers && L.answers[k]) add(id, {k:"o", t:id, ref:k}); }); });
+  const errs=new Map();
+  Object.entries(backAll()).forEach(([key,e])=>{ if(e.done || idIndex[e.t]==null || !DATA.content[e.t]) return; if(!errs.has(e.t)) errs.set(e.t,[]); errs.get(e.t).push({k:e.k, t:e.t, ref:e.ref, q:e.q, a:e.a, bkey:key}); });
+  return {by, errs};
+}
+function buildMix(){
+  const {by, errs}=mixPool(), ids=[...new Set([...by.keys(), ...errs.keys()])], q=new Map();
+  ids.forEach(id=>{ const e=shuffle(errs.get(id)||[]), seen=new Set(e.map(x=>x.k+":"+x.ref)); q.set(id, e.concat(shuffle((by.get(id)||[]).filter(x=>!seen.has(x.k+":"+x.ref))))); });
+  const due=ids.filter(id=>topics[idIndex[id]].due).sort((a,b)=>((srsOf(a)||{}).due||0)-((srsOf(b)||{}).due||0));
+  const order=due.concat(shuffle(ids.filter(id=>!due.includes(id)))), n=Math.min(MIX_MAX, MIX_MIN+due.length), cards=[], usedB=new Set();
+  while(cards.length<n){ let added=false;
+    for(const id of order){ if(cards.length>=n) break; const list=q.get(id);
+      while(list.length){ const it=list.shift(); if(it.k==="b"){ if(usedB.has(it.ref)) continue; usedB.add(it.ref); } if(!itemView(it)) continue;
+        cards.push({kind:"mix", i:idIndex[id], it, bkey:it.bkey}); added=true; break; } }
+    if(!added) break; }
+  return new Set(cards.map(c=>c.i)).size>=2 ? cards : [];
+}
+function renderItemCard(c){
+  const body=$("runBody"), t=topics[c.i], v=itemView(c.it), mix=c.kind==="mix";
+  const topicLine=`${BRANCHES[t.b].code} · ${esc(t.title)}`;
+  const kind = mix ? v.label+(c.bkey?" · ТВОЯ ОШИБКА":"") : "ОШИБКА ВОЗВРАЩАЕТСЯ · "+(c.ok?"ДЕНЬ "+BACK_DAYS[1]:"ДЕНЬ "+BACK_DAYS[0])+" · "+v.label;
+  body.innerHTML=`<div class="run-kind">${kind}</div><div class="run-topic" id="runTopic">${mix?"ТЕМА СКРЫТА ДО ОТВЕТА":topicLine}</div>
+    <h3 class="run-q">${v.h}</h3>${v.p?`<div class="run-a" style="border-color:var(--line-2)">${esc(v.p)}</div>`:""}
+    ${v.code?terminal(v.code, "Задача", "", {plain:v.oral||proseCode(v.code)}):""}
+    <p class="run-tip" id="runTip">Ответь вслух или про себя. Потом открой ответ.</p>
+    <div class="run-acts" id="runActs"><button type="button" class="cta" id="runShow">ПОКАЗАТЬ ОТВЕТ</button></div>`;
+  $("runShow").addEventListener("click",()=>{
+    $("runTip").outerHTML=`<div class="run-ans">${itemAnswer(v)}</div>`; $("runTopic").innerHTML=topicLine;
+    $("runActs").innerHTML=`<button type="button" class="cta" id="runYes">ПОМНЮ</button><button type="button" class="ghostbtn" id="runNo">НЕ ВСПОМНИЛ</button>`;
+    $("runYes").addEventListener("click",()=>{ sfx.ok(); backPass(c.bkey || backKey(c.it.k, c.it.t, c.it.ref)); runRes.push(true); flash[c.i]=1.6; burst(c.i,10); refreshProgress(); runIdx++; renderRun(); });
+    $("runNo").addEventListener("click",()=>{ sfx.no(); backFail(c.it.k, c.it.t, c.it.ref, v.eq, c.it.q, c.it.a);
+      if(mix) logErr(t.id, v.eq, "Тренировка: не вспомнил — вернётся в ран завтра."); runRes.push(false); refreshProgress(); runIdx++; renderRun(); });
+  });
+}
 const RUN_KIND={review:"ПОВТОР · ТЕМА ПРОСИТ ВСПОМНИТЬ", recall:"ВСПОМНИ ИЗ ПРОЙДЕННОГО", warm:"РАЗМИНКА · УГАДАЙ ДО ТЕОРИИ", step:"СЛЕДУЮЩАЯ СТУПЕНЬ"};
 let pendingRun=null;
-function openRun(){ runCards=buildRun(); runIdx=0; runRes=[]; $("run").hidden=false; hideTip(); renderRun(); }
+let runMode="run";
+function setRunMode(m){ runMode=m; $("runTitle").innerHTML = m==="mix" ? "<i></i>MIX.EXE · ТРЕНИРОВКА" : "<i></i>RUN.EXE · 5 МИН"; $("run").setAttribute("aria-label", m==="mix" ? "Смешанная тренировка" : "Ран 5 минут"); }
+function openRun(){ setRunMode("run"); runCards=buildRun(); runIdx=0; runRes=[]; $("run").hidden=false; hideTip(); renderRun(); }
+function openMix(){ setRunMode("mix"); runCards=buildMix(); runIdx=0; runRes=[]; $("run").hidden=false; hideTip(); renderRun(); }
 function closeRun(){ $("run").hidden=true; stopTyping(); }
 function finishRunDay(){ fxLog("RUN","СЕРИЯ ОБНОВЛЕНА"); const days=runDays(), k=dayKey(); if(!days.includes(k)){ days.push(k); store.set("pm.runs", days.slice(-120)); } refreshRun(); }
 function renderRun(){
-  const body=$("runBody"), n=runCards.length; $("runBar").style.width=(Math.min(runIdx,n)/n*100)+"%";
+  const body=$("runBody"), n=runCards.length; $("runBar").style.width=(n?Math.min(runIdx,n)/n*100:0)+"%";
+  if(runMode==="mix" && !n){ $("runStep").textContent="";
+    body.innerHTML=`<div class="run-kind">ТРЕНИРОВКЕ НУЖНО ХОТЯ БЫ ДВЕ ТЕМЫ</div><p class="run-tip">Смешанная тренировка берёт вопросы из тем, где ты уже отвечал: ступени, банк, «Проверь себя», твои ошибки. Начни вторую тему — и вопросы начнут перемешиваться.</p>
+      <div class="run-acts"><button type="button" class="ghostbtn" id="runDone">НА КАРТУ</button></div>`;
+    $("runDone").addEventListener("click",closeRun); return; }
+  if(runMode==="mix" && runIdx>=n){ $("runStep").textContent="ГОТОВО"; const ok=runRes.filter(x=>x).length, tn=new Set(runCards.map(c=>c.i)).size;
+    body.innerHTML=`<div class="run-kind">ТРЕНИРОВКА ЗАВЕРШЕНА</div><div class="run-big">ВСПОМНИЛ ${ok} / ${runRes.length}</div>
+      <div class="run-stats"><span>ТЕМ ВПЕРЕМЕШКУ <b>${tn}</b></span>${runRes.length-ok?`<span>НЕ ВСПОМНИЛ <b>${runRes.length-ok}</b> · ВЕРНУТСЯ В РАН ЗАВТРА</span>`:""}</div>
+      <div class="run-acts"><button type="button" class="cta" id="runMore">ЕЩЁ ТРЕНИРОВКА</button><button type="button" class="ghostbtn" id="runDone">НА КАРТУ</button></div>`;
+    $("runMore").addEventListener("click",openMix); $("runDone").addEventListener("click",closeRun); return; }
   if(runIdx>=n){ const counted=runRes.length>0; if(counted) finishRunDay(); $("runStep").textContent="ГОТОВО";
     const ok=runRes.filter(x=>x).length, nx=topics.filter(t=>t.status==="done").map(t=>srsOf(t.id)).filter(Boolean).sort((a,b)=>a.due-b.due)[0];
     body.innerHTML=`<div class="run-kind">${counted?"РАН ЗАВЕРШЁН":"РАН БЕЗ ОТВЕТОВ · ДЕНЬ НЕ ЗАСЧИТАН"}</div><div class="run-big">СЕРИЯ ${streak()} ${streak()===1?"ДЕНЬ":streak()<5?"ДНЯ":"ДНЕЙ"}</div>
@@ -3435,6 +3551,7 @@ function renderRun(){
       <div class="run-acts"><button type="button" class="cta" id="runMore">ЕЩЁ ОДИН РАН</button><button type="button" class="ghostbtn" id="runDone">НА КАРТУ</button></div>`;
     $("runMore").addEventListener("click",openRun); $("runDone").addEventListener("click",closeRun); return; }
   const c=runCards[runIdx], t=topics[c.i]; $("runStep").textContent=(runIdx+1)+" / "+n;
+  if(c.it){ renderItemCard(c); return; }
   if(c.kind==="step" && c.k<0) RUN_KIND.step="ЗАДАЧА ИЗ БАНКА · ТЕМА УЖЕ ОСВОЕНА"; else RUN_KIND.step="СЛЕДУЮЩАЯ СТУПЕНЬ";
   if(c.kind==="step"){
     body.innerHTML=`<div class="run-kind">${RUN_KIND.step}</div><div class="run-topic">${BRANCHES[t.b].code} · ${esc(t.title)}</div>
@@ -3452,11 +3569,12 @@ function renderRun(){
   $("runShow").addEventListener("click",()=>{ stopTyping();
     $("runTip").outerHTML=`<div class="run-a">${esc(c.a)}</div>`;
     $("runActs").innerHTML=`<button type="button" class="cta" id="runYes">ПОМНЮ</button><button type="button" class="ghostbtn" id="runNo">НЕ ВСПОМНИЛ</button>`;
-    $("runYes").addEventListener("click",()=>{ sfx.ok(); if(c.kind==="review" && honestDone(t.id)) srsPass(t.id); runRes.push(true); flash[c.i]=1.6; burst(c.i,10); refreshProgress(); runIdx++; renderRun(); });
-    $("runNo").addEventListener("click",()=>{ sfx.no(); if(t.status==="done" || (c.kind==="review" && store.get("pm.srs."+t.id,null))) srsFail(t.id); if(c.kind!=="warm") logErr(t.id, c.q, "Ран: не вспомнил. Ответ: "+c.a); runRes.push(false); refreshProgress(); runIdx++; renderRun(); });
+    $("runYes").addEventListener("click",()=>{ sfx.ok(); if(c.kind==="review" && honestDone(t.id)) srsPass(t.id); backPass(backKey("q", t.id, strHash(c.q))); runRes.push(true); flash[c.i]=1.6; burst(c.i,10); refreshProgress(); runIdx++; renderRun(); });
+    $("runNo").addEventListener("click",()=>{ sfx.no(); if(t.status==="done" || (c.kind==="review" && store.get("pm.srs."+t.id,null))) srsFail(t.id); if(c.kind!=="warm"){ logErr(t.id, c.q, "Ран: не вспомнил. Ответ: "+c.a); backFail("q", t.id, strHash(c.q), c.q, c.q, c.a); } runRes.push(false); refreshProgress(); runIdx++; renderRun(); });
   });
 }
 $("runBtn").addEventListener("click",openRun);
+$("mixBtn").addEventListener("click",openMix);
 $("runClose").addEventListener("click",closeRun);
 $("run").addEventListener("click",e=>{ if(e.target.id==="run") closeRun(); });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !$("run").hidden){ e.stopImmediatePropagation(); closeRun(); } }, true);
