@@ -138,6 +138,25 @@ button:disabled{cursor:not-allowed}
 .tlab.hot .ts{display:block}
 .tlab.done .tn{color:var(--ink)}
 .tlab.dark .tn{color:#69737A}
+.tlab .need{display:none;margin-top:4px;font-family:var(--f-mono);font-size:var(--fs-ui);letter-spacing:.03em;color:#7C878D}
+.tlab .need b{color:var(--cyan);font-weight:400}
+.tlab.hot .need:not(:empty){display:block}
+.tlab.fog .tn{color:#3E474D;filter:blur(1.1px)}
+.tlab.fog .tk{color:#2C3337}
+.tlab.fog.hot .tn{filter:none;color:#7C878D}
+.stages{position:absolute;left:50%;top:84px;transform:translateX(-50%);display:flex;align-items:flex-start;gap:12px;pointer-events:none;white-space:nowrap;font-family:var(--f-display);font-size:var(--fs-ui);letter-spacing:.08em;color:#5B656B}
+.stages .stg{display:flex;flex-direction:column;gap:4px;min-width:130px}
+.stages .stg i{display:block;height:2px;background:#1C2226}
+.stages .stg i b{display:block;height:2px;background:currentColor}
+.stages .stg small{font-family:var(--f-mono);font-size:var(--fs-label);letter-spacing:.04em;color:#5B656B}
+.stages .stg.on{color:var(--cyan)}
+.stages .stg.done{color:var(--ink)}
+.stages .ar{color:#3A4248}
+.track .fog{opacity:.4}
+.card .fogNeed{color:var(--muted)}
+.card .fogNeed b{color:var(--cyan);font-weight:400}
+.card .anyway{min-height:30px;margin-top:-8px;font-family:var(--f-read);font-size:var(--fs-ui);letter-spacing:0;text-transform:none;color:var(--dim);text-align:left}
+@media (max-width:1180px){.stages{display:none}}
 .tlab .tk{font-style:normal;color:#4A545B;font-size:var(--fs-label);margin-right:8px;letter-spacing:.04em}
 .tlab .nxt{display:none;font-style:normal;margin-left:10px;padding:1px 6px;border:1px solid var(--cyan);color:var(--cyan);font-size:var(--fs-label);letter-spacing:.04em;vertical-align:2px}
 .tlab.nx .nxt{display:inline-block}
@@ -863,6 +882,20 @@ html.phone .pl-t.st-prog .pl-st{color:var(--ink)}
 html.phone .pl-t.st-cur,html.phone .pl-t.st-due{box-shadow:inset 2px 0 var(--cyan);background:rgba(45,226,230,.04)}
 html.phone .pl-t.st-cur .pl-st,html.phone .pl-t.st-due .pl-st,html.phone .pl-t.st-cur .pl-n,html.phone .pl-t.st-due .pl-n{color:var(--cyan)}
 html.phone .pl-t.st-dark{opacity:.45}
+html.phone .pl-t.st-fog .pl-tt{color:#4A545B}
+html.phone .pl-t.st-fog .pl-n{color:#2C3337}
+html.phone .pl-need{display:block;margin-top:4px;font-family:var(--f-mono);font-size:12px;line-height:1.35;color:#69737A}
+html.phone .pl-need b{color:var(--cyan);font-weight:400}
+html.phone .pl-ask{display:none;padding:0 4px 12px 42px}
+html.phone li.ask .pl-ask{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+html.phone .pl-go{min-height:36px;font-family:var(--f-mono);font-size:var(--fs-read);color:var(--cyan);text-align:left}
+html.phone .pl-any{min-height:36px;margin-top:4px;font-family:var(--f-read);font-size:12px;color:var(--dim);text-align:left}
+html.phone .pl-stg{padding:22px 4px 8px;font-family:var(--f-display);font-size:var(--fs-read);letter-spacing:.08em;color:#5B656B;border-bottom:1px solid var(--line)}
+html.phone .pl-stg.on{color:var(--cyan)}
+html.phone .pl-stg.done{color:var(--ink)}
+html.phone .pl-stg small{display:block;margin-top:3px;font-family:var(--f-mono);font-size:11px;letter-spacing:.04em;color:#5B656B}
+html.phone .pl-stg i{display:block;height:2px;margin-top:8px;background:#1C2226}
+html.phone .pl-stg i b{display:block;height:2px;background:currentColor}
 /* topic view */
 html.phone .t-head{padding-right:0}
 html.phone .t-row{flex-wrap:wrap;gap:2px 10px}
@@ -955,6 +988,7 @@ html.phone .ep-nav #epNext[hidden]{display:none}
       <canvas id="c"></canvas>
       <div class="overlay" id="overlay">
         <div class="stagehead"><span>КАРТА ЗНАНИЙ · <b id="stCount">0</b> / <span class="tTot">60</span> · <span class="kbd">CTRL K</span> ПОИСК</span><span class="sh-r"><button type="button" class="srchBtn" id="srchBtn">ПОИСК</button><button type="button" class="runBtn" id="runBtn"></button><button type="button" class="contBtn" id="contBtn"></button></span></div>
+        <div class="stages" id="stages" aria-label="Этапы"></div>
         <svg class="route" id="route" aria-hidden="true"><polyline id="rDone" points=""/><polyline id="rNext" points=""/></svg>
         <div class="marker" id="marker"></div>
         <div class="tip" id="tip"></div>
@@ -969,6 +1003,7 @@ html.phone .ep-nav #epNext[hidden]{display:none}
             <div class="card-route"><button type="button" class="rnav" id="cPrev" aria-label="Предыдущая тема">◂</button><span id="cStep"></span><button type="button" class="rnav" id="cNext" aria-label="Следующая тема">▸</button></div>
             <button class="cta" id="cta" type="button">ОТКРЫТЬ ТЕМУ ▸</button>
             <button type="button" class="textbtn know" id="cKnow">Уже знаю эту тему — сдать проверку</button>
+            <button type="button" class="textbtn anyway" id="cAnyway" hidden>открыть всё равно</button>
           </div>
           <i class="cb tl"></i><i class="cb br"></i>
         </section>
@@ -2266,11 +2301,19 @@ function srsFail(id){ fxLog("SRS","NODE://"+id.toUpperCase()+" · ЛЕСЕНКА
 function logErr(id, q, note){ const list=store.get("pm.err."+id,[]); list.unshift({at:Date.now(), q:String(q).slice(0,400), note:String(note||"").slice(0,600)}); store.set("pm.err."+id, list.slice(0,20)); }
 function fmtDate(ts){ const d=new Date(ts); return String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0"); }
 function whenLabel(ts){ const d=Math.round((ts-Date.now())/DAY); return d<=0?"СЕГОДНЯ":d===1?"ЗАВТРА":"ЧЕРЕЗ "+d+" ДН."; }
+/* stages (09.11 backlog p.9): 4 stages over the branches; a topic is "in fog" while any of its lesson prereqs is not «освоено» */
+const STAGES = [{n:1, name:"SWIFT-БАЗА", br:[0]}, {n:2, name:"SWIFTUI-ПРИЛОЖЕНИЕ", br:[1]}, {n:3, name:"СЕТЬ И ПАМЯТЬ", br:[2,3,4]}, {n:4, name:"СОБЕСЕДОВАНИЕ", br:[5,6,7]}];
+function stageOfB(b){ const k=STAGES.findIndex(s=>s.br.includes(b)); return k<0 ? STAGES.length-1 : k; }
+const TIDX = {}; topics.forEach((t,i)=>{ TIDX[t.id]=i; });
+const PRE = topics.map(t=>{ const L=(DATA.content[t.id]||{}).lesson; return ((L&&L.prereqs)||[]).map(p=>TIDX[p]).filter(j=>j!=null && topics[j].id!==t.id); });
+function stageStats(k){ const idx=topics.map((t,i)=>i).filter(i=>STAGES[k].br.includes(topics[i].b));
+  return {total:idx.length, done:idx.filter(i=>topics[i].status==="done").length, fog:idx.filter(i=>topics[i].fog).length}; }
 function computeStatuses(){
   topics.forEach(t=>{ t.status=statusOf(t.id); t.due=isDue(t.id); t.legacy = t.status==="done" && !honestDone(t.id) && !!LEGACY[t.id]; });
-  let nx = topics.findIndex(t=>t.due); if(nx<0) nx = topics.findIndex(t=>t.status==="prog"); if(nx<0) nx = topics.findIndex(t=>t.status==="none" && !SKIP[t.id]); if(nx<0) nx = topics.findIndex(t=>t.status==="none"); if(nx<0) nx=0;
-  curIdx = nx; topics.forEach((t,i)=>{ t.cur = i===curIdx; });
-  routeAt = topics.findIndex(t=>t.status!=="done" && t.status!=="dark"); if(routeAt<0) routeAt = topics.length-1;
+  topics.forEach((t,i)=>{ t.miss = PRE[i].filter(j=>topics[j].status!=="done"); t.fog = t.status==="none" && !t.due && t.miss.length>0; });
+  let nx = topics.findIndex(t=>t.due); if(nx<0) nx = topics.findIndex(t=>t.status==="prog"); if(nx<0) nx = topics.findIndex(t=>t.status==="none" && !t.fog && !SKIP[t.id]); if(nx<0) nx = topics.findIndex(t=>t.status==="none" && !t.fog); if(nx<0) nx = topics.findIndex(t=>t.status==="none"); if(nx<0) nx=0;
+  curIdx = nx; topics.forEach((t,i)=>{ t.cur = i===curIdx; if(t.cur) t.fog=false; });
+  routeAt = topics.findIndex(t=>t.status!=="done" && t.status!=="dark" && !t.fog); if(routeAt<0) routeAt = topics.findIndex(t=>t.status!=="done" && t.status!=="dark"); if(routeAt<0) routeAt = topics.length-1;
   for(let i=0;i<N;i++) hot[i] = (i<T && topics[i].b===topics[curIdx].b) || d2(i,curIdx) < 0.09 ? 1 : 0;
   hotList = topics.map((t,i)=>i).filter(i=>topics[i].b===topics[curIdx].b);
 }
@@ -2330,6 +2373,7 @@ function applyNodeStyles(){
       else if(t.status==="done"){ c=WHITE; s=12.5; a=1; }
       else if(t.status==="prog"){ c=WHITE; s=6+6*gr; a=0.75+0.2*gr; r=1; }
       else if(t.status==="dark"){ c=GREY; s=6; a=0.4; r=1; }
+      else if(t.fog){ c=GREY; s=3; a=0.16; }   /* in fog: prereqs not «освоено» yet */
       else { c=GREY; s=5; a=0.62; } }
     else if(fillTopic[i]>=0 && topics[fillTopic[i]].status==="done"){ const ret=retentionOf(fillTopic[i]); c=mixc(GREY,[0.78,0.94,0.96],ret); a=0.42+0.4*ret; s=2.1+1.1*ret; }
     else if(fillTopic[i]>=0 && topics[fillTopic[i]].status==="prog"){ const gr=growthOf(fillTopic[i]); a=0.42+0.22*gr; s=2.1+0.6*gr; }
@@ -2524,7 +2568,7 @@ let nbShown=[];
 const nbLabels = Array.from({length:8},()=>{ const d=document.createElement("div"); d.className="nlabel"; d.hidden=true; overlay.appendChild(d); return d; });
 const marker=$("marker");
 const leaderSvg=document.createElementNS("http://www.w3.org/2000/svg","svg"); leaderSvg.setAttribute("class","leaders"); overlay.appendChild(leaderSvg);
-const tLabs = topics.map(t=>{ const d=document.createElement("div"); d.className="tlab"; d.innerHTML=`<span class="tn"><i class="tk">${String(t.k+1).padStart(2,"0")}</i>${esc(t.title)}<em class="nxt">ДАЛЬШЕ</em></span><span class="ts">${esc(t.sub)}</span>`; overlay.appendChild(d); return {el:d, w:0, h:0, line:null}; });
+const tLabs = topics.map(t=>{ const d=document.createElement("div"); d.className="tlab"; d.innerHTML=`<span class="tn"><i class="tk">${String(t.k+1).padStart(2,"0")}</i>${esc(t.title)}<em class="nxt">ДАЛЬШЕ</em></span><span class="ts">${esc(t.sub)}</span><span class="need"></span>`; overlay.appendChild(d); return {el:d, w:0, h:0, line:null, need:d.querySelector(".need"), needKey:null}; });
 let labBranch=-1;
 function layoutTopicLabels(breath){
   const ab = hoverNode>=0 ? topics[hoverNode].b : highlight;
@@ -2534,7 +2578,8 @@ function layoutTopicLabels(breath){
   topics.forEach((t,i)=>{ if(t.b!==ab) return; const p=[pos[i*3]*breath,pos[i*3+1]*breath,pos[i*3+2]*breath]; const [x,y]=project(...p); items.push({i,x,y,f:facing(...p)}); cx+=x; cy+=y; });
   cx/=items.length; cy/=items.length;
   const card=$("card"), cr = (cardOn && !card.hidden) ? {l:cardX-12, t:cardY-12, r:cardX+card.offsetWidth+12, b:cardY+card.offsetHeight+12} : null;
-  items.forEach(it=>{ const L=tLabs[it.i], t=topics[it.i]; L.el.classList.add("on"); L.el.classList.toggle("hot", it.i===hoverNode); L.el.classList.toggle("done", t.status==="done"); L.el.classList.toggle("dark", t.status==="dark"); L.el.classList.toggle("nx", it.i===curIdx);
+  items.forEach(it=>{ const L=tLabs[it.i], t=topics[it.i]; L.el.classList.add("on"); L.el.classList.toggle("hot", it.i===hoverNode); L.el.classList.toggle("done", t.status==="done"); L.el.classList.toggle("dark", t.status==="dark"); L.el.classList.toggle("fog", !!t.fog);
+    const nk = t.fog ? t.miss.join(",") : ""; if(L.needKey!==nk){ L.needKey=nk; L.need.innerHTML = nk ? "В ТУМАНЕ · СНАЧАЛА <b>"+missNames(t).map(esc).join(" · ")+"</b>" : ""; } L.el.classList.toggle("nx", it.i===curIdx);
     L.w=L.el.offsetWidth; L.h=L.el.offsetHeight; it.side = it.x>=cx ? 1 : -1; it.ly = it.y + (it.y-cy)*0.25; });
   const place=it=>{ const L=tLabs[it.i]; it.lx = it.side>0 ? it.x+26 : it.x-26-L.w; };
   items.forEach(it=>{ place(it); if(cr){ const L=tLabs[it.i]; if(it.lx<cr.r && it.lx+L.w>cr.l && it.ly+L.h/2>cr.t && it.ly-L.h/2<cr.b){ it.side=-it.side; place(it); } } });
@@ -2568,10 +2613,11 @@ function setHighlight(bi){
 }
 const STATUS={done:"ОСВОЕНО",prog:"В ПРОЦЕССЕ",none:"НЕ НАЧАТО",dark:"ТЁМНЫЙ НЕЙРОН"};
 const LVL={J:"JUNIOR",M:"MIDDLE",S:"SENIOR"};
-function statusLabel(t){ return t.due ? "ПОВТОРИТЬ" : t.cur ? (t.status==="none"?"СЛЕДУЮЩАЯ":"ТЕКУЩАЯ") : STATUS[t.status]; }
+function statusLabel(t){ return t.due ? "ПОВТОРИТЬ" : t.cur ? (t.status==="none"?"СЛЕДУЮЩАЯ":"ТЕКУЩАЯ") : t.fog ? "В ТУМАНЕ" : STATUS[t.status]; }
+function missNames(t){ return (t.miss||[]).map(j=>topics[j].title); }
 function metaHTML(t){
   const pr=topicProgress(t.id);
-  return `<span class="${t.cur||t.due?"st-cur":""}" style="color:${(t.status==="none"||t.status==="dark")&&!t.cur?"var(--muted)":"var(--ink)"}">${statusLabel(t)}</span>${pr.total?`<span><b>${pr.ok}</b>/${pr.total} СТУПЕНЕЙ</span>`:""}${t.legacy?`<span title="Засчитано по старому правилу: ступень 7 и Выгрузка по памяти ещё впереди — на ближайшем повторе">СТАРЫЙ ЗАЧЁТ</span>`:""}<span><b>${LVL[t.lvl]}</b></span><span>~<b>${t.min}</b> МИН</span>`;
+  return `<span class="${t.cur||t.due?"st-cur":""}" style="color:${(t.status==="none"||t.status==="dark")&&!t.cur?"var(--muted)":"var(--ink)"}">${statusLabel(t)}</span>${t.fog?`<span class="fogNeed">СНАЧАЛА <b>${missNames(t).map(esc).join(" · ")}</b></span>`:""}${pr.total?`<span><b>${pr.ok}</b>/${pr.total} СТУПЕНЕЙ</span>`:""}${t.legacy?`<span title="Засчитано по старому правилу: ступень 7 и Выгрузка по памяти ещё впереди — на ближайшем повторе">СТАРЫЙ ЗАЧЁТ</span>`:""}<span><b>${LVL[t.lvl]}</b></span><span>~<b>${t.min}</b> МИН</span>`;
 }
 function linkList(ul, i, onPick){
   ul.textContent="";
@@ -2594,7 +2640,8 @@ function select(i, fly){
   if(fly) focusOn(i);
   showCard();
 }
-$("cta").addEventListener("click",()=>openTopic(selected));
+$("cta").addEventListener("click",()=>{ const t=topics[selected]; if(t && t.fog) select(t.miss[0], true); else openTopic(selected); });   /* in fog: the main button leads to the missing prereq */
+$("cAnyway").addEventListener("click",()=>openTopic(selected));
 $("tNav").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; if(b.dataset.check) startCheck(+b.dataset.check); else if(b.dataset.go) openTopic(+b.dataset.go, "theory"); });
 $("cKnow").addEventListener("click",()=>startCheck(selected));
 $("cNext").addEventListener("click",()=>{ const nx=nextIdx(selected); if(nx>=0) select(nx,true); });
@@ -2608,19 +2655,19 @@ function renderTrack(c){
   let h = prevIdx(first)>=0 ? `<button type="button" class="tmore" data-go="${prevIdx(first)}" aria-label="Раньше">‹</button>` : "";
   idx.forEach((i,n)=>{ const t=topics[i], br = (n===0 || topics[idx[n-1]].b!==t.b) ? BRANCHES[t.b].code+" "+BRANCHES[t.b].name : "";
     const tag = i===routeAt ? "ТЫ ЗДЕСЬ" : br || (i===nextIdx(routeAt) ? "ДАЛЬШЕ" : "");
-    h += `<button type="button" data-go="${i}" class="${t.status==="done"?"done":""} ${i===routeAt?"here":""} ${t.status==="dark"?"dark":""} ${i===selected&&cardOn?"sel":""}" title="${esc(t.title)}"><span class="tb">${esc(tag)}</span><span class="tl"><span class="tt">${String(i+1).padStart(2,"0")} ${esc(t.title)}</span></span></button>`; });
+    h += `<button type="button" data-go="${i}" class="${t.status==="done"?"done":""} ${i===routeAt?"here":""} ${t.status==="dark"?"dark":""} ${t.fog?"fog":""} ${i===selected&&cardOn?"sel":""}" title="${esc(t.title)}"><span class="tb">${esc(tag)}</span><span class="tl"><span class="tt">${String(i+1).padStart(2,"0")} ${esc(t.title)}</span></span></button>`; });
   if(nextIdx(last)>=0) h += `<button type="button" class="tmore" data-go="${nextIdx(last)}" aria-label="Дальше">›</button>`;
   $("track").innerHTML=h;
 }
 $("track") && $("track").addEventListener("click",e=>{ const b=e.target.closest("button[data-go]"); if(!b) return; select(+b.dataset.go, true); });
 function refreshCardNav(i){
   const t=topics[i], nx=nextIdx(i), pv=prevIdx(i), hasSteps=((DATA.content[t.id]||{}).steps||[]).length>0;
-  $("cKnow").hidden = t.status==="done" || !hasSteps;
+  $("cKnow").hidden = t.status==="done" || !hasSteps || !!t.fog; $("cAnyway").hidden = !t.fog;
   $("cNext").disabled = nx<0; $("cPrev").disabled = pv<0;
   const where = i===routeAt ? "<em>ТЫ ЗДЕСЬ</em>" : i<routeAt ? (t.status==="done"?"ПРОЙДЕНА":"ПРОПУЩЕНА") : i===nextIdx(routeAt) ? "СЛЕДУЮЩАЯ" : "ВПЕРЕДИ · ЧЕРЕЗ "+(i-routeAt);
   $("cStep").innerHTML = `ШАГ <b>${i+1}</b> / ${topics.length} · ${where}`;
   renderTrack(i);
-  $("cta").textContent = t.status==="dark" ? "ОТКРЫТЬ ТЕМУ ▸" : t.due ? "ПОВТОРИТЬ ▸" : t.status==="none" ? "НАЧАТЬ ТЕМУ ▸" : t.status==="done" ? "ОТКРЫТЬ ТЕМУ ▸" : "ПРОДОЛЖИТЬ ▸";
+  $("cta").textContent = t.fog ? "СНАЧАЛА: "+topics[t.miss[0]].title+" ▸" : t.status==="dark" ? "ОТКРЫТЬ ТЕМУ ▸" : t.due ? "ПОВТОРИТЬ ▸" : t.status==="none" ? "НАЧАТЬ ТЕМУ ▸" : t.status==="done" ? "ОТКРЫТЬ ТЕМУ ▸" : "ПРОДОЛЖИТЬ ▸";
 }
 const bl=$("pBranches");
 BRANCHES.forEach((br,bi)=>{
@@ -2640,7 +2687,13 @@ function refreshRun(){
   $("runBtn").innerHTML = `⚡ РАН · 5 МИН${nd?` <small>· ${nd} ${nd===1?"ПОВТОР":nd<5?"ПОВТОРА":"ПОВТОРОВ"}</small>`:today?" <small>· ✓ СЕГОДНЯ</small>":""}`;
   $("streak").innerHTML = st ? `СЕРИЯ <b>${st}</b> ${st===1?"ДЕНЬ":st<5?"ДНЯ":"ДНЕЙ"}${today?"":" · СЕГОДНЯ ЕЩЁ НЕ БЫЛО"}` : "СЕРИЯ <b>0</b> · НАЧНИ С РАНА";
 }
+function renderStages(){
+  const el=$("stages"); if(!el) return; const here=stageOfB(topics[curIdx].b);
+  el.innerHTML = STAGES.map((st,k)=>{ const x=stageStats(k), cls = k===here ? "on" : x.done===x.total ? "done" : "";
+    return `${k?'<span class="ar" aria-hidden="true">→</span>':""}<div class="stg ${cls}"><span class="sn">${st.n} ${esc(st.name)}</span><i><b style="width:${Math.round(x.done/x.total*100)}%"></b></i><small>${x.done} / ${x.total}${x.fog?" · В ТУМАНЕ "+x.fog:""}</small></div>`; }).join("");
+}
 function refreshUI(){
+  renderStages();
   try{ sfx.setProgress(topics.filter(t=>t.status==="done").length, topics.filter(t=>t.due).length); }catch(e){}
   const doneN=topics.filter(t=>t.status==="done").length, pct=Math.round(doneN/T*100);
   $("doneCount").textContent=doneN; $("donePct").textContent=pct+"%"; $("doneBar").style.width=pct+"%";
@@ -2674,7 +2727,10 @@ function plistBuild(){
     if(e.target.closest(".pl-cont")){ const t=topics[curIdx], pr=topicProgress(t.id); plScroll=plEl.scrollTop; doOpen(curIdx, (pr.ok>0||t.due||Object.keys(pr.p).length)?"practice":"theory"); return; }
     const h=e.target.closest(".pl-bh");
     if(h){ const bi=+h.dataset.b, on=!plOpen.has(bi); if(on) plOpen.add(bi); else plOpen.delete(bi); h.parentNode.classList.toggle("open",on); h.setAttribute("aria-expanded",on); return; }
-    const b=e.target.closest(".pl-t"); if(b){ plScroll=plEl.scrollTop; doOpen(+b.dataset.i, "theory"); }
+    const go=e.target.closest("[data-go]"); if(go){ plScroll=plEl.scrollTop; doOpen(+go.dataset.go, "theory"); return; }   /* fog: a missing prereq, or «открыть всё равно» */
+    const b=e.target.closest(".pl-t"); if(b){ const i=+b.dataset.i;
+      if(topics[i].fog){ const li=b.parentNode, on=!li.classList.contains("ask"); plEl.querySelectorAll(".pl-ts li.ask").forEach(x=>x.classList.remove("ask")); li.classList.toggle("ask",on); b.setAttribute("aria-expanded",on); return; }
+      plScroll=plEl.scrollTop; doOpen(i, "theory"); }
   });
   $("pBranches").addEventListener("click",e=>{ const li=e.target.closest("li"); if(!li) return; const bi=[...li.parentNode.children].indexOf(li); if(bi<0) return;
     plOpen.add(bi); setMode("map"); renderPList(); const h=plEl.querySelector(`.pl-bh[data-b="${bi}"]`); if(h) plEl.scrollTop=h.parentNode.offsetTop-8; });
@@ -2685,13 +2741,17 @@ function renderPList(){
   const ct=topics[curIdx], cb=BRANCHES[ct.b], doneN=topics.filter(t=>t.status==="done").length;
   $("plCont").innerHTML=`<span class="k">▸ ${ct.due?"ПОВТОРИТЬ":ct.status==="none"?"НАЧАТЬ":"ПРОДОЛЖИТЬ"}</span><span class="t">${esc(ct.title)}</span><span class="s">${cb.code} ${esc(cb.name)} · ${ct.k+1}/${topics.filter(x=>x.b===ct.b).length}</span>`;
   $("plProg").innerHTML=`<span>ОСВОЕНО <b>${doneN}</b> / ${T}</span><span class="bar"><i style="width:${Math.round(doneN/T*100)}%"></i></span>`;
-  let h="";
+  let h=""; const here=stageOfB(ct.b);
   BRANCHES.forEach((br,bi)=>{
+    const sk=STAGES.findIndex(st=>st.br[0]===bi);
+    if(sk>=0){ const x=stageStats(sk); h+=`<div class="pl-stg ${sk===here?"on":x.done===x.total?"done":""}">ЭТАП ${STAGES[sk].n} · ${esc(STAGES[sk].name)}<small>ОСВОЕНО ${x.done} / ${x.total}${x.fog?" · В ТУМАНЕ "+x.fog:""}</small><i><b style="width:${Math.round(x.done/x.total*100)}%"></b></i></div>`; }
     const idx=topics.map((t,i)=>i).filter(i=>topics[i].b===bi), dn=idx.filter(i=>topics[i].status==="done").length, open=plOpen.has(bi);
     h+=`<div class="pl-br${open?" open":""}${bi===ct.b?" here":""}"><button type="button" class="pl-bh" data-b="${bi}" aria-expanded="${open}"><span class="pl-bc">${br.code}</span><span class="pl-bn">${esc(br.name)}</span><span class="pl-bd"><b>${dn}</b> / ${idx.length}</span><i class="pl-chev" aria-hidden="true">▸</i></button><ol class="pl-ts">`;
-    idx.forEach(i=>{ const t=topics[i], st=t.due?"due":t.cur?"cur":t.status, pr=topicProgress(t.id);
+    idx.forEach(i=>{ const t=topics[i], st=t.due?"due":t.cur?"cur":t.fog?"fog":t.status, pr=topicProgress(t.id);
       const extra = t.status==="prog" && pr.total ? ` · ${pr.ok}/${pr.total}` : t.legacy ? " · старый зачёт" : "";
-      h+=`<li><button type="button" class="pl-t st-${st}" data-i="${i}"><span class="pl-n">${String(i+1).padStart(2,"0")}</span><span class="pl-tt">${esc(t.title)}${t.sub?`<small>${esc(t.sub)}</small>`:""}</span><span class="pl-st">${statusLabel(t)}${extra}</span></button></li>`; });
+      const need = t.fog ? `<span class="pl-need">сначала: <b>${missNames(t).map(esc).join(", ")}</b></span>` : "";
+      const ask = t.fog ? `<div class="pl-ask">${t.miss.map(j=>`<button type="button" class="pl-go" data-go="${j}">▸ ${esc(topics[j].title)}</button>`).join("")}<button type="button" class="pl-any" data-go="${i}">открыть всё равно</button></div>` : "";
+      h+=`<li><button type="button" class="pl-t st-${st}" data-i="${i}"${t.fog?' aria-expanded="false"':""}><span class="pl-n">${String(i+1).padStart(2,"0")}</span><span class="pl-tt">${esc(t.title)}${t.sub?`<small>${esc(t.sub)}</small>`:""}${need}</span><span class="pl-st">${statusLabel(t)}${extra}</span></button>${ask}</li>`; });
     h+=`</ol></div>`;
   });
   const sc=plEl.scrollTop; $("plBrs").innerHTML=h; plEl.scrollTop=sc;
