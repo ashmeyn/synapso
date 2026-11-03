@@ -26,10 +26,12 @@ async function run() {
       introVisible: (() => { const e = document.getElementById('intro'); if (!e) return false; const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(e).display !== 'none'; })(),
       webgl: !!document.querySelector('canvas') && (() => { const c = document.getElementById('c'); return !!(c && c.width > 300 && c.getBoundingClientRect().width > 0); })(),
       rows: document.querySelectorAll('#plist .pl-t').length,
+      tsa: (() => { const c = getComputedStyle(document.documentElement); return c.webkitTextSizeAdjust || c.textSizeAdjust || ''; })(),
     }));
     await s.check('html.phone is set', st.phone, st);
     await s.check('intro is skipped', !st.introVisible, st);
     await s.check('3D map canvas not shown', !st.webgl, st);
+    await s.check('iOS text autosizing off (text-size-adjust 100%)', st.tsa === '100%', st.tsa);
     await s.check('topic list has rows', st.rows > 0, st);
     await noHScroll('list');
     await quiet('list');
