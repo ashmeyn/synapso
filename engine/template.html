@@ -304,7 +304,12 @@ button:disabled{cursor:not-allowed}
 .card .cb{position:absolute;width:10px;height:10px;border:solid var(--cyan);pointer-events:none}
 .card .cb.tl{left:-1px;top:-1px;border-width:1px 0 0 1px}
 .card .cb.br{right:-1px;bottom:-1px;border-width:0 1px 1px 0}
-.overlay .legend{position:absolute;right:32px;bottom:22px;flex-direction:column;align-items:flex-start;gap:7px;margin:0;font-size:var(--fs-label);color:var(--dim)}
+.legwrap{position:absolute;right:32px;bottom:24px;pointer-events:auto;display:flex;flex-direction:column;align-items:flex-end}
+#brain.mini .legwrap,#brain.intro .legwrap{pointer-events:none}
+.leg-q{width:24px;height:24px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line-2);border-radius:50%;font-family:var(--f-mono);font-size:var(--fs-ui);color:var(--muted)}
+.legwrap:hover .leg-q,.leg-q:focus-visible{color:var(--cyan);border-color:var(--cyan)}
+.overlay .legend{position:absolute;right:0;bottom:24px;display:none;flex-direction:column;align-items:flex-start;gap:8px;margin:0;padding:8px 0 16px;font-size:var(--fs-label);color:var(--dim);white-space:nowrap}
+.legwrap:hover .legend,.legwrap:focus-within .legend{display:flex}
 
 .panel{position:absolute;right:0;top:0;bottom:0;width:340px;border-left:1px solid var(--line);padding:36px 32px;display:flex;flex-direction:column;gap:30px;overflow-y:auto;z-index:2;transition:opacity .45s,transform .6s var(--ease)}
 .is-topic .panel{opacity:0;transform:translateX(24px);pointer-events:none}
@@ -645,6 +650,34 @@ html:not(.phone) #pane-practice .ed:focus-within{border-color:#1F3B3D}
 html:not(.phone) #pane-practice .ed:focus-within::before,html:not(.phone) #pane-practice .ed:focus-within::after{border-color:var(--cyan)}
 html:not(.phone) #pane-practice .answer textarea{border-left:0;padding:12px 18px}
 html:not(.phone) #pane-practice .ed-hl{padding:12px 18px}
+/* desktop design pass 7: spacing on an 8px grid, a frame only around the window and code (incl. the answer editor) */
+html:not(.phone) .win{margin-top:16px}
+html:not(.phone) .win-b{padding:32px 32px 40px}
+html:not(.phone) .split > .side{gap:32px}
+html:not(.phone) .ch{gap:24px 48px}
+html:not(.phone) .ch-h{margin:24px 0 16px}
+html:not(.phone) .ch-list li{gap:16px;padding:8px 0}
+html:not(.phone) .ch-tip{margin:0 0 16px}
+html:not(.phone) .qa{padding:8px 0 8px 16px;margin-bottom:8px}
+html:not(.phone) .theory{gap:24px}
+html:not(.phone) .theory p{padding-top:16px}
+html:not(.phone) .theory > .tb{padding-top:16px}
+html:not(.phone) .tb h3{margin:0 0 16px}
+html:not(.phone) .tb h3 i{margin-right:16px}
+html:not(.phone) .theory .tb p{margin:0 0 16px}
+html:not(.phone) .tb ul{margin:0 0 16px}
+html:not(.phone) .tb li{padding-left:24px;margin-bottom:8px}
+html:not(.phone) .tb .term{margin:8px 0 16px}
+html:not(.phone) .lcode{margin:0 0 16px;padding:16px}
+html:not(.phone) .lnote{margin:0 0 16px;padding:16px}
+html:not(.phone) .theory > .tb.mission{border:0;background:none;box-shadow:inset 2px 0 var(--cyan);padding:8px 0 0 24px}
+html:not(.phone) .tb.mission h2{margin:8px 0 16px}
+html:not(.phone) .m-g > span{margin-bottom:8px}
+html:not(.phone) .theory > .deep-sep{gap:16px;padding-top:24px}
+html:not(.phone) .deepBtn{border:0;padding:0;min-height:40px}
+html:not(.phone) .deepBtn:hover{background:none;color:var(--ink)}
+html:not(.phone) .more{border:0;padding:0;margin-top:32px;gap:16px}
+html:not(.phone) .t-foot{gap:24px 48px;margin-top:32px;padding-top:24px}
 .kswap{font-family:var(--f-mono);font-size:var(--fs-label);letter-spacing:.04em;color:var(--cyan);margin-left:12px;padding:0 2px}
 .kswap:hover{color:var(--ink)}
 .assess{display:flex;flex-wrap:wrap;gap:22px;align-items:center;margin-top:6px}
@@ -754,7 +787,7 @@ html.phone .grows button{min-height:32px}
   .srchBtn{display:flex;align-items:center;min-height:40px;padding:0 12px;border:1px solid var(--line-2);background:rgba(6,9,11,.8);font-family:var(--f-mono);font-size:13px;letter-spacing:.04em;color:var(--ink-2)}
   .runBtn,.contBtn{min-height:40px;padding:0 10px;white-space:nowrap}
   .contBtn .t{max-width:9ch}
-  .legend,.hint,#lead{display:none}
+  .legwrap,.legend,.hint,#lead{display:none}
   .track{left:10px;right:10px;bottom:10px;transform:none;max-width:none}
   .card{position:fixed!important;left:8px!important;right:8px;top:auto!important;bottom:calc(8px + env(safe-area-inset-bottom));width:auto;max-height:58%;overflow-y:auto;transform:none!important;opacity:1!important;z-index:25}
   .run-w{width:calc(100% - 16px);max-height:calc(100% - 16px)}
@@ -1061,12 +1094,12 @@ html.phone .gflash{color:var(--ink)!important;border-color:var(--cyan)!important
           </div>
           <i class="cb tl"></i><i class="cb br"></i>
         </section>
-        <div class="legend">
+        <div class="legwrap"><button type="button" class="leg-q" id="legQ" aria-label="Легенда карты: что значат точки">?</button><div class="legend" role="tooltip">
           <span><i class="lg done"></i>ОСВОЕНО</span><span><i class="lg prog"></i>В ПРОЦЕССЕ</span>
           <span><i class="lg cur"></i>ТЕКУЩАЯ</span><span><i class="lg none"></i>НЕ НАЧАТО</span><span><i class="lg dark"></i>ТЁМНЫЙ НЕЙРОН</span>
-        </div>
+        </div></div>
         <nav class="track" id="track" aria-label="Маршрут обучения"></nav>
-        <div class="hint">ПЕРЕТАЩИ — ВРАЩАТЬ · КЛИК — ВЫБРАТЬ · ЕЩЁ КЛИК — ОТКРЫТЬ</div>
+        <div class="hint" id="mapHint">ПЕРЕТАЩИ — ВРАЩАТЬ · КЛИК — ВЫБРАТЬ · ЕЩЁ КЛИК — ОТКРЫТЬ</div>
       </div>
       <div class="minicap">КАРТА ↗</div>
     </div>
@@ -2071,6 +2104,8 @@ html.phone .gflash{color:var(--ink)!important;border-color:var(--cyan)!important
 const DATA = JSON.parse(document.getElementById("data").textContent);
 /* PHONE: computed once in <head> (pointer: coarse && min(screen.width, innerWidth) < 980, or #phone/#desktop). All phone-only behaviour is gated on it. */
 const PHONE = document.documentElement.classList.contains("phone");
+/* map hint «перетащи — вращать»: only the first 2 visits (pm.mapHint = visits that showed it) */
+if(!PHONE) (()=>{ const h=document.getElementById("mapHint"); if(!h) return; let n=0; try{ n=+JSON.parse(localStorage.getItem("pm.mapHint")||"0")||0; }catch(e){} if(n>=2){ h.hidden=true; return; } try{ localStorage.setItem("pm.mapHint", JSON.stringify(n+1)); }catch(e){} })();
 
 /* ---------- course structure ---------- */
 const BRANCHES = [
@@ -3888,17 +3923,6 @@ refreshRun(); refreshBackupNote();
     pool=codePool(); poolFor=current;
     lanes=[]; for(let y=LINE*0.8; y<h; y+=LINE){ const L={y, v:(28+Math.random()*95)*(Math.random()<0.5?1:-1), a:0.06+Math.random()*0.08, segs:[]}; fillLane(L); lanes.push(L); }
   }
-  function ambientLog(){
-    if(current<0) return null; const t=topics[current], id=t.id.toUpperCase(), pr=topicProgress(t.id), errs=store.get("pm.err."+t.id,[]).length, bank=bankFor(t.id), r=srsOf(t.id);
-    const opts=[["SYNC","NODE://"+id+" · "+pr.ok+"/"+pr.total+" STEPS"]];
-    if(t.due) opts.push(["SRS","NODE://"+id+" · ПОВТОР СЕГОДНЯ"]); else if(r) opts.push(["SRS","NEXT REVIEW · "+whenLabel(r.due)]);
-    if(errs) opts.push(["LOG","ОШИБОК В ЖУРНАЛЕ: "+errs]);
-    if(bank.length) opts.push(["BANK","ЗАДАЧ: "+bank.length+" · РЕШЕНО: "+bank.filter(b=>bankStat(b.id).ok>0).length]);
-    if(streak()) opts.push(["RUN","СЕРИЯ "+streak()+" ДН."]);
-    if(t.status==="done") opts.push(["DECRYPTED","NODE://"+id+" · КОД ОТКРЫТ"]);
-    opts.push(["SCAN","LINKS: "+[...topicLinks[current]].map(j=>topics[j].id.toUpperCase()).slice(0,4).join(" · ")]);
-    return opts[(Math.random()*opts.length)|0];
-  }
   let rsT=0; new ResizeObserver(()=>{ clearTimeout(rsT); rsT=setTimeout(()=>{ const r=host.getBoundingClientRect(); if(Math.abs(r.width-w)>2 || Math.abs(r.height-h)>2) init(); },60); }).observe(host);
   host.addEventListener("pointermove",e=>{ overBg = e.target===host; inWin = !overBg && !!(e.target.closest && e.target.closest(".win, .t-head, #topic > *")); const r=host.getBoundingClientRect(); bx=e.clientX-r.left; by=e.clientY-r.top; },{passive:true});
   host.addEventListener("pointerleave",()=>{ overBg=false; inWin=false; });
@@ -3949,9 +3973,9 @@ refreshRun(); refreshBackupNote();
     if(wave && waveR>0){ cx.strokeStyle=`rgba(45,226,230,${Math.max(0,0.35-wave.t*0.22)})`; cx.lineWidth=1; cx.beginPath(); cx.arc(wave.x,wave.y,waveR,0,Math.PI*2); cx.stroke(); }
     // event log lines
     logNext-=dt;
-    if(logNext<=0 && logs.length<3){ const ev = fxQueue.length ? fxQueue.shift() : (()=>{ const a=ambientLog(); return a ? {tag:a[0], text:a[1]} : null; })();
+    if(logNext<=0 && logs.length<3){ const ev = fxQueue.length ? fxQueue.shift() : null;   /* only real events (fxLog), no ambient filler */
       if(ev){ const full="["+ev.tag+"] "+ev.text, tw=full.length*charW; logs.push({tag:"["+ev.tag+"]", full, x:Math.max(12, w-tw-24), y:120+Math.random()*(h-200), t:0, life:7.5}); }
-      logNext = fxQueue.length ? 0.8 : 6+Math.random()*5; }
+      logNext = fxQueue.length ? 0.8 : 0.3; }
     logs=logs.filter(Lg=>{ Lg.t+=dt; if(Lg.t>Lg.life) return false; const n=Math.min(Lg.full.length, Math.floor(Lg.t*38)), fade=Math.min(1,(Lg.life-Lg.t)/1.4);
       const tw=Lg.full.length*charW; cx.fillStyle=`rgba(5,7,8,${0.85*fade})`; cx.fillRect(Lg.x-8, Lg.y-10, tw+22, 20);
       const shown=Lg.full.slice(0,n), tagLen=Math.min(n, Lg.tag.length);
@@ -4020,6 +4044,7 @@ function mergeProgress(local, incoming){
     if(/^pm\.(recall|out)\./.test(key)) return isObj(a)&&isObj(b) ? attempt(a,b) : a;
     if(/^pm\.roots\./.test(key)) return isObj(a)&&isObj(b) ? (num(b.at)>num(a.at) ? b : a) : a;   /* «Корни»: the latest recall */
     if(/^pm\.rootsSkip\./.test(key)) return Math.max(num(a), num(b)) || a;
+    if(key==="pm.mapHint") return Math.max(num(a), num(b)) || a;   /* map hint shown on N visits: the larger count */
     /* errors that come back (pm.back): union of entries; per entry the latest miss wins, same miss -> more progress */
     if(key==="pm.back") return isObj(a)&&isObj(b) ? tsMap(a,b,(x,y)=>{ if(!isObj(x)||!isObj(y)) return isObj(x)?x:y;
       if(num(y.at)!==num(x.at)) return num(y.at)>num(x.at) ? y : x;

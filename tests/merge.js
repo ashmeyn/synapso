@@ -57,6 +57,10 @@ async function unit(s) {
   // «Корни»: the latest recall of a root wins, the latest skip wins
   r = merge(J({ 'pm.roots.opt': { at: T0, v: 'no' }, 'pm.rootsSkip.coll': T0 }), J({ 'pm.roots.opt': { at: T0 + 5, v: 'ok' }, 'pm.rootsSkip.coll': T0 + 9 }));
   await s.check('roots: latest recall and skip win', P(r.map, 'pm.roots.opt').v === 'ok' && P(r.map, 'pm.rootsSkip.coll') === T0 + 9, r.map);
+  r = merge(J({ 'pm.mapHint': 1 }), J({ 'pm.mapHint': 2 }));
+  await s.check('map hint: larger visit count wins', P(r.map, 'pm.mapHint') === 2, r.map);
+  r = merge(J({ 'pm.mapHint': 2 }), J({ 'pm.mapHint': 0 }));
+  await s.check('map hint: never drops back', P(r.map, 'pm.mapHint') === 2, r.map);
   r = merge(J({ 'pm.roots.opt': { at: T0 + 5, v: 'ok' } }), J({ 'pm.roots.opt': { at: T0, v: 'no' } }));
   await s.check('roots: older recall ignored', r.changed === 0, r);
   // errors that come back (pm.back): union; same miss -> the side that closed it more; newer miss reopens
