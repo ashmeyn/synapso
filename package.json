@@ -14,7 +14,8 @@
     "test:roots": "node tests/run.js roots",
     "test:fog": "node tests/run.js fog",
     "test:merge": "node tests/run.js merge",
-    "test:practice": "node tests/run.js practice"
+    "test:practice": "node tests/run.js practice",
+    "test:back": "node tests/run.js back"
   },
   "devDependencies": {
     "playwright": "1.63.0"

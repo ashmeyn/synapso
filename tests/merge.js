@@ -59,6 +59,13 @@ async function unit(s) {
   await s.check('roots: latest recall and skip win', P(r.map, 'pm.roots.opt').v === 'ok' && P(r.map, 'pm.rootsSkip.coll') === T0 + 9, r.map);
   r = merge(J({ 'pm.roots.opt': { at: T0 + 5, v: 'ok' } }), J({ 'pm.roots.opt': { at: T0, v: 'no' } }));
   await s.check('roots: older recall ignored', r.changed === 0, r);
+  // errors that come back (pm.back): union; same miss -> the side that closed it more; newer miss reopens
+  r = merge(J({ 'pm.back': { 'q:opt:1': { at: T0, ok: 1, next: T0 + 3 * DAY }, 'q:opt:2': { at: T0 + 2, ok: 0 } } }),
+    J({ 'pm.back': { 'q:opt:1': { at: T0, ok: 2, done: T0 + 4 * DAY }, 'q:opt:3': { at: T0 + 1, ok: 0 } } }));
+  const bk = P(r.map, 'pm.back');
+  await s.check('back: union of entries, more progress on the same miss', Object.keys(bk).sort().join() === 'q:opt:1,q:opt:2,q:opt:3' && bk['q:opt:1'].done === T0 + 4 * DAY, bk);
+  r = merge(J({ 'pm.back': { 'q:opt:1': { at: T0, ok: 2, done: T0 + 4 * DAY } } }), J({ 'pm.back': { 'q:opt:1': { at: T0 + 5 * DAY, ok: 0 } } }));
+  await s.check('back: a newer miss reopens the entry', !P(r.map, 'pm.back')['q:opt:1'].done, r.map);
   const e1 = { at: T0 + 1, q: 'a', note: '' }, e2 = { at: T0 + 2, q: 'b', note: '' }, e3 = { at: T0 + 3, q: 'c', note: '' };
   r = merge(J({ 'pm.err.opt': [e2, e1] }), J({ 'pm.err.opt': [e3, e1] }));
   await s.check('errors: union, newest first, no duplicates', P(r.map, 'pm.err.opt').map(x => x.q).join() === 'c,b,a', r.map);
