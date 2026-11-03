@@ -4,7 +4,9 @@
 
 Writes OUT_DIR/template.html (with __DATA__) and OUT_DIR/data.json.
 Use it when the engine was changed directly in the claude.ai artifact and the change must come back into the repo:
-diff OUT_DIR/template.html against engine/template.html, and compare data with `scripts/build.py --check OUT_DIR/data.json`.
+diff OUT_DIR/template.html against the assembled template (`scripts/build.py --template-out assembled.html`;
+engine/template.html itself is only markup with __INLINE:<path>__ markers), carry the change into engine/styles.css,
+engine/app.js or the markup, and compare data with `scripts/build.py --check OUT_DIR/data.json`.
 A saved artifact page is wrapped by the host (<!doctype ...><body>); the wrapper is removed here.
 """
 import os, re, sys
