@@ -38,6 +38,8 @@ async function run() {
           const steps = data.content[tp.id].steps;
           await page.evaluate(i => { const b = document.querySelector(`#plist .pl-t[data-i="${i}"]`); b.closest('.pl-br').classList.add('open'); b.scrollIntoView(); }, tp.i);
           await page.tap(`#plist .pl-t[data-i="${tp.i}"]`);
+          // fog row (stages): the tap expands it, «открыть всё равно» opens the topic
+          await page.evaluate(i => { const a = document.querySelector(`#plist .pl-t[data-i="${i}"]`).parentNode.querySelector('.pl-any'); if (a) a.click(); }, tp.i);
           await page.waitForFunction(() => document.getElementById('main').classList.contains('is-topic'), null, { timeout: 5000 });
           await page.tap('#tab-practice');
           await page.evaluate(() => { const r = document.querySelector('#pane-practice .rung[data-step="0"]'); if (r) r.click(); });

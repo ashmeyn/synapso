@@ -54,6 +54,11 @@ async function unit(s) {
   // bank stats: max of counters (both files carry the same history), error log: union without duplicates
   r = merge(J({ 'pm.bank.q1': { ok: 2, no: 1, last: T0 } }), J({ 'pm.bank.q1': { ok: 1, no: 3, last: T0 + 1 } }));
   await s.check('bank: max counters', JSON.stringify(P(r.map, 'pm.bank.q1')) === JSON.stringify({ ok: 2, no: 3, last: T0 + 1 }), r.map);
+  // «Корни»: the latest recall of a root wins, the latest skip wins
+  r = merge(J({ 'pm.roots.opt': { at: T0, v: 'no' }, 'pm.rootsSkip.coll': T0 }), J({ 'pm.roots.opt': { at: T0 + 5, v: 'ok' }, 'pm.rootsSkip.coll': T0 + 9 }));
+  await s.check('roots: latest recall and skip win', P(r.map, 'pm.roots.opt').v === 'ok' && P(r.map, 'pm.rootsSkip.coll') === T0 + 9, r.map);
+  r = merge(J({ 'pm.roots.opt': { at: T0 + 5, v: 'ok' } }), J({ 'pm.roots.opt': { at: T0, v: 'no' } }));
+  await s.check('roots: older recall ignored', r.changed === 0, r);
   const e1 = { at: T0 + 1, q: 'a', note: '' }, e2 = { at: T0 + 2, q: 'b', note: '' }, e3 = { at: T0 + 3, q: 'c', note: '' };
   r = merge(J({ 'pm.err.opt': [e2, e1] }), J({ 'pm.err.opt': [e3, e1] }));
   await s.check('errors: union, newest first, no duplicates', P(r.map, 'pm.err.opt').map(x => x.q).join() === 'c,b,a', r.map);

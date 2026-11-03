@@ -10,9 +10,10 @@ const DATA = dataFromBuild();
 
 async function openTopic(page, id) {
   if (await page.evaluate(() => document.getElementById('main').classList.contains('is-topic'))) { await page.tap('#winClose'); await page.waitForTimeout(250); }
-  await page.evaluate(i => { const b = document.querySelector(`#plist .pl-t[data-i="${i}"]`); b.closest('.pl-br').classList.add('open'); b.click(); }, IDX[id].i);
+  await page.evaluate(i => { const b = document.querySelector(`#plist .pl-t[data-i="${i}"]`); b.closest('.pl-br').classList.add('open'); b.click(); const any = b.parentNode.querySelector('.pl-any'); if (any) any.click(); }, IDX[id].i);
   await page.waitForFunction(() => document.getElementById('main').classList.contains('is-topic'), null, { timeout: 5000 });
   await page.waitForTimeout(250);
+  if (await page.isVisible('#rootsSkip')) { await page.tap('#rootsSkip'); await page.waitForTimeout(150); }   // «Корни» before a lesson with prereqs
 }
 const epState = page => page.evaluate(() => {
   const ep = document.getElementById('ep'), tr = document.getElementById('epTrack');

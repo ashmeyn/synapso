@@ -951,6 +951,7 @@ html.phone .ep-acts > button{align-self:stretch;min-height:52px;justify-content:
 html.phone .ep-acts .deepBtn{flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;padding:8px 16px;text-align:left}
 html.phone .ep-acts .cta small{display:block;margin:2px 0 0;font-size:12px;opacity:.75}
 html.phone .ep-end .sect{margin-top:18px}
+html.phone .ep-end .grows{margin-top:18px}
 html.phone .ep-end .sect h3{margin:0 0 8px;font-size:12px;color:var(--muted)}
 html.phone .ep-nav{display:flex;gap:8px;padding:8px 12px calc(8px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:#0A0D10}
 html.phone .ep-nav #epPrev{flex:0 0 64px;min-height:48px;padding:0;font-size:18px}
@@ -2354,7 +2355,7 @@ function computeStatuses(){
   hotList = topics.map((t,i)=>i).filter(i=>topics[i].b===topics[curIdx].b);
 }
 computeStatuses();
-const TIDX={}; topics.forEach((t,i)=>{ TIDX[t.id]=i; });
+/* TIDX (topic id -> index) is declared once above, next to STAGES; «Корни» uses the same map */
 function prereqsOf(id){ const L=(DATA.content[id]||{}).lesson; return ((L && L.prereqs)||[]).filter(p=>p!==id && TIDX[p]!==undefined); }
 const GROWS={}; topics.forEach((t,i)=>prereqsOf(t.id).forEach(p=>{ (GROWS[p]=GROWS[p]||[]).push(i); }));   /* reverse prereqs */
 function nextIdx(i){ for(let j=i+1;j<topics.length;j++) if(topics[j].status!=="dark") return j; return -1; }
@@ -3088,6 +3089,7 @@ function renderEpisode(t, c, L, nextI){
       ${c.steps && c.steps.length ? `<button class="${outPass||!qn?"cta":"ghostbtn"}" type="button" id="toPractice">ЗАПУСТИТЬ ПРАКТИКУ ▸</button>` : ""}
       ${!deep && nDeep ? `<button class="deepBtn" type="button" id="toDeep"><span>БОНУС · ГЛУБЖЕ ▸</span><small>${nDeep} ${nDeep<5?"РАЗДЕЛА":"РАЗДЕЛОВ"} · ДЛЯ СОБЕСА И MIDDLE</small></button>` : ""}
       ${deep ? `<button class="textbtn" type="button" id="epBase">← К ОСНОВНОМУ ЭПИЗОДУ</button>` : ""}</div>
+    ${deep ? "" : growsHTML(id)}
     <div class="sect"><h3>СВЯЗИ</h3><ul class="links" id="tLinks"></ul></div>
     ${nextI>=0 ? `<div class="sect"><h3>ДАЛЬШЕ В ВЕТКЕ</h3><ul class="links"><li><button type="button" id="tNext"><span>${esc(topics[nextI].title)}</span><em>→</em></button></li></ul></div>` : ""}</section>`);
   const n=cards.length; P.k=Math.max(0, Math.min(P.k, n-1));
@@ -3097,6 +3099,7 @@ function renderEpisode(t, c, L, nextI){
     <div class="ep-track theory lesson" id="epTrack" tabindex="-1">${cards.join("")}</div>
     <div class="ep-nav"><button type="button" class="ghostbtn" id="epPrev" aria-label="Назад">◂</button><button type="button" class="cta" id="epNext">ДАЛЬШЕ ▸</button></div></div>`;
   const track=$("epTrack"), dots=[...$("epDots").children];
+  if($("tGrows")) $("tGrows").addEventListener("click",e=>{ const b=e.target.closest("[data-i]"); if(b) openTopic(+b.dataset.i); });   /* «Корни»: reverse prereqs on the finale card */
   const paint=()=>{
     dots.forEach((d,k)=>{ d.classList.toggle("on", k===P.k); d.classList.toggle("past", k<P.k); if(k===P.k) d.setAttribute("aria-current","step"); else d.removeAttribute("aria-current"); });
     $("epN").textContent = String(P.k+1).padStart(2,"0")+" / "+String(n).padStart(2,"0");
@@ -3886,6 +3889,8 @@ function mergeProgress(local, incoming){
     if(/^pm\.(steps|grade)\./.test(key)) return isObj(a)&&isObj(b) ? marks(a,b) : a;
     if(/^pm\.srs\./.test(key)) return isObj(a)&&isObj(b) ? (num(b.due)>num(a.due) ? b : a) : a;
     if(/^pm\.(recall|out)\./.test(key)) return isObj(a)&&isObj(b) ? attempt(a,b) : a;
+    if(/^pm\.roots\./.test(key)) return isObj(a)&&isObj(b) ? (num(b.at)>num(a.at) ? b : a) : a;   /* «Корни»: the latest recall */
+    if(/^pm\.rootsSkip\./.test(key)) return Math.max(num(a), num(b)) || a;
     if(/^pm\.doneAt\./.test(key)) return minTs(a,b) || a;
     if(/^pm\.bank\./.test(key)) return isObj(a)&&isObj(b) ? {...a, ok:Math.max(num(a.ok),num(b.ok)), no:Math.max(num(a.no),num(b.no)), last:Math.max(num(a.last),num(b.last))} : a;
     if(/^pm\.err\./.test(key)){ if(!Array.isArray(a)||!Array.isArray(b)) return a; const seen=new Set(), r=[];
