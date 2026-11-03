@@ -59,7 +59,7 @@
   "id": "s7",
   "title": "Проверка по памяти",
   "prompt": "Без подсказок и без урока. Верно — отметь тему.",
-  "code": "На экране желаний теперь отдельный фильтр query. По памяти создай WishFilter, FilterAction.queryChanged(String)/reset, чистый filterReduce и FilterStore с private(set) state. Через send запиши «Лампа», затем reset; проверь непустой и пустой query. Эффект этому фильтру не нужен.",
+  "code": "На экране желаний теперь отдельный фильтр query. По памяти создай\nWishFilter, FilterAction.queryChanged(String)/reset, чистый filterReduce\nи FilterStore с private(set) state. Через send запиши «Лампа», затем\nreset; проверь непустой и пустой query. Эффект этому фильтру не нужен.",
   "key": "struct WishFilter: Equatable { var query = \"\" }\nenum FilterAction { case queryChanged(String), reset }\nfunc filterReduce(_ state: WishFilter, _ action: FilterAction) -> WishFilter {\n    var next = state\n    switch action {\n    case let .queryChanged(value): next.query = value\n    case .reset: next.query = \"\"\n    }\n    return next\n}\nfinal class FilterStore {\n    private(set) var state = WishFilter()\n    func send(_ action: FilterAction) { state = filterReduce(state, action) }\n}\nlet store = FilterStore()\nstore.send(.queryChanged(\"Лампа\"))\nassert(store.state.query == \"Лампа\")\nstore.send(.reset)\nassert(store.state.query.isEmpty)\n\nНовый элемент восстановлен тем же маршрутом событий. Setter закрыт, а reset описывает самостоятельный переход к начальному полю."
  }
 ]

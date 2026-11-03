@@ -3,7 +3,7 @@
   "id": "s1",
   "title": "Ступень 1. Предскажи исход",
   "prompt": "Какая ветка catch выполнится для строки Встреча:abc и что выведется?",
-  "code": "enum EventImportError: Error { case wrongFormat, invalidDuration }\nfunc parse(_ text: String) throws -> Int {\n    let parts = text.split(separator: \":\")\n    guard parts.count == 2 else { throw EventImportError.wrongFormat }\n    guard let minutes = Int(parts[1]) else { throw EventImportError.invalidDuration }\n    return minutes\n}\ndo { print(try parse(\"Встреча:abc\")) }\ncatch EventImportError.invalidDuration { print(\"Длительность не число\") }\ncatch { print(\"Другой формат\") }",
+  "code": "enum EventImportError: Error { case wrongFormat, invalidDuration }\nfunc parse(_ text: String) throws -> Int {\n    let parts = text.split(separator: \":\")\n    guard parts.count == 2 else { throw EventImportError.wrongFormat }\n    guard let minutes = Int(parts[1]) else {\n        throw EventImportError.invalidDuration\n    }\n    return minutes\n}\ndo { print(try parse(\"Встреча:abc\")) }\ncatch EventImportError.invalidDuration { print(\"Длительность не число\") }\ncatch { print(\"Другой формат\") }",
   "key": "Будет выведено «Длительность не число». Int(\"abc\") даёт nil, поэтому parse бросает EventImportError.invalidDuration, а соответствующий catch обрабатывает его."
  },
  {
@@ -11,7 +11,7 @@
   "title": "Ступень 2. Собери по каркасу",
   "prompt": "Заполни parse: две части через двоеточие, непустое название, длительность Int; иначе брось нужную ошибку.",
   "code": "enum EventImportError: Error { case wrongFormat, emptyName, invalidDuration }\nfunc parse(_ line: String) throws -> (String, Int) {\n    // Раздели с сохранением пустых частей.\n    // Проверь формат, имя и длительность.\n}",
-  "key": "func parse(_ line: String) throws -> (String, Int) {\n    let parts = line.split(separator: \":\", omittingEmptySubsequences: false)\n    guard parts.count == 2 else { throw EventImportError.wrongFormat }\n    let name = String(parts[0])\n    guard !name.isEmpty else { throw EventImportError.emptyName }\n    guard let minutes = Int(parts[1]) else { throw EventImportError.invalidDuration }\n    return (name, minutes)\n}\n\nКаждый отказ имеет отдельную причину; вызывающий экран сможет дать точную подсказку вместо общего nil."
+  "key": "func parse(_ line: String) throws -> (String, Int) {\n    let parts = line.split(separator: \":\", omittingEmptySubsequences: false)\n    guard parts.count == 2 else { throw EventImportError.wrongFormat }\n    let name = String(parts[0])\n    guard !name.isEmpty else { throw EventImportError.emptyName }\n    guard let minutes = Int(parts[1]) else {\n        throw EventImportError.invalidDuration\n    }\n    return (name, minutes)\n}\n\nКаждый отказ имеет отдельную причину; вызывающий экран сможет дать точную подсказку вместо общего nil."
  },
  {
   "id": "s3",
@@ -46,6 +46,6 @@
   "title": "Проверка по памяти",
   "prompt": "Без подсказок и без урока. Верно — отметь тему.",
   "code": "Опиши EventImportError и parse строки название:длительность. Покажи try с catch для нечисловой длительности. Объясни, почему try! здесь нельзя.",
-  "key": "enum EventImportError: Error { case wrongFormat, invalidDuration }\nfunc parse(_ line: String) throws -> Int {\n    let parts = line.split(separator: \":\")\n    guard parts.count == 2 else { throw EventImportError.wrongFormat }\n    guard let minutes = Int(parts[1]) else { throw EventImportError.invalidDuration }\n    return minutes\n}\ndo { print(try parse(\"Встреча:abc\")) }\ncatch EventImportError.invalidDuration { print(\"Проверь длительность\") }\ncatch { print(\"Проверь формат\") }\n\ntry! завершит программу на обычной ошибке пользовательского ввода. Сверь решение в Swift Playground."
+  "key": "enum EventImportError: Error { case wrongFormat, invalidDuration }\nfunc parse(_ line: String) throws -> Int {\n    let parts = line.split(separator: \":\")\n    guard parts.count == 2 else { throw EventImportError.wrongFormat }\n    guard let minutes = Int(parts[1]) else {\n        throw EventImportError.invalidDuration\n    }\n    return minutes\n}\ndo { print(try parse(\"Встреча:abc\")) }\ncatch EventImportError.invalidDuration { print(\"Проверь длительность\") }\ncatch { print(\"Проверь формат\") }\n\ntry! завершит программу на обычной ошибке пользовательского ввода. Сверь решение в Swift Playground."
  }
 ]

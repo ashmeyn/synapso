@@ -1,0 +1,38 @@
+[
+ {
+  "id": "opt-b1",
+  "topics": [
+   "opt"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Объём стакана в трекере воды",
+  "prompt": "Пользователь вводит объём стакана в миллилитрах. Что напечатает цикл? Какой тип у ml и почему сравнение ml == 0 компилируется?",
+  "code": "let inputs = [\"250\", \"\", \" 300\", \"0\"]\nfor text in inputs {\n    let ml = Int(text)\n    print(ml ?? -1, ml == 0)\n}",
+  "key": "250 false\n-1 false\n-1 false\n0 true\n\nml имеет тип Int?: Int(_:) возвращает nil, если строка не число целиком. Пустая строка и « 300» с пробелом — не числа, поэтому ?? подставляет -1. Сравнение Int? с 0 разрешено: 0 оборачивается в Optional, и nil == 0 даёт false, а не краш. Для экрана: пробелы убирают до преобразования, а -1 нельзя показывать как объём.",
+  "added": "2026-11-02"
+ },
+ {
+  "id": "opt-b2",
+  "topics": [
+   "opt"
+  ],
+  "type": "Найди ошибку",
+  "title": "Срок доставки посылки",
+  "prompt": "Тестировщик прислал скриншоты карточки посылки: текст выглядит странно и с прогнозом, и без него. Найди причину и почини: без прогноза — «Срок уточняется».",
+  "code": "struct Parcel {\n    let track: String\n    let daysLeft: Int?\n}\nfunc deliveryText(for parcel: Parcel) -> String {\n    \"Осталось \\(parcel.daysLeft) дн.\"\n}\nprint(deliveryText(for: Parcel(track: \"RB12\", daysLeft: 3)))\nprint(deliveryText(for: Parcel(track: \"RB13\", daysLeft: nil)))",
+  "key": "func deliveryText(for parcel: Parcel) -> String {\n    guard let days = parcel.daysLeft else { return \"Срок уточняется\" }\n    return \"Осталось \\(days) дн.\"\n}\n\nИнтерполяция Optional компилируется (только с предупреждением) и печатает «Осталось Optional(3) дн.» и «Осталось nil дн.». Значение разворачивают до вставки в текст: guard let отсекает nil, дальше days — обычный Int. Теперь вывод «Осталось 3 дн.» и «Срок уточняется». ?? 0 здесь не подходит: «Осталось 0 дн.» соврал бы о сроке.",
+  "added": "2026-11-02"
+ },
+ {
+  "id": "opt-b3",
+  "topics": [
+   "opt"
+  ],
+  "type": "Устно",
+  "title": "Тёмная тема: три состояния",
+  "prompt": "Объясни как на собеседовании: сколько состояний у prefersDark и что означает каждое; почему закомментированная строка не компилируется и как экрану выбрать тему.",
+  "code": "struct ThemeSettings {\n    var prefersDark: Bool?   // из настроек аккаунта\n}\nlet settings = ThemeSettings(prefersDark: nil)\nlet systemIsDark = true\n// if settings.prefersDark { ... }   // не компилируется",
+  "key": "Три состояния: true — пользователь выбрал тёмную тему, false — выбрал светлую, nil — ещё не выбирал. Optional добавляет к Bool отдельный ответ «значения нет», поэтому nil нельзя молча считать false. if ждёт Bool, а не Bool?: Swift не решает за нас, что делать при nil. Выбор темы — settings.prefersDark ?? systemIsDark: явный выбор пользователя важнее, при nil следуем системе. Если нужна проверка только явного «да», пишут settings.prefersDark == true.",
+  "added": "2026-11-02"
+ }
+]

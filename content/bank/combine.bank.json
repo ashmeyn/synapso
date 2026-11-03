@@ -18,8 +18,8 @@
   "type": "Найди ошибку",
   "title": "Размер шрифта в читалке",
   "prompt": "Экран должен принимать размер не меньше 12, но фильтр пропускает маленький 10 и отбрасывает 16. Исправь условие.",
-  "code": "import Combine\nlet sizes = PassthroughSubject<Int, Never>()\nlet subscription = sizes.filter { $0 < 12 }.map { \"Шрифт: \\($0)\" }.sink { print($0) }\nsizes.send(10)\nsizes.send(16)\nsubscription.cancel()",
-  "key": "import Combine\nlet sizes = PassthroughSubject<Int, Never>()\nlet subscription = sizes.filter { $0 >= 12 }.map { \"Шрифт: \\($0)\" }.sink { print($0) }\nsizes.send(10)\nsizes.send(16)\nsubscription.cancel()\n\nФильтр должен пропускать $0 >= 12. Исправленный вывод «Шрифт: 16»."
+  "code": "import Combine\nlet sizes = PassthroughSubject<Int, Never>()\nlet subscription = sizes.filter { $0 < 12 }\n    .map { \"Шрифт: \\($0)\" }\n    .sink { print($0) }\nsizes.send(10)\nsizes.send(16)\nsubscription.cancel()",
+  "key": "import Combine\nlet sizes = PassthroughSubject<Int, Never>()\nlet subscription = sizes.filter { $0 >= 12 }\n    .map { \"Шрифт: \\($0)\" }\n    .sink { print($0) }\nsizes.send(10)\nsizes.send(16)\nsubscription.cancel()\n\nФильтр должен пропускать $0 >= 12. Исправленный вывод «Шрифт: 16»."
  },
  {
   "id": "combine-b3",
@@ -29,7 +29,7 @@
   "type": "Допиши",
   "title": "Счёт выбранного матча",
   "prompt": "Добавь фильтр matchID 8 перед map. Чужой матч не должен менять строку счёта.",
-  "code": "import Combine\nstruct ScoreEvent { let matchID: Int; let score: Int }\nlet events = PassthroughSubject<ScoreEvent, Never>()\nlet subscription = events.filter { /* нужный matchID */ }.map { $0.score }.sink { print($0) }\nevents.send(ScoreEvent(matchID: 9, score: 4))\nevents.send(ScoreEvent(matchID: 8, score: 2))\nsubscription.cancel()",
-  "key": "import Combine\nstruct ScoreEvent { let matchID: Int; let score: Int }\nlet events = PassthroughSubject<ScoreEvent, Never>()\nlet subscription = events.filter { $0.matchID == 8 }.map { $0.score }.sink { print($0) }\nevents.send(ScoreEvent(matchID: 9, score: 4))\nevents.send(ScoreEvent(matchID: 8, score: 2))\nsubscription.cancel()\n\nСобытие матча 9 отсеяно, счёт матча 8 проходит. Вывод 2."
+  "code": "import Combine\nstruct ScoreEvent { let matchID: Int; let score: Int }\nlet events = PassthroughSubject<ScoreEvent, Never>()\nlet subscription = events.filter { /* нужный matchID */ }\n    .map { $0.score }\n    .sink { print($0) }\nevents.send(ScoreEvent(matchID: 9, score: 4))\nevents.send(ScoreEvent(matchID: 8, score: 2))\nsubscription.cancel()",
+  "key": "import Combine\nstruct ScoreEvent { let matchID: Int; let score: Int }\nlet events = PassthroughSubject<ScoreEvent, Never>()\nlet subscription = events.filter { $0.matchID == 8 }\n    .map { $0.score }\n    .sink { print($0) }\nevents.send(ScoreEvent(matchID: 9, score: 4))\nevents.send(ScoreEvent(matchID: 8, score: 2))\nsubscription.cancel()\n\nСобытие матча 9 отсеяно, счёт матча 8 проходит. Вывод 2."
  }
 ]

@@ -1,0 +1,38 @@
+[
+ {
+  "id": "err-b1",
+  "topics": [
+   "err"
+  ],
+  "type": "Допиши",
+  "title": "Смена пароля",
+  "prompt": "Допиши validate и changePassword. Пароль короче 8 символов — ошибка с минимальной длиной, без цифры — своя ошибка. changePassword сама ошибки не обрабатывает: что показать, решает экран. Проверь короткий пароль.",
+  "code": "enum PasswordError: Error, Equatable {\n    case tooShort(minimum: Int)\n    case noDigit\n}\nvar savedPassword = \"\"\n// func validate(_ password: String) throws\n// func changePassword(to password: String) throws",
+  "key": "func validate(_ password: String) throws {\n    guard password.count >= 8 else {\n        throw PasswordError.tooShort(minimum: 8)\n    }\n    guard password.contains(where: { $0.isNumber }) else {\n        throw PasswordError.noDigit\n    }\n}\nfunc changePassword(to password: String) throws {\n    try validate(password)\n    savedPassword = password\n}\ndo {\n    try changePassword(to: \"кот7\")\n    assertionFailure(\"Ожидалась ошибка\")\n} catch {\n    assert(error as? PasswordError == .tooShort(minimum: 8))\n}\nassert(savedPassword.isEmpty)\n\nСвязанное значение несёт данные ошибки: экран покажет «Минимум 8 символов» без отдельной константы. changePassword помечена throws и вызывает try validate без do/catch — ошибка уходит к вызывающему, а строка сохранения не выполняется. Поэтому после неудачи savedPassword остаётся пустым.",
+  "added": "2026-11-02"
+ },
+ {
+  "id": "err-b2",
+  "topics": [
+   "err"
+  ],
+  "type": "Найди ошибку",
+  "title": "Черновик письма",
+  "prompt": "Когда места нет, почтовый клиент всё равно пишет «Черновик сохранён». Найди причину и почини, не трогая save.",
+  "code": "enum SaveError: Error { case diskFull }\nvar freeBytes = 0\nfunc save(_ draft: String) throws {\n    guard draft.utf8.count <= freeBytes else { throw SaveError.diskFull }\n    freeBytes -= draft.utf8.count\n}\nvar banner = \"\"\nfunc saveTapped(_ draft: String) {\n    do {\n        try save(draft)\n    } catch {\n        banner = \"Не сохранено: нет места\"\n    }\n    banner = \"Черновик сохранён\"\n}\nsaveTapped(\"Привет, Оля!\")\nprint(banner)",
+  "key": "func saveTapped(_ draft: String) {\n    do {\n        try save(draft)\n        banner = \"Черновик сохранён\"\n    } catch {\n        banner = \"Не сохранено: нет места\"\n    }\n}\n\nСтрока успеха стоит после всего do/catch и выполняется при любом исходе: catch ставит текст ошибки, следующая строка его затирает. Успех пишут внутри do сразу после try — туда попадаем, только если save не бросил. Теперь вывод «Не сохранено: нет места».",
+  "added": "2026-11-02"
+ },
+ {
+  "id": "err-b3",
+  "topics": [
+   "err"
+  ],
+  "type": "Устно",
+  "title": "Три способа сказать «не вышло»",
+  "prompt": "Объясни как на собеседовании: чем отличаются эти три способа сообщить о неудаче, как вызывающий код обрабатывает каждый и почему они выбраны именно так.",
+  "code": "// Фотоальбом\n// A: превью может ещё не быть в кэше\nfunc cachedThumbnail(id: Int) -> Data?\n// B: файл профиля может быть повреждён — нужна причина\nfunc decodeProfile(_ data: Data) throws -> Profile\n// C: загрузка закончится позже, исход нужно передать\nfunc upload(_ photo: Data,\n            completion: @escaping (Result<URL, Error>) -> Void)",
+  "key": "A — Optional: отсутствие — обычный исход без причины, вызывающий решает через if let или ??. B — throws: причин несколько, и экрану важна каждая; вызов пишут с try внутри do/catch или в функции, которая тоже throws. C — Result: исход наступит позже, бросить ошибку в момент вызова нельзя, поэтому успех или ошибку кладут в значение и передают в completion, а разбирают через switch. try? превращает throws в Optional и теряет причину, try! роняет приложение при ошибке — для данных извне не годится.",
+  "added": "2026-11-02"
+ }
+]
