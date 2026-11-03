@@ -9,7 +9,13 @@
     "test:smoke": "node tests/run.js smoke",
     "test:phone": "node tests/run.js phone",
     "test:desktop": "node tests/run.js desktop",
-    "test:honest": "node tests/run.js honest"
+    "test:honest": "node tests/run.js honest",
+    "test:episode": "node tests/run.js episode",
+    "test:roots": "node tests/run.js roots",
+    "test:fog": "node tests/run.js fog",
+    "test:merge": "node tests/run.js merge",
+    "test:practice": "node tests/run.js practice",
+    "test:back": "node tests/run.js back"
   },
   "devDependencies": {
     "playwright": "1.63.0"

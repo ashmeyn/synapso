@@ -1,0 +1,38 @@
+[
+ {
+  "id": "setdict-b1",
+  "topics": [
+   "setdict"
+  ],
+  "type": "Допиши",
+  "title": "Фильмы на вечер вдвоём",
+  "prompt": "Двое отметили фильмы, которые хотят посмотреть. Получи три значения для экрана: что хотят оба, что хочет только Аня и сколько всего разных фильмов в двух списках. Обойдись без циклов.",
+  "code": "let anya: Set<Int> = [11, 24, 37, 52]\nlet ilya: Set<Int> = [24, 52, 60]\n// both     — хотят оба\n// onlyAnya — хочет только Аня\n// total    — число разных фильмов",
+  "key": "let both = anya.intersection(ilya)\nlet onlyAnya = anya.subtracting(ilya)\nlet total = anya.union(ilya).count\nassert(both == [24, 52])\nassert(onlyAnya == [11, 37])\nassert(total == 5)\nprint(both.sorted())\n\nintersection — общие элементы, subtracting — свои без общих, union — все без повторов. Каждая операция возвращает новое множество, исходные не меняются. Сравниваем с литералом Set, а не с массивом: порядок обхода множества не обещан. Для списка на экране порядок задаём сами — sorted() или порядок каталога.",
+  "added": "2026-11-02"
+ },
+ {
+  "id": "setdict-b2",
+  "topics": [
+   "setdict"
+  ],
+  "type": "Найди ошибку",
+  "title": "Курсы валют в кошельке",
+  "prompt": "Кошелёк путешественника склеивает курсы из двух загрузок. На этих данных экран падает при открытии. Найди причину и почини: при повторе кода валюты берётся курс из более поздней загрузки.",
+  "code": "let morning = [(\"USD\", 92), (\"EUR\", 99)]\nlet evening = [(\"USD\", 93), (\"TRY\", 3)]\nlet rates = Dictionary(uniqueKeysWithValues: morning + evening)\nprint(rates[\"USD\"] ?? 0)",
+  "key": "let rates = Dictionary(morning + evening,\n                       uniquingKeysWith: { _, later in later })\nprint(rates[\"USD\"] ?? 0)\n\nuniqueKeysWithValues требует, чтобы ключи не повторялись, и на втором «USD» останавливает программу с Fatal error о повторном ключе. Инициализатор с uniquingKeysWith принимает правило для повтора: замыкание получает прежнее и новое значение, оставляем новое. Вывод 93. Если повтор ключа — ошибка данных, а не нормальный случай, лучше сообщить о нём, чем молча выбирать.",
+  "added": "2026-11-02"
+ },
+ {
+  "id": "setdict-b3",
+  "topics": [
+   "setdict"
+  ],
+  "type": "Устно",
+  "title": "Задачи по проектам в трекере",
+  "prompt": "Объясни как на собеседовании: что возвращает Dictionary(grouping:by:) и чем он отличается от счётчика с default:. Что выберешь для экрана A, что для B и сколько памяти тратит каждый вариант?",
+  "code": "struct TaskItem {\n    let title: String\n    let project: String\n}\n// Экран A: бейджи «Дом — 3, Работа — 5»\n// Экран B: список задач с секциями по проекту\n// let byProject = Dictionary(grouping: tasks, by: { $0.project })\n// var counts: [String: Int] = [:]  // counts[project, default: 0] += 1",
+  "key": "Dictionary(grouping:by:) за один проход раскладывает сами элементы по ключу: [String: [TaskItem]], внутри группы сохраняется исходный порядок задач. Счётчик с default: хранит только число: [String: Int]. Экрану A нужны лишь числа — беру счётчик, память O(k) по числу проектов. Экрану B нужны сами задачи — беру grouping, память O(n): каждая задача попадает в свою группу. Если группы уже построены, числа получаются из них: byProject.mapValues { $0.count }. Порядок ключей словаря не обещан, поэтому секции на экране сортируют отдельно, например byProject.keys.sorted().",
+  "added": "2026-11-02"
+ }
+]

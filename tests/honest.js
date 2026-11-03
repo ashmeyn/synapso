@@ -203,7 +203,8 @@ const phoneUi = {
     await page.waitForFunction(() => document.getElementById('main').classList.contains('is-topic'), null, { timeout: 5000 });
     await page.waitForTimeout(300);
   },
-  async revealTheory(page) { for (let k = 0; k < 40 && await page.isVisible('#tMore'); k++) { await page.tap('#tMore'); await page.waitForTimeout(40); } },
+  // phone theory: skip «Корни» if shown, then flip the episode to its finale card (where «Выгрузка» lives)
+  async revealTheory(page) { if (await page.isVisible('#rootsSkip')) await page.click('#rootsSkip'); for (let k = 0; k < 40 && await page.isVisible('#epNext'); k++) { await page.tap('#epNext'); await page.waitForTimeout(40); } },
   async isDone(page, id) {
     // the list is re-rendered on every progress change even while hidden behind the topic
     const r = await page.evaluate(i => { const b = document.querySelector(`#plist .pl-t[data-i="${i}"]`); return !!b && b.classList.contains('st-done'); }, IDX[id].i);
@@ -229,7 +230,7 @@ const desktopUi = {
     await page.waitForTimeout(500);
     if (await page.isVisible('#skipType')) await page.click('#skipType');
   },
-  async revealTheory(page) { for (let k = 0; k < 40 && await page.isVisible('#tMore'); k++) { await page.click('#tMore'); await page.waitForTimeout(40); if (await page.isVisible('#skipType')) await page.click('#skipType'); } },
+  async revealTheory(page) { if (await page.isVisible('#rootsSkip')) await page.click('#rootsSkip'); for (let k = 0; k < 40 && await page.isVisible('#tMore'); k++) { await page.click('#tMore'); await page.waitForTimeout(40); if (await page.isVisible('#skipType')) await page.click('#skipType'); } },
   async isDone(page, id) { return page.evaluate(() => /ОСВОЕНО/.test(document.getElementById('pMeta').textContent)); },
   async check(page, id) { await this.open(page, id); await page.click('#tNav [data-check]'); await page.waitForTimeout(500); },
 };

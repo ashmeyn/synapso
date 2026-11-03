@@ -2,7 +2,7 @@
 
 ## Что это и для кого
 
-Synapso — личная iOS-лаборатория Дана: 3D-карта знаний в виде мозга (75 тем), уроки-миссии, практика по 7 ступеням, банк задач, ран и интервальные повторы. Сайт собирается в один HTML-файл.
+Synapso — личная iOS-лаборатория Дана: 3D-карта знаний в виде мозга (76 тем), уроки-миссии, практика по 7 ступеням, банк задач, ран и интервальные повторы. Сайт собирается в один HTML-файл.
 
 Дан переходит из барменства в iOS-разработку (цель — junior/middle). Приложение построено под его метод recall-first:
 
@@ -15,13 +15,13 @@ Synapso — личная iOS-лаборатория Дана: 3D-карта зн
 
 ## Карта репозитория
 
-1. `content/lessons/<id>.md` — 75 уроков формата v2 (frontmatter + Markdown).
+1. `content/lessons/<id>.md` — 76 уроков формата v2 (frontmatter + Markdown).
 2. `content/steps/<id>.json` — 7 ступеней практики `[{id, title, prompt, code, key}]`.
 3. `content/bank/<id>.bank.json` — банк задач по темам. `zz-live` нарочно последний: сборщик читает файлы по алфавиту.
 4. `content/base/{content,tasks,bank,cases,ref}.json` — данные старой доски. `content.json` задаёт список тем (урок без записи здесь не соберётся), `ref.json` — `cheat` (шпаргалки), `one`, `follow`.
 5. `engine/template.html` — движок (CSS, JS, three.js r128 вшит), на месте данных маркер `__DATA__`.
 6. `scripts/build.py` — сборщик (docstring описывает форму данных). `scripts/split_lab.py` — достаёт template и data из сохранённой страницы артефакта.
-7. `tests/` — Playwright: smoke всех тем, телефон, десктоп.
+7. `tests/` — Playwright: smoke всех тем, телефон, десктоп, практика на телефоне (портрет и альбом), объединение прогресса.
 8. `docs/` — `content-format.md`, `history.md`, `backlog.md`, `chat-prompts.md`.
 9. `dist/` (в .gitignore): `artifact.html` — голая страница для артефакта (doctype и обёртку добавляет хост), `index.html` — полный документ для GitHub Pages.
 
@@ -33,7 +33,7 @@ python3 scripts/build.py --check lab.json # сверить данные с вы�
 npm test                                  # Playwright по dist/index.html
 ```
 
-Ожидаемая строка сборки: 75 topics · 75 lessons · 259 bank tasks (банк может только расти). CI (`.github/workflows/ci.yml`) гоняет сборку и тесты на каждый push и PR. `pages.yml` на push в main собирает и деплоит `dist/index.html` на https://ashmeyn.github.io/synapso/.
+Ожидаемая строка сборки: 76 topics · 76 lessons · 262 bank tasks (банк может только расти). CI (`.github/workflows/ci.yml`) гоняет сборку и тесты на каждый push и PR. `pages.yml` на push в main собирает и деплоит `dist/index.html` на https://ashmeyn.github.io/synapso/.
 
 ## Жёсткие правила
 
@@ -75,7 +75,7 @@ npm test                                  # Playwright по dist/index.html
 
 ### Прогресс
 
-Прогресс живёт в localStorage под ключами `pm.*` (`pm.steps.*`, `pm.srs.*`, `pm.doneAt.*`, `pm.known`, `pm.bank*`, `pm.runs` и др.; с 02.11 честный статус — `pm.recall.*`, `pm.out.*`, `pm.grade.*`, `pm.rans.*`, `pm.outAns.*`, `pm.legacy`, `pm.honest`). Не переименовывай и не меняй формат без миграции в движке и без поддержки старых файлов экспорта. Лаборатория и Pages — разные origin, прогресс переносится экспортом/импортом (импорт заменяет целиком).
+Прогресс живёт в localStorage под ключами `pm.*` (`pm.steps.*`, `pm.srs.*`, `pm.doneAt.*`, `pm.known`, `pm.bank*`, `pm.runs` и др.; с 02.11 честный статус — `pm.recall.*`, `pm.out.*`, `pm.grade.*`, `pm.rans.*`, `pm.outAns.*`, `pm.legacy`, `pm.honest`; «Корни» — `pm.roots.*`, `pm.rootsSkip.*`; с 03.11 возвраты ошибок — `pm.back`). Не переименовывай и не меняй формат без миграции в движке и без поддержки старых файлов экспорта. Лаборатория и Pages — разные origin, прогресс переносится экспортом/импортом или через приватный gist (`pm.gist`, токен только на устройстве). С 02.11 импорт и gist **объединяют** прогресс (`mergeProgress` в шаблоне, блок `merge:begin`…`merge:end`, тест `tests/merge.js`): ступень берёт лучшую оценку, SRS — более позднюю дату повтора. Новый ключ прогресса — добавь правило в `mergeProgress`, иначе при конфликте остаётся локальное значение.
 
 ## Порядок работы
 

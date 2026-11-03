@@ -62,11 +62,13 @@ async function ui(name, ctxOpts, hash, drv) {
 const phoneUi = {
   async ready(page) { await page.waitForSelector('#plist', { state: 'visible', timeout: 15000 }); },
   async open(page, id) {
-    await page.evaluate(i => { const b = document.querySelector(`#plist .pl-t[data-i="${i}"]`); b.closest('.pl-br').classList.add('open'); b.click(); }, IDX[id].i);
+    await page.evaluate(i => { const b = document.querySelector(`#plist .pl-t[data-i="${i}"]`); b.closest('.pl-br').classList.add('open'); b.click();
+      const any = b.parentNode.querySelector('.pl-any'); if (any) any.click(); }, IDX[id].i);   // a topic in fog expands first: «открыть всё равно»
     await page.waitForFunction(() => document.getElementById('main').classList.contains('is-topic'), null, { timeout: 5000 });
     await page.waitForTimeout(300);
   },
-  async revealTheory(page) { for (let k = 0; k < 40 && await page.isVisible('#tMore'); k++) { await page.tap('#tMore'); await page.waitForTimeout(40); } },
+  // phone theory: skip «Корни» if shown, then flip the episode to its finale card (where «Выгрузка» lives)
+  async revealTheory(page) { if (await page.isVisible('#rootsSkip')) await page.click('#rootsSkip'); for (let k = 0; k < 40 && await page.isVisible('#epNext'); k++) { await page.tap('#epNext'); await page.waitForTimeout(40); } },
 };
 const desktopUi = {
   async ready(page) { await page.waitForSelector('#inStart', { state: 'visible', timeout: 20000 }); await page.click('#inStart'); await page.waitForTimeout(900); },
@@ -79,7 +81,7 @@ const desktopUi = {
     await page.waitForTimeout(500);
     if (await page.isVisible('#skipType')) await page.click('#skipType');
   },
-  async revealTheory(page) { for (let k = 0; k < 40 && await page.isVisible('#tMore'); k++) { await page.click('#tMore'); await page.waitForTimeout(40); if (await page.isVisible('#skipType')) await page.click('#skipType'); } },
+  async revealTheory(page) { if (await page.isVisible('#rootsSkip')) await page.click('#rootsSkip'); for (let k = 0; k < 40 && await page.isVisible('#tMore'); k++) { await page.click('#tMore'); await page.waitForTimeout(40); if (await page.isVisible('#skipType')) await page.click('#skipType'); } },
 };
 
 async function run() {

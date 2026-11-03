@@ -1,5 +1,5 @@
 ---
-mission: ОПЕРАЦИЯ 23 · ЗАГРУЗИТЬ НАЗВАНИЕ ГЛАВЫ
+mission: ОПЕРАЦИЯ 24 · ЗАГРУЗИТЬ НАЗВАНИЕ ГЛАВЫ
 scenario: Экран аудиокниги запрашивает главу 12 и показывает её название только после успешного HTTP-ответа и разбора JSON. Ошибка сервера не должна выглядеть как загруженная глава.
 goals:
 - Выполнить GET через URLSession с try await и получить данные вместе с ответом.
@@ -56,8 +56,10 @@ invalidID — наша проверка входа, notHTTP — ответ не 
 
 ```swift
 func decodeChapter(data: Data, response: URLResponse) throws -> Chapter {
-    guard let http = response as? HTTPURLResponse else { throw LoadError.notHTTP }
-    guard http.statusCode == 200 else { throw LoadError.status(http.statusCode) }
+    guard let http = response as? HTTPURLResponse
+    else { throw LoadError.notHTTP }
+    guard http.statusCode == 200
+    else { throw LoadError.status(http.statusCode) }
     return try JSONDecoder().decode(Chapter.self, from: data)
 }
 ```
@@ -104,8 +106,10 @@ enum LoadError: Error {
     case status(Int)
 }
 func decodeChapter(data: Data, response: URLResponse) throws -> Chapter {
-    guard let http = response as? HTTPURLResponse else { throw LoadError.notHTTP }
-    guard http.statusCode == 200 else { throw LoadError.status(http.statusCode) }
+    guard let http = response as? HTTPURLResponse
+    else { throw LoadError.notHTTP }
+    guard http.statusCode == 200
+    else { throw LoadError.status(http.statusCode) }
     return try JSONDecoder().decode(Chapter.self, from: data)
 }
 func loadChapter(

@@ -1,5 +1,5 @@
 ---
-mission: ОПЕРАЦИЯ 25 · СОХРАНИТЬ ЖУРНАЛ МЕЖДУ ЗАПУСКАМИ
+mission: ОПЕРАЦИЯ 26 · СОХРАНИТЬ ЖУРНАЛ МЕЖДУ ЗАПУСКАМИ
 scenario: Журнал хранит настройку компактного списка, черновик записи и токен входа. Настройка, текст и секрет должны попасть в подходящие хранилища, а ошибка записи — остаться видимой.
 goals:
 - Сохранить маленькую настройку в UserDefaults и отличить отсутствие ключа от false.
@@ -118,7 +118,8 @@ func readSessionToken() throws -> String? {
     let status = SecItemCopyMatching(query as CFDictionary, &result)
     if status == errSecItemNotFound { return nil }
     guard status == errSecSuccess else { throw StorageError.keychain(status) }
-    guard let data = result as? Data, let token = String(data: data, encoding: .utf8)
+    guard let data = result as? Data,
+          let token = String(data: data, encoding: .utf8)
     else { throw StorageError.invalidToken }
     return token
 }
@@ -139,11 +140,13 @@ func saveSessionToken(_ token: String) -> OSStatus {
         kSecAttrAccount as String: "session"]
     var item = query
     item[kSecValueData as String] = Data(token.utf8)
-    item[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+    item[kSecAttrAccessible as String] =
+        kSecAttrAccessibleWhenUnlockedThisDeviceOnly
     let status = SecItemAdd(item as CFDictionary, nil)
     if status == errSecDuplicateItem {
         let changes: [String: Any] = [kSecValueData as String: Data(token.utf8),
-            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly]
+            kSecAttrAccessible as String:
+                kSecAttrAccessibleWhenUnlockedThisDeviceOnly]
         return SecItemUpdate(query as CFDictionary, changes as CFDictionary)
     }
     return status

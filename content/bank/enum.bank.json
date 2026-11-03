@@ -1,0 +1,38 @@
+[
+ {
+  "id": "enum-b1",
+  "topics": [
+   "enum"
+  ],
+  "type": "Допиши",
+  "title": "Пауза пробежки",
+  "prompt": "Кнопка «Пауза» в приложении для бега. Допиши метод pause(now:): идущая пробежка становится паузой с прошедшими секундами, в остальных состояниях ничего не меняется. Время — секунды от начала дня.",
+  "code": "enum RunState: Equatable {\n    case idle\n    case running(startedAt: Int)\n    case paused(elapsed: Int)\n    // pause(now:) меняет текущее состояние\n}",
+  "key": "enum RunState: Equatable {\n    case idle\n    case running(startedAt: Int)\n    case paused(elapsed: Int)\n    mutating func pause(now: Int) {\n        switch self {\n        case .running(let startedAt):\n            self = .paused(elapsed: now - startedAt)\n        case .idle, .paused:\n            break\n        }\n    }\n}\nvar state = RunState.running(startedAt: 100)\nstate.pause(now: 160)\nassert(state == .paused(elapsed: 60))\nstate.pause(now: 200)\nassert(state == .paused(elapsed: 60))\nvar idle = RunState.idle\nidle.pause(now: 50)\nassert(idle == .idle)\n\nМетод меняет само значение enum, поэтому он mutating и присваивает self новый случай. Повторная пауза не трогает прошедшие 60 секунд. .idle, .paused перечислены явно вместо default: новый случай (например, .finished) заставит решить, что делает пауза. Equatable синтезируется сам, потому что связанные Int сравнимы.",
+  "added": "2026-11-02"
+ },
+ {
+  "id": "enum-b2",
+  "topics": [
+   "enum"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Срок годности в холодильнике",
+  "prompt": "Приложение-холодильник подписывает продукты. Что напечатают четыре строки? Что изменится, если поменять местами первые два case?",
+  "code": "enum Freshness {\n    case fresh(daysLeft: Int)\n    case expired(daysAgo: Int)\n}\nfunc badge(_ item: Freshness) -> String {\n    switch item {\n    case .fresh(let days) where days <= 1: return \"Съешь сегодня\"\n    case .fresh(let days): return \"Ещё \\(days) дн.\"\n    case .expired(0): return \"Истёк сегодня\"\n    case .expired: return \"Выбросить\"\n    }\n}\nprint(badge(.fresh(daysLeft: 1)))\nprint(badge(.fresh(daysLeft: 5)))\nprint(badge(.expired(daysAgo: 0)))\nprint(badge(.expired(daysAgo: 3)))",
+  "key": "Съешь сегодня\nЕщё 5 дн.\nИстёк сегодня\nВыбросить\n\nswitch проверяет шаблоны сверху вниз и берёт первый подходящий. where добавляет условие к связанному значению, .expired(0) сравнивает его с конкретным числом. Если поставить .fresh(let days) первым, он поймает все свежие продукты, и ветка с where не выполнится никогда: для одного дня экран покажет «Ещё 1 дн.». Частные шаблоны ставят выше общих.",
+  "added": "2026-11-02"
+ },
+ {
+  "id": "enum-b3",
+  "topics": [
+   "enum"
+  ],
+  "type": "Устно",
+  "title": "Возврат товара: raw value и данные",
+  "prompt": "Объясни как на собеседовании: чем raw value отличается от associated value, зачем здесь два enum и в каком месте переводить один в другой.",
+  "code": "// Сервер прислал: {\"state\": \"approved\", \"refund\": 1290}\nenum ReturnState: String {\n    case review, approved, rejected\n}\nenum ReturnStatus {\n    case review\n    case approved(refund: Int)\n    case rejected(reason: String)\n}",
+  "key": "Raw value — постоянная метка случая, одна на все значения: ReturnState(rawValue: \"approved\") строит случай из строки сервера и возвращает Optional, потому что строка может быть незнакомой. Associated value — данные конкретного значения: у каждого одобренного возврата своя сумма, у отказа своя причина. Один enum не может одновременно иметь raw values и связанные значения, поэтому ReturnState описывает формат сервера, а ReturnStatus — модель экрана. Переводить на границе данных, при разборе ответа: незнакомое состояние или approved без суммы — ошибка разбора, а экран дальше работает только с ReturnStatus через switch.",
+  "added": "2026-11-02"
+ }
+]

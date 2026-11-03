@@ -138,6 +138,25 @@ button:disabled{cursor:not-allowed}
 .tlab.hot .ts{display:block}
 .tlab.done .tn{color:var(--ink)}
 .tlab.dark .tn{color:#69737A}
+.tlab .need{display:none;margin-top:4px;font-family:var(--f-mono);font-size:var(--fs-ui);letter-spacing:.03em;color:#7C878D}
+.tlab .need b{color:var(--cyan);font-weight:400}
+.tlab.hot .need:not(:empty){display:block}
+.tlab.fog .tn{color:#3E474D;filter:blur(1.1px)}
+.tlab.fog .tk{color:#2C3337}
+.tlab.fog.hot .tn{filter:none;color:#7C878D}
+.stages{position:absolute;left:50%;top:84px;transform:translateX(-50%);display:flex;align-items:flex-start;gap:12px;pointer-events:none;white-space:nowrap;font-family:var(--f-display);font-size:var(--fs-ui);letter-spacing:.08em;color:#5B656B}
+.stages .stg{display:flex;flex-direction:column;gap:4px;min-width:130px}
+.stages .stg i{display:block;height:2px;background:#1C2226}
+.stages .stg i b{display:block;height:2px;background:currentColor}
+.stages .stg small{font-family:var(--f-mono);font-size:var(--fs-label);letter-spacing:.04em;color:#5B656B}
+.stages .stg.on{color:var(--cyan)}
+.stages .stg.done{color:var(--ink)}
+.stages .ar{color:#3A4248}
+.track .fog{opacity:.4}
+.card .fogNeed{color:var(--muted)}
+.card .fogNeed b{color:var(--cyan);font-weight:400}
+.card .anyway{min-height:30px;margin-top:-8px;font-family:var(--f-read);font-size:var(--fs-ui);letter-spacing:0;text-transform:none;color:var(--dim);text-align:left}
+@media (max-width:1180px){.stages{display:none}}
 .tlab .tk{font-style:normal;color:#4A545B;font-size:var(--fs-label);margin-right:8px;letter-spacing:.04em}
 .tlab .nxt{display:none;font-style:normal;margin-left:10px;padding:1px 6px;border:1px solid var(--cyan);color:var(--cyan);font-size:var(--fs-label);letter-spacing:.04em;vertical-align:2px}
 .tlab.nx .nxt{display:inline-block}
@@ -218,6 +237,9 @@ button:disabled{cursor:not-allowed}
 .sh-r{display:flex;gap:12px;align-items:center;pointer-events:auto}
 .runBtn{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 16px;background:var(--cyan);color:var(--on-cyan);font-family:var(--f-mono);font-size:var(--fs-ui);letter-spacing:.06em;clip-path:var(--step-corner);box-shadow:0 0 22px rgba(45,226,230,.25)}
 .runBtn small{font-size:var(--fs-label);opacity:.75}
+.mixBtn{display:flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid var(--cyan);background:rgba(6,9,11,.8);color:var(--cyan);font-family:var(--f-mono);font-size:var(--fs-ui);letter-spacing:.06em;white-space:nowrap}
+.mixBtn:hover{background:rgba(45,226,230,.1)}
+.run-ans{display:flex;flex-direction:column;gap:14px}
 .run{position:absolute;inset:0;z-index:20;display:grid;place-items:center;background:rgba(3,5,6,.72);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
 .run[hidden]{display:none}
 .run-w{width:min(760px,calc(100% - 64px));max-height:calc(100% - 64px);display:flex;flex-direction:column;background:#06090B;border:1px solid var(--line-2);box-shadow:0 30px 90px rgba(0,0,0,.8);animation:cardIn .4s var(--ease) both}
@@ -246,6 +268,8 @@ button:disabled{cursor:not-allowed}
 .errs li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px 12px;align-items:start;padding:9px 0;border-top:1px solid var(--line-2)}
 .errs .eq{display:block;font-family:var(--f-read);font-size:var(--fs-read);line-height:1.4;color:var(--ink-2)}
 .errs .en{display:block;margin-top:4px;font-family:var(--f-read);font-size:var(--fs-ui);line-height:1.45;color:var(--muted)}
+.errs .eb{display:block;margin-top:6px;font-family:var(--f-mono);font-size:var(--fs-label);letter-spacing:.04em;color:var(--cyan)}
+.errs .eb.off{color:var(--dim)}
 .errs .ed{font-family:var(--f-mono);font-size:var(--fs-label);color:var(--dim);padding-top:3px}
 .errs .ex{width:26px;height:26px;color:var(--dim);border:1px solid var(--line-2);font-size:var(--fs-label)}
 .errs .ex:hover{color:var(--cyan);border-color:var(--cyan)}
@@ -419,6 +443,8 @@ html, html *{cursor:none!important}
 .fontpop .fp-n{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:var(--fs-label);letter-spacing:.04em;color:var(--muted)}
 .fontbtn{font-family:var(--f-mono);font-size:var(--fs-ui);letter-spacing:.06em;color:var(--muted);min-height:36px;text-align:left}
 .fontbtn:hover{color:var(--cyan)}
+.gistf{display:flex;flex-direction:column;gap:6px;margin:2px 0 6px}
+.gistf input{min-height:36px;padding:0 8px;border:1px solid var(--line-2);background:#07090B;color:var(--ink);font-family:var(--f-code);font-size:16px;width:100%;box-sizing:border-box}
 .caret{display:inline-block;width:.55em;height:1.05em;margin-left:1px;vertical-align:-.15em;background:var(--cyan);box-shadow:0 0 8px var(--cyan);animation:blink .9s steps(2,start) infinite}
 @keyframes blink{to{visibility:hidden}}
 .pane[hidden]{display:none}
@@ -648,6 +674,17 @@ html, html *{cursor:none!important}
 html.phone .out{gap:14px}
 html.phone .out .row-actions{gap:10px 20px}
 html.phone .out .assess{gap:12px 16px}
+/* «Корни»: prereqs recalled before the lesson; «Из этой темы растут» under it */
+.roots-t{font-family:var(--f-mono);font-size:var(--fs-ui);letter-spacing:.06em;color:var(--cyan);text-transform:uppercase}
+.roots-sum{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-family:var(--f-read);font-size:var(--fs-read);line-height:1.5;color:var(--ink-2)}
+.roots-sum li{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.roots-sum b{font-family:var(--f-mono);font-weight:400;font-size:var(--fs-ui);letter-spacing:.04em;color:var(--muted);min-width:9ch}
+.roots-sum li.no b{color:var(--cyan)}
+.grows{flex:1 1 100%;margin:0;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline;font-family:var(--f-read);font-size:var(--fs-label);line-height:1.6;color:var(--muted)}
+.grows button{padding:0;font:inherit;color:var(--cyan);text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(45,226,230,.4)}
+.grows button:hover{text-decoration-color:var(--cyan)}
+.grows i{font-style:normal;color:var(--dim)}
+html.phone .grows button{min-height:32px}
 
 /* tasks */
 .task{border-top:1px solid var(--line);padding:22px 0}
@@ -756,8 +793,8 @@ html.phone .out .assess{gap:12px 16px}
   #pane-practice.kbd.codebig .prompt{max-height:7.25em}
   #pane-practice.kbd > .ladder,#pane-practice.kbd .bank-h,#pane-practice.kbd .step-title,#pane-practice.kbd #keyBox{display:none}
   #pane-practice.kbd .prompt{grid-row:1;position:relative;max-height:2.9em;overflow:hidden;font-size:13px;line-height:1.45;color:var(--ink-2)}
-  #pane-practice.kbd .prompt.more{padding-right:22px}
-  #pane-practice.kbd .prompt.more::after{content:"▾";position:absolute;right:2px;bottom:0;color:var(--cyan);font-size:14px;line-height:1.45}
+  #pane-practice.kbd .prompt.pmore{padding-right:22px}
+  #pane-practice.kbd .prompt.pmore::after{content:"▾";position:absolute;right:2px;bottom:0;color:var(--cyan);font-size:14px;line-height:1.45}
   #pane-practice.kbd .prompt.open{max-height:11.6em;overflow-y:auto}
   #pane-practice.kbd .prompt.open::after{content:"▴"}
   #pane-practice.kbd .term-b{background:linear-gradient(#0000 calc(100% - 14px),rgba(45,226,230,.10)) }
@@ -821,7 +858,10 @@ html.phone .pl-cont:active{background:rgba(45,226,230,.12)}
 html.phone .pl-cont .k{font-family:var(--f-mono);font-size:13px;letter-spacing:.06em;color:var(--cyan)}
 html.phone .pl-cont .t{font-family:var(--f-title);font-size:24px;line-height:1.15;color:var(--ink);overflow-wrap:break-word;max-width:100%}
 html.phone .pl-cont .s{font-family:var(--f-mono);font-size:12px;letter-spacing:.04em;color:var(--muted)}
-html.phone .pl-acts{display:flex;gap:8px}
+html.phone .pl-acts{display:flex;flex-wrap:wrap;gap:8px}
+html.phone .pl-top .pl-acts .runBtn{flex-basis:100%}
+html.phone .pl-acts .mixBtn{flex:1 1 auto;justify-content:center;min-height:46px;font-size:14px}
+html.phone .pl-top .streak{font-size:12px}
 html.phone .pl-acts .runBtn{flex:1 1 auto;min-width:0;min-height:46px;justify-content:center;font-size:14px;white-space:nowrap;overflow:hidden}
 html.phone .pl-acts .srchBtn{display:flex;flex:none;align-items:center;justify-content:center;min-height:46px;padding:0 16px;border:1px solid var(--line-2);background:#07090B;font-family:var(--f-mono);font-size:14px;letter-spacing:.04em;color:var(--ink-2)}
 html.phone .pl-prog{display:flex;align-items:center;gap:12px;font-family:var(--f-mono);font-size:12px;letter-spacing:.04em;color:var(--muted)}
@@ -852,6 +892,20 @@ html.phone .pl-t.st-prog .pl-st{color:var(--ink)}
 html.phone .pl-t.st-cur,html.phone .pl-t.st-due{box-shadow:inset 2px 0 var(--cyan);background:rgba(45,226,230,.04)}
 html.phone .pl-t.st-cur .pl-st,html.phone .pl-t.st-due .pl-st,html.phone .pl-t.st-cur .pl-n,html.phone .pl-t.st-due .pl-n{color:var(--cyan)}
 html.phone .pl-t.st-dark{opacity:.45}
+html.phone .pl-t.st-fog .pl-tt{color:#4A545B}
+html.phone .pl-t.st-fog .pl-n{color:#2C3337}
+html.phone .pl-need{display:block;margin-top:4px;font-family:var(--f-mono);font-size:12px;line-height:1.35;color:#69737A}
+html.phone .pl-need b{color:var(--cyan);font-weight:400}
+html.phone .pl-ask{display:none;padding:0 4px 12px 42px}
+html.phone li.ask .pl-ask{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+html.phone .pl-go{min-height:36px;font-family:var(--f-mono);font-size:var(--fs-read);color:var(--cyan);text-align:left}
+html.phone .pl-any{min-height:36px;margin-top:4px;font-family:var(--f-read);font-size:12px;color:var(--dim);text-align:left}
+html.phone .pl-stg{padding:22px 4px 8px;font-family:var(--f-display);font-size:var(--fs-read);letter-spacing:.08em;color:#5B656B;border-bottom:1px solid var(--line)}
+html.phone .pl-stg.on{color:var(--cyan)}
+html.phone .pl-stg.done{color:var(--ink)}
+html.phone .pl-stg small{display:block;margin-top:3px;font-family:var(--f-mono);font-size:11px;letter-spacing:.04em;color:#5B656B}
+html.phone .pl-stg i{display:block;height:2px;margin-top:8px;background:#1C2226}
+html.phone .pl-stg i b{display:block;height:2px;background:currentColor}
 /* topic view */
 html.phone .t-head{padding-right:0}
 html.phone .t-row{flex-wrap:wrap;gap:2px 10px}
@@ -879,6 +933,68 @@ html.phone .t-nav{gap:6px;align-items:stretch;min-height:0;padding-top:6px}
 html.phone .tn-b{flex:1 1 0;min-width:0;max-width:none;min-height:44px;margin:0;padding:6px 10px;border:1px solid var(--line-2);font-size:13px;line-height:1.3;text-align:left;white-space:normal;overflow:visible;text-overflow:clip}
 html.phone .tn-b.nx{flex:1.5 1 0;margin-left:0}
 html.phone .tn-b:not(.know):not(.nx){flex:0 0 auto}
+/* «Эпизод» (phone lesson): header + dots, a horizontal scroll-snap track of full-height cards, nav buttons.
+   The window body does not scroll while the episode is shown: each card scrolls vertically on its own. */
+html.phone #winBody:has(> #pane-theory:not([hidden]) > .ep){overflow:hidden;display:flex;flex-direction:column;padding:0}
+html.phone #winBody:has(> #pane-theory:not([hidden]) > .ep) > #pane-theory{flex:1;min-height:0;display:flex;flex-direction:column;padding:0}
+html.phone .ep{flex:1;min-height:0;display:flex;flex-direction:column}
+html.phone .ep-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:10px 16px 0;font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;color:var(--muted)}
+html.phone .ep.bonus .ep-k{color:var(--cyan)}
+html.phone .ep-n{color:var(--ink-2)}
+html.phone .ep-dots{display:flex;gap:2px;padding:0 10px;border-bottom:1px solid var(--line)}
+html.phone .ep-dots button{flex:1 1 0;min-width:0;height:28px;display:flex;align-items:center;justify-content:center;padding:0 2px}
+html.phone .ep-dots i{display:block;width:100%;max-width:28px;height:3px;background:#1F262B}
+html.phone .ep-dots button.past i{background:#3A6C6F}
+html.phone .ep-dots button.on i{background:var(--cyan)}
+html.phone .ep-track{flex:1;min-height:0;display:flex;flex-direction:row;gap:0;max-width:none;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch;outline:none}
+html.phone .ep-track::-webkit-scrollbar{display:none}
+html.phone .ep-track > .ep-card{flex:0 0 100%;width:100%;min-width:0;max-height:none;margin:0;padding:18px 16px 28px;border:0;opacity:1;overflow-x:hidden;overflow-y:auto;overscroll-behavior-y:contain;scroll-snap-align:start;scroll-snap-stop:always;cursor:auto}
+html.phone .ep-track > .ep-card.mission{border:0;padding:22px 18px 28px}
+html.phone .ep-card .lcode{max-width:none;overscroll-behavior-x:contain}
+html.phone .ep-card ul:not(.links){padding-left:20px}
+html.phone .ep-end h3{font-family:var(--f-mono);font-size:13px;letter-spacing:.06em;color:var(--cyan)}
+html.phone .ep-track .ep-tip{margin:0 0 14px;padding:0;border:0;color:var(--ink-2)}
+html.phone .ep-acts{display:flex;flex-direction:column;gap:12px;margin:6px 0 26px}
+html.phone .ep-acts > button{align-self:stretch;min-height:52px;justify-content:center;text-align:center}
+html.phone .ep-acts .deepBtn{flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;padding:8px 16px;text-align:left}
+html.phone .ep-acts .cta small{display:block;margin:2px 0 0;font-size:12px;opacity:.75}
+html.phone .ep-end .sect{margin-top:18px}
+html.phone .ep-end .grows{margin-top:18px}
+html.phone .ep-end .sect h3{margin:0 0 8px;font-size:12px;color:var(--muted)}
+html.phone .ep-nav{display:flex;gap:8px;padding:8px 12px calc(8px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:#0A0D10}
+html.phone .ep-nav #epPrev{flex:0 0 64px;min-height:48px;padding:0;font-size:18px}
+html.phone .ep-nav #epPrev:disabled{opacity:.35}
+html.phone .ep-nav #epNext{flex:1;align-self:stretch;min-height:48px}
+html.phone .ep-nav #epNext[hidden]{display:none}
+/* phone landscape (02.11): the screen is ~390px tall. At rest the whole topic scrolls (head, tabs and window together)
+   instead of a 170px window; while typing, two columns: task + answer on the left, keyboard on the right */
+@media (orientation:landscape) and (max-height:520px){
+  html.phone body:not(.kb-on) #topic{overflow-y:auto;-webkit-overflow-scrolling:touch}
+  html.phone body:not(.kb-on) .win{flex:none;min-height:auto}
+  html.phone body:not(.kb-on) .win-b,html.phone body:not(.kb-on) .win-b.fit{flex:none;overflow:visible}
+  html.phone .t-row .t-sub{display:none}
+  html.phone #pane-practice .answer textarea{min-height:140px}
+  html.phone body.kb-on .win-b{padding:4px 8px 0}
+  html.phone body.kb-on #pane-practice.kbd{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) minmax(0,1fr) auto;column-gap:10px;row-gap:4px}
+  html.phone body.kb-on #pane-practice.kbd .prompt{grid-column:1;grid-row:1}
+  html.phone body.kb-on #pane-practice.kbd .p-code{grid-column:1;grid-row:2/4}
+  html.phone body.kb-on #pane-practice.kbd .answer{grid-column:2;grid-row:1/4}
+  html.phone body.kb-on #pane-practice.kbd .symbar{grid-column:1/-1;grid-row:4}
+  html.phone body.kb-on #pane-practice.kbd.codebig{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+  html.phone body.kb-on #pane-practice.kbd.skbm{position:relative;grid-template-rows:minmax(0,.8fr) minmax(0,1.4fr);row-gap:6px}
+  html.phone body.kb-on #pane-practice.kbd.skbm .prompt{grid-column:2;grid-row:1;align-self:start;max-height:5.8em}
+  html.phone body.kb-on #pane-practice.kbd.skbm .prompt.open{max-height:5.8em;overflow-y:auto}
+  html.phone body.kb-on #pane-practice.kbd.skbm .p-code{grid-column:1;grid-row:1}
+  html.phone body.kb-on #pane-practice.kbd.skbm .answer{grid-column:1;grid-row:2}
+  html.phone body.kb-on #pane-practice.kbd.skbm .skb{grid-column:2;grid-row:1/-1;position:absolute;left:0;right:0;bottom:0;justify-content:flex-end;gap:4px;padding-bottom:max(4px,env(safe-area-inset-bottom))}
+  html.phone #pane-practice.kbd.skbm .skb-keys{gap:4px}
+  html.phone #pane-practice.kbd.skbm .skb-row{gap:3px}
+  html.phone #pane-practice.kbd.skbm .skb-row button{min-height:40px;font-size:16px}
+  html.phone #pane-practice.kbd.skbm .skb-row.sym button{min-height:34px;font-size:14px}
+  html.phone #pane-practice.kbd.skbm .skb-sug,html.phone #pane-practice.kbd.skbm .skb-sug > button,html.phone #pane-practice.kbd.skbm .skb-sug .sug button{min-height:34px}
+}
+/* phone: «Ключ» pressed too early while typing — the gate line is hidden, so the key button itself says what is missing */
+html.phone .gflash{color:var(--ink)!important;border-color:var(--cyan)!important}
 </style>
 
 <div class="xcur" id="cur" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b><span id="curTxt"></span></div>
@@ -900,6 +1016,9 @@ html.phone .tn-b:not(.know):not(.nx){flex:0 0 auto}
       <button type="button" class="fontbtn" id="exportBtn">ЭКСПОРТ ПРОГРЕССА ↓</button>
       <button type="button" class="fontbtn" id="importBtn">ИМПОРТ ПРОГРЕССА ↑</button>
       <input type="file" id="importFile" accept="application/json,.json" hidden>
+      <button type="button" class="fontbtn" id="gistBtn">СИНХРОНИЗАЦИЯ ЧЕРЕЗ GIST ⇅</button>
+      <div class="gistf" id="gistForm" hidden><div class="note">Токен GitHub с одним правом Gists (read/write) · хранится только на этом устройстве, в файл экспорта не попадает</div><input type="password" id="gistToken" placeholder="github_pat_… или ghp_…" autocomplete="off" spellcheck="false"><button type="button" class="fontbtn" id="gistSave">ПОДКЛЮЧИТЬ</button></div>
+      <button type="button" class="fontbtn" id="gistOff" hidden>ОТКЛЮЧИТЬ GIST</button>
       <button type="button" class="fontbtn" id="sfxBtn">ЗВУК: ВЫКЛ</button>
       <div class="vols" id="vols"><label>ФОН <input type="range" id="volAmb" min="0" max="1" step="0.01"></label><label>ЭФФЕКТЫ <input type="range" id="volFx" min="0" max="1" step="0.01"></label></div>
       <div class="note" id="importNote"></div>
@@ -911,7 +1030,8 @@ html.phone .tn-b:not(.know):not(.nx){flex:0 0 auto}
     <div id="brain" class="noanim" role="region" aria-label="Карта знаний: 60 тем в 8 ветках">
       <canvas id="c"></canvas>
       <div class="overlay" id="overlay">
-        <div class="stagehead"><span>КАРТА ЗНАНИЙ · <b id="stCount">0</b> / <span class="tTot">60</span> · <span class="kbd">CTRL K</span> ПОИСК</span><span class="sh-r"><button type="button" class="srchBtn" id="srchBtn">ПОИСК</button><button type="button" class="runBtn" id="runBtn"></button><button type="button" class="contBtn" id="contBtn"></button></span></div>
+        <div class="stagehead"><span>КАРТА ЗНАНИЙ · <b id="stCount">0</b> / <span class="tTot">60</span> · <span class="kbd">CTRL K</span> ПОИСК</span><span class="sh-r"><button type="button" class="srchBtn" id="srchBtn">ПОИСК</button><button type="button" class="runBtn" id="runBtn"></button><button type="button" class="mixBtn" id="mixBtn" aria-label="Смешанная тренировка">⇄ ТРЕНИРОВКА</button><button type="button" class="contBtn" id="contBtn"></button></span></div>
+        <div class="stages" id="stages" aria-label="Этапы"></div>
         <svg class="route" id="route" aria-hidden="true"><polyline id="rDone" points=""/><polyline id="rNext" points=""/></svg>
         <div class="marker" id="marker"></div>
         <div class="tip" id="tip"></div>
@@ -926,6 +1046,7 @@ html.phone .tn-b:not(.know):not(.nx){flex:0 0 auto}
             <div class="card-route"><button type="button" class="rnav" id="cPrev" aria-label="Предыдущая тема">◂</button><span id="cStep"></span><button type="button" class="rnav" id="cNext" aria-label="Следующая тема">▸</button></div>
             <button class="cta" id="cta" type="button">ОТКРЫТЬ ТЕМУ ▸</button>
             <button type="button" class="textbtn know" id="cKnow">Уже знаю эту тему — сдать проверку</button>
+            <button type="button" class="textbtn anyway" id="cAnyway" hidden>открыть всё равно</button>
           </div>
           <i class="cb tl"></i><i class="cb br"></i>
         </section>
@@ -942,7 +1063,7 @@ html.phone .tn-b:not(.know):not(.nx){flex:0 0 auto}
 
     <div class="run" id="run" hidden role="dialog" aria-modal="true" aria-label="Ран 5 минут">
       <div class="run-w">
-        <div class="run-h"><span><i></i>RUN.EXE · 5 МИН</span><span id="runStep"></span><button type="button" class="card-x" id="runClose" aria-label="Закрыть">×</button></div>
+        <div class="run-h"><span id="runTitle"><i></i>RUN.EXE · 5 МИН</span><span id="runStep"></span><button type="button" class="card-x" id="runClose" aria-label="Закрыть">×</button></div>
         <div class="run-bar"><i id="runBar"></i></div>
         <div class="run-b" id="runBody"></div>
       </div>
@@ -1951,7 +2072,8 @@ const BRANCHES = [
   {code:"02", name:"SWIFTUI", topics:[
     ["state","@State и @Binding","J",90],["obs","@StateObject, @ObservedObject, @Observable","J",90],
     ["flowui","Поток данных и модификаторы","J",90],["mvvm","MVVM: зачем и где границы","J",90],
-    ["nav","Навигация в SwiftUI","M",60],["proto","Протокол как контракт","J",60],
+    ["nav","Навигация в SwiftUI","M",60],["uilife","Жизненный цикл SwiftUI: идентичность, .task","J",90],
+    ["proto","Протокол как контракт","J",60],
     ["di","Dependency Injection","J",90],["clos","Замыкания и capture list","J",90],
     ["access","Модификаторы доступа, final","J",45],["combine","Combine: Publisher и подписки","M",120]]},
   {code:"03", name:"СЕТЬ", topics:[
@@ -1983,7 +2105,7 @@ const BRANCHES = [
 ];
 const CROSS = [["clos","weak"],["proto","gen"],["di","tests"],["async","urls"],["actor","race"],["valref","cow"],
   ["state","valref"],["table","layout"],["mvvm","arch"],["err","urls"],["hof","coll"],["disp","proto"],
-  ["esc","clos"],["coord","nav"],["obs","arc"],["group","async"],["leaks","weak"],["patt","di"],["codable","enum"],["hit","vclc"],
+  ["esc","clos"],["coord","nav"],["uilife","state"],["uilife","vclc"],["obs","arc"],["group","async"],["leaks","weak"],["patt","di"],["codable","enum"],["hit","vclc"],
   ["locks","race"],["locks","dead"],["runloop","weak"],["runloop","vclc"],["threadbug","dead"],["combine","obs"],["combine","clos"],["cache","store"],["realtime","urls"],["arpool","arc"],["objc","disp"],["fp","hof"],["collection","table"],["coreanim","layout"],["render","runloop"],["uitest","tests"],["tca","arch"],["review","git"]];
 
 /* ---------- sound: generative ambience + responsive fx (synthesized, off by default) ---------- */
@@ -2105,9 +2227,10 @@ const fxQueue=[]; function fxLog(tag, text){ fxQueue.push({tag, text}); if(fxQue
 /* ---------- helpers ---------- */
 const $ = id => document.getElementById(id);
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+let progDirty=false;   /* progress written since the last gist sync */
 const store = {
   get(k,d){ try{ const v = localStorage.getItem(k); return v==null ? d : JSON.parse(v); }catch(e){ return d; } },
-  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} if(k.indexOf("pm.")===0) askPersist(); }
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} if(k.indexOf("pm.")===0){ askPersist(); progDirty=true; } }
 };
 /* ask the browser not to evict localStorage (Safari drops it after 7 days without a visit); once per page, on the first progress write */
 let persistAsked=false;
@@ -2128,7 +2251,7 @@ const HEMI=[-1,1,1,-1,1,-1,1,-1]; /* 01 КАРКАС L · 02 SWIFTUI R · 03 С�
 const HEMI_YZ={"-1":[[0.6,0.38],[-0.1,-0.72],[0.12,0.72],[-0.62,-0.2]], "1":[[0.6,-0.38],[0.1,0.72],[-0.12,-0.72],[-0.62,0.2]]};
 
 /* ---------- nodes ---------- */
-const TNAMES = {"opt": ["Optional", "Как работать со значением, которого может не быть."], "coll": ["Array, Dictionary, Set", "Как хранить списки, пары и уникальные значения."], "func": ["Функции и inout", "Как называть параметры и менять переданную переменную."], "enum": ["Enum", "Как описать возможные состояния экрана."], "flow": ["guard, switch, циклы", "Как вести код без лестницы вложенных if."], "hof": ["map / filter / reduce", "Как преобразовать список данных."], "err": ["Ошибки и throws", "Как сообщить, что пошло не так, и обработать это."], "skel": ["Каркас решения", "Как не зависнуть перед пустым редактором на задаче."], "bigo": ["Big-O", "Как понять, будет ли код тормозить на больших данных."], "setdict": ["Подсчёт: Dictionary и Set", "Как посчитать частоты и найти повторы за один проход."], "state": ["@State и @Binding", "Как экран хранит своё состояние и делится им."], "obs": ["@StateObject и @Observable", "Кто владеет моделью экрана и как она обновляет UI."], "flowui": ["Поток данных в SwiftUI", "Как данные идут от модели к экрану и обратно."], "mvvm": ["MVVM", "Как отделить логику от экрана, чтобы её можно было тестировать."], "nav": ["Навигация в SwiftUI", "Как переходить между экранами и передавать данные."], "proto": ["Протоколы", "Как описать контракт, не привязываясь к конкретному типу."], "di": ["Dependency Injection", "Как передавать зависимости снаружи, а не создавать внутри."], "clos": ["Замыкания", "Как передавать код как значение и не поймать утечку."], "access": ["Модификаторы доступа", "Как спрятать детали и показать только нужное."], "combine": ["Combine", "Как подписаться на поток событий и реагировать на него."], "rest": ["REST", "Как приложение разговаривает с сервером."], "codable": ["Codable", "Как превратить JSON в модели Swift и обратно."], "urls": ["URLSession", "Как отправить запрос и получить ответ из сети."], "esc": ["@escaping", "Почему замыкание иногда живёт дольше функции."], "store": ["UserDefaults и Keychain", "Где хранить настройки, секреты и файлы."], "mapkit": ["MapKit", "Как показать карту и точки на ней."], "cache": ["NSCache", "Как не скачивать одну и ту же картинку дважды."], "realtime": ["Real-time", "Как получать обновления без перезагрузки экрана."], "valref": ["Value и Reference", "Чем копия отличается от общей ссылки на объект."], "cow": ["Copy-on-Write", "Почему копировать массив дёшево, пока его не меняют."], "arc": ["ARC", "Как Swift решает, когда освободить объект."], "weak": ["weak и unowned", "Как не дать объектам держать друг друга вечно."], "eq": ["== и ===", "Чем равные значения отличаются от одного и того же объекта."], "leaks": ["Поиск утечек", "Как найти объект, который не освобождается."], "arpool": ["Autorelease pool", "Как сбросить временную память в тяжёлом цикле."], "queues": ["GCD: очереди", "Как сделать работу в фоне и вернуться на главный поток."], "race": ["Гонка данных", "Почему два потока портят общие данные."], "dead": ["Deadlock", "Почему приложение может навсегда зависнуть."], "group": ["DispatchGroup", "Как дождаться нескольких задач сразу."], "gcdmore": ["Semaphore, barrier, Operation", "Как ограничить и упорядочить параллельную работу."], "async": ["async/await", "Как писать асинхронный код без лестницы колбэков."], "actor": ["Actors", "Как защитить состояние от гонок средствами языка."], "locks": ["Locks", "Как пускать в общий код только один поток."], "runloop": ["RunLoop и Timer", "Почему таймер замирает при скролле и держит экран."], "threadbug": ["Livelock и priority inversion", "Какие ещё ловушки бывают у потоков, кроме deadlock."], "gen": ["Generics", "Как написать код один раз для разных типов."], "assoc": ["some, any, associatedtype", "Как протоколы работают с заранее неизвестными типами."], "disp": ["Диспетчеризация", "Как Swift решает, какую реализацию метода вызвать."], "pw": ["Property wrappers", "Как вынести повторяющуюся логику свойства в обёртку."], "fp": ["Функциональный стиль", "Как собирать код из маленьких чистых функций."], "objc": ["Objective-C runtime", "Как устроена динамика под капотом UIKit."], "vclc": ["Жизненный цикл VC", "В каком порядке экран загружается и появляется."], "frame": ["frame и bounds", "Где view стоит и как устроены её координаты."], "layout": ["Auto Layout", "Как описать расположение view правилами."], "table": ["UITableView", "Как показать длинный список и переиспользовать ячейки."], "hit": ["hitTest и Responder chain", "Как касание находит нужную view."], "coord": ["Coordinator", "Как вынести навигацию из контроллеров."], "collection": ["UICollectionView", "Как собрать сетку и сложные списки."], "coreanim": ["Core Animation", "Как устроены слои и плавные анимации."], "render": ["Отрисовка UI", "Что происходит между изменением view и кадром на экране."], "solid": ["SOLID", "Как писать код, который легко менять."], "arch": ["Архитектуры", "Чем отличаются MVC, MVP, VIPER и Clean."], "patt": ["Паттерны", "Delegate, observer и factory на живых примерах."], "tests": ["Unit-тесты", "Как проверить логику и подменить зависимости моками."], "git": ["Git", "Как работать в ветках и решать конфликты."], "debug": ["Отладка", "Как поймать баг с breakpoints и View Hierarchy."], "spm": ["SPM и модули", "Как подключать пакеты и делить проект на модули."], "uitest": ["UI- и snapshot-тесты", "Как проверить экран целиком."], "review": ["Code review", "Как читать чужой код и следить за крэшами."], "tca": ["TCA", "Как построить приложение на однонаправленном потоке данных."], "sysd": ["System design", "Как спроектировать мобильное приложение целиком."], "coredata": ["Core Data и SwiftData", "Как хранить данные в базе на устройстве."], "ptr": ["Два указателя", "Как решать задачи на строки и массивы за один проход."], "live": ["Live-coding", "Как решать задачу на собесе вслух и без паники."], "feature": ["Фича с нуля", "Как довести задачу от требований до работающего экрана."]};
+const TNAMES = {"opt": ["Optional", "Как работать со значением, которого может не быть."], "coll": ["Array, Dictionary, Set", "Как хранить списки, пары и уникальные значения."], "func": ["Функции и inout", "Как называть параметры и менять переданную переменную."], "enum": ["Enum", "Как описать возможные состояния экрана."], "flow": ["guard, switch, циклы", "Как вести код без лестницы вложенных if."], "hof": ["map / filter / reduce", "Как преобразовать список данных."], "err": ["Ошибки и throws", "Как сообщить, что пошло не так, и обработать это."], "skel": ["Каркас решения", "Как не зависнуть перед пустым редактором на задаче."], "bigo": ["Big-O", "Как понять, будет ли код тормозить на больших данных."], "setdict": ["Подсчёт: Dictionary и Set", "Как посчитать частоты и найти повторы за один проход."], "state": ["@State и @Binding", "Как экран хранит своё состояние и делится им."], "obs": ["@StateObject и @Observable", "Кто владеет моделью экрана и как она обновляет UI."], "flowui": ["Поток данных в SwiftUI", "Как данные идут от модели к экрану и обратно."], "mvvm": ["MVVM", "Как отделить логику от экрана, чтобы её можно было тестировать."], "nav": ["Навигация в SwiftUI", "Как переходить между экранами и передавать данные."], "uilife": ["Жизненный цикл SwiftUI", "Когда вью та же самая и когда грузить данные."], "proto": ["Протоколы", "Как описать контракт, не привязываясь к конкретному типу."], "di": ["Dependency Injection", "Как передавать зависимости снаружи, а не создавать внутри."], "clos": ["Замыкания", "Как передавать код как значение и не поймать утечку."], "access": ["Модификаторы доступа", "Как спрятать детали и показать только нужное."], "combine": ["Combine", "Как подписаться на поток событий и реагировать на него."], "rest": ["REST", "Как приложение разговаривает с сервером."], "codable": ["Codable", "Как превратить JSON в модели Swift и обратно."], "urls": ["URLSession", "Как отправить запрос и получить ответ из сети."], "esc": ["@escaping", "Почему замыкание иногда живёт дольше функции."], "store": ["UserDefaults и Keychain", "Где хранить настройки, секреты и файлы."], "mapkit": ["MapKit", "Как показать карту и точки на ней."], "cache": ["NSCache", "Как не скачивать одну и ту же картинку дважды."], "realtime": ["Real-time", "Как получать обновления без перезагрузки экрана."], "valref": ["Value и Reference", "Чем копия отличается от общей ссылки на объект."], "cow": ["Copy-on-Write", "Почему копировать массив дёшево, пока его не меняют."], "arc": ["ARC", "Как Swift решает, когда освободить объект."], "weak": ["weak и unowned", "Как не дать объектам держать друг друга вечно."], "eq": ["== и ===", "Чем равные значения отличаются от одного и того же объекта."], "leaks": ["Поиск утечек", "Как найти объект, который не освобождается."], "arpool": ["Autorelease pool", "Как сбросить временную память в тяжёлом цикле."], "queues": ["GCD: очереди", "Как сделать работу в фоне и вернуться на главный поток."], "race": ["Гонка данных", "Почему два потока портят общие данные."], "dead": ["Deadlock", "Почему приложение может навсегда зависнуть."], "group": ["DispatchGroup", "Как дождаться нескольких задач сразу."], "gcdmore": ["Semaphore, barrier, Operation", "Как ограничить и упорядочить параллельную работу."], "async": ["async/await", "Как писать асинхронный код без лестницы колбэков."], "actor": ["Actors", "Как защитить состояние от гонок средствами языка."], "locks": ["Locks", "Как пускать в общий код только один поток."], "runloop": ["RunLoop и Timer", "Почему таймер замирает при скролле и держит экран."], "threadbug": ["Livelock и priority inversion", "Какие ещё ловушки бывают у потоков, кроме deadlock."], "gen": ["Generics", "Как написать код один раз для разных типов."], "assoc": ["some, any, associatedtype", "Как протоколы работают с заранее неизвестными типами."], "disp": ["Диспетчеризация", "Как Swift решает, какую реализацию метода вызвать."], "pw": ["Property wrappers", "Как вынести повторяющуюся логику свойства в обёртку."], "fp": ["Функциональный стиль", "Как собирать код из маленьких чистых функций."], "objc": ["Objective-C runtime", "Как устроена динамика под капотом UIKit."], "vclc": ["Жизненный цикл VC", "В каком порядке экран загружается и появляется."], "frame": ["frame и bounds", "Где view стоит и как устроены её координаты."], "layout": ["Auto Layout", "Как описать расположение view правилами."], "table": ["UITableView", "Как показать длинный список и переиспользовать ячейки."], "hit": ["hitTest и Responder chain", "Как касание находит нужную view."], "coord": ["Coordinator", "Как вынести навигацию из контроллеров."], "collection": ["UICollectionView", "Как собрать сетку и сложные списки."], "coreanim": ["Core Animation", "Как устроены слои и плавные анимации."], "render": ["Отрисовка UI", "Что происходит между изменением view и кадром на экране."], "solid": ["SOLID", "Как писать код, который легко менять."], "arch": ["Архитектуры", "Чем отличаются MVC, MVP, VIPER и Clean."], "patt": ["Паттерны", "Delegate, observer и factory на живых примерах."], "tests": ["Unit-тесты", "Как проверить логику и подменить зависимости моками."], "git": ["Git", "Как работать в ветках и решать конфликты."], "debug": ["Отладка", "Как поймать баг с breakpoints и View Hierarchy."], "spm": ["SPM и модули", "Как подключать пакеты и делить проект на модули."], "uitest": ["UI- и snapshot-тесты", "Как проверить экран целиком."], "review": ["Code review", "Как читать чужой код и следить за крэшами."], "tca": ["TCA", "Как построить приложение на однонаправленном потоке данных."], "sysd": ["System design", "Как спроектировать мобильное приложение целиком."], "coredata": ["Core Data и SwiftData", "Как хранить данные в базе на устройстве."], "ptr": ["Два указателя", "Как решать задачи на строки и массивы за один проход."], "live": ["Live-coding", "Как решать задачу на собесе вслух и без паники."], "feature": ["Фича с нуля", "Как довести задачу от требований до работающего экрана."]};
 const topics = [], bcenters = [];
 const hemiCount={"-1":0,"1":0};
 BRANCHES.forEach((br,bi)=>{
@@ -2188,6 +2311,7 @@ function topicProgress(id){ const c=DATA.content[id]; const steps=c?c.steps:[]; 
    as pm.legacy (migration marker pm.honest); their next SRS review goes through the honest path. */
 let LEGACY = store.get("pm.legacy", {});
 function recallOf(id){ return store.get("pm.recall."+id, null); }   /* {at, v:"ok"|"part"|"no", pass:ts|0} — step 7 by memory */
+function rootOf(id){ return store.get("pm.roots."+id, null)||{}; }    /* {at, v:"ok"|"no"} — last recall of this topic as a root («Корни») of another */
 function outOf(id){ return store.get("pm.out."+id, null); }         /* {at, g:[...], v, pass:ts|0} — «Выгрузка» */
 function gradesOf(id){ return store.get("pm.grade."+id, {}); }       /* {s1:"ok"|"part"|"no", ...} — 3-level self-grade */
 function honestDone(id){ const r=recallOf(id), o=outOf(id); return !!(r && r.pass && o && o.pass); }
@@ -2207,7 +2331,7 @@ function srsOf(id){
   return r;
 }
 function isDue(id){
-  if(statusOf(id)!=="done"){ const r=store.get("pm.srs."+id,null); const o=outOf(id); return !!r && r.due<=Date.now() && !!o && o.v!=="ok"; } /* «нет» in Выгрузка before the topic is done: come back tomorrow */
+  if(statusOf(id)!=="done"){ const r=store.get("pm.srs."+id,null); const o=outOf(id); return !!r && r.due<=Date.now() && ((!!o && o.v!=="ok") || rootOf(id).v==="no"); } /* «нет» in Выгрузка before the topic is done: come back tomorrow */
   const r=srsOf(id); return !!r && r.due<=Date.now(); }
 function srsHold(id){ const r=srsOf(id)||{stage:0,lapses:0}; r.due=Date.now()+DAY; store.set("pm.srs."+id, r); }
 /* one self-grade into the existing SRS: recalled → next rung, partly → same rung tomorrow, no → reset, tomorrow */
@@ -2220,17 +2344,59 @@ function gateText(v, oral){ const n=answerLeft(v, oral); return n ? "Ключ о
 function srsPass(id){ fxLog("SRS","NODE://"+id.toUpperCase()+" · ПОВТОР ЗАСЧИТАН"); const r=srsOf(id)||{stage:0,lapses:0}; r.stage=Math.min(SRS_DAYS.length-1, r.stage+1); r.due=Date.now()+SRS_DAYS[r.stage]*DAY; store.set("pm.srs."+id, r); }
 function srsFail(id){ fxLog("SRS","NODE://"+id.toUpperCase()+" · ЛЕСЕНКА СБРОШЕНА"); const r=srsOf(id)||{stage:0,lapses:0}; r.stage=0; r.lapses=(r.lapses||0)+1; r.due=Date.now()+DAY; store.set("pm.srs."+id, r); }
 function logErr(id, q, note){ const list=store.get("pm.err."+id,[]); list.unshift({at:Date.now(), q:String(q).slice(0,400), note:String(note||"").slice(0,600)}); store.set("pm.err."+id, list.slice(0,20)); }
+/* ---------- errors come back (pm.back, pm.err stays as is): an item graded «нет» returns to the daily run on day 1 and day 3 after the miss;
+   two «вспомнил» in a row on its due day close it. pm.back = {"<k>:<topic>:<ref>": {t, k, ref, q?, a?, eq, at, ok, next, done?}}
+   k: "s" step · "b" bank task · "o" «Проверь себя» question (ref = index) · "q" run card (q/a kept, ref = hash). eq = the pm.err text it matches. */
+const BACK_DAYS=[1,3];
+function dayStart(ts){ const d=new Date(ts); d.setHours(0,0,0,0); return d.getTime(); }
+function addDays(ts, n){ const d=new Date(dayStart(ts)); d.setDate(d.getDate()+n); return d.getTime(); }
+function daysTo(ts){ return Math.round((dayStart(ts)-dayStart(Date.now()))/DAY); }
+function strHash(s){ let h=5381; s=String(s); for(let i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))|0; return (h>>>0).toString(36); }
+function backAll(){ const m=store.get("pm.back",{}); return m && typeof m==="object" && !Array.isArray(m) ? m : {}; }
+function backSave(all){ const now=Date.now(); let ks=Object.keys(all).filter(k=>!all[k].done || now-all[k].done<30*DAY);
+  if(ks.length>300) ks=ks.sort((a,b)=>(all[b].at||0)-(all[a].at||0)).slice(0,300);
+  const out={}; ks.forEach(k=>out[k]=all[k]); store.set("pm.back", out); }
+function backKey(k, t, ref){ return k+":"+t+":"+ref; }
+function backFail(k, t, ref, eq, q, a){ const all=backAll(), key=backKey(k,t,ref), now=Date.now(), old=all[key]||{};
+  const e={t, k, ref, eq:String(eq||old.eq||"").slice(0,400), at:now, ok:0, next:addDays(now, BACK_DAYS[0])};
+  if(k==="q"){ e.q=String(q!=null?q:old.q||"").slice(0,400); e.a=String(a!=null?a:old.a||"").slice(0,1200); }
+  all[key]=e; backSave(all); return key; }
+/* a «вспомнил» counts only on the day the item is due (a quick re-try right after the miss does not close it) */
+function backPass(key){ const all=backAll(), e=all[key], now=Date.now(); if(!e || e.done || e.next>now) return false;
+  e.ok=(e.ok||0)+1; if(e.ok>=BACK_DAYS.length) e.done=now; else e.next=Math.max(addDays(e.at, BACK_DAYS[e.ok]), addDays(now,1));
+  backSave(all); fxLog("BACK", e.done ? "ОШИБКА ЗАКРЫТА · ВСПОМНИЛ ДВАЖДЫ" : "ОШИБКА ВЕРНЁТСЯ ЕЩЁ РАЗ"); return true; }
+function backDueList(){ const now=Date.now(); return Object.entries(backAll()).filter(([k,e])=>!e.done && e.next<=now && DATA.content[e.t]).sort((a,b)=>a[1].next-b[1].next); }
+function backFor(t, eq){ let best=null; Object.values(backAll()).forEach(e=>{ if(e.t===t && e.eq===eq && (!best || e.at>best.at)) best=e; }); return best; }
+function backLabel(e){
+  if(!e) return "";
+  if(e.done) return "ЗАКРЫТА · ВСПОМНИЛ 2 РАЗА ПОДРЯД";
+  const d=daysTo(e.next), when = d<=0 ? "СЕГОДНЯ В РАНЕ" : d===1 ? "ЗАВТРА" : "ЧЕРЕЗ "+d+" "+plural(d,["ДЕНЬ","ДНЯ","ДНЕЙ"]);
+  return "ВЕРНЁТСЯ "+when+" · "+(e.ok||0)+" / "+BACK_DAYS.length; }
+const stepEq = s => short(s.title)+": "+s.prompt;
+const bankEq = s => s.title+": "+s.prompt;
+const outEq = q => "Выгрузка: "+htmlText(q);
 function fmtDate(ts){ const d=new Date(ts); return String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0"); }
 function whenLabel(ts){ const d=Math.round((ts-Date.now())/DAY); return d<=0?"СЕГОДНЯ":d===1?"ЗАВТРА":"ЧЕРЕЗ "+d+" ДН."; }
+/* stages (09.11 backlog p.9): 4 stages over the branches; a topic is "in fog" while any of its lesson prereqs is not «освоено» */
+const STAGES = [{n:1, name:"SWIFT-БАЗА", br:[0]}, {n:2, name:"SWIFTUI-ПРИЛОЖЕНИЕ", br:[1]}, {n:3, name:"СЕТЬ И ПАМЯТЬ", br:[2,3,4]}, {n:4, name:"СОБЕСЕДОВАНИЕ", br:[5,6,7]}];
+function stageOfB(b){ const k=STAGES.findIndex(s=>s.br.includes(b)); return k<0 ? STAGES.length-1 : k; }
+const TIDX = {}; topics.forEach((t,i)=>{ TIDX[t.id]=i; });
+const PRE = topics.map(t=>{ const L=(DATA.content[t.id]||{}).lesson; return ((L&&L.prereqs)||[]).map(p=>TIDX[p]).filter(j=>j!=null && topics[j].id!==t.id); });
+function stageStats(k){ const idx=topics.map((t,i)=>i).filter(i=>STAGES[k].br.includes(topics[i].b));
+  return {total:idx.length, done:idx.filter(i=>topics[i].status==="done").length, fog:idx.filter(i=>topics[i].fog).length}; }
 function computeStatuses(){
   topics.forEach(t=>{ t.status=statusOf(t.id); t.due=isDue(t.id); t.legacy = t.status==="done" && !honestDone(t.id) && !!LEGACY[t.id]; });
-  let nx = topics.findIndex(t=>t.due); if(nx<0) nx = topics.findIndex(t=>t.status==="prog"); if(nx<0) nx = topics.findIndex(t=>t.status==="none" && !SKIP[t.id]); if(nx<0) nx = topics.findIndex(t=>t.status==="none"); if(nx<0) nx=0;
-  curIdx = nx; topics.forEach((t,i)=>{ t.cur = i===curIdx; });
-  routeAt = topics.findIndex(t=>t.status!=="done" && t.status!=="dark"); if(routeAt<0) routeAt = topics.length-1;
+  topics.forEach((t,i)=>{ t.miss = PRE[i].filter(j=>topics[j].status!=="done"); t.fog = t.status==="none" && !t.due && t.miss.length>0; });
+  let nx = topics.findIndex(t=>t.due); if(nx<0) nx = topics.findIndex(t=>t.status==="prog"); if(nx<0) nx = topics.findIndex(t=>t.status==="none" && !t.fog && !SKIP[t.id]); if(nx<0) nx = topics.findIndex(t=>t.status==="none" && !t.fog); if(nx<0) nx = topics.findIndex(t=>t.status==="none"); if(nx<0) nx=0;
+  curIdx = nx; topics.forEach((t,i)=>{ t.cur = i===curIdx; if(t.cur) t.fog=false; });
+  routeAt = topics.findIndex(t=>t.status!=="done" && t.status!=="dark" && !t.fog); if(routeAt<0) routeAt = topics.findIndex(t=>t.status!=="done" && t.status!=="dark"); if(routeAt<0) routeAt = topics.length-1;
   for(let i=0;i<N;i++) hot[i] = (i<T && topics[i].b===topics[curIdx].b) || d2(i,curIdx) < 0.09 ? 1 : 0;
   hotList = topics.map((t,i)=>i).filter(i=>topics[i].b===topics[curIdx].b);
 }
 computeStatuses();
+/* TIDX (topic id -> index) is declared once above, next to STAGES; «Корни» uses the same map */
+function prereqsOf(id){ const L=(DATA.content[id]||{}).lesson; return ((L && L.prereqs)||[]).filter(p=>p!==id && TIDX[p]!==undefined); }
+const GROWS={}; topics.forEach((t,i)=>prereqsOf(t.id).forEach(p=>{ (GROWS[p]=GROWS[p]||[]).push(i); }));   /* reverse prereqs */
 function nextIdx(i){ for(let j=i+1;j<topics.length;j++) if(topics[j].status!=="dark") return j; return -1; }
 function prevIdx(i){ for(let j=i-1;j>=0;j--) if(topics[j].status!=="dark") return j; return -1; }
 function startCheck(i){ const t=topics[i]; checkMode=t.id; const st=(DATA.content[t.id]||{}).steps||[]; forceStep=Math.max(0, st.findIndex(x=>x.id==="s7")); fxLog("SCAN","NODE://"+t.id.toUpperCase()+" · ПРОВЕРКА ЗНАНИЯ"); openTopic(i,"practice"); }
@@ -2283,6 +2449,7 @@ function applyNodeStyles(){
       else if(t.status==="done"){ c=WHITE; s=12.5; a=1; }
       else if(t.status==="prog"){ c=WHITE; s=6+6*gr; a=0.75+0.2*gr; r=1; }
       else if(t.status==="dark"){ c=GREY; s=6; a=0.4; r=1; }
+      else if(t.fog){ c=GREY; s=3; a=0.16; }   /* in fog: prereqs not «освоено» yet */
       else { c=GREY; s=5; a=0.62; } }
     else if(fillTopic[i]>=0 && topics[fillTopic[i]].status==="done"){ const ret=retentionOf(fillTopic[i]); c=mixc(GREY,[0.78,0.94,0.96],ret); a=0.42+0.4*ret; s=2.1+1.1*ret; }
     else if(fillTopic[i]>=0 && topics[fillTopic[i]].status==="prog"){ const gr=growthOf(fillTopic[i]); a=0.42+0.22*gr; s=2.1+0.6*gr; }
@@ -2477,7 +2644,7 @@ let nbShown=[];
 const nbLabels = Array.from({length:8},()=>{ const d=document.createElement("div"); d.className="nlabel"; d.hidden=true; overlay.appendChild(d); return d; });
 const marker=$("marker");
 const leaderSvg=document.createElementNS("http://www.w3.org/2000/svg","svg"); leaderSvg.setAttribute("class","leaders"); overlay.appendChild(leaderSvg);
-const tLabs = topics.map(t=>{ const d=document.createElement("div"); d.className="tlab"; d.innerHTML=`<span class="tn"><i class="tk">${String(t.k+1).padStart(2,"0")}</i>${esc(t.title)}<em class="nxt">ДАЛЬШЕ</em></span><span class="ts">${esc(t.sub)}</span>`; overlay.appendChild(d); return {el:d, w:0, h:0, line:null}; });
+const tLabs = topics.map(t=>{ const d=document.createElement("div"); d.className="tlab"; d.innerHTML=`<span class="tn"><i class="tk">${String(t.k+1).padStart(2,"0")}</i>${esc(t.title)}<em class="nxt">ДАЛЬШЕ</em></span><span class="ts">${esc(t.sub)}</span><span class="need"></span>`; overlay.appendChild(d); return {el:d, w:0, h:0, line:null, need:d.querySelector(".need"), needKey:null}; });
 let labBranch=-1;
 function layoutTopicLabels(breath){
   const ab = hoverNode>=0 ? topics[hoverNode].b : highlight;
@@ -2487,7 +2654,8 @@ function layoutTopicLabels(breath){
   topics.forEach((t,i)=>{ if(t.b!==ab) return; const p=[pos[i*3]*breath,pos[i*3+1]*breath,pos[i*3+2]*breath]; const [x,y]=project(...p); items.push({i,x,y,f:facing(...p)}); cx+=x; cy+=y; });
   cx/=items.length; cy/=items.length;
   const card=$("card"), cr = (cardOn && !card.hidden) ? {l:cardX-12, t:cardY-12, r:cardX+card.offsetWidth+12, b:cardY+card.offsetHeight+12} : null;
-  items.forEach(it=>{ const L=tLabs[it.i], t=topics[it.i]; L.el.classList.add("on"); L.el.classList.toggle("hot", it.i===hoverNode); L.el.classList.toggle("done", t.status==="done"); L.el.classList.toggle("dark", t.status==="dark"); L.el.classList.toggle("nx", it.i===curIdx);
+  items.forEach(it=>{ const L=tLabs[it.i], t=topics[it.i]; L.el.classList.add("on"); L.el.classList.toggle("hot", it.i===hoverNode); L.el.classList.toggle("done", t.status==="done"); L.el.classList.toggle("dark", t.status==="dark"); L.el.classList.toggle("fog", !!t.fog);
+    const nk = t.fog ? t.miss.join(",") : ""; if(L.needKey!==nk){ L.needKey=nk; L.need.innerHTML = nk ? "В ТУМАНЕ · СНАЧАЛА <b>"+missNames(t).map(esc).join(" · ")+"</b>" : ""; } L.el.classList.toggle("nx", it.i===curIdx);
     L.w=L.el.offsetWidth; L.h=L.el.offsetHeight; it.side = it.x>=cx ? 1 : -1; it.ly = it.y + (it.y-cy)*0.25; });
   const place=it=>{ const L=tLabs[it.i]; it.lx = it.side>0 ? it.x+26 : it.x-26-L.w; };
   items.forEach(it=>{ place(it); if(cr){ const L=tLabs[it.i]; if(it.lx<cr.r && it.lx+L.w>cr.l && it.ly+L.h/2>cr.t && it.ly-L.h/2<cr.b){ it.side=-it.side; place(it); } } });
@@ -2521,10 +2689,11 @@ function setHighlight(bi){
 }
 const STATUS={done:"ОСВОЕНО",prog:"В ПРОЦЕССЕ",none:"НЕ НАЧАТО",dark:"ТЁМНЫЙ НЕЙРОН"};
 const LVL={J:"JUNIOR",M:"MIDDLE",S:"SENIOR"};
-function statusLabel(t){ return t.due ? "ПОВТОРИТЬ" : t.cur ? (t.status==="none"?"СЛЕДУЮЩАЯ":"ТЕКУЩАЯ") : STATUS[t.status]; }
+function statusLabel(t){ return t.due ? "ПОВТОРИТЬ" : t.cur ? (t.status==="none"?"СЛЕДУЮЩАЯ":"ТЕКУЩАЯ") : t.fog ? "В ТУМАНЕ" : STATUS[t.status]; }
+function missNames(t){ return (t.miss||[]).map(j=>topics[j].title); }
 function metaHTML(t){
   const pr=topicProgress(t.id);
-  return `<span class="${t.cur||t.due?"st-cur":""}" style="color:${(t.status==="none"||t.status==="dark")&&!t.cur?"var(--muted)":"var(--ink)"}">${statusLabel(t)}</span>${pr.total?`<span><b>${pr.ok}</b>/${pr.total} СТУПЕНЕЙ</span>`:""}${t.legacy?`<span title="Засчитано по старому правилу: ступень 7 и Выгрузка по памяти ещё впереди — на ближайшем повторе">СТАРЫЙ ЗАЧЁТ</span>`:""}<span><b>${LVL[t.lvl]}</b></span><span>~<b>${t.min}</b> МИН</span>`;
+  return `<span class="${t.cur||t.due?"st-cur":""}" style="color:${(t.status==="none"||t.status==="dark")&&!t.cur?"var(--muted)":"var(--ink)"}">${statusLabel(t)}</span>${t.fog?`<span class="fogNeed">СНАЧАЛА <b>${missNames(t).map(esc).join(" · ")}</b></span>`:""}${pr.total?`<span><b>${pr.ok}</b>/${pr.total} СТУПЕНЕЙ</span>`:""}${t.legacy?`<span title="Засчитано по старому правилу: ступень 7 и Выгрузка по памяти ещё впереди — на ближайшем повторе">СТАРЫЙ ЗАЧЁТ</span>`:""}<span><b>${LVL[t.lvl]}</b></span><span>~<b>${t.min}</b> МИН</span>`;
 }
 function linkList(ul, i, onPick){
   ul.textContent="";
@@ -2547,7 +2716,8 @@ function select(i, fly){
   if(fly) focusOn(i);
   showCard();
 }
-$("cta").addEventListener("click",()=>openTopic(selected));
+$("cta").addEventListener("click",()=>{ const t=topics[selected]; if(t && t.fog) select(t.miss[0], true); else openTopic(selected); });   /* in fog: the main button leads to the missing prereq */
+$("cAnyway").addEventListener("click",()=>openTopic(selected));
 $("tNav").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; if(b.dataset.check) startCheck(+b.dataset.check); else if(b.dataset.go) openTopic(+b.dataset.go, "theory"); });
 $("cKnow").addEventListener("click",()=>startCheck(selected));
 $("cNext").addEventListener("click",()=>{ const nx=nextIdx(selected); if(nx>=0) select(nx,true); });
@@ -2561,19 +2731,19 @@ function renderTrack(c){
   let h = prevIdx(first)>=0 ? `<button type="button" class="tmore" data-go="${prevIdx(first)}" aria-label="Раньше">‹</button>` : "";
   idx.forEach((i,n)=>{ const t=topics[i], br = (n===0 || topics[idx[n-1]].b!==t.b) ? BRANCHES[t.b].code+" "+BRANCHES[t.b].name : "";
     const tag = i===routeAt ? "ТЫ ЗДЕСЬ" : br || (i===nextIdx(routeAt) ? "ДАЛЬШЕ" : "");
-    h += `<button type="button" data-go="${i}" class="${t.status==="done"?"done":""} ${i===routeAt?"here":""} ${t.status==="dark"?"dark":""} ${i===selected&&cardOn?"sel":""}" title="${esc(t.title)}"><span class="tb">${esc(tag)}</span><span class="tl"><span class="tt">${String(i+1).padStart(2,"0")} ${esc(t.title)}</span></span></button>`; });
+    h += `<button type="button" data-go="${i}" class="${t.status==="done"?"done":""} ${i===routeAt?"here":""} ${t.status==="dark"?"dark":""} ${t.fog?"fog":""} ${i===selected&&cardOn?"sel":""}" title="${esc(t.title)}"><span class="tb">${esc(tag)}</span><span class="tl"><span class="tt">${String(i+1).padStart(2,"0")} ${esc(t.title)}</span></span></button>`; });
   if(nextIdx(last)>=0) h += `<button type="button" class="tmore" data-go="${nextIdx(last)}" aria-label="Дальше">›</button>`;
   $("track").innerHTML=h;
 }
 $("track") && $("track").addEventListener("click",e=>{ const b=e.target.closest("button[data-go]"); if(!b) return; select(+b.dataset.go, true); });
 function refreshCardNav(i){
   const t=topics[i], nx=nextIdx(i), pv=prevIdx(i), hasSteps=((DATA.content[t.id]||{}).steps||[]).length>0;
-  $("cKnow").hidden = t.status==="done" || !hasSteps;
+  $("cKnow").hidden = t.status==="done" || !hasSteps || !!t.fog; $("cAnyway").hidden = !t.fog;
   $("cNext").disabled = nx<0; $("cPrev").disabled = pv<0;
   const where = i===routeAt ? "<em>ТЫ ЗДЕСЬ</em>" : i<routeAt ? (t.status==="done"?"ПРОЙДЕНА":"ПРОПУЩЕНА") : i===nextIdx(routeAt) ? "СЛЕДУЮЩАЯ" : "ВПЕРЕДИ · ЧЕРЕЗ "+(i-routeAt);
   $("cStep").innerHTML = `ШАГ <b>${i+1}</b> / ${topics.length} · ${where}`;
   renderTrack(i);
-  $("cta").textContent = t.status==="dark" ? "ОТКРЫТЬ ТЕМУ ▸" : t.due ? "ПОВТОРИТЬ ▸" : t.status==="none" ? "НАЧАТЬ ТЕМУ ▸" : t.status==="done" ? "ОТКРЫТЬ ТЕМУ ▸" : "ПРОДОЛЖИТЬ ▸";
+  $("cta").textContent = t.fog ? "СНАЧАЛА: "+topics[t.miss[0]].title+" ▸" : t.status==="dark" ? "ОТКРЫТЬ ТЕМУ ▸" : t.due ? "ПОВТОРИТЬ ▸" : t.status==="none" ? "НАЧАТЬ ТЕМУ ▸" : t.status==="done" ? "ОТКРЫТЬ ТЕМУ ▸" : "ПРОДОЛЖИТЬ ▸";
 }
 const bl=$("pBranches");
 BRANCHES.forEach((br,bi)=>{
@@ -2593,7 +2763,13 @@ function refreshRun(){
   $("runBtn").innerHTML = `⚡ РАН · 5 МИН${nd?` <small>· ${nd} ${nd===1?"ПОВТОР":nd<5?"ПОВТОРА":"ПОВТОРОВ"}</small>`:today?" <small>· ✓ СЕГОДНЯ</small>":""}`;
   $("streak").innerHTML = st ? `СЕРИЯ <b>${st}</b> ${st===1?"ДЕНЬ":st<5?"ДНЯ":"ДНЕЙ"}${today?"":" · СЕГОДНЯ ЕЩЁ НЕ БЫЛО"}` : "СЕРИЯ <b>0</b> · НАЧНИ С РАНА";
 }
+function renderStages(){
+  const el=$("stages"); if(!el) return; const here=stageOfB(topics[curIdx].b);
+  el.innerHTML = STAGES.map((st,k)=>{ const x=stageStats(k), cls = k===here ? "on" : x.done===x.total ? "done" : "";
+    return `${k?'<span class="ar" aria-hidden="true">→</span>':""}<div class="stg ${cls}"><span class="sn">${st.n} ${esc(st.name)}</span><i><b style="width:${Math.round(x.done/x.total*100)}%"></b></i><small>${x.done} / ${x.total}${x.fog?" · В ТУМАНЕ "+x.fog:""}</small></div>`; }).join("");
+}
 function refreshUI(){
+  renderStages();
   try{ sfx.setProgress(topics.filter(t=>t.status==="done").length, topics.filter(t=>t.due).length); }catch(e){}
   const doneN=topics.filter(t=>t.status==="done").length, pct=Math.round(doneN/T*100);
   $("doneCount").textContent=doneN; $("donePct").textContent=pct+"%"; $("doneBar").style.width=pct+"%";
@@ -2621,13 +2797,17 @@ function plistBuild(){
   plEl=document.createElement("section"); plEl.id="plist"; plEl.className="plist"; plEl.hidden=true; plEl.setAttribute("aria-label","Список тем");
   plEl.innerHTML=`<div class="pl-top"><button type="button" class="pl-cont" id="plCont"></button><div class="pl-acts" id="plActs"></div><div class="pl-prog" id="plProg"></div></div><div class="pl-brs" id="plBrs"></div>`;
   mainEl.appendChild(plEl);
-  const acts=$("plActs"); ["runBtn","srchBtn"].forEach(id=>{ const b=$(id); if(b) acts.appendChild(b); });
+  const acts=$("plActs"); ["runBtn","mixBtn","srchBtn"].forEach(id=>{ const b=$(id); if(b) acts.appendChild(b); });
+  const sk=$("streak"); if(sk) $("plProg").before(sk);   /* phone: the streak lives in the list header, not in the ≡ menu */
   const tc=$("tab-cheat"); if(tc){ tc.textContent="Шпарг."; tc.setAttribute("aria-label","Шпаргалка"); }
   plEl.addEventListener("click",e=>{
     if(e.target.closest(".pl-cont")){ const t=topics[curIdx], pr=topicProgress(t.id); plScroll=plEl.scrollTop; doOpen(curIdx, (pr.ok>0||t.due||Object.keys(pr.p).length)?"practice":"theory"); return; }
     const h=e.target.closest(".pl-bh");
     if(h){ const bi=+h.dataset.b, on=!plOpen.has(bi); if(on) plOpen.add(bi); else plOpen.delete(bi); h.parentNode.classList.toggle("open",on); h.setAttribute("aria-expanded",on); return; }
-    const b=e.target.closest(".pl-t"); if(b){ plScroll=plEl.scrollTop; doOpen(+b.dataset.i, "theory"); }
+    const go=e.target.closest("[data-go]"); if(go){ plScroll=plEl.scrollTop; doOpen(+go.dataset.go, "theory"); return; }   /* fog: a missing prereq, or «открыть всё равно» */
+    const b=e.target.closest(".pl-t"); if(b){ const i=+b.dataset.i;
+      if(topics[i].fog){ const li=b.parentNode, on=!li.classList.contains("ask"); plEl.querySelectorAll(".pl-ts li.ask").forEach(x=>x.classList.remove("ask")); li.classList.toggle("ask",on); b.setAttribute("aria-expanded",on); return; }
+      plScroll=plEl.scrollTop; doOpen(i, "theory"); }
   });
   $("pBranches").addEventListener("click",e=>{ const li=e.target.closest("li"); if(!li) return; const bi=[...li.parentNode.children].indexOf(li); if(bi<0) return;
     plOpen.add(bi); setMode("map"); renderPList(); const h=plEl.querySelector(`.pl-bh[data-b="${bi}"]`); if(h) plEl.scrollTop=h.parentNode.offsetTop-8; });
@@ -2638,13 +2818,17 @@ function renderPList(){
   const ct=topics[curIdx], cb=BRANCHES[ct.b], doneN=topics.filter(t=>t.status==="done").length;
   $("plCont").innerHTML=`<span class="k">▸ ${ct.due?"ПОВТОРИТЬ":ct.status==="none"?"НАЧАТЬ":"ПРОДОЛЖИТЬ"}</span><span class="t">${esc(ct.title)}</span><span class="s">${cb.code} ${esc(cb.name)} · ${ct.k+1}/${topics.filter(x=>x.b===ct.b).length}</span>`;
   $("plProg").innerHTML=`<span>ОСВОЕНО <b>${doneN}</b> / ${T}</span><span class="bar"><i style="width:${Math.round(doneN/T*100)}%"></i></span>`;
-  let h="";
+  let h=""; const here=stageOfB(ct.b);
   BRANCHES.forEach((br,bi)=>{
+    const sk=STAGES.findIndex(st=>st.br[0]===bi);
+    if(sk>=0){ const x=stageStats(sk); h+=`<div class="pl-stg ${sk===here?"on":x.done===x.total?"done":""}">ЭТАП ${STAGES[sk].n} · ${esc(STAGES[sk].name)}<small>ОСВОЕНО ${x.done} / ${x.total}${x.fog?" · В ТУМАНЕ "+x.fog:""}</small><i><b style="width:${Math.round(x.done/x.total*100)}%"></b></i></div>`; }
     const idx=topics.map((t,i)=>i).filter(i=>topics[i].b===bi), dn=idx.filter(i=>topics[i].status==="done").length, open=plOpen.has(bi);
     h+=`<div class="pl-br${open?" open":""}${bi===ct.b?" here":""}"><button type="button" class="pl-bh" data-b="${bi}" aria-expanded="${open}"><span class="pl-bc">${br.code}</span><span class="pl-bn">${esc(br.name)}</span><span class="pl-bd"><b>${dn}</b> / ${idx.length}</span><i class="pl-chev" aria-hidden="true">▸</i></button><ol class="pl-ts">`;
-    idx.forEach(i=>{ const t=topics[i], st=t.due?"due":t.cur?"cur":t.status, pr=topicProgress(t.id);
+    idx.forEach(i=>{ const t=topics[i], st=t.due?"due":t.cur?"cur":t.fog?"fog":t.status, pr=topicProgress(t.id);
       const extra = t.status==="prog" && pr.total ? ` · ${pr.ok}/${pr.total}` : t.legacy ? " · старый зачёт" : "";
-      h+=`<li><button type="button" class="pl-t st-${st}" data-i="${i}"><span class="pl-n">${String(i+1).padStart(2,"0")}</span><span class="pl-tt">${esc(t.title)}${t.sub?`<small>${esc(t.sub)}</small>`:""}</span><span class="pl-st">${statusLabel(t)}${extra}</span></button></li>`; });
+      const need = t.fog ? `<span class="pl-need">сначала: <b>${missNames(t).map(esc).join(", ")}</b></span>` : "";
+      const ask = t.fog ? `<div class="pl-ask">${t.miss.map(j=>`<button type="button" class="pl-go" data-go="${j}">▸ ${esc(topics[j].title)}</button>`).join("")}<button type="button" class="pl-any" data-go="${i}">открыть всё равно</button></div>` : "";
+      h+=`<li><button type="button" class="pl-t st-${st}" data-i="${i}"${t.fog?' aria-expanded="false"':""}><span class="pl-n">${String(i+1).padStart(2,"0")}</span><span class="pl-tt">${esc(t.title)}${t.sub?`<small>${esc(t.sub)}</small>`:""}${need}</span><span class="pl-st">${statusLabel(t)}${extra}</span></button>${ask}</li>`; });
     h+=`</ol></div>`;
   });
   const sc=plEl.scrollTop; $("plBrs").innerHTML=h; plEl.scrollTop=sc;
@@ -2731,10 +2915,11 @@ function doOpen(i, tab){
   if(t.due){ const k7=steps.findIndex(s=>s.id==="s7"); if(k7>=0){ stepIdx=k7; bankIdx=-1; } }
   if(checkMode && checkMode!==t.id) checkMode=null;
   if(forceStep>=0){ stepIdx=Math.min(forceStep, Math.max(0,steps.length-1)); bankIdx=-1; forceStep=-1; }
-  if(t.due && t.status!=="done" && tab!=="cheat" && tab!=="tasks") tab="out";   /* a failed «Выгрузка» is due: start there */
+  if(t.due && t.status!=="done" && tab!=="cheat" && tab!=="tasks" && outQs(t.id).length) tab="out";   /* a failed «Выгрузка» is due: start there */
   refreshTopicNav(i);
-  outSt=null; renderTheory(); renderCheat(); renderPractice(); renderTasks();
+  outSt=null; rootsSt=null; renderTheory(); renderCheat(); renderPractice(); renderTasks();
   if(tab==="out"){ renderOut(); tab="theory"; }
+  else if((!tab || tab==="theory") && !checkMode) openRoots(t.id);
   setTab(tab || "theory");
   focusOn(i); burst(i, 8);
   setMode("topic");
@@ -2897,9 +3082,11 @@ function renderTheory(){
   const t=topics[current], c=DATA.content[t.id], pane=$("pane-theory");
   const nextIdx = topics.findIndex(x=>x.b===t.b && x.k===t.k+1);
   const L = c && c.lesson, nDeep = L ? L.deeper.length : 0, outPass = !!(outOf(t.id)||{}).pass;
+  if(PHONE && L){ renderEpisode(t, c, L, nextIdx); return; }   /* phone: the lesson is a stack of cards («Эпизод») */
   pane.innerHTML = `<div class="theory${L?" lesson":""}">${c ? (L ? lessonHTML(L) : c.theory) : `<p class="empty">Теория для этой темы ещё не написана. Она появится по тому же шаблону: что это, почему так устроено, последствия и аналогия.</p>`}</div>
     <button type="button" class="more" id="tMore" hidden></button>
     <div class="t-foot">
+      ${growsHTML(t.id)}
       ${nDeep ? `<button class="deepBtn" type="button" id="toDeep"><span>ГЛУБЖЕ ▾</span><small>${nDeep} ${nDeep<5?"РАЗДЕЛА":"РАЗДЕЛОВ"} · ДЛЯ СОБЕСА И MIDDLE</small></button>` : ""}
       ${outQs(t.id).length ? (outPass ? `<button class="ghostbtn" type="button" id="toOut">ВЫГРУЗКА ✓ · ПРОЙТИ ЕЩЁ РАЗ</button>` : `<button class="cta" type="button" id="toOut">ВЫГРУЗКА ▸ <small>${outQs(t.id).length} ${plural(outQs(t.id).length,["ВОПРОС","ВОПРОСА","ВОПРОСОВ"])} ПО ПАМЯТИ</small></button>`) : ""}
       ${c && c.steps.length ? `<button class="${outPass||!outQs(t.id).length?"cta":"ghostbtn"}" type="button" id="toPractice">ЗАПУСТИТЬ ПРАКТИКУ ▸</button>` : ""}
@@ -2917,6 +3104,63 @@ function renderTheory(){
   if($("toPractice")) $("toPractice").addEventListener("click",()=>setTab("practice"));
   if($("toOut")) $("toOut").addEventListener("click",()=>openOut());
   if($("tNext")) $("tNext").addEventListener("click",()=>openTopic(nextIdx));
+  if($("tGrows")) $("tGrows").addEventListener("click",e=>{ const b=e.target.closest("[data-i]"); if(b) openTopic(+b.dataset.i); });
+}
+
+/* ---------- PHONE «Эпизод»: the lesson as a stack of cards, one ## section per screen ----------
+   Swipe = native CSS scroll-snap on .ep-track (no JS animation, no rAF); buttons and dots jump by scrollLeft.
+   The current card is read on "scroll" events only. ГЛУБЖЕ is a separate bonus episode opened from the last card.
+   Position lives in memory (epPos), so «← К УРОКУ» from «Выгрузка» or a tab switch returns to the same card. */
+const epPos={};   /* id -> {deep, k} */
+function renderEpisode(t, c, L, nextI){
+  const id=t.id, pane=$("pane-theory"), P=epPos[id]||(epPos[id]={deep:false, k:0});
+  const deep=P.deep && L.deeper.length>0; if(!deep) P.deep=false;
+  stopTyping(); thBlocks=[]; thShown=0;
+  const nDeep=L.deeper.length, qn=outQs(id).length, outPass=!!(outOf(id)||{}).pass;
+  const body=list=>list.map(n=> n.t==="p" ? `<p>${n.html}</p>` : n.t==="ul" ? `<ul>${n.items.map(x=>`<li>${x}</li>`).join("")}</ul>` : n.t==="note" ? `<div class="lnote">${n.html}</div>` : `<pre class="lcode"><code>${hl(n.code)}</code></pre>`).join("");
+  const sec=(x,k)=>`<section class="ep-card tb${deep?" deep":""}${/^Аналогия/.test(x.h)?" analogy":""}${/^Проверь себя/.test(x.h)?" check":""}"><h3><i>${deep?"+":""}${String(k+1).padStart(2,"0")}</i>${x.h}</h3>${body(x.body)}</section>`;
+  const cards=[];
+  if(!deep && L.mission) cards.push(`<section class="ep-card tb mission"><div class="m-k">${L.mission}</div>${L.scenario?`<h2>${L.scenario}</h2>`:""}${L.goals.length?`<div class="m-g"><span>ПОСЛЕ МИССИИ ТЫ СМОЖЕШЬ</span><ul>${L.goals.map(g=>`<li>${g}</li>`).join("")}</ul></div>`:""}</section>`);
+  (deep ? L.deeper : L.base).forEach((x,k)=>cards.push(sec(x,k)));
+  const outBtn = qn ? (outPass ? `<button class="ghostbtn" type="button" id="toOut">ВЫГРУЗКА ✓ · ПРОЙТИ ЕЩЁ РАЗ</button>` : `<button class="cta" type="button" id="toOut">ВЫГРУЗКА ▸ <small>${qn} ${plural(qn,["ВОПРОС","ВОПРОСА","ВОПРОСОВ"])} ПО ПАМЯТИ</small></button>`) : "";
+  cards.push(`<section class="ep-card ep-end"><h3>${deep?"КОНЕЦ БОНУСА":"КОНЕЦ ЭПИЗОДА"}</h3>
+    <p class="ep-tip">${qn ? "Текст урока закроется. Вытащи главное из головы — так тема и запоминается." : "Закрепи урок практикой: ответ — по памяти, потом сверка."}</p>
+    <div class="ep-acts">${outBtn}
+      ${c.steps && c.steps.length ? `<button class="${outPass||!qn?"cta":"ghostbtn"}" type="button" id="toPractice">ЗАПУСТИТЬ ПРАКТИКУ ▸</button>` : ""}
+      ${!deep && nDeep ? `<button class="deepBtn" type="button" id="toDeep"><span>БОНУС · ГЛУБЖЕ ▸</span><small>${nDeep} ${nDeep<5?"РАЗДЕЛА":"РАЗДЕЛОВ"} · ДЛЯ СОБЕСА И MIDDLE</small></button>` : ""}
+      ${deep ? `<button class="textbtn" type="button" id="epBase">← К ОСНОВНОМУ ЭПИЗОДУ</button>` : ""}</div>
+    ${deep ? "" : growsHTML(id)}
+    <div class="sect"><h3>СВЯЗИ</h3><ul class="links" id="tLinks"></ul></div>
+    ${nextI>=0 ? `<div class="sect"><h3>ДАЛЬШЕ В ВЕТКЕ</h3><ul class="links"><li><button type="button" id="tNext"><span>${esc(topics[nextI].title)}</span><em>→</em></button></li></ul></div>` : ""}</section>`);
+  const n=cards.length; P.k=Math.max(0, Math.min(P.k, n-1));
+  pane.innerHTML = `<div class="ep${deep?" bonus":""}" id="ep">
+    <div class="ep-h"><span class="ep-k">${deep?"БОНУС · ГЛУБЖЕ":"ЭПИЗОД"}</span><span class="ep-n" id="epN"></span></div>
+    <div class="ep-dots" id="epDots">${cards.map((_,k)=>`<button type="button" data-k="${k}" aria-label="${k===n-1?"Финал":"Карточка "+(k+1)}"><i></i></button>`).join("")}</div>
+    <div class="ep-track theory lesson" id="epTrack" tabindex="-1">${cards.join("")}</div>
+    <div class="ep-nav"><button type="button" class="ghostbtn" id="epPrev" aria-label="Назад">◂</button><button type="button" class="cta" id="epNext">ДАЛЬШЕ ▸</button></div></div>`;
+  const track=$("epTrack"), dots=[...$("epDots").children];
+  if($("tGrows")) $("tGrows").addEventListener("click",e=>{ const b=e.target.closest("[data-i]"); if(b) openTopic(+b.dataset.i); });   /* «Корни»: reverse prereqs on the finale card */
+  const paint=()=>{
+    dots.forEach((d,k)=>{ d.classList.toggle("on", k===P.k); d.classList.toggle("past", k<P.k); if(k===P.k) d.setAttribute("aria-current","step"); else d.removeAttribute("aria-current"); });
+    $("epN").textContent = String(P.k+1).padStart(2,"0")+" / "+String(n).padStart(2,"0");
+    $("epPrev").disabled = P.k===0 && !deep;   /* in the bonus, ◂ on the first card returns to the base finale */
+    const last=P.k>=n-1; $("epNext").hidden=last; $("epNext").textContent = P.k===n-2 ? "ФИНАЛ ▸" : "ДАЛЬШЕ ▸";
+  };
+  const go=k=>{ P.k=Math.max(0, Math.min(k, n-1)); paint(); if(track.clientWidth) track.scrollTo({left:P.k*track.clientWidth, behavior:"auto"}); };
+  track.addEventListener("scroll",()=>{ const w=track.clientWidth; if(!w) return; const k=Math.round(track.scrollLeft/w); if(k!==P.k && k>=0 && k<n){ P.k=k; paint(); } },{passive:true});
+  /* the pane may be hidden while rendering (openTopic), and the phone may rotate: snap back to the current card on resize */
+  if(window.ResizeObserver){ const ro=new ResizeObserver(()=>{ if(!track.isConnected){ ro.disconnect(); return; } if(track.clientWidth) track.scrollLeft=P.k*track.clientWidth; }); ro.observe(track); }
+  dots.forEach(d=>d.addEventListener("click",()=>go(+d.dataset.k)));
+  $("epPrev").addEventListener("click",()=>{ if(deep && P.k===0){ epPos[id]={deep:false, k:1e9}; renderEpisode(t, c, L, nextI); } else go(P.k-1); });
+  $("epNext").addEventListener("click",()=>go(P.k+1));
+  track.addEventListener("keydown",e=>{ if(e.key==="ArrowRight"){ e.preventDefault(); go(P.k+1); } if(e.key==="ArrowLeft"){ e.preventDefault(); go(P.k-1); } });
+  paint(); go(P.k);
+  linkList($("tLinks"), current, j=>openTopic(j));
+  if($("toPractice")) $("toPractice").addEventListener("click",()=>setTab("practice"));
+  if($("toOut")) $("toOut").addEventListener("click",()=>openOut());
+  if($("tNext")) $("tNext").addEventListener("click",()=>openTopic(nextI));
+  if($("toDeep")) $("toDeep").addEventListener("click",()=>{ epPos[id]={deep:true, k:0}; renderEpisode(t, c, L, nextI); });
+  if($("epBase")) $("epBase").addEventListener("click",()=>{ epPos[id]={deep:false, k:1e9};   /* back to the base finale (k is clamped) */ renderEpisode(t, c, L, nextI); });
 }
 
 /* ---------- «Выгрузка»: the lesson text is closed, the «Проверь себя» questions one by one, answer → reveal → self-grade ---------- */
@@ -3002,6 +3246,62 @@ function renderOutDone(t, S){
   if($("outNextT")) $("outNextT").addEventListener("click",()=>openTopic(nextIdx(current),"theory"));
   if($("outPractice")) $("outPractice").addEventListener("click",()=>{ const st=DATA.content[id].steps; if(!(rec&&rec.pass)){ const k7=st.findIndex(x=>x.id==="s7"); if(k7>=0){ stepIdx=k7; bankIdx=-1; } } renderPractice(); setTab("practice"); });
 }
+
+/* ---------- «Корни»: before a lesson, each prereq not recalled lately → one question from memory → reveal → вспомнил / нет ---------- */
+const ROOTS_FRESH=3*DAY;
+let rootsSt=null;   /* {id, list:[prereq ids], k, shown, g:[]} */
+function rootQ(p){ const o=DATA.ref.one[p], ch=DATA.ref.cheat[p], t=topics[TIDX[p]];
+  if(o && o.q) return {q:o.q, a:o.a||""};
+  if(ch && ch.length) return {q:"Что главное про «"+t.title+"»? Сформулируй одной фразой.", a:ch[0]};
+  return null; }
+/* last time a topic was pulled from memory: as a root, step 7, «Выгрузка» or an SRS grade */
+function lastRecall(p){ const r=store.get("pm.srs."+p, null);
+  const srsAt = r && r.due ? r.due-SRS_DAYS[Math.min(r.stage||0, SRS_DAYS.length-1)]*DAY : 0;
+  return Math.max(rootOf(p).at||0, (recallOf(p)||{}).at||0, (outOf(p)||{}).at||0, Math.min(srsAt, Date.now())); }
+function rootsDue(id){
+  if(Date.now()-(store.get("pm.rootsSkip."+id, 0)||0) < DAY) return [];
+  return prereqsOf(id).filter(p=>rootQ(p) && Date.now()-lastRecall(p) > ROOTS_FRESH); }
+function openRoots(id){ const list=rootsDue(id); if(!list.length) return false; rootsSt={id, list, k:0, shown:false, g:[]}; renderRoots(); return true; }
+function closeRoots(){ rootsSt=null; renderTheory(); $("winBody").scrollTop=0; }
+function renderRoots(){
+  const S=rootsSt, pane=$("pane-theory"); if(!S) return;
+  stopTyping(); thBlocks=[]; thShown=0;
+  if(S.k>=S.list.length){ renderRootsDone(); return; }
+  const p=S.list[S.k], t=topics[TIDX[p]], q=rootQ(p);
+  pane.innerHTML = `<div class="out roots" id="roots">
+    <div class="out-h"><span>КОРНИ · <b>${S.k+1}</b> / ${S.list.length}</span><button type="button" class="textbtn" id="rootsSkip">ПРОПУСТИТЬ →</button></div>
+    <p class="out-tip">Урок стоит на этих темах. Вспомни ответ по памяти, потом открой его и честно отметь. «Нет» поставит тему в повтор.</p>
+    <div class="roots-t">${BRANCHES[t.b].code} · ${esc(t.title)}</div>
+    <h2 class="out-q" id="rootsQ">${esc(q.q)}</h2>
+    <div class="row-actions" id="rootsActs"><button type="button" class="cta" id="rootsShow">ПОКАЗАТЬ ОТВЕТ</button></div>
+    <div id="rootsKey"></div></div>`;
+  $("rootsSkip").addEventListener("click",()=>{ store.set("pm.rootsSkip."+S.id, Date.now()); closeRoots(); });
+  $("rootsShow").addEventListener("click",()=>{
+    S.shown=true; $("rootsActs").hidden=true;
+    $("rootsKey").innerHTML = `<div class="out-a">${esc(q.a)}</div>
+      <div class="assess"><span class="q">Вспомнил это сам, до ответа?</span><button type="button" class="cta" data-g="ok">ВСПОМНИЛ</button><button type="button" class="ghostbtn" data-g="no">НЕТ</button></div>`;
+    $("rootsKey").querySelectorAll("[data-g]").forEach(b=>b.addEventListener("click",()=>{
+      const v=b.dataset.g; S.g[S.k]=v; store.set("pm.roots."+p, {at:Date.now(), v});
+      if(v==="no"){ srsFail(p); logErr(p, "Корни: "+q.q, "Не вспомнил перед темой «"+topics[TIDX[S.id]].title+"». Ответ: "+q.a); sfx.no(); refreshProgress(); }
+      else sfx.ok();
+      S.k++; S.shown=false; renderRoots(); $("winBody").scrollTop=0; }));
+    const kb=$("rootsKey"); if(kb.scrollIntoView) kb.scrollIntoView({block:"nearest"});
+  });
+}
+function renderRootsDone(){
+  const S=rootsSt, ok=S.g.filter(x=>x==="ok").length, n=S.list.length, miss=S.list.filter((p,k)=>S.g[k]==="no");
+  $("pane-theory").innerHTML = `<div class="out roots" id="roots">
+    <div class="out-h"><span>КОРНИ · ИТОГ</span></div>
+    <div class="out-sum"><span>ВСПОМНИЛ <b>${ok}</b> / ${n}</span></div>
+    <ul class="roots-sum">${S.list.map((p,k)=>`<li class="${S.g[k]==="no"?"no":""}"><b>${S.g[k]==="no"?"В ПОВТОР":"ВСПОМНИЛ"}</b><span>${esc(topics[TIDX[p]].title)}</span></li>`).join("")}</ul>
+    <p class="out-tip">${miss.length ? "Темы с «нет» вернутся в повторе уже завтра. Урок можно читать и сейчас." : "Опора на месте — можно в урок."}</p>
+    <div class="out-acts"><button type="button" class="cta" id="rootsGo">К УРОКУ ▸</button>
+      ${miss.map(p=>`<button type="button" class="ghostbtn" data-i="${TIDX[p]}">ОТКРЫТЬ · ${esc(topics[TIDX[p]].title)}</button>`).join("")}</div></div>`;
+  $("rootsGo").addEventListener("click",closeRoots);
+  $("pane-theory").querySelectorAll(".out-acts [data-i]").forEach(b=>b.addEventListener("click",()=>{ rootsSt=null; openTopic(+b.dataset.i); }));
+}
+function growsHTML(id){ const g=GROWS[id]; if(!g || !g.length) return "";
+  return `<p class="grows" id="tGrows"><span>Из этой темы растут:</span>${g.map((j,k)=>(k?"<i>·</i>":"")+`<button type="button" data-i="${j}">${esc(topics[j].title)}</button>`).join("")}</p>`; }
 
 /* ---------- answer editor: auto-pairs, indent, tab, highlight, key sounds ---------- */
 function attachEditor(ta, hlEl, opts){
@@ -3223,14 +3523,18 @@ function renderPractice(){
   exitKb();
   const useSkb = !oral && canSkb() && store.get("pm.kbd","skb")!=="sys";
   if(useSkb){ ta.setAttribute("inputmode","none"); pane.classList.add("skbm"); } else pane.classList.remove("skbm");
+  /* phone: «Ключ» before the answer is long enough — stay in typing mode, the key button shows what is missing */
+  const gateFlash=()=>pane.querySelectorAll('[data-k="key"],[data-s="key"]').forEach(b=>{ if(b.dataset.lab==null) b.dataset.lab=b.textContent;
+    const n=answerLeft(ta.value,oral); b.textContent="ещё "+n; b.classList.add("gflash"); clearTimeout(b._gt);
+    b._gt=setTimeout(()=>{ b.textContent=b.dataset.lab; b.classList.remove("gflash"); },1600); });
   const doAct=v=>{
     if(v==="done"){ ta.blur(); exitKb(); return; }
-    if(v==="key"){ ta.blur(); exitKb(); if(!kb.disabled){ kb.click(); setTimeout(()=>{ const k=$("keyBox"); if(k) k.scrollIntoView({block:"start",behavior:"smooth"}); },350); } else { gate.classList.remove("blink"); void gate.offsetWidth; gate.classList.add("blink"); } return; }
+    if(v==="key"){ if(PHONE && kb.disabled && !kb.dataset.open){ gateFlash(); return; } ta.blur(); exitKb(); if(!kb.disabled){ kb.click(); setTimeout(()=>{ const k=$("keyBox"); if(k) k.scrollIntoView({block:"start",behavior:"smooth"}); },350); } else { gate.classList.remove("blink"); void gate.offsetWidth; gate.classList.add("blink"); } return; }
     if(v==="sys"||v==="kbd"){ store.set("pm.kbd", v==="sys" ? "sys" : "skb"); renderPractice(); const t2=$("ans"); if(t2){ t2.focus(); t2.setSelectionRange(t2.value.length,t2.value.length); } return; }
   };
   const skb = useSkb && $("skb") ? buildSkb($("skb"), ed, doAct, s.code) : null;
   if(skb){ ta.addEventListener("input",()=>skb.refresh()); ta.addEventListener("click",()=>skb.refresh()); }
-  const pr=pane.querySelector(".prompt"), markMore=()=>{ if(!pr) return; if(!pr.classList.contains("open")) pr.scrollTop=0; pr.classList.toggle("more", pr.classList.contains("open") || pr.scrollHeight>pr.clientHeight+2); };
+  const pr=pane.querySelector(".prompt"), markMore=()=>{ if(!pr) return; if(!pr.classList.contains("open")) pr.scrollTop=0; pr.classList.toggle("pmore", pr.classList.contains("open") || pr.scrollHeight>pr.clientHeight+2); };
   ta.addEventListener("focus",()=>{ if(!narrow()) return; document.body.classList.add("kb-on"); pane.classList.add("kbd");
     if(useSkb){ fullVV(); } else { updVV(); setTimeout(guessVV, 550); }
     try{ window.scrollTo(0,0); }catch(e){} requestAnimationFrame(()=>{ fitCode(); markMore(); }); });
@@ -3241,7 +3545,7 @@ function renderPractice(){
   (function(){ const bar=$("symbar"); if(!bar) return;
     const act=btn=>{ const v=btn.dataset.s;
       if(v==="done"||v==="kbd"){ doAct(v); return; }
-      if(v==="key"){ ta.blur(); exitKb(); if(!kb.disabled){ kb.click(); setTimeout(()=>{ const k=$("keyBox"); if(k) k.scrollIntoView({block:"start",behavior:"smooth"}); },350); } else { gate.classList.remove("blink"); void gate.offsetWidth; gate.classList.add("blink"); } return; }
+      if(v==="key"){ doAct("key"); return; }
       if(v==="flip"){ pane.classList.toggle("codebig"); requestAnimationFrame(()=>{ fitCode(); markMore(); }); return; }
       if(v==="tab"){ ed.tab(false); return; } if(v==="untab"){ ed.tab(true); return; }
       ed.sym(v); };
@@ -3291,6 +3595,7 @@ function renderPractice(){
     if(inBank){
       fxLog(v==="ok"?"OK":"FAIL", "BANK://"+s.id.toUpperCase()+(v==="ok"?" · РЕШЕНО":" · В ЖУРНАЛ")); const st=bankStat(s.id); st[v==="ok"?"ok":"no"]++; st.last=Date.now(); store.set("pm.bank."+s.id, st);
       if(v==="ok"){ burst(current, 12); sfx.ok(); } else { sfx.no(); } if(v!=="ok") logErr(t.id, s.title+": "+s.prompt, v==="part" ? "Банк задач: частично — сверить с ключом." : "Банк задач: не вышло — разобрать по ключу.");
+      if(v==="no") backFail("b", t.id, s.id, bankEq(s)); else if(v==="ok") backPass(backKey("b", t.id, s.id));
       if(stay) return;
       store.set(ansKey, ""); bankIdx=pickBank(t.id, s.id); renderPractice(); startTyping("practice"); return;
     }
@@ -3299,6 +3604,7 @@ function renderPractice(){
       const r=document.querySelector('.rung[data-step="'+stepIdx+'"]'); if(r){ r.classList.toggle("ok",v==="ok"); r.classList.toggle("no",v==="no"); }
       return; }
     const gr=gradesOf(t.id); gr[s.id]=v; store.set("pm.grade."+t.id, gr);
+    if(v==="no") backFail("s", t.id, s.id, stepEq(s)); else if(v==="ok") backPass(backKey("s", t.id, s.id));   /* «нет» comes back in the run on day 1 and 3 */
     if(s.id==="s7"){ const r0=recallOf(t.id)||{}; store.set("pm.recall."+t.id, {at:Date.now(), v, pass: v==="ok" ? (r0.pass||Date.now()) : (r0.pass||0)}); }
     if(blind){ if(v==="ok" && ta.value.trim()) store.set("pm.ans."+t.id+".s7", ta.value); store.set(ansKey, ""); }
     if(t.due && s.id==="s7") srsGrade(t.id, v);
@@ -3332,7 +3638,7 @@ function renderCheat(){
   const errs=store.get("pm.err."+t.id,[]);
   $("tab-cheat").hidden = !(ch||one||fol.length||cmp.length||ln.length||errs.length);
   const qa=(q,a)=>`<button type="button" class="qa" aria-expanded="false"><span class="q">${esc(q)}</span><span class="a" hidden>${esc(a)}</span></button>`;
-  const errHTML = errs.length ? `<h5 class="ch-h err-h">ТВОИ ОШИБКИ · ${errs.length}</h5><ul class="errs">${errs.map((e,k)=>`<li><div><span class="eq">${esc(e.q)}</span>${e.note?`<span class="en">${esc(e.note)}</span>`:""}</div><span class="ed">${fmtDate(e.at)}</span><button type="button" class="ex" data-k="${k}" title="Разобрался — убрать">✓</button></li>`).join("")}</ul>` : "";
+  const errHTML = errs.length ? `<h5 class="ch-h err-h">ТВОИ ОШИБКИ · ${errs.length}</h5><ul class="errs">${errs.map((e,k)=>`<li><div><span class="eq">${esc(e.q)}</span>${e.note?`<span class="en">${esc(e.note)}</span>`:""}${(b=>b?`<span class="eb${b.done?" off":""}">${backLabel(b)}</span>`:`<span class="eb off">В РАН НЕ ВЕРНЁТСЯ · ОЦЕНКА НЕ «НЕТ»</span>`)(backFor(t.id, e.q))}</div><span class="ed">${fmtDate(e.at)}</span><button type="button" class="ex" data-k="${k}" title="Разобрался — убрать">✓</button></li>`).join("")}</ul>` : "";
   const left = errHTML + (ch?`<h5 class="ch-h">ШПАРГАЛКА</h5><ol class="ch-list">${ch.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:"")
     + cmp.map(c=>`<h5 class="ch-h">СРАВНЕНИЕ · ${esc(c.t)}</h5><table class="ch-cmp"><thead><tr><th></th><th>${esc(c.a)}</th><th>${esc(c.b)}</th></tr></thead><tbody>${c.rows.map(r=>`<tr><th>${esc(r[0])}</th><td>${esc(r[1])}</td><td>${esc(r[2])}</td></tr>`).join("")}</tbody></table>`).join("");
   const right = ((one||fol.length)?`<p class="ch-tip">Сначала ответь вслух, потом кликни — проверь себя.</p>`:"")
@@ -3412,6 +3718,7 @@ function pickQ(id){ const R=DATA.ref, f=R.follow[id]||[], one=R.one[id]; const p
   return pool.length ? pool[(Math.random()*pool.length)|0] : null; }
 function buildRun(){
   const cards=[], used=new Set();
+  backDueList().slice(0,3).forEach(([key,e])=>{ const i=idIndex[e.t], it={k:e.k, t:e.t, ref:e.ref, q:e.q, a:e.a}; if(i==null || !itemView(it)) return; cards.push({kind:"back", i, it, bkey:key, ok:e.ok||0}); });
   dueList().slice(0,2).forEach(i=>{ const q=pickQ(topics[i].id); if(q){ cards.push({kind:"review", i, q:q[0], a:q[1]}); used.add(i); } });
   const pool=topics.map((t,i)=>i).filter(i=>!used.has(i) && (topics[i].status==="done"||topics[i].status==="prog") && pickQ(topics[i].id));
   while(cards.length<2 && pool.length){ const i=pool.splice((Math.random()*pool.length)|0,1)[0]; const q=pickQ(topics[i].id); cards.push({kind:"recall", i, q:q[0], a:q[1]}); used.add(i); }
@@ -3423,13 +3730,86 @@ function buildRun(){
     else { const done=topics.map((t,i)=>i).filter(i=>topics[i].status==="done" && bankFor(topics[i].id).length); if(done.length){ const i=done[(Math.random()*done.length)|0]; const b=pickBank(topics[i].id); cards.push({kind:"step", i, k:-1, bank:b, s:bankFor(topics[i].id)[b]}); } } }
   return cards;
 }
+/* one recall card from a stored item (error return in the run, mixed training): question → answer → ПОМНЮ / НЕ ВСПОМНИЛ */
+function itemView(it){
+  const c=DATA.content[it.t]||{};
+  if(it.k==="s"){ const k=(c.steps||[]).findIndex(x=>x.id===it.ref), s=k>=0 && c.steps[k]; if(!s) return null;
+    return {label:"СТУПЕНЬ "+(k+1), h:esc(short(s.title)), p:s.prompt, code:s.code, oral:s.id==="s5", key:s.key, points:s.points, eq:stepEq(s)}; }
+  if(it.k==="b"){ const s=DATA.bank.find(x=>x.id===it.ref); if(!s) return null;
+    return {label:"ЗАДАЧА БАНКА · "+String(s.type||"").toUpperCase(), h:esc(s.title), p:s.prompt, code:s.code, oral:s.type==="Устно", key:s.key, points:s.points, eq:bankEq(s)}; }
+  if(it.k==="o"){ const L=c.lesson||{}, q=outQs(it.t)[it.ref], a=L.answers && L.answers[it.ref]; if(!q) return null;
+    return {label:"ПРОВЕРЬ СЕБЯ", h:q, ans:a?`<div class="out-a">${a}</div>`:"", eq:outEq(q)}; }
+  if(it.k==="q") return it.q ? {label:"ВОПРОС ИЗ РАНА", h:esc(it.q), ans:`<div class="run-a">${esc(it.a||"")}</div>`, eq:it.q} : null;
+  return null;
+}
+function itemAnswer(v){
+  if(v.ans!=null) return v.ans || `<div class="run-a">Эталонного ответа нет — сверься со шпаргалкой темы.</div>`;
+  const pts = v.points && v.points.length ? `<div class="kpoints"><div class="kp-h">СВЕРЬ ПО ПУНКТАМ · ВСЕ ОБЯЗАТЕЛЬНЫ</div><ol>${v.points.map(p=>`<li>${p}</li>`).join("")}</ol></div>` : "";
+  return pts + (v.key ? terminal(v.key, "Ключ", "сверь со своим ответом", {plain:true, key:true}) : "");
+}
+/* mixed training: 5–10 cards from topics in progress or done (steps, bank, «Проверь себя», open errors), topics interleaved round-robin,
+   topics due in SRS go first and add a card each; the topic name stays hidden until the answer. No streak, no SRS move. */
+const MIX_MIN=5, MIX_MAX=10;
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function mixPool(){
+  const by=new Map(), add=(id,it)=>{ if(!by.has(id)) by.set(id,[]); by.get(id).push(it); };
+  topics.forEach(t=>{ const id=t.id, c=DATA.content[id]; if(!c || (t.status!=="done" && t.status!=="prog")) return;
+    const p=progressOf(id), done=t.status==="done", L=c.lesson||{};
+    (c.steps||[]).forEach(s=>{ if(done || p[s.id]) add(id, {k:"s", t:id, ref:s.id}); });
+    bankFor(id).forEach(b=>{ if(done || bankStat(b.id).last) add(id, {k:"b", t:id, ref:b.id}); });
+    if(done || outOf(id)) outQs(id).forEach((q,k)=>{ if(L.answers && L.answers[k]) add(id, {k:"o", t:id, ref:k}); }); });
+  const errs=new Map();
+  Object.entries(backAll()).forEach(([key,e])=>{ if(e.done || idIndex[e.t]==null || !DATA.content[e.t]) return; if(!errs.has(e.t)) errs.set(e.t,[]); errs.get(e.t).push({k:e.k, t:e.t, ref:e.ref, q:e.q, a:e.a, bkey:key}); });
+  return {by, errs};
+}
+function buildMix(){
+  const {by, errs}=mixPool(), ids=[...new Set([...by.keys(), ...errs.keys()])], q=new Map();
+  ids.forEach(id=>{ const e=shuffle(errs.get(id)||[]), seen=new Set(e.map(x=>x.k+":"+x.ref)); q.set(id, e.concat(shuffle((by.get(id)||[]).filter(x=>!seen.has(x.k+":"+x.ref))))); });
+  const due=ids.filter(id=>topics[idIndex[id]].due).sort((a,b)=>((srsOf(a)||{}).due||0)-((srsOf(b)||{}).due||0));
+  const order=due.concat(shuffle(ids.filter(id=>!due.includes(id)))), n=Math.min(MIX_MAX, MIX_MIN+due.length), cards=[], usedB=new Set();
+  while(cards.length<n){ let added=false;
+    for(const id of order){ if(cards.length>=n) break; const list=q.get(id);
+      while(list.length){ const it=list.shift(); if(it.k==="b"){ if(usedB.has(it.ref)) continue; usedB.add(it.ref); } if(!itemView(it)) continue;
+        cards.push({kind:"mix", i:idIndex[id], it, bkey:it.bkey}); added=true; break; } }
+    if(!added) break; }
+  return new Set(cards.map(c=>c.i)).size>=2 ? cards : [];
+}
+function renderItemCard(c){
+  const body=$("runBody"), t=topics[c.i], v=itemView(c.it), mix=c.kind==="mix";
+  const topicLine=`${BRANCHES[t.b].code} · ${esc(t.title)}`;
+  const kind = mix ? v.label+(c.bkey?" · ТВОЯ ОШИБКА":"") : "ОШИБКА ВОЗВРАЩАЕТСЯ · "+(c.ok?"ДЕНЬ "+BACK_DAYS[1]:"ДЕНЬ "+BACK_DAYS[0])+" · "+v.label;
+  body.innerHTML=`<div class="run-kind">${kind}</div><div class="run-topic" id="runTopic">${mix?"ТЕМА СКРЫТА ДО ОТВЕТА":topicLine}</div>
+    <h3 class="run-q">${v.h}</h3>${v.p?`<div class="run-a" style="border-color:var(--line-2)">${esc(v.p)}</div>`:""}
+    ${v.code?terminal(v.code, "Задача", "", {plain:v.oral||proseCode(v.code)}):""}
+    <p class="run-tip" id="runTip">Ответь вслух или про себя. Потом открой ответ.</p>
+    <div class="run-acts" id="runActs"><button type="button" class="cta" id="runShow">ПОКАЗАТЬ ОТВЕТ</button></div>`;
+  $("runShow").addEventListener("click",()=>{
+    $("runTip").outerHTML=`<div class="run-ans">${itemAnswer(v)}</div>`; $("runTopic").innerHTML=topicLine;
+    $("runActs").innerHTML=`<button type="button" class="cta" id="runYes">ПОМНЮ</button><button type="button" class="ghostbtn" id="runNo">НЕ ВСПОМНИЛ</button>`;
+    $("runYes").addEventListener("click",()=>{ sfx.ok(); backPass(c.bkey || backKey(c.it.k, c.it.t, c.it.ref)); runRes.push(true); flash[c.i]=1.6; burst(c.i,10); refreshProgress(); runIdx++; renderRun(); });
+    $("runNo").addEventListener("click",()=>{ sfx.no(); backFail(c.it.k, c.it.t, c.it.ref, v.eq, c.it.q, c.it.a);
+      if(mix) logErr(t.id, v.eq, "Тренировка: не вспомнил — вернётся в ран завтра."); runRes.push(false); refreshProgress(); runIdx++; renderRun(); });
+  });
+}
 const RUN_KIND={review:"ПОВТОР · ТЕМА ПРОСИТ ВСПОМНИТЬ", recall:"ВСПОМНИ ИЗ ПРОЙДЕННОГО", warm:"РАЗМИНКА · УГАДАЙ ДО ТЕОРИИ", step:"СЛЕДУЮЩАЯ СТУПЕНЬ"};
 let pendingRun=null;
-function openRun(){ runCards=buildRun(); runIdx=0; runRes=[]; $("run").hidden=false; hideTip(); renderRun(); }
+let runMode="run";
+function setRunMode(m){ runMode=m; $("runTitle").innerHTML = m==="mix" ? "<i></i>MIX.EXE · ТРЕНИРОВКА" : "<i></i>RUN.EXE · 5 МИН"; $("run").setAttribute("aria-label", m==="mix" ? "Смешанная тренировка" : "Ран 5 минут"); }
+function openRun(){ setRunMode("run"); runCards=buildRun(); runIdx=0; runRes=[]; $("run").hidden=false; hideTip(); renderRun(); }
+function openMix(){ setRunMode("mix"); runCards=buildMix(); runIdx=0; runRes=[]; $("run").hidden=false; hideTip(); renderRun(); }
 function closeRun(){ $("run").hidden=true; stopTyping(); }
 function finishRunDay(){ fxLog("RUN","СЕРИЯ ОБНОВЛЕНА"); const days=runDays(), k=dayKey(); if(!days.includes(k)){ days.push(k); store.set("pm.runs", days.slice(-120)); } refreshRun(); }
 function renderRun(){
-  const body=$("runBody"), n=runCards.length; $("runBar").style.width=(Math.min(runIdx,n)/n*100)+"%";
+  const body=$("runBody"), n=runCards.length; $("runBar").style.width=(n?Math.min(runIdx,n)/n*100:0)+"%";
+  if(runMode==="mix" && !n){ $("runStep").textContent="";
+    body.innerHTML=`<div class="run-kind">ТРЕНИРОВКЕ НУЖНО ХОТЯ БЫ ДВЕ ТЕМЫ</div><p class="run-tip">Смешанная тренировка берёт вопросы из тем, где ты уже отвечал: ступени, банк, «Проверь себя», твои ошибки. Начни вторую тему — и вопросы начнут перемешиваться.</p>
+      <div class="run-acts"><button type="button" class="ghostbtn" id="runDone">НА КАРТУ</button></div>`;
+    $("runDone").addEventListener("click",closeRun); return; }
+  if(runMode==="mix" && runIdx>=n){ $("runStep").textContent="ГОТОВО"; const ok=runRes.filter(x=>x).length, tn=new Set(runCards.map(c=>c.i)).size;
+    body.innerHTML=`<div class="run-kind">ТРЕНИРОВКА ЗАВЕРШЕНА</div><div class="run-big">ВСПОМНИЛ ${ok} / ${runRes.length}</div>
+      <div class="run-stats"><span>ТЕМ ВПЕРЕМЕШКУ <b>${tn}</b></span>${runRes.length-ok?`<span>НЕ ВСПОМНИЛ <b>${runRes.length-ok}</b> · ВЕРНУТСЯ В РАН ЗАВТРА</span>`:""}</div>
+      <div class="run-acts"><button type="button" class="cta" id="runMore">ЕЩЁ ТРЕНИРОВКА</button><button type="button" class="ghostbtn" id="runDone">НА КАРТУ</button></div>`;
+    $("runMore").addEventListener("click",openMix); $("runDone").addEventListener("click",closeRun); return; }
   if(runIdx>=n){ const counted=runRes.length>0; if(counted) finishRunDay(); $("runStep").textContent="ГОТОВО";
     const ok=runRes.filter(x=>x).length, nx=topics.filter(t=>t.status==="done").map(t=>srsOf(t.id)).filter(Boolean).sort((a,b)=>a.due-b.due)[0];
     body.innerHTML=`<div class="run-kind">${counted?"РАН ЗАВЕРШЁН":"РАН БЕЗ ОТВЕТОВ · ДЕНЬ НЕ ЗАСЧИТАН"}</div><div class="run-big">СЕРИЯ ${streak()} ${streak()===1?"ДЕНЬ":streak()<5?"ДНЯ":"ДНЕЙ"}</div>
@@ -3437,6 +3817,7 @@ function renderRun(){
       <div class="run-acts"><button type="button" class="cta" id="runMore">ЕЩЁ ОДИН РАН</button><button type="button" class="ghostbtn" id="runDone">НА КАРТУ</button></div>`;
     $("runMore").addEventListener("click",openRun); $("runDone").addEventListener("click",closeRun); return; }
   const c=runCards[runIdx], t=topics[c.i]; $("runStep").textContent=(runIdx+1)+" / "+n;
+  if(c.it){ renderItemCard(c); return; }
   if(c.kind==="step" && c.k<0) RUN_KIND.step="ЗАДАЧА ИЗ БАНКА · ТЕМА УЖЕ ОСВОЕНА"; else RUN_KIND.step="СЛЕДУЮЩАЯ СТУПЕНЬ";
   if(c.kind==="step"){
     body.innerHTML=`<div class="run-kind">${RUN_KIND.step}</div><div class="run-topic">${BRANCHES[t.b].code} · ${esc(t.title)}</div>
@@ -3454,11 +3835,12 @@ function renderRun(){
   $("runShow").addEventListener("click",()=>{ stopTyping();
     $("runTip").outerHTML=`<div class="run-a">${esc(c.a)}</div>`;
     $("runActs").innerHTML=`<button type="button" class="cta" id="runYes">ПОМНЮ</button><button type="button" class="ghostbtn" id="runNo">НЕ ВСПОМНИЛ</button>`;
-    $("runYes").addEventListener("click",()=>{ sfx.ok(); if(c.kind==="review" && honestDone(t.id)) srsPass(t.id); runRes.push(true); flash[c.i]=1.6; burst(c.i,10); refreshProgress(); runIdx++; renderRun(); });
-    $("runNo").addEventListener("click",()=>{ sfx.no(); if(t.status==="done" || (c.kind==="review" && store.get("pm.srs."+t.id,null))) srsFail(t.id); if(c.kind!=="warm") logErr(t.id, c.q, "Ран: не вспомнил. Ответ: "+c.a); runRes.push(false); refreshProgress(); runIdx++; renderRun(); });
+    $("runYes").addEventListener("click",()=>{ sfx.ok(); if(c.kind==="review" && honestDone(t.id)) srsPass(t.id); else if(c.kind==="review" && rootOf(t.id).v==="no") store.set("pm.roots."+t.id, {at:Date.now(), v:"ok"}); backPass(backKey("q", t.id, strHash(c.q))); runRes.push(true); flash[c.i]=1.6; burst(c.i,10); refreshProgress(); runIdx++; renderRun(); });
+    $("runNo").addEventListener("click",()=>{ sfx.no(); if(t.status==="done" || (c.kind==="review" && store.get("pm.srs."+t.id,null))) srsFail(t.id); if(c.kind!=="warm"){ logErr(t.id, c.q, "Ран: не вспомнил. Ответ: "+c.a); backFail("q", t.id, strHash(c.q), c.q, c.q, c.a); } runRes.push(false); refreshProgress(); runIdx++; renderRun(); });
   });
 }
 $("runBtn").addEventListener("click",openRun);
+$("mixBtn").addEventListener("click",openMix);
 $("runClose").addEventListener("click",closeRun);
 $("run").addEventListener("click",e=>{ if(e.target.id==="run") closeRun(); });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !$("run").hidden){ e.stopImmediatePropagation(); closeRun(); } }, true);
@@ -3606,8 +3988,65 @@ refreshRun(); refreshBackupNote();
   requestAnimationFrame(loop);
 })();
 
+/* merge:begin — pure, no DOM/storage (tests/merge.js runs this block in Node).
+   mergeProgress(local, incoming): two maps key -> JSON string of pm.* progress, returns {map, changed}.
+   Never loses progress: per step/grade the better mark wins (ok > part > no), SRS keeps the later due date,
+   «passed» timestamps are kept from either side, logs and day lists are unions, drafts prefer the local text. */
+function mergeProgress(local, incoming){
+  const RANK={ok:3, part:2, no:1};
+  const P=s=>{ if(s==null) return undefined; try{ return JSON.parse(s); }catch(e){ return undefined; } };
+  const isObj=v=>v && typeof v==="object" && !Array.isArray(v);
+  const num=v=>typeof v==="number" && isFinite(v) ? v : 0;
+  const minTs=(a,b)=>{ a=num(a); b=num(b); return a&&b ? Math.min(a,b) : a||b; };
+  const better=(a,b)=>(RANK[b]||0)>(RANK[a]||0) ? b : a;
+  const marks=(a,b)=>{ const r={...b, ...a}; Object.keys(b).forEach(k=>{ r[k]=better(a[k], b[k]); }); return r; };
+  /* {at, v, pass}: the newer attempt describes the last state, a pass from either device is kept (earliest) */
+  const attempt=(a,b)=>{ const n=num(b.at)>num(a.at) ? b : a; return {...n, pass:minTs(a.pass, b.pass)}; };
+  const tsMap=(a,b,pick)=>{ const r={...a}; Object.keys(b).forEach(k=>{ r[k] = k in a ? pick(a[k], b[k]) : b[k]; }); return r; };
+  function one(key, a, b){
+    if(/^pm\.(steps|grade)\./.test(key)) return isObj(a)&&isObj(b) ? marks(a,b) : a;
+    if(/^pm\.srs\./.test(key)) return isObj(a)&&isObj(b) ? (num(b.due)>num(a.due) ? b : a) : a;
+    if(/^pm\.(recall|out)\./.test(key)) return isObj(a)&&isObj(b) ? attempt(a,b) : a;
+    if(/^pm\.roots\./.test(key)) return isObj(a)&&isObj(b) ? (num(b.at)>num(a.at) ? b : a) : a;   /* «Корни»: the latest recall */
+    if(/^pm\.rootsSkip\./.test(key)) return Math.max(num(a), num(b)) || a;
+    /* errors that come back (pm.back): union of entries; per entry the latest miss wins, same miss -> more progress */
+    if(key==="pm.back") return isObj(a)&&isObj(b) ? tsMap(a,b,(x,y)=>{ if(!isObj(x)||!isObj(y)) return isObj(x)?x:y;
+      if(num(y.at)!==num(x.at)) return num(y.at)>num(x.at) ? y : x;
+      const g=e=>(e.done?100:0)+num(e.ok); return g(y)>g(x) ? y : x; }) : a;
+    if(/^pm\.doneAt\./.test(key)) return minTs(a,b) || a;
+    if(/^pm\.bank\./.test(key)) return isObj(a)&&isObj(b) ? {...a, ok:Math.max(num(a.ok),num(b.ok)), no:Math.max(num(a.no),num(b.no)), last:Math.max(num(a.last),num(b.last))} : a;
+    if(/^pm\.err\./.test(key)){ if(!Array.isArray(a)||!Array.isArray(b)) return a; const seen=new Set(), r=[];
+      a.concat(b).forEach(x=>{ const k=x && (num(x.at)+"|"+x.q); if(!x || seen.has(k)) return; seen.add(k); r.push(x); });
+      return r.sort((x,y)=>num(y.at)-num(x.at)).slice(0,20); }
+    if(key==="pm.known" || key==="pm.legacy") return isObj(a)&&isObj(b) ? tsMap(a,b,minTs) : a;
+    if(key==="pm.skip") return isObj(a)&&isObj(b) ? tsMap(a,b,(x,y)=>Math.max(num(x),num(y))) : a;
+    if(key==="pm.imported") return isObj(a)&&isObj(b) ? tsMap(a,b,(x,y)=>x==="done"||y==="done" ? "done" : x||y) : a;
+    if(key==="pm.runs") return Array.isArray(a)&&Array.isArray(b) ? [...new Set(a.concat(b))].sort().slice(-120) : a;
+    if(key==="pm.honest") return isObj(a)&&isObj(b) ? (num(b.at)&&num(b.at)<num(a.at) ? b : a) : a;
+    if(/^pm\.outAns\./.test(key)){ if(!Array.isArray(a)||!Array.isArray(b)) return a; const r=a.slice(); b.forEach((x,i)=>{ if(!(r[i]&&String(r[i]).trim())) r[i]=x; }); return r; }
+    if(typeof a==="string") return a.trim() ? a : b;   /* answer drafts: pm.ans.*, pm.rans.*, pm.bankAns.* */
+    return a;
+  }
+  /* key order does not matter: {s1,s2} and {s2,s1} are the same progress */
+  const canon=v=>JSON.stringify(v, (k,x)=>isObj(x) ? Object.keys(x).sort().reduce((o,kk)=>(o[kk]=x[kk], o), {}) : x);
+  const map={...local};
+  Object.keys(incoming||{}).forEach(key=>{
+    const bs=incoming[key], b=P(bs); if(b===undefined) return;
+    if(!(key in local)){ map[key]=bs; return; }
+    const a=P(local[key]); if(a===undefined){ map[key]=bs; return; }
+    const r=one(key, a, b);
+    if(canon(r)!==canon(a)) map[key]=JSON.stringify(r);
+  });
+  /* «Уже знаю» confirmed after the topic was put aside: it is no longer skipped */
+  const kn=P(map["pm.known"]), sk=P(map["pm.skip"]);
+  if(isObj(kn) && isObj(sk)){ let d=0; Object.keys(sk).forEach(id=>{ if(num(kn[id])>=num(sk[id])){ delete sk[id]; d++; } }); if(d){ map["pm.skip"]=JSON.stringify(sk); } }
+  const changed=Object.keys(map).filter(k=>map[k]!==local[k]).length;
+  return {map, changed};
+}
+/* merge:end */
+
 /* ---------- import from the old board ---------- */
-function collectProgress(){ const data={}; try{ for(let k=0;k<localStorage.length;k++){ const key=localStorage.key(k); if(key && key.startsWith("pm.") && key!=="pm.font" && key!=="pm.codefont") data[key]=localStorage.getItem(key); } }catch(e){} return data; }
+function collectProgress(){ const data={}; try{ for(let k=0;k<localStorage.length;k++){ const key=localStorage.key(k); if(key && key.startsWith("pm.") && !DEVICE_KEYS.has(key)) data[key]=localStorage.getItem(key); } }catch(e){} return data; }
 async function exportProgress(){
   const now=new Date(), name="synapso-"+now.toISOString().slice(0,10)+".json";
   const json=JSON.stringify({app:"put-k-middle", v:1, at:now.toISOString(), data:collectProgress()}, null, 1);
@@ -3632,11 +4071,11 @@ $("volFx").addEventListener("input",e=>{ sfx.setVol("fx",+e.target.value); sfx.h
 $("sfxBtn").addEventListener("click",()=>{ sfx.toggle(); sfxLabel(); }); sfxLabel();
 $("importBtn").addEventListener("click",()=>$("importFile").click());
 /* ---------- safe import: validate -> confirm -> write before delete -> rollback on failure ---------- */
-const DEVICE_KEYS=new Set(["pm.font","pm.codefont","pm.sfx","pm.volAmb","pm.volFx","pm.keysnd","pm.split","pm.lastExport","pm.kbd"]);
+const DEVICE_KEYS=new Set(["pm.font","pm.codefont","pm.sfx","pm.volAmb","pm.volFx","pm.keysnd","pm.split","pm.lastExport","pm.kbd","pm.gist","pm.lastSync"]);
 let lastSnapshot=null;
 function progressKeys(){ const r=[]; try{ for(let k=0;k<localStorage.length;k++){ const key=localStorage.key(k); if(key && key.startsWith("pm.") && !DEVICE_KEYS.has(key)) r.push(key); } }catch(e){} return r; }
 function takeSnapshot(){ const o={}; progressKeys().forEach(k=>{ try{ o[k]=localStorage.getItem(k); }catch(e){} }); return o; }
-function reloadState(){ IMPORTED=store.get("pm.imported",{}); KNOWN=store.get("pm.known",{}); SKIP=store.get("pm.skip",{}); LEGACY=store.get("pm.legacy",{}); migrateHonest(); outSt=null; refreshProgress(); refreshRun(); refreshBackupNote(); }
+function reloadState(){ IMPORTED=store.get("pm.imported",{}); KNOWN=store.get("pm.known",{}); SKIP=store.get("pm.skip",{}); LEGACY=store.get("pm.legacy",{}); migrateHonest(); outSt=null; rootsSt=null; refreshProgress(); refreshRun(); refreshBackupNote(); }
 function restoreSnapshot(snap){ progressKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); Object.entries(snap).forEach(([k,v])=>{ try{ localStorage.setItem(k,v); }catch(e){} }); reloadState(); }
 function topicCount(map){ return Object.keys(map).filter(k=>k.indexOf("pm.steps.")===0 && map[k] && map[k]!=="{}").length; }
 function checkImport(obj){
@@ -3652,19 +4091,21 @@ function checkImport(obj){
   if(size>5000000) return {err:"ФАЙЛ СЛИШКОМ БОЛЬШОЙ"};
   return {map, topics:topicCount(map), at:String(obj.at||"").slice(0,10)};
 }
-function applyImport(map){
-  const note=$("importNote"), snap=takeSnapshot(); lastSnapshot=snap;
+/* merge (02.11): the file / gist and this device are combined, nothing is removed; ОТКАТИТЬ restores the snapshot */
+function applyMerge(incoming, what){
+  const note=$("importNote"), snap=takeSnapshot();
+  const r=mergeProgress(snap, incoming);
+  if(!r.changed){ note.textContent=what+" · НОВОГО НЕТ, ВСЁ УЖЕ ЕСТЬ НА ЭТОМ УСТРОЙСТВЕ"; return r; }
+  lastSnapshot=snap;
   try{ localStorage.setItem("bk.last", JSON.stringify({at:Date.now(), data:snap})); }catch(e){}
-  try{
-    Object.entries(map).forEach(([k,v])=>localStorage.setItem(k,v));
-    Object.keys(snap).forEach(k=>{ if(!(k in map)) localStorage.removeItem(k); });
-  }catch(err){
-    restoreSnapshot(snap); note.textContent="ИМПОРТ НЕ УДАЛСЯ · ВСЁ ВОЗВРАЩЕНО КАК БЫЛО"; return false; }
+  try{ Object.entries(r.map).forEach(([k,v])=>{ if(snap[k]!==v) localStorage.setItem(k,v); }); }
+  catch(err){ restoreSnapshot(snap); note.textContent=what+" НЕ УДАЛСЯ · ВСЁ ВОЗВРАЩЕНО КАК БЫЛО"; r.failed=true; return r; }
+  const before=new Set(topics.filter(t=>t.status==="done").map(t=>t.id));
   reloadState();
-  topics.forEach((t,i)=>{ if(t.status!=="none"&&t.status!=="dark") flash[i]=1.6; });
-  note.innerHTML = 'ПРОГРЕСС ЗАМЕНЁН · '+Object.keys(map).length+' ЗАПИСЕЙ <button type="button" class="fontbtn" id="impUndo">ОТКАТИТЬ</button>';
-  $("impUndo").addEventListener("click",()=>{ if(lastSnapshot){ restoreSnapshot(lastSnapshot); note.textContent="ВОЗВРАЩЕНО КАК БЫЛО ДО ИМПОРТА"; } });
-  return true;
+  topics.forEach((t,i)=>{ if(t.status==="done" && !before.has(t.id)) flash[i]=1.6; });
+  note.innerHTML = what+' · ОБЪЕДИНЕНО, ОБНОВЛЕНО ЗАПИСЕЙ: '+r.changed+' <button type="button" class="fontbtn" id="impUndo">ОТКАТИТЬ</button>';
+  $("impUndo").addEventListener("click",()=>{ if(lastSnapshot){ restoreSnapshot(lastSnapshot); lastSnapshot=null; note.textContent="ВОЗВРАЩЕНО КАК БЫЛО ДО ОБЪЕДИНЕНИЯ"; } });
+  return r;
 }
 $("importFile").addEventListener("change",async e=>{
   const f=e.target.files[0]; if(!f) return; const note=$("importNote");
@@ -3673,8 +4114,8 @@ $("importFile").addEventListener("change",async e=>{
     if(obj && obj.app==="put-k-middle"){
       const r=checkImport(obj); if(r.err){ note.textContent=r.err; e.target.value=""; return; }
       const now=topicCount(takeSnapshot());
-      note.innerHTML = '<div>ФАЙЛ ОТ '+(r.at||"?")+': ТЕМ С ОТВЕТАМИ '+r.topics+' · СЕЙЧАС: '+now+'. ТЕКУЩИЙ ПРОГРЕСС БУДЕТ ЗАМЕНЁН.</div><button type="button" class="fontbtn" id="impYes">ЗАМЕНИТЬ</button> <button type="button" class="fontbtn" id="impNo">ОТМЕНА</button>';
-      $("impYes").addEventListener("click",()=>applyImport(r.map)); $("impNo").addEventListener("click",()=>{ note.textContent="ИМПОРТ ОТМЕНЁН · НИЧЕГО НЕ ИЗМЕНЕНО"; });
+      note.innerHTML = '<div>ФАЙЛ ОТ '+(r.at||"?")+': ТЕМ С ОТВЕТАМИ '+r.topics+' · СЕЙЧАС: '+now+'. ПРОГРЕСС БУДЕТ ОБЪЕДИНЁН: ПО КАЖДОЙ СТУПЕНИ БЕРЁТСЯ ЛУЧШЕЕ, ПОВТОРЫ — ПО БОЛЕЕ ПОЗДНЕЙ ДАТЕ.</div><button type="button" class="fontbtn" id="impYes">ОБЪЕДИНИТЬ</button> <button type="button" class="fontbtn" id="impNo">ОТМЕНА</button>';
+      $("impYes").addEventListener("click",()=>applyMerge(r.map, "ИМПОРТ")); $("impNo").addEventListener("click",()=>{ note.textContent="ИМПОРТ ОТМЕНЁН · НИЧЕГО НЕ ИЗМЕНЕНО"; });
       e.target.value=""; return;
     }
     const st = obj.topics || (obj.state&&obj.state.topics) || (obj.data&&obj.data.topics) || {};
@@ -3689,6 +4130,68 @@ $("importFile").addEventListener("change",async e=>{
   }catch(err){ note.textContent="НЕ ПОЛУЧИЛОСЬ ПРОЧИТАТЬ ФАЙЛ · НИЧЕГО НЕ ИЗМЕНЕНО"; }
   e.target.value="";
 });
+
+/* ---------- sync through a private GitHub gist (02.11) ----------
+   pm.gist = {token, id} lives only on this device (DEVICE_KEYS: never exported). A sync = GET the gist -> merge into
+   this device -> PATCH the merged progress back. Runs on the button, on start, and when the page is hidden after changes.
+   In the claude.ai lab the host may block requests to api.github.com: then the file export/import still works. */
+const GIST_FILE="synapso-progress.json", GIST_API="https://api.github.com";
+let gistBusy=false;
+function gistCfg(){ const c=store.get("pm.gist",null); return c && c.token ? c : null; }
+function progressFile(){ return JSON.stringify({app:"put-k-middle", v:1, at:new Date().toISOString(), data:collectProgress()}, null, 1); }
+function gistLabel(){ const c=gistCfg(), last=store.get("pm.lastSync",0);
+  $("gistBtn").textContent = c ? "СИНХРОНИЗИРОВАТЬ GIST ⇅"+(last?" · "+fmtDate(last):"") : "СИНХРОНИЗАЦИЯ ЧЕРЕЗ GIST ⇅";
+  $("gistOff").hidden=!c; if(c) $("gistForm").hidden=true; }
+async function gistReq(method, path, body){
+  const c=gistCfg(); if(!c) throw {code:"off"};
+  let res;
+  try{ res=await fetch(GIST_API+path, {method, cache:"no-store", headers:{"Authorization":"Bearer "+c.token, "Accept":"application/vnd.github+json", ...(body?{"Content-Type":"application/json"}:{})}, body: body?JSON.stringify(body):undefined}); }
+  catch(e){ throw {code:"net"}; }
+  if(res.status===401 || res.status===403) throw {code:"auth"};
+  if(res.status===404) throw {code:"404"};
+  if(!res.ok) throw {code:"http", status:res.status};
+  return res.json();
+}
+async function gistSync(manual){
+  const c=gistCfg(), note=$("importNote"); if(!c || gistBusy) return;
+  gistBusy=true; if(manual) note.textContent="GIST · СИНХРОНИЗАЦИЯ…";
+  try{
+    let id=c.id;
+    if(!id){ const list=await gistReq("GET", "/gists?per_page=100"); const g=(list||[]).find(x=>x && x.files && x.files[GIST_FILE]); id=g ? g.id : ""; }
+    if(!id){
+      const g=await gistReq("POST", "/gists", {description:"Synapso progress", public:false, files:{[GIST_FILE]:{content:progressFile()}}});
+      store.set("pm.gist", {...c, id:g.id}); store.set("pm.lastSync", Date.now()); progDirty=false;
+      note.textContent="GIST СОЗДАН · ПРОГРЕСС ЭТОГО УСТРОЙСТВА ВЫГРУЖЕН"; return;
+    }
+    if(id!==c.id) store.set("pm.gist", {...c, id});
+    const g=await gistReq("GET", "/gists/"+id), f=g.files && g.files[GIST_FILE];
+    let text=f ? f.content : "";
+    if(f && f.truncated && f.raw_url){ try{ text=await (await fetch(f.raw_url, {cache:"no-store"})).text(); }catch(e){ throw {code:"net"}; } }
+    let obj=null, merged=0; try{ obj=text ? JSON.parse(text) : null; }catch(e){}
+    if(obj){ const r=checkImport(obj);
+      if(r.err && r.err!=="В ФАЙЛЕ НЕТ ПРОГРЕССА"){ note.textContent="GIST: "+r.err+" · НИЧЕГО НЕ ИЗМЕНЕНО"; return; }
+      if(r.map){ const m=applyMerge(r.map, "GIST"); if(m.failed) return; merged=m.changed; } }
+    await gistReq("PATCH", "/gists/"+id, {files:{[GIST_FILE]:{content:progressFile()}}});
+    store.set("pm.lastSync", Date.now()); progDirty=false;
+    if(merged) note.insertAdjacentText("afterbegin", "СИНХРОНИЗИРОВАНО · ");   /* keeps the ОТКАТИТЬ button of applyMerge */
+    else note.textContent="GIST · СИНХРОНИЗИРОВАНО "+fmtDate(Date.now())+" · НОВОГО С ДРУГИХ УСТРОЙСТВ НЕТ";
+  }catch(e){
+    const code=e && e.code;
+    if(code==="404"){ store.set("pm.gist", {...c, id:""}); note.textContent="GIST НЕ НАЙДЕН · ПРИ СЛЕДУЮЩЕЙ СИНХРОНИЗАЦИИ СОЗДАМ НОВЫЙ"; }
+    else if(code==="auth") note.textContent="GIST: ТОКЕН НЕ ПОДОШЁЛ · НУЖЕН ТОКЕН С ПРАВОМ GISTS (READ/WRITE)";
+    else if(code==="net") note.textContent="GIST: НЕТ СВЯЗИ С GITHUB · ЕСЛИ ЭТО ЛАБОРАТОРИЯ, СИНХРОНИЗИРУЙ НА ASHMEYN.GITHUB.IO/SYNAPSO";
+    else note.textContent="GIST: ОШИБКА "+((e&&e.status)||"")+" · ПРОГРЕСС НЕ ТРОНУТ";
+  }finally{ gistBusy=false; gistLabel(); }
+}
+$("gistBtn").addEventListener("click",()=>{ if(gistCfg()) gistSync(true); else { $("gistForm").hidden=!$("gistForm").hidden; if(!$("gistForm").hidden) $("gistToken").focus(); } });
+$("gistSave").addEventListener("click",()=>{ const t=$("gistToken").value.trim(); if(!t){ $("gistToken").focus(); return; }
+  store.set("pm.gist", {token:t, id:""}); $("gistToken").value=""; gistLabel(); gistSync(true); });
+$("gistOff").addEventListener("click",()=>{ try{ localStorage.removeItem("pm.gist"); localStorage.removeItem("pm.lastSync"); }catch(e){} gistLabel(); $("importNote").textContent="GIST ОТКЛЮЧЁН · ТОКЕН УДАЛЁН С ЭТОГО УСТРОЙСТВА (САМ GIST ОСТАЛСЯ НА GITHUB)"; });
+gistLabel();
+if(gistCfg()) setTimeout(()=>gistSync(false), 1500);
+document.addEventListener("visibilitychange",()=>{ if(!gistCfg()) return;
+  if(document.visibilityState==="hidden" && progDirty) gistSync(false);
+  else if(document.visibilityState==="visible" && Date.now()-store.get("pm.lastSync",0)>10*60*1000) gistSync(false); });
 
 $("navMap").addEventListener("click",()=>setMode("map"));
 $("navTopic").addEventListener("click",()=>openTopic(current>=0?current:selected,"theory"));

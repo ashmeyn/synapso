@@ -1,11 +1,11 @@
 // Runs all browser suites against dist/index.html and prints a compact summary.
-// Usage: node tests/run.js [smoke|phone|desktop ...]   (default: all)
+// Usage: node tests/run.js [smoke|phone|desktop|honest|episode|answers|roots|fog|back|merge|practice ...]   (default: all)
 // Env: CHROMIUM_PATH=/path/to/chrome to use a specific Chromium binary.
 'use strict';
 const fs = require('fs');
 const { OUT } = require('./lib');
 
-const SUITES = { phone: './phone', desktop: './desktop', honest: './honest', answers: './answers', smoke: './smoke' };
+const SUITES = { merge: './merge', practice: './practice', phone: './phone', desktop: './desktop', honest: './honest', episode: './episode', answers: './answers', roots: './roots', fog: './fog', back: './back', smoke: './smoke' };
 
 (async () => {
   const pick = process.argv.slice(2).filter(a => SUITES[a]);
