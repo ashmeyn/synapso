@@ -42,7 +42,18 @@ button:disabled{cursor:not-allowed}
   .app.topic-on{grid-template-columns:0px minmax(0,1fr)}
   .app .nav{overflow:hidden;transition:opacity .35s}
   .app.topic-on .nav{opacity:0;pointer-events:none;border-right-color:transparent}
+  /* backlog 6 (desktop): in a topic the panel folds to a narrow strip of icons instead of disappearing */
+  html:not(.phone) .app.topic-on{grid-template-columns:56px minmax(0,1fr)}
+  html:not(.phone) .app.topic-on .nav{opacity:1;pointer-events:auto;border-right-color:var(--line);padding:32px 0;align-items:center;gap:24px}
+  html:not(.phone) .app.topic-on .nav .brand{font-size:0;line-height:1;letter-spacing:0}
+  html:not(.phone) .app.topic-on .nav .brand::before{content:"S";font-size:var(--fs-read);letter-spacing:0}
+  html:not(.phone) .app.topic-on .navlist{gap:8px;align-items:center}
+  html:not(.phone) .app.topic-on .navlist button{width:40px;min-height:40px;justify-content:center;gap:0;position:relative}
+  html:not(.phone) .app.topic-on .navlist button > i{position:absolute;left:-8px;top:50%;margin-top:-2px}
+  html:not(.phone) .app.topic-on .navlist .nt,html:not(.phone) .app.topic-on #navMore,html:not(.phone) .app.topic-on .nbr,html:not(.phone) .app.topic-on .progress{display:none}
+  html:not(.phone) .app.topic-on .navlist .ni{display:block}
 }
+.navlist .ni{display:none;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.2;stroke-linejoin:round;stroke-linecap:round}
 
 /* nav */
 .nav{border-right:1px solid var(--line);padding:36px 28px;display:flex;flex-direction:column;gap:36px;min-width:0;overflow-y:auto}
@@ -620,6 +631,7 @@ html, html *{cursor:none!important}
 .t-kw{color:var(--ink);font-weight:700} .t-ty{color:var(--type)} .t-com{color:#5C666E} .t-str{color:#D9DEE2} .t-num{color:var(--ink)}
 .term.plain .ln.prose{white-space:pre-wrap}
 .term.plain .ln.prose code{font-family:var(--f-read);font-size:var(--fs-ui);color:var(--ink-2)}
+html:not(.phone) .term.plain .ln.prose{overflow-wrap:anywhere}   /* a long identifier in a prose task breaks instead of overflowing the narrower window */
 .term.key{border-color:#1F3B3D}
 .term.key .term-h{color:var(--cyan)}
 
@@ -974,9 +986,11 @@ html.phone .ch{grid-template-columns:minmax(0,1fr);gap:20px}
 html.phone #pane-practice .ladder{gap:2px}
 html.phone #pane-practice .rung{min-width:0}
 html.phone .t-nav{gap:6px;align-items:stretch;min-height:0;padding-top:6px}
-html.phone .tn-b{flex:1 1 0;min-width:0;max-width:none;min-height:44px;margin:0;padding:6px 10px;border:1px solid var(--line-2);font-size:13px;line-height:1.3;text-align:left;white-space:normal;overflow:visible;text-overflow:clip}
-html.phone .tn-b.nx{flex:1.5 1 0;margin-left:0}
-html.phone .tn-b:not(.know):not(.nx){flex:0 0 auto}
+html.phone .tn-b{flex:1 1 0;min-width:0;max-width:none;min-height:44px;margin:0;padding:6px 10px;border:1px solid var(--line-2);font-size:13px;line-height:1.3;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.phone .tn-b .tn-t{display:none}   /* one line in 390: «◂», «Уже знаю», «Дальше: Практика 3 из 7 ▸» */
+html.phone .tn-b.pv{flex:0 0 44px;padding:0;text-align:center}
+html.phone .tn-b.know{flex:0 0 auto}
+html.phone .tn-b.nx{flex:1 1 auto;margin-left:0}
 /* «Эпизод» (phone lesson): header + dots, a horizontal scroll-snap track of full-height cards, nav buttons.
    The window body does not scroll while the episode is shown: each card scrolls vertically on its own. */
 html.phone #winBody:has(> #pane-theory:not([hidden]) > .ep){overflow:hidden;display:flex;flex-direction:column;padding:0}
@@ -1046,9 +1060,9 @@ html.phone .gflash{color:var(--ink)!important;border-color:var(--cyan)!important
   <nav class="nav" aria-label="Разделы">
     <div class="brand">SYNAPSO</div>
     <div class="navlist">
-      <button type="button" id="navMap" class="on"><i></i>КАРТА</button>
-      <button type="button" id="navTopic"><i></i>ТЕМА</button>
-      <button type="button" id="navTasks"><i></i>ЗАДАНИЯ</button>
+      <button type="button" id="navMap" class="on" title="Карта"><i></i><svg class="ni" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5"/><circle cx="7" cy="8" r="1.3"/><circle cx="13" cy="7" r="1.3"/><circle cx="11" cy="13" r="1.3"/><path d="M7 8l6-1-2 6z"/></svg><span class="nt">КАРТА</span></button>
+      <button type="button" id="navTopic" title="Тема"><i></i><svg class="ni" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 3.5h9l3 3v10H4z"/><path d="M7 9h6M7 12h6M7 15h4"/></svg><span class="nt">ТЕМА</span></button>
+      <button type="button" id="navTasks" title="Задания"><i></i><svg class="ni" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 5.5l1.5 1.5 2.5-3M3.5 11.5l1.5 1.5 2.5-3"/><path d="M10 6h7M10 12h7M10 16h4"/></svg><span class="nt">ЗАДАНИЯ</span></button>
     </div>
     <button type="button" id="navMore" aria-label="Ветки, прогресс и настройки" aria-expanded="false">≡</button>
     <div class="nbr"><h3>ВЕТКИ</h3><ul class="links branches" id="pBranches"></ul></div>
@@ -2764,7 +2778,9 @@ function select(i, fly){
 }
 $("cta").addEventListener("click",()=>{ const t=topics[selected]; if(t && t.fog) select(t.miss[0], true); else openTopic(selected); });   /* in fog: the main button leads to the missing prereq */
 $("cAnyway").addEventListener("click",()=>openTopic(selected));
-$("tNav").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; if(b.dataset.check) startCheck(+b.dataset.check); else if(b.dataset.go) openTopic(+b.dataset.go, "theory"); });
+$("tNav").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; if(b.dataset.check) startCheck(+b.dataset.check); else if(b.dataset.go) openTopic(+b.dataset.go, "theory");
+  else if(b.dataset.step){ stepIdx=+b.dataset.step; bankIdx=-1; if(activeTab!=="practice") setTab("practice"); renderPractice(); startTyping("practice"); }
+  else if(b.dataset.out) openOut(); });
 $("cKnow").addEventListener("click",()=>startCheck(selected));
 $("cNext").addEventListener("click",()=>{ const nx=nextIdx(selected); if(nx>=0) select(nx,true); });
 $("cPrev").addEventListener("click",()=>{ const pv=prevIdx(selected); if(pv>=0) select(pv,true); });
@@ -2923,13 +2939,29 @@ function showCheckResult(ok){
   if($("chkTheory")) $("chkTheory").addEventListener("click",()=>setTab("theory"));
   if($("chkOut")) $("chkOut").addEventListener("click",()=>openOut());
 }
+/* backlog 8: the bottom line leads through the topic — Теория → Практика 1…7 → Выгрузка → next topic.
+   Returns {label, attr} for the next screen, or null when the next move is the next topic. */
+function nextInTopic(i){
+  const t=topics[i], id=t.id; if(t.status==="done" || activeTab==="tasks") return null;
+  const tp=topicProgress(id), n=tp.steps.length; if(!n) return null;
+  const outNext=()=>!(outOf(id)||{}).pass && outQs(id).length ? {label:"Выгрузка", attr:'data-out="1"'} : null;
+  if(activeTab==="theory" && outSt) return null;   /* already on «Выгрузка» */
+  if(activeTab==="practice" && bankIdx<0){
+    if(stepIdx<n-1) return {label:"Практика "+(stepIdx+2)+" из "+n, attr:`data-step="${stepIdx+1}"`};
+    return outNext();
+  }
+  const f=tp.steps.findIndex(x=>tp.p[x.id]!=="ok");
+  return f>=0 ? {label:"Практика "+(f+1)+" из "+n, attr:`data-step="${f}"`} : outNext();
+}
 function refreshTopicNav(i){
+  if(i<0 || !topics[i]) return;
   const t=topics[i], pv=prevIdx(i), nx=nextIdx(i), el=$("tNav"); if(!el) return;
-  const known = t.status==="done";
+  const known = t.status==="done", step = nextInTopic(i);
   el.innerHTML =
-    (pv>=0?`<button type="button" class="tn-b" data-go="${pv}" title="${esc(topics[pv].title)}"><span class="k">◂</span> Назад</button>`:"") +
-    (!known && (DATA.content[t.id]||{}).steps && DATA.content[t.id].steps.length ? `<button type="button" class="tn-b know" data-check="${i}">Уже знаю — проверка</button>` : "") +
-    (nx>=0?`<button type="button" class="tn-b nx${known?" hot":""}" data-go="${nx}">${known?"Тема освоена · дальше":"Дальше"}: ${esc(topics[nx].title)} <span class="k">▸</span></button>`:"");
+    (pv>=0?`<button type="button" class="tn-b pv" data-go="${pv}" title="Назад: ${esc(topics[pv].title)}" aria-label="Предыдущая тема: ${esc(topics[pv].title)}"><span class="k">◂</span><span class="tn-t"> Назад</span></button>`:"") +
+    (!known && (DATA.content[t.id]||{}).steps && DATA.content[t.id].steps.length ? `<button type="button" class="tn-b know" data-check="${i}">Уже знаю<span class="tn-t"> — проверка</span></button>` : "") +
+    (step ? `<button type="button" class="tn-b nx" ${step.attr}>Дальше: ${step.label} <span class="k">▸</span></button>`
+      : nx>=0?`<button type="button" class="tn-b nx${known?" hot":""}" data-go="${nx}">${known?"Тема освоена · дальше":"Дальше"}: ${esc(topics[nx].title)} <span class="k">▸</span></button>`:"");
 }
 function crumbHTML(t, br, inBranch){ return `<b>${br.code} ${br.name}</b><span>·</span><span>${t.k+1}/${inBranch}</span><span>·</span><span>~${t.min} мин</span>${t.due?`<span>·</span><span class="st">повторить</span>`:""}`; }
 let diving=false, diveBoost=0;
@@ -2974,7 +3006,7 @@ function doOpen(i, tab){
 const WIN_NAMES={theory:"Теория",cheat:"Шпаргалка",practice:"Практика",tasks:"Задания"};
 let winToken=0;
 function setTab(name){
-  const win=$("winBody"); activeTab=name; stopTyping(); exitKb();
+  const win=$("winBody"); activeTab=name; stopTyping(); exitKb(); refreshTopicNav(current);
   ["theory","cheat","practice","tasks"].forEach(n=>$("tab-"+n).setAttribute("aria-selected", n===name));
   $("navTopic").classList.toggle("on", mode==="topic" && name!=="tasks");
   $("navTasks").classList.toggle("on", mode==="topic" && name==="tasks");
@@ -3217,7 +3249,7 @@ function outQs(id){ const L=(DATA.content[id]||{}).lesson; if(!L) return [];
 function htmlText(h){ const d=document.createElement("div"); d.innerHTML=h; return d.textContent; }
 function openOut(){ if(current<0) return; outSt=null; renderOut(); if(activeTab!=="theory") setTab("theory"); else $("winBody").scrollTop=0; }
 function outVerdict(g){ return g.includes("no") ? "no" : g.length && g.every(x=>x==="ok") ? "ok" : "part"; }   /* passed only when every answer was recalled */
-function renderOut(){
+function renderOut(){ setTimeout(()=>refreshTopicNav(current),0);
   const t=topics[current], id=t.id, qs=outQs(id), L=(DATA.content[id]||{}).lesson||{}, pane=$("pane-theory");
   stopTyping(); thBlocks=[]; thShown=0;
   if(!outSt || outSt.id!==id) outSt={id, k:0, g:[], dunno:false, shown:false};
@@ -3499,7 +3531,7 @@ function guessVV(){ if(!document.body.classList.contains("kb-on") || vvMode!=="v
 function exitKb(){ vvMode="vv"; if(!document.body.classList.contains("kb-on")) return; document.body.classList.remove("kb-on"); const p=$("pane-practice"); if(p) p.classList.remove("kbd","codebig"); requestAnimationFrame(()=>fitCode()); }
 if(window.visualViewport){ ["resize","scroll"].forEach(ev=>window.visualViewport.addEventListener(ev,()=>{ if(!document.body.classList.contains("kb-on")) return; if(vvMode==="guess" && window.visualViewport.height < window.innerHeight*0.85) vvMode="vv"; updVV(); })); }
 window.addEventListener("resize",()=>{ if(document.body.classList.contains("kb-on")) updVV(); });
-function renderPractice(){
+function renderPractice(){ setTimeout(()=>refreshTopicNav(current),0);
   const t=topics[current], c=DATA.content[t.id], pane=$("pane-practice");
   stopTyping();
   if(!c || !c.steps.length){ pane.innerHTML=`<p class="empty">Практика для этой темы ещё не написана.</p>`; return; }
