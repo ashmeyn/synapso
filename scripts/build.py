@@ -1,7 +1,11 @@
-"""Synapso build: content/ + engine/template.html -> dist/index.html (one self-contained page).
+"""Synapso build: content/ + engine/ -> dist/index.html (one self-contained page).
+
+engine/template.html is the markup with __INLINE:<path>__ markers for engine/styles.css, engine/app.js and
+engine/vendor/*.js (three.js r128); the build inlines them back verbatim, then puts the data in place of __DATA__.
 
     python3 scripts/build.py            # build dist/index.html
     python3 scripts/build.py --check X  # also compare the built data with a JSON file X (e.g. data from the lab)
+    python3 scripts/build.py --template-out F  # also write the assembled one-file template (with __DATA__) to F
 
 Data shape (what the engine reads from __DATA__):
   content[id]  = base/content.json[id] + lesson (parsed from content/lessons/<id>.md) + steps (content/steps/<id>.json)
@@ -157,10 +161,29 @@ def build_data():
     return d
 
 
+INLINE = re.compile(r'__INLINE:([\w./-]+)__')
+
+
+def assemble_template():
+    """engine/template.html is the markup; each __INLINE:<path>__ marker is replaced by engine/<path> verbatim
+    (styles.css, app.js, vendor/*.js — three.js r128 and its postprocessing passes). One pass over the markup only,
+    so text inside the inlined files is never treated as a marker."""
+    t = open(P('engine', 'template.html')).read()
+    names = INLINE.findall(t)
+    assert names and len(names) == len(set(names)), 'template: each __INLINE:path__ exactly once'
+    def file(m):
+        path = P('engine', *m.group(1).split('/'))
+        assert os.path.isfile(path), 'missing engine/' + m.group(1)
+        return open(path).read()
+    return INLINE.sub(file, t)
+
+
 def main():
     d = build_data()
-    t = open(P('engine', 'template.html')).read()
+    t = assemble_template()
     assert t.count('__DATA__') == 1, 'template must contain exactly one __DATA__'
+    if '--template-out' in sys.argv:   # the assembled one-file template, e.g. to diff against scripts/split_lab.py output
+        open(sys.argv[sys.argv.index('--template-out') + 1], 'w').write(t)
     os.makedirs(P('dist'), exist_ok=True)
     out = t.replace('__DATA__', json.dumps(d, ensure_ascii=False).replace('</', '<\\/'))
     # artifact.html: raw page for the claude.ai lab artifact (the host adds <!doctype>/<html>/<body> itself)

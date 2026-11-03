@@ -1,14 +1,14 @@
 // Progress merge: unit tests for mergeProgress() (Node, no browser) + import-by-merge and gist sync in the page.
-// The function is taken from engine/template.html between /* merge:begin */ and /* merge:end */.
+// The function is taken from engine/app.js between /* merge:begin */ and /* merge:end */.
 'use strict';
 const fs = require('fs');
 const path = require('path');
 const { Suite, launch, openPage, ensureDist, ROOT } = require('./lib');
 
 function loadMerge() {
-  const src = fs.readFileSync(path.join(ROOT, 'engine', 'template.html'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'engine', 'app.js'), 'utf8');
   const a = src.indexOf('/* merge:begin'), b = src.indexOf('/* merge:end */');
-  if (a < 0 || b < 0) throw new Error('merge block not found in engine/template.html');
+  if (a < 0 || b < 0) throw new Error('merge block not found in engine/app.js');
   return new Function(src.slice(a, b) + '\nreturn mergeProgress;')();
 }
 
