@@ -438,6 +438,8 @@ html, html *{cursor:none!important}
 .fontpop .fp-n{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:var(--fs-label);letter-spacing:.04em;color:var(--muted)}
 .fontbtn{font-family:var(--f-mono);font-size:var(--fs-ui);letter-spacing:.06em;color:var(--muted);min-height:36px;text-align:left}
 .fontbtn:hover{color:var(--cyan)}
+.gistf{display:flex;flex-direction:column;gap:6px;margin:2px 0 6px}
+.gistf input{min-height:36px;padding:0 8px;border:1px solid var(--line-2);background:#07090B;color:var(--ink);font-family:var(--f-code);font-size:16px;width:100%;box-sizing:border-box}
 .caret{display:inline-block;width:.55em;height:1.05em;margin-left:1px;vertical-align:-.15em;background:var(--cyan);box-shadow:0 0 8px var(--cyan);animation:blink .9s steps(2,start) infinite}
 @keyframes blink{to{visibility:hidden}}
 .pane[hidden]{display:none}
@@ -786,8 +788,8 @@ html.phone .grows button{min-height:32px}
   #pane-practice.kbd.codebig .prompt{max-height:7.25em}
   #pane-practice.kbd > .ladder,#pane-practice.kbd .bank-h,#pane-practice.kbd .step-title,#pane-practice.kbd #keyBox{display:none}
   #pane-practice.kbd .prompt{grid-row:1;position:relative;max-height:2.9em;overflow:hidden;font-size:13px;line-height:1.45;color:var(--ink-2)}
-  #pane-practice.kbd .prompt.more{padding-right:22px}
-  #pane-practice.kbd .prompt.more::after{content:"▾";position:absolute;right:2px;bottom:0;color:var(--cyan);font-size:14px;line-height:1.45}
+  #pane-practice.kbd .prompt.pmore{padding-right:22px}
+  #pane-practice.kbd .prompt.pmore::after{content:"▾";position:absolute;right:2px;bottom:0;color:var(--cyan);font-size:14px;line-height:1.45}
   #pane-practice.kbd .prompt.open{max-height:11.6em;overflow-y:auto}
   #pane-practice.kbd .prompt.open::after{content:"▴"}
   #pane-practice.kbd .term-b{background:linear-gradient(#0000 calc(100% - 14px),rgba(45,226,230,.10)) }
@@ -955,6 +957,35 @@ html.phone .ep-nav #epPrev{flex:0 0 64px;min-height:48px;padding:0;font-size:18p
 html.phone .ep-nav #epPrev:disabled{opacity:.35}
 html.phone .ep-nav #epNext{flex:1;align-self:stretch;min-height:48px}
 html.phone .ep-nav #epNext[hidden]{display:none}
+/* phone landscape (02.11): the screen is ~390px tall. At rest the whole topic scrolls (head, tabs and window together)
+   instead of a 170px window; while typing, two columns: task + answer on the left, keyboard on the right */
+@media (orientation:landscape) and (max-height:520px){
+  html.phone body:not(.kb-on) #topic{overflow-y:auto;-webkit-overflow-scrolling:touch}
+  html.phone body:not(.kb-on) .win{flex:none;min-height:auto}
+  html.phone body:not(.kb-on) .win-b,html.phone body:not(.kb-on) .win-b.fit{flex:none;overflow:visible}
+  html.phone .t-row .t-sub{display:none}
+  html.phone #pane-practice .answer textarea{min-height:140px}
+  html.phone body.kb-on .win-b{padding:4px 8px 0}
+  html.phone body.kb-on #pane-practice.kbd{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) minmax(0,1fr) auto;column-gap:10px;row-gap:4px}
+  html.phone body.kb-on #pane-practice.kbd .prompt{grid-column:1;grid-row:1}
+  html.phone body.kb-on #pane-practice.kbd .p-code{grid-column:1;grid-row:2/4}
+  html.phone body.kb-on #pane-practice.kbd .answer{grid-column:2;grid-row:1/4}
+  html.phone body.kb-on #pane-practice.kbd .symbar{grid-column:1/-1;grid-row:4}
+  html.phone body.kb-on #pane-practice.kbd.codebig{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+  html.phone body.kb-on #pane-practice.kbd.skbm{position:relative;grid-template-rows:minmax(0,.8fr) minmax(0,1.4fr);row-gap:6px}
+  html.phone body.kb-on #pane-practice.kbd.skbm .prompt{grid-column:2;grid-row:1;align-self:start;max-height:5.8em}
+  html.phone body.kb-on #pane-practice.kbd.skbm .prompt.open{max-height:5.8em;overflow-y:auto}
+  html.phone body.kb-on #pane-practice.kbd.skbm .p-code{grid-column:1;grid-row:1}
+  html.phone body.kb-on #pane-practice.kbd.skbm .answer{grid-column:1;grid-row:2}
+  html.phone body.kb-on #pane-practice.kbd.skbm .skb{grid-column:2;grid-row:1/-1;position:absolute;left:0;right:0;bottom:0;justify-content:flex-end;gap:4px;padding-bottom:max(4px,env(safe-area-inset-bottom))}
+  html.phone #pane-practice.kbd.skbm .skb-keys{gap:4px}
+  html.phone #pane-practice.kbd.skbm .skb-row{gap:3px}
+  html.phone #pane-practice.kbd.skbm .skb-row button{min-height:40px;font-size:16px}
+  html.phone #pane-practice.kbd.skbm .skb-row.sym button{min-height:34px;font-size:14px}
+  html.phone #pane-practice.kbd.skbm .skb-sug,html.phone #pane-practice.kbd.skbm .skb-sug > button,html.phone #pane-practice.kbd.skbm .skb-sug .sug button{min-height:34px}
+}
+/* phone: «Ключ» pressed too early while typing — the gate line is hidden, so the key button itself says what is missing */
+html.phone .gflash{color:var(--ink)!important;border-color:var(--cyan)!important}
 </style>
 
 <div class="xcur" id="cur" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b><span id="curTxt"></span></div>
@@ -976,6 +1007,9 @@ html.phone .ep-nav #epNext[hidden]{display:none}
       <button type="button" class="fontbtn" id="exportBtn">ЭКСПОРТ ПРОГРЕССА ↓</button>
       <button type="button" class="fontbtn" id="importBtn">ИМПОРТ ПРОГРЕССА ↑</button>
       <input type="file" id="importFile" accept="application/json,.json" hidden>
+      <button type="button" class="fontbtn" id="gistBtn">СИНХРОНИЗАЦИЯ ЧЕРЕЗ GIST ⇅</button>
+      <div class="gistf" id="gistForm" hidden><div class="note">Токен GitHub с одним правом Gists (read/write) · хранится только на этом устройстве, в файл экспорта не попадает</div><input type="password" id="gistToken" placeholder="github_pat_… или ghp_…" autocomplete="off" spellcheck="false"><button type="button" class="fontbtn" id="gistSave">ПОДКЛЮЧИТЬ</button></div>
+      <button type="button" class="fontbtn" id="gistOff" hidden>ОТКЛЮЧИТЬ GIST</button>
       <button type="button" class="fontbtn" id="sfxBtn">ЗВУК: ВЫКЛ</button>
       <div class="vols" id="vols"><label>ФОН <input type="range" id="volAmb" min="0" max="1" step="0.01"></label><label>ЭФФЕКТЫ <input type="range" id="volFx" min="0" max="1" step="0.01"></label></div>
       <div class="note" id="importNote"></div>
@@ -2183,9 +2217,10 @@ const fxQueue=[]; function fxLog(tag, text){ fxQueue.push({tag, text}); if(fxQue
 /* ---------- helpers ---------- */
 const $ = id => document.getElementById(id);
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+let progDirty=false;   /* progress written since the last gist sync */
 const store = {
   get(k,d){ try{ const v = localStorage.getItem(k); return v==null ? d : JSON.parse(v); }catch(e){ return d; } },
-  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} if(k.indexOf("pm.")===0) askPersist(); }
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} if(k.indexOf("pm.")===0){ askPersist(); progDirty=true; } }
 };
 /* ask the browser not to evict localStorage (Safari drops it after 7 days without a visit); once per page, on the first progress write */
 let persistAsked=false;
@@ -3444,14 +3479,18 @@ function renderPractice(){
   exitKb();
   const useSkb = !oral && canSkb() && store.get("pm.kbd","skb")!=="sys";
   if(useSkb){ ta.setAttribute("inputmode","none"); pane.classList.add("skbm"); } else pane.classList.remove("skbm");
+  /* phone: «Ключ» before the answer is long enough — stay in typing mode, the key button shows what is missing */
+  const gateFlash=()=>pane.querySelectorAll('[data-k="key"],[data-s="key"]').forEach(b=>{ if(b.dataset.lab==null) b.dataset.lab=b.textContent;
+    const n=answerLeft(ta.value,oral); b.textContent="ещё "+n; b.classList.add("gflash"); clearTimeout(b._gt);
+    b._gt=setTimeout(()=>{ b.textContent=b.dataset.lab; b.classList.remove("gflash"); },1600); });
   const doAct=v=>{
     if(v==="done"){ ta.blur(); exitKb(); return; }
-    if(v==="key"){ ta.blur(); exitKb(); if(!kb.disabled){ kb.click(); setTimeout(()=>{ const k=$("keyBox"); if(k) k.scrollIntoView({block:"start",behavior:"smooth"}); },350); } else { gate.classList.remove("blink"); void gate.offsetWidth; gate.classList.add("blink"); } return; }
+    if(v==="key"){ if(PHONE && kb.disabled && !kb.dataset.open){ gateFlash(); return; } ta.blur(); exitKb(); if(!kb.disabled){ kb.click(); setTimeout(()=>{ const k=$("keyBox"); if(k) k.scrollIntoView({block:"start",behavior:"smooth"}); },350); } else { gate.classList.remove("blink"); void gate.offsetWidth; gate.classList.add("blink"); } return; }
     if(v==="sys"||v==="kbd"){ store.set("pm.kbd", v==="sys" ? "sys" : "skb"); renderPractice(); const t2=$("ans"); if(t2){ t2.focus(); t2.setSelectionRange(t2.value.length,t2.value.length); } return; }
   };
   const skb = useSkb && $("skb") ? buildSkb($("skb"), ed, doAct, s.code) : null;
   if(skb){ ta.addEventListener("input",()=>skb.refresh()); ta.addEventListener("click",()=>skb.refresh()); }
-  const pr=pane.querySelector(".prompt"), markMore=()=>{ if(!pr) return; if(!pr.classList.contains("open")) pr.scrollTop=0; pr.classList.toggle("more", pr.classList.contains("open") || pr.scrollHeight>pr.clientHeight+2); };
+  const pr=pane.querySelector(".prompt"), markMore=()=>{ if(!pr) return; if(!pr.classList.contains("open")) pr.scrollTop=0; pr.classList.toggle("pmore", pr.classList.contains("open") || pr.scrollHeight>pr.clientHeight+2); };
   ta.addEventListener("focus",()=>{ if(!narrow()) return; document.body.classList.add("kb-on"); pane.classList.add("kbd");
     if(useSkb){ fullVV(); } else { updVV(); setTimeout(guessVV, 550); }
     try{ window.scrollTo(0,0); }catch(e){} requestAnimationFrame(()=>{ fitCode(); markMore(); }); });
@@ -3462,7 +3501,7 @@ function renderPractice(){
   (function(){ const bar=$("symbar"); if(!bar) return;
     const act=btn=>{ const v=btn.dataset.s;
       if(v==="done"||v==="kbd"){ doAct(v); return; }
-      if(v==="key"){ ta.blur(); exitKb(); if(!kb.disabled){ kb.click(); setTimeout(()=>{ const k=$("keyBox"); if(k) k.scrollIntoView({block:"start",behavior:"smooth"}); },350); } else { gate.classList.remove("blink"); void gate.offsetWidth; gate.classList.add("blink"); } return; }
+      if(v==="key"){ doAct("key"); return; }
       if(v==="flip"){ pane.classList.toggle("codebig"); requestAnimationFrame(()=>{ fitCode(); markMore(); }); return; }
       if(v==="tab"){ ed.tab(false); return; } if(v==="untab"){ ed.tab(true); return; }
       ed.sym(v); };
@@ -3827,8 +3866,59 @@ refreshRun(); refreshBackupNote();
   requestAnimationFrame(loop);
 })();
 
+/* merge:begin — pure, no DOM/storage (tests/merge.js runs this block in Node).
+   mergeProgress(local, incoming): two maps key -> JSON string of pm.* progress, returns {map, changed}.
+   Never loses progress: per step/grade the better mark wins (ok > part > no), SRS keeps the later due date,
+   «passed» timestamps are kept from either side, logs and day lists are unions, drafts prefer the local text. */
+function mergeProgress(local, incoming){
+  const RANK={ok:3, part:2, no:1};
+  const P=s=>{ if(s==null) return undefined; try{ return JSON.parse(s); }catch(e){ return undefined; } };
+  const isObj=v=>v && typeof v==="object" && !Array.isArray(v);
+  const num=v=>typeof v==="number" && isFinite(v) ? v : 0;
+  const minTs=(a,b)=>{ a=num(a); b=num(b); return a&&b ? Math.min(a,b) : a||b; };
+  const better=(a,b)=>(RANK[b]||0)>(RANK[a]||0) ? b : a;
+  const marks=(a,b)=>{ const r={...b, ...a}; Object.keys(b).forEach(k=>{ r[k]=better(a[k], b[k]); }); return r; };
+  /* {at, v, pass}: the newer attempt describes the last state, a pass from either device is kept (earliest) */
+  const attempt=(a,b)=>{ const n=num(b.at)>num(a.at) ? b : a; return {...n, pass:minTs(a.pass, b.pass)}; };
+  const tsMap=(a,b,pick)=>{ const r={...a}; Object.keys(b).forEach(k=>{ r[k] = k in a ? pick(a[k], b[k]) : b[k]; }); return r; };
+  function one(key, a, b){
+    if(/^pm\.(steps|grade)\./.test(key)) return isObj(a)&&isObj(b) ? marks(a,b) : a;
+    if(/^pm\.srs\./.test(key)) return isObj(a)&&isObj(b) ? (num(b.due)>num(a.due) ? b : a) : a;
+    if(/^pm\.(recall|out)\./.test(key)) return isObj(a)&&isObj(b) ? attempt(a,b) : a;
+    if(/^pm\.doneAt\./.test(key)) return minTs(a,b) || a;
+    if(/^pm\.bank\./.test(key)) return isObj(a)&&isObj(b) ? {...a, ok:Math.max(num(a.ok),num(b.ok)), no:Math.max(num(a.no),num(b.no)), last:Math.max(num(a.last),num(b.last))} : a;
+    if(/^pm\.err\./.test(key)){ if(!Array.isArray(a)||!Array.isArray(b)) return a; const seen=new Set(), r=[];
+      a.concat(b).forEach(x=>{ const k=x && (num(x.at)+"|"+x.q); if(!x || seen.has(k)) return; seen.add(k); r.push(x); });
+      return r.sort((x,y)=>num(y.at)-num(x.at)).slice(0,20); }
+    if(key==="pm.known" || key==="pm.legacy") return isObj(a)&&isObj(b) ? tsMap(a,b,minTs) : a;
+    if(key==="pm.skip") return isObj(a)&&isObj(b) ? tsMap(a,b,(x,y)=>Math.max(num(x),num(y))) : a;
+    if(key==="pm.imported") return isObj(a)&&isObj(b) ? tsMap(a,b,(x,y)=>x==="done"||y==="done" ? "done" : x||y) : a;
+    if(key==="pm.runs") return Array.isArray(a)&&Array.isArray(b) ? [...new Set(a.concat(b))].sort().slice(-120) : a;
+    if(key==="pm.honest") return isObj(a)&&isObj(b) ? (num(b.at)&&num(b.at)<num(a.at) ? b : a) : a;
+    if(/^pm\.outAns\./.test(key)){ if(!Array.isArray(a)||!Array.isArray(b)) return a; const r=a.slice(); b.forEach((x,i)=>{ if(!(r[i]&&String(r[i]).trim())) r[i]=x; }); return r; }
+    if(typeof a==="string") return a.trim() ? a : b;   /* answer drafts: pm.ans.*, pm.rans.*, pm.bankAns.* */
+    return a;
+  }
+  /* key order does not matter: {s1,s2} and {s2,s1} are the same progress */
+  const canon=v=>JSON.stringify(v, (k,x)=>isObj(x) ? Object.keys(x).sort().reduce((o,kk)=>(o[kk]=x[kk], o), {}) : x);
+  const map={...local};
+  Object.keys(incoming||{}).forEach(key=>{
+    const bs=incoming[key], b=P(bs); if(b===undefined) return;
+    if(!(key in local)){ map[key]=bs; return; }
+    const a=P(local[key]); if(a===undefined){ map[key]=bs; return; }
+    const r=one(key, a, b);
+    if(canon(r)!==canon(a)) map[key]=JSON.stringify(r);
+  });
+  /* «Уже знаю» confirmed after the topic was put aside: it is no longer skipped */
+  const kn=P(map["pm.known"]), sk=P(map["pm.skip"]);
+  if(isObj(kn) && isObj(sk)){ let d=0; Object.keys(sk).forEach(id=>{ if(num(kn[id])>=num(sk[id])){ delete sk[id]; d++; } }); if(d){ map["pm.skip"]=JSON.stringify(sk); } }
+  const changed=Object.keys(map).filter(k=>map[k]!==local[k]).length;
+  return {map, changed};
+}
+/* merge:end */
+
 /* ---------- import from the old board ---------- */
-function collectProgress(){ const data={}; try{ for(let k=0;k<localStorage.length;k++){ const key=localStorage.key(k); if(key && key.startsWith("pm.") && key!=="pm.font" && key!=="pm.codefont") data[key]=localStorage.getItem(key); } }catch(e){} return data; }
+function collectProgress(){ const data={}; try{ for(let k=0;k<localStorage.length;k++){ const key=localStorage.key(k); if(key && key.startsWith("pm.") && !DEVICE_KEYS.has(key)) data[key]=localStorage.getItem(key); } }catch(e){} return data; }
 async function exportProgress(){
   const now=new Date(), name="synapso-"+now.toISOString().slice(0,10)+".json";
   const json=JSON.stringify({app:"put-k-middle", v:1, at:now.toISOString(), data:collectProgress()}, null, 1);
@@ -3853,7 +3943,7 @@ $("volFx").addEventListener("input",e=>{ sfx.setVol("fx",+e.target.value); sfx.h
 $("sfxBtn").addEventListener("click",()=>{ sfx.toggle(); sfxLabel(); }); sfxLabel();
 $("importBtn").addEventListener("click",()=>$("importFile").click());
 /* ---------- safe import: validate -> confirm -> write before delete -> rollback on failure ---------- */
-const DEVICE_KEYS=new Set(["pm.font","pm.codefont","pm.sfx","pm.volAmb","pm.volFx","pm.keysnd","pm.split","pm.lastExport","pm.kbd"]);
+const DEVICE_KEYS=new Set(["pm.font","pm.codefont","pm.sfx","pm.volAmb","pm.volFx","pm.keysnd","pm.split","pm.lastExport","pm.kbd","pm.gist","pm.lastSync"]);
 let lastSnapshot=null;
 function progressKeys(){ const r=[]; try{ for(let k=0;k<localStorage.length;k++){ const key=localStorage.key(k); if(key && key.startsWith("pm.") && !DEVICE_KEYS.has(key)) r.push(key); } }catch(e){} return r; }
 function takeSnapshot(){ const o={}; progressKeys().forEach(k=>{ try{ o[k]=localStorage.getItem(k); }catch(e){} }); return o; }
@@ -3873,19 +3963,21 @@ function checkImport(obj){
   if(size>5000000) return {err:"ФАЙЛ СЛИШКОМ БОЛЬШОЙ"};
   return {map, topics:topicCount(map), at:String(obj.at||"").slice(0,10)};
 }
-function applyImport(map){
-  const note=$("importNote"), snap=takeSnapshot(); lastSnapshot=snap;
+/* merge (02.11): the file / gist and this device are combined, nothing is removed; ОТКАТИТЬ restores the snapshot */
+function applyMerge(incoming, what){
+  const note=$("importNote"), snap=takeSnapshot();
+  const r=mergeProgress(snap, incoming);
+  if(!r.changed){ note.textContent=what+" · НОВОГО НЕТ, ВСЁ УЖЕ ЕСТЬ НА ЭТОМ УСТРОЙСТВЕ"; return r; }
+  lastSnapshot=snap;
   try{ localStorage.setItem("bk.last", JSON.stringify({at:Date.now(), data:snap})); }catch(e){}
-  try{
-    Object.entries(map).forEach(([k,v])=>localStorage.setItem(k,v));
-    Object.keys(snap).forEach(k=>{ if(!(k in map)) localStorage.removeItem(k); });
-  }catch(err){
-    restoreSnapshot(snap); note.textContent="ИМПОРТ НЕ УДАЛСЯ · ВСЁ ВОЗВРАЩЕНО КАК БЫЛО"; return false; }
+  try{ Object.entries(r.map).forEach(([k,v])=>{ if(snap[k]!==v) localStorage.setItem(k,v); }); }
+  catch(err){ restoreSnapshot(snap); note.textContent=what+" НЕ УДАЛСЯ · ВСЁ ВОЗВРАЩЕНО КАК БЫЛО"; r.failed=true; return r; }
+  const before=new Set(topics.filter(t=>t.status==="done").map(t=>t.id));
   reloadState();
-  topics.forEach((t,i)=>{ if(t.status!=="none"&&t.status!=="dark") flash[i]=1.6; });
-  note.innerHTML = 'ПРОГРЕСС ЗАМЕНЁН · '+Object.keys(map).length+' ЗАПИСЕЙ <button type="button" class="fontbtn" id="impUndo">ОТКАТИТЬ</button>';
-  $("impUndo").addEventListener("click",()=>{ if(lastSnapshot){ restoreSnapshot(lastSnapshot); note.textContent="ВОЗВРАЩЕНО КАК БЫЛО ДО ИМПОРТА"; } });
-  return true;
+  topics.forEach((t,i)=>{ if(t.status==="done" && !before.has(t.id)) flash[i]=1.6; });
+  note.innerHTML = what+' · ОБЪЕДИНЕНО, ОБНОВЛЕНО ЗАПИСЕЙ: '+r.changed+' <button type="button" class="fontbtn" id="impUndo">ОТКАТИТЬ</button>';
+  $("impUndo").addEventListener("click",()=>{ if(lastSnapshot){ restoreSnapshot(lastSnapshot); lastSnapshot=null; note.textContent="ВОЗВРАЩЕНО КАК БЫЛО ДО ОБЪЕДИНЕНИЯ"; } });
+  return r;
 }
 $("importFile").addEventListener("change",async e=>{
   const f=e.target.files[0]; if(!f) return; const note=$("importNote");
@@ -3894,8 +3986,8 @@ $("importFile").addEventListener("change",async e=>{
     if(obj && obj.app==="put-k-middle"){
       const r=checkImport(obj); if(r.err){ note.textContent=r.err; e.target.value=""; return; }
       const now=topicCount(takeSnapshot());
-      note.innerHTML = '<div>ФАЙЛ ОТ '+(r.at||"?")+': ТЕМ С ОТВЕТАМИ '+r.topics+' · СЕЙЧАС: '+now+'. ТЕКУЩИЙ ПРОГРЕСС БУДЕТ ЗАМЕНЁН.</div><button type="button" class="fontbtn" id="impYes">ЗАМЕНИТЬ</button> <button type="button" class="fontbtn" id="impNo">ОТМЕНА</button>';
-      $("impYes").addEventListener("click",()=>applyImport(r.map)); $("impNo").addEventListener("click",()=>{ note.textContent="ИМПОРТ ОТМЕНЁН · НИЧЕГО НЕ ИЗМЕНЕНО"; });
+      note.innerHTML = '<div>ФАЙЛ ОТ '+(r.at||"?")+': ТЕМ С ОТВЕТАМИ '+r.topics+' · СЕЙЧАС: '+now+'. ПРОГРЕСС БУДЕТ ОБЪЕДИНЁН: ПО КАЖДОЙ СТУПЕНИ БЕРЁТСЯ ЛУЧШЕЕ, ПОВТОРЫ — ПО БОЛЕЕ ПОЗДНЕЙ ДАТЕ.</div><button type="button" class="fontbtn" id="impYes">ОБЪЕДИНИТЬ</button> <button type="button" class="fontbtn" id="impNo">ОТМЕНА</button>';
+      $("impYes").addEventListener("click",()=>applyMerge(r.map, "ИМПОРТ")); $("impNo").addEventListener("click",()=>{ note.textContent="ИМПОРТ ОТМЕНЁН · НИЧЕГО НЕ ИЗМЕНЕНО"; });
       e.target.value=""; return;
     }
     const st = obj.topics || (obj.state&&obj.state.topics) || (obj.data&&obj.data.topics) || {};
@@ -3910,6 +4002,68 @@ $("importFile").addEventListener("change",async e=>{
   }catch(err){ note.textContent="НЕ ПОЛУЧИЛОСЬ ПРОЧИТАТЬ ФАЙЛ · НИЧЕГО НЕ ИЗМЕНЕНО"; }
   e.target.value="";
 });
+
+/* ---------- sync through a private GitHub gist (02.11) ----------
+   pm.gist = {token, id} lives only on this device (DEVICE_KEYS: never exported). A sync = GET the gist -> merge into
+   this device -> PATCH the merged progress back. Runs on the button, on start, and when the page is hidden after changes.
+   In the claude.ai lab the host may block requests to api.github.com: then the file export/import still works. */
+const GIST_FILE="synapso-progress.json", GIST_API="https://api.github.com";
+let gistBusy=false;
+function gistCfg(){ const c=store.get("pm.gist",null); return c && c.token ? c : null; }
+function progressFile(){ return JSON.stringify({app:"put-k-middle", v:1, at:new Date().toISOString(), data:collectProgress()}, null, 1); }
+function gistLabel(){ const c=gistCfg(), last=store.get("pm.lastSync",0);
+  $("gistBtn").textContent = c ? "СИНХРОНИЗИРОВАТЬ GIST ⇅"+(last?" · "+fmtDate(last):"") : "СИНХРОНИЗАЦИЯ ЧЕРЕЗ GIST ⇅";
+  $("gistOff").hidden=!c; if(c) $("gistForm").hidden=true; }
+async function gistReq(method, path, body){
+  const c=gistCfg(); if(!c) throw {code:"off"};
+  let res;
+  try{ res=await fetch(GIST_API+path, {method, cache:"no-store", headers:{"Authorization":"Bearer "+c.token, "Accept":"application/vnd.github+json", ...(body?{"Content-Type":"application/json"}:{})}, body: body?JSON.stringify(body):undefined}); }
+  catch(e){ throw {code:"net"}; }
+  if(res.status===401 || res.status===403) throw {code:"auth"};
+  if(res.status===404) throw {code:"404"};
+  if(!res.ok) throw {code:"http", status:res.status};
+  return res.json();
+}
+async function gistSync(manual){
+  const c=gistCfg(), note=$("importNote"); if(!c || gistBusy) return;
+  gistBusy=true; if(manual) note.textContent="GIST · СИНХРОНИЗАЦИЯ…";
+  try{
+    let id=c.id;
+    if(!id){ const list=await gistReq("GET", "/gists?per_page=100"); const g=(list||[]).find(x=>x && x.files && x.files[GIST_FILE]); id=g ? g.id : ""; }
+    if(!id){
+      const g=await gistReq("POST", "/gists", {description:"Synapso progress", public:false, files:{[GIST_FILE]:{content:progressFile()}}});
+      store.set("pm.gist", {...c, id:g.id}); store.set("pm.lastSync", Date.now()); progDirty=false;
+      note.textContent="GIST СОЗДАН · ПРОГРЕСС ЭТОГО УСТРОЙСТВА ВЫГРУЖЕН"; return;
+    }
+    if(id!==c.id) store.set("pm.gist", {...c, id});
+    const g=await gistReq("GET", "/gists/"+id), f=g.files && g.files[GIST_FILE];
+    let text=f ? f.content : "";
+    if(f && f.truncated && f.raw_url){ try{ text=await (await fetch(f.raw_url, {cache:"no-store"})).text(); }catch(e){ throw {code:"net"}; } }
+    let obj=null, merged=0; try{ obj=text ? JSON.parse(text) : null; }catch(e){}
+    if(obj){ const r=checkImport(obj);
+      if(r.err && r.err!=="В ФАЙЛЕ НЕТ ПРОГРЕССА"){ note.textContent="GIST: "+r.err+" · НИЧЕГО НЕ ИЗМЕНЕНО"; return; }
+      if(r.map){ const m=applyMerge(r.map, "GIST"); if(m.failed) return; merged=m.changed; } }
+    await gistReq("PATCH", "/gists/"+id, {files:{[GIST_FILE]:{content:progressFile()}}});
+    store.set("pm.lastSync", Date.now()); progDirty=false;
+    if(merged) note.insertAdjacentText("afterbegin", "СИНХРОНИЗИРОВАНО · ");   /* keeps the ОТКАТИТЬ button of applyMerge */
+    else note.textContent="GIST · СИНХРОНИЗИРОВАНО "+fmtDate(Date.now())+" · НОВОГО С ДРУГИХ УСТРОЙСТВ НЕТ";
+  }catch(e){
+    const code=e && e.code;
+    if(code==="404"){ store.set("pm.gist", {...c, id:""}); note.textContent="GIST НЕ НАЙДЕН · ПРИ СЛЕДУЮЩЕЙ СИНХРОНИЗАЦИИ СОЗДАМ НОВЫЙ"; }
+    else if(code==="auth") note.textContent="GIST: ТОКЕН НЕ ПОДОШЁЛ · НУЖЕН ТОКЕН С ПРАВОМ GISTS (READ/WRITE)";
+    else if(code==="net") note.textContent="GIST: НЕТ СВЯЗИ С GITHUB · ЕСЛИ ЭТО ЛАБОРАТОРИЯ, СИНХРОНИЗИРУЙ НА ASHMEYN.GITHUB.IO/SYNAPSO";
+    else note.textContent="GIST: ОШИБКА "+((e&&e.status)||"")+" · ПРОГРЕСС НЕ ТРОНУТ";
+  }finally{ gistBusy=false; gistLabel(); }
+}
+$("gistBtn").addEventListener("click",()=>{ if(gistCfg()) gistSync(true); else { $("gistForm").hidden=!$("gistForm").hidden; if(!$("gistForm").hidden) $("gistToken").focus(); } });
+$("gistSave").addEventListener("click",()=>{ const t=$("gistToken").value.trim(); if(!t){ $("gistToken").focus(); return; }
+  store.set("pm.gist", {token:t, id:""}); $("gistToken").value=""; gistLabel(); gistSync(true); });
+$("gistOff").addEventListener("click",()=>{ try{ localStorage.removeItem("pm.gist"); localStorage.removeItem("pm.lastSync"); }catch(e){} gistLabel(); $("importNote").textContent="GIST ОТКЛЮЧЁН · ТОКЕН УДАЛЁН С ЭТОГО УСТРОЙСТВА (САМ GIST ОСТАЛСЯ НА GITHUB)"; });
+gistLabel();
+if(gistCfg()) setTimeout(()=>gistSync(false), 1500);
+document.addEventListener("visibilitychange",()=>{ if(!gistCfg()) return;
+  if(document.visibilityState==="hidden" && progDirty) gistSync(false);
+  else if(document.visibilityState==="visible" && Date.now()-store.get("pm.lastSync",0)>10*60*1000) gistSync(false); });
 
 $("navMap").addEventListener("click",()=>setMode("map"));
 $("navTopic").addEventListener("click",()=>openTopic(current>=0?current:selected,"theory"));

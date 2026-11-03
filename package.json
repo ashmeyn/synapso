@@ -12,7 +12,9 @@
     "test:honest": "node tests/run.js honest",
     "test:episode": "node tests/run.js episode",
     "test:roots": "node tests/run.js roots",
-    "test:fog": "node tests/run.js fog"
+    "test:fog": "node tests/run.js fog",
+    "test:merge": "node tests/run.js merge",
+    "test:practice": "node tests/run.js practice"
   },
   "devDependencies": {
     "playwright": "1.63.0"
