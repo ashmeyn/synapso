@@ -31,6 +31,15 @@ async function run() {
     const o = await docOverflow(page);
     await s.check('no horizontal page overflow on map', o.sw <= o.cw + 1, o);
 
+    // map legend lives behind «?»; drag hint only on the first 2 visits (pm.mapHint)
+    await s.check('legend hidden until «?»', !(await page.isVisible('.overlay .legend')));
+    await page.hover('#legQ'); await page.waitForTimeout(200);
+    await s.check('legend shows on «?» hover', await page.isVisible('.overlay .legend'));
+    await page.mouse.move(700, 450);
+    const hints = [await page.isVisible('#mapHint')];
+    for (let v = 0; v < 2; v++) { await page.reload(); await page.waitForTimeout(800); if (await page.isVisible('#inStart')) await page.click('#inStart'); await page.waitForTimeout(800); hints.push(await page.isVisible('#mapHint')); }
+    await s.check('drag hint on visits 1-2, gone on 3', hints[0] && hints[1] && !hints[2], hints);
+
     // Ctrl+K search
     await page.keyboard.press('Control+k');
     await s.check('Ctrl+K opens the palette', await page.isVisible('#palInput'));
