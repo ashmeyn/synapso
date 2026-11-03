@@ -159,8 +159,9 @@ async function inPage(s, browser) {
     // wrong token: clear message, nothing changed
     // second sync: nothing new on either side
     await dom('#gistBtn');
-    await page.waitForFunction(() => /НОВОГО/.test(document.getElementById('importNote').textContent), null, { timeout: 5000 }).catch(() => {});
-    await s.check('gist: repeated sync finds nothing new', /НОВОГО С ДРУГИХ УСТРОЙСТВ НЕТ/.test(await page.textContent('#importNote')), await page.textContent('#importNote'));
+    await page.waitForFunction(() => /НОВОГО С ДРУГИХ УСТРОЙСТВ НЕТ/.test(document.getElementById('importNote').textContent), null, { timeout: 5000 }).catch(() => {});
+    const note2 = await page.textContent('#importNote');
+    await s.check('gist: repeated sync finds nothing new', /НОВОГО С ДРУГИХ УСТРОЙСТВ НЕТ/.test(note2), note2);
     // wrong token: clear message, nothing changed
     await dom('#gistOff');
     await s.check('gist: disconnect removes the token', await page.evaluate(() => localStorage.getItem('pm.gist') === null));

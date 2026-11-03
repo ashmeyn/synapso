@@ -634,6 +634,17 @@ html, html *{cursor:none!important}
 .answer textarea::placeholder{color:#3A4248}
 .row-actions{display:flex;flex-wrap:wrap;align-items:center;gap:22px 28px}
 .gate{font-size:var(--fs-ui);color:var(--dim)}
+/* desktop practice (backlog design 4): gate on the key-button row, answer field framed like the code window */
+html:not(.phone) #pane-practice .row-actions{gap:12px 24px}
+html:not(.phone) #pane-practice .gate{font-family:var(--f-mono);font-size:var(--fs-ui);letter-spacing:.04em}
+html:not(.phone) #pane-practice .ed{overflow:visible;background:var(--code-bg);border:1px solid var(--line-2)}
+html:not(.phone) #pane-practice .ed::before,html:not(.phone) #pane-practice .ed::after{content:"";position:absolute;width:12px;height:12px;border-color:var(--ink-2);border-style:solid;pointer-events:none;z-index:2}
+html:not(.phone) #pane-practice .ed::before{left:-1px;top:-1px;border-width:1px 0 0 1px}
+html:not(.phone) #pane-practice .ed::after{right:-1px;bottom:-1px;border-width:0 1px 1px 0}
+html:not(.phone) #pane-practice .ed:focus-within{border-color:#1F3B3D}
+html:not(.phone) #pane-practice .ed:focus-within::before,html:not(.phone) #pane-practice .ed:focus-within::after{border-color:var(--cyan)}
+html:not(.phone) #pane-practice .answer textarea{border-left:0;padding:12px 18px}
+html:not(.phone) #pane-practice .ed-hl{padding:12px 18px}
 .kswap{font-family:var(--f-mono);font-size:var(--fs-label);letter-spacing:.04em;color:var(--cyan);margin-left:12px;padding:0 2px}
 .kswap:hover{color:var(--ink)}
 .assess{display:flex;flex-wrap:wrap;gap:22px;align-items:center;margin-top:6px}
@@ -3474,7 +3485,7 @@ function renderPractice(){
     ? `<div class="s7note">Ступень 7 по памяти засчитана · для «освоено» осталась Выгрузка <button type="button" class="textbtn" id="s7out">К ВЫГРУЗКЕ ▸</button></div>` : "";
   const bst = inBank ? bankStat(s.id) : null;
   pane.innerHTML = `<div class="ladder">${ladder}</div>
-    <div class="p-code">${s.code ? terminal(s.code, inBank ? "Задача из банка "+(bankIdx+1)+" из "+bank.length : "Задача "+(stepIdx+1)+" из "+steps.length, "", {plain: oral || proseCode(s.code)}) : ""}</div>
+    <div class="p-code">${s.code ? terminal(s.code, inBank ? "Задача из банка "+(bankIdx+1)+" из "+bank.length : PHONE ? "Задача "+(stepIdx+1)+" из "+steps.length : "Код задачи", "", {plain: oral || proseCode(s.code)}) : ""}</div>
     <div class="split" id="split" role="separator" aria-orientation="vertical" tabindex="0" title="Потяни — изменить ширину · двойной клик — авто"></div>
     <div class="p-side">
       ${inBank ? `<div class="bank-h"><span class="bt">${esc(s.type.toUpperCase())}${s.mins?" · "+s.mins+" МИН":""}</span><span>${bst.ok?"РЕШЕНО ×"+bst.ok:bst.no?"НЕ ВЫШЛО ×"+bst.no:"НОВАЯ"}</span><span class="bnav"><button type="button" class="textbtn" id="bankPrev">◂</button><button type="button" class="textbtn" id="bankNext">ДРУГАЯ ▸</button></span></div>` : ""}
