@@ -52,6 +52,19 @@ async function run() {
     const title = ((await page.textContent('#tTitle')) || '').trim();
     await s.check('topic window opened for Optional', /optional/i.test(title), title);
 
+    // backlog 6: in a topic the left panel is a narrow strip of icons
+    await page.waitForTimeout(900);   /* the grid column animates for .8s */
+    const strip = await page.evaluate(() => { const n = document.querySelector('.nav'), r = n.getBoundingClientRect(), b = document.getElementById('navMap');
+      return { w: Math.round(r.width), op: getComputedStyle(n).opacity, icon: getComputedStyle(b.querySelector('.ni')).display, text: getComputedStyle(b.querySelector('.nt')).display }; });
+    await s.check('topic: nav folds to an icon strip', strip.w >= 40 && strip.w <= 72 && strip.op === '1' && strip.icon !== 'none' && strip.text === 'none', strip);
+    // backlog 8: the bottom line leads to the next screen inside the topic
+    await page.click('#tab-practice'); await page.waitForTimeout(500);
+    const nx1 = ((await page.textContent('#tNav .tn-b.nx')) || '').trim();
+    await s.check('topic line: «Дальше: Практика 2 из 7» on step 1', /^Дальше: Практика 2 из 7/.test(nx1), nx1);
+    await page.click('#tNav .tn-b.nx'); await page.waitForTimeout(500);
+    const on = await page.evaluate(() => { const r = document.querySelector('#pane-practice .rung.on'); return r ? +r.dataset.step : -1; });
+    await s.check('topic line click opens step 2', on === 1, on);
+    await page.click('#tab-theory'); await page.waitForTimeout(300);
     for (const n of ['theory', 'cheat', 'practice', 'tasks']) {
       await page.click('#tab-' + n);
       await page.waitForTimeout(500);

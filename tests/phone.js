@@ -63,6 +63,12 @@ async function run() {
       await noHScroll(n);
       await quiet(n);
     }
+    // bottom line (backlog 8): «Дальше: Практика N из 7» in one line within 390
+    const tn = await page.evaluate(() => { const el = document.getElementById('tNav'), nx = el.querySelector('.tn-b.nx');
+      return { txt: nx ? nx.textContent.trim() : '', h: el.getBoundingClientRect().height, sw: el.scrollWidth, cw: el.clientWidth,
+        wrapped: [...el.querySelectorAll('.tn-b')].some(b => b.getBoundingClientRect().height > 52 || b.scrollWidth > b.clientWidth + 1) }; });
+    await s.check('topic line: next step inside the topic', /^Дальше: Практика \d из \d/.test(tn.txt), tn);
+    await s.check('topic line fits one row without wrapping', tn.h <= 52 && tn.sw <= tn.cw + 1 && !tn.wrapped, tn);
     await page.tap('#tab-tasks'); await page.waitForTimeout(300);
     await noHScroll('tasks');
     await page.tap('#tab-theory'); await page.waitForTimeout(200);
