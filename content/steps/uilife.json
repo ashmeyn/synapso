@@ -1,0 +1,63 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Мини и полный плеер",
+  "prompt": "Дан дважды нажал на карточку, потом «Переключить», потом ещё раз «Переключить». Какую подпись покажет карточка после каждого из трёх шагов? Что изменится, если вместо if/else стоит одна карточка `PlayerCard(title: isCompact ? \"Мини\" : \"Полный\")`? Объясни через идентичность.",
+  "code": "struct PlayerCard: View {\n    let title: String\n    @State private var speed = 1.0\n    var body: some View {\n        Button(\"\\(title): ×\\(speed)\") { speed += 0.5 }\n    }\n}\nstruct PlayerScreen: View {\n    @State private var isCompact = true\n    var body: some View {\n        VStack {\n            if isCompact {\n                PlayerCard(title: \"Мини\")\n            } else {\n                PlayerCard(title: \"Полный\")\n            }\n            Button(\"Переключить\") { isCompact.toggle() }\n        }\n    }\n}",
+  "key": "С if/else: «Мини: ×2.0» → «Полный: ×1.0» → «Мини: ×1.0». Ветки — два разных места в коде, то есть две идентичности. При переключении карточка новой ветки создаётся с начальным `speed = 1.0`, а хранилище ушедшей удаляется, поэтому и «Мини» после возврата начинает сначала.\n\nС одной карточкой и тернарным параметром: «Мини: ×2.0» → «Полный: ×2.0» → «Мини: ×2.0». Место и тип те же, меняется только значение `title`; пересчёт `body` хранилище `@State` не трогает."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Отметка остаётся у выпуска",
+  "prompt": "Фид присылает выпуски с guid и названием; названия повторяются, новые выпуски приходят сверху. Допиши `ForEach` так, чтобы отметка «В очередь» оставалась у своего выпуска после обновления. Модель `Episode` не меняй.",
+  "code": "struct Episode {\n    let guid: String\n    let title: String\n}\nstruct EpisodeRow: View {\n    let episode: Episode\n    @State private var isQueued = false\n    var body: some View {\n        Toggle(episode.title, isOn: $isQueued)\n    }\n}\nstruct EpisodesList: View {\n    // [(\"a12\", \"Бонус\"), (\"a11\", \"Бонус\"), (\"a10\", \"Интервью\")]\n    let episodes: [Episode]\n    var body: some View {\n        List {\n            ForEach(/* … */) { episode in\n                EpisodeRow(episode: episode)\n            }\n        }\n    }\n}",
+  "key": "struct Episode {\n    let guid: String\n    let title: String\n}\nstruct EpisodeRow: View {\n    let episode: Episode\n    @State private var isQueued = false\n    var body: some View {\n        Toggle(episode.title, isOn: $isQueued)\n    }\n}\nstruct EpisodesList: View {\n    // [(\"a12\", \"Бонус\"), (\"a11\", \"Бонус\"), (\"a10\", \"Интервью\")]\n    let episodes: [Episode]\n    var body: some View {\n        List {\n            ForEach(episodes, id: \\.guid) { episode in\n                EpisodeRow(episode: episode)\n            }\n        }\n    }\n}\n\nguid уникален и не меняется, поэтому хранилище отметки едет вместе со своим выпуском. `\\.title` не годится: два «Бонуса» получат одну идентичность, и SwiftUI перепутает их строки. Индексы тоже нет: после вставки сверху номер 0 достанется новому выпуску вместе со старой отметкой."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Загрузка без повторов",
+  "prompt": "Сейчас описание грузится заново после каждого возврата из комментариев, а если закрыть экран посреди загрузки, запрос продолжает работать. Перепиши запуск загрузки: запрос должен обрываться, когда экран уходит, и не повторяться, если описание уже есть.",
+  "code": "// Episode и SummaryLoader — из урока\nstruct EpisodeScreen: View {\n    let episode: Episode\n    let loader = SummaryLoader()\n    @State private var summary: String?\n    var body: some View {\n        VStack {\n            Text(summary ?? \"Загрузка…\")\n            NavigationLink(\"Комментарии\") { Text(\"Комментарии\") }\n        }\n        .onAppear {\n            Task {\n                summary = try? await loader.summary(for: episode.id)\n            }\n        }\n    }\n}",
+  "key": "struct EpisodeScreen: View {\n    let episode: Episode\n    let loader = SummaryLoader()\n    @State private var summary: String?\n    var body: some View {\n        VStack {\n            Text(summary ?? \"Загрузка…\")\n            NavigationLink(\"Комментарии\") { Text(\"Комментарии\") }\n        }\n        .task {\n            if summary != nil { return }\n            let id = episode.id\n            guard let text = try? await loader.summary(for: id) else {\n                return\n            }\n            summary = text\n        }\n    }\n}\n\n`.task` сам отменяет задачу, когда экран исчезает: отменённый `Task.sleep` бросает ошибку, `try?` даёт `nil`, и `guard` выходит, ничего не записав. Появления после возврата из комментариев повторяются, но проверка `summary != nil` не даёт загрузить готовое описание второй раз."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Пропавший комментарий",
+  "prompt": "Дан набрал комментарий и нажал «Играть» — поле опустело. Найди причину и почини. Черновик при этом должен начинаться заново, когда родитель показывает в этом экране другой эпизод.",
+  "code": "struct CommentDraft: View {\n    @State private var text = \"\"\n    var body: some View {\n        TextField(\"Комментарий\", text: $text)\n    }\n}\nstruct EpisodePlayer: View {\n    let episode: Episode\n    @State private var isPlaying = false\n    var body: some View {\n        VStack {\n            Text(episode.title)\n            Button(isPlaying ? \"Пауза\" : \"Играть\") { isPlaying.toggle() }\n            CommentDraft()\n                .id(UUID())\n        }\n    }\n}",
+  "key": "struct CommentDraft: View {\n    @State private var text = \"\"\n    var body: some View {\n        TextField(\"Комментарий\", text: $text)\n    }\n}\nstruct EpisodePlayer: View {\n    let episode: Episode\n    @State private var isPlaying = false\n    var body: some View {\n        VStack {\n            Text(episode.title)\n            Button(isPlaying ? \"Пауза\" : \"Играть\") { isPlaying.toggle() }\n            CommentDraft()\n                .id(episode.id)\n        }\n    }\n}\n\nНажатие «Играть» меняет `isPlaying`, `body` пересчитывается, и `UUID()` выдаёт `CommentDraft` новую идентичность — SwiftUI создаёт новое хранилище с пустым `text`. `episode.id` стабилен при пересчётах и меняется только вместе с эпизодом, поэтому черновик живёт, пока на экране тот же выпуск, и начинается заново для другого."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни как на собеседовании (устно)",
+  "prompt": "Ответь вслух или текстом, 4–6 предложений, без кода.",
+  "code": "Экран эпизода грузит описание; сверху открываются комментарии.\n- Когда вызывается init вью, а когда onAppear?\n- Что будет с onAppear и .task при push комментариев и возврате назад?\n- Где поэтому начинать загрузку данных экрана и почему?",
+  "key": "`init` — просто создание значения структуры: он вызывается при каждом пересчёте `body` родителя, иногда много раз, даже если экран не появлялся заново. `onAppear` срабатывает при каждом появлении на экране: после push сверху экран исчезает, после возврата появляется снова и вызывает `onAppear` ещё раз. `.task` запускается в те же моменты, но асинхронный и сам отменяется, когда вью исчезает; `.task(id:)` ещё и перезапускается при смене значения. Поэтому загрузку данных начинают в `.task` с проверкой «уже загружено», а не в `init` и не в `onAppear` с ручным `Task`, который никто не отменит."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Поиск без устаревших ответов",
+  "prompt": "Сервис отвечает на короткий запрос дольше. Дан быстро набрал «swift»: сначала появились результаты для «swift», потом их затёр ответ на «sw». Перепиши так, чтобы устаревший запрос обрывался и не перезаписывал экран.",
+  "code": "// Episode — из урока\nstruct SearchService {\n    func find(_ query: String) async throws -> [Episode] {\n        let slow = query.count < 3\n        try await Task.sleep(for: .seconds(slow ? 2 : 1))\n        return [Episode(id: query.count, title: \"Найдено: \\(query)\")]\n    }\n}\nstruct SearchScreen: View {\n    let service = SearchService()\n    @State private var query = \"\"\n    @State private var results: [Episode] = []\n    var body: some View {\n        List {\n            TextField(\"Поиск\", text: $query)\n            ForEach(results) { Text($0.title) }\n        }\n        .onChange(of: query) {\n            Task { results = (try? await service.find(query)) ?? [] }\n        }\n    }\n}",
+  "key": "struct SearchService {\n    func find(_ query: String) async throws -> [Episode] {\n        let slow = query.count < 3\n        try await Task.sleep(for: .seconds(slow ? 2 : 1))\n        return [Episode(id: query.count, title: \"Найдено: \\(query)\")]\n    }\n}\nstruct SearchScreen: View {\n    let service = SearchService()\n    @State private var query = \"\"\n    @State private var results: [Episode] = []\n    var body: some View {\n        List {\n            TextField(\"Поиск\", text: $query)\n            ForEach(results) { Text($0.title) }\n        }\n        .task(id: query) {\n            guard let found = try? await service.find(query) else {\n                return\n            }\n            results = found\n        }\n    }\n}\n\n`.task(id: query)` перезапускается при каждой новой букве и отменяет предыдущую задачу: запрос «sw» обрывается во сне, `try?` даёт `nil`, `guard` выходит и не трогает `results`. До экрана доходит только ответ на последний текст. Отдельный `onChange` больше не нужен: `.task(id:)` и запускается при появлении, и следит за значением.",
+  "points": [
+   "`onChange` с ручным `Task` убран — вместо него `.task(id: query)`.",
+   "Результат пишется только при успехе: `guard let found = try? await service.find(query)`.",
+   "Отменённый запрос «sw» выходит через `guard` и не трогает `results`."
+  ]
+ },
+ {
+  "id": "s7",
+  "title": "Ступень 7. Список и экран эпизода по памяти",
+  "prompt": "Без урока напиши обе вью. `EpisodesList`: эпизоды 12 и 11, кнопка «Обновить» вставляет эпизод 13 сверху, а отметка «В очередь» в каждой строке остаётся у своего эпизода. `EpisodeScreen`: описание через `SummaryLoader` — запрос обрывается при уходе с экрана и не повторяется, если описание уже есть; черновик заметки пустой для каждого нового эпизода, которого родитель показывает на том же месте.",
+  "code": "// Episode, EpisodeRow и SummaryLoader — из урока\nstruct EpisodesList: View {\n    // стартовые эпизоды 12 и 11, кнопка «Обновить» добавляет 13 сверху\n}\nstruct EpisodeScreen: View {\n    let episode: Episode\n    // описание через SummaryLoader и черновик заметки\n}",
+  "key": "struct EpisodesList: View {\n    @State private var episodes = [\n        Episode(id: 12, title: \"Эпизод 12\"),\n        Episode(id: 11, title: \"Эпизод 11\")\n    ]\n    var body: some View {\n        List {\n            Button(\"Обновить\") {\n                let fresh = Episode(id: 13, title: \"Эпизод 13\")\n                episodes.insert(fresh, at: 0)\n            }\n            ForEach(episodes) { episode in\n                EpisodeRow(episode: episode)\n            }\n        }\n    }\n}\nstruct EpisodeScreen: View {\n    let episode: Episode\n    let loader = SummaryLoader()\n    @State private var summary: String?\n    @State private var note = \"\"\n    var body: some View {\n        VStack {\n            Text(summary ?? \"Загрузка…\")\n            TextField(\"Заметка\", text: $note)\n        }\n        .task {\n            if summary != nil { return }\n            let id = episode.id\n            guard let text = try? await loader.summary(for: id) else {\n                return\n            }\n            summary = text\n        }\n    }\n}\n// у родителя: EpisodeScreen(episode: current).id(current.id)\n\nСтроки привязаны к `episode.id`, поэтому после «Обновить» отметка остаётся у 12. `.task` отменяется при уходе и не грузит готовое описание; `.id(current.id)` у родителя даёт новому эпизоду пустые `summary` и `note`.",
+  "points": [
+   "Состояние списка — `@State private var episodes`; «Обновить» вставляет 13 через `insert(_, at: 0)`.",
+   "`ForEach(episodes)` по `Identifiable` (или `id: \\.id`) — не по индексам и не по названию.",
+   "`EpisodeScreen` грузит в `.task`, первой строкой выходит при `summary != nil`.",
+   "Ответ записывается только при успехе: `guard let text = try? await …` — отменённая задача ничего не пишет.",
+   "Новый эпизод на том же месте — `.id(current.id)` у родителя, а не `.id(UUID())`."
+  ]
+ }
+]

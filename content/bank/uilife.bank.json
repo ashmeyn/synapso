@@ -1,0 +1,41 @@
+[
+ {
+  "id": "uilife-b1",
+  "topics": [
+   "uilife"
+  ],
+  "type": "Предскажи вывод",
+  "title": "Вкладка новостей в читалке",
+  "prompt": "Приложение открылось на вкладке «Новости». Через полсекунды Дан перешёл в «Профиль», через три секунды вернулся в «Новости» и больше ничего не трогал. Что напечатает консоль и почему именно столько строк?",
+  "code": "struct NewsTab: View {\n    var body: some View {\n        Text(\"Новости\")\n            .onAppear { print(\"появилась\") }\n            .task {\n                do {\n                    try await Task.sleep(for: .seconds(1))\n                    print(\"загружено\")\n                } catch {\n                    print(\"отменено\")\n                }\n            }\n    }\n}\nstruct ReaderTabs: View {\n    var body: some View {\n        TabView {\n            NewsTab().tabItem { Text(\"Новости\") }\n            Text(\"Профиль\").tabItem { Text(\"Профиль\") }\n        }\n    }\n}",
+  "key": "появилась\nотменено\nпоявилась\nзагружено\n\nПереход на другую вкладку убирает «Новости» с экрана, и `.task` отменяет задачу: `Task.sleep` бросает ошибку отмены, срабатывает `catch`. Возврат — новое появление: `onAppear` печатает ещё раз, `.task` стартует заново и на этот раз успевает досчитать секунду.",
+  "added": "2026-11-03",
+  "mins": 5
+ },
+ {
+  "id": "uilife-b2",
+  "topics": [
+   "uilife"
+  ],
+  "type": "Допиши",
+  "title": "Бесконечная галерея",
+  "prompt": "Галерея подгружает фото порциями по 20. Допиши модификатор строки: следующая порция грузится, когда на экран выезжает последняя строка, и только одна, пока порция не пришла.",
+  "code": "struct Photo: Identifiable {\n    let id: Int\n}\nstruct GalleryScreen: View {\n    @State private var photos = (1...20).map { Photo(id: $0) }\n    @State private var isLoading = false\n    var body: some View {\n        List(photos) { photo in\n            Text(\"Фото \\(photo.id)\")\n                /* модификатор строки */\n        }\n    }\n    func loadMore() async {\n        isLoading = true\n        try? await Task.sleep(for: .seconds(1))\n        let start = photos.count + 1\n        photos += (start..<start + 20).map { Photo(id: $0) }\n        isLoading = false\n    }\n}",
+  "key": "struct Photo: Identifiable {\n    let id: Int\n}\nstruct GalleryScreen: View {\n    @State private var photos = (1...20).map { Photo(id: $0) }\n    @State private var isLoading = false\n    var body: some View {\n        List(photos) { photo in\n            Text(\"Фото \\(photo.id)\")\n                .task {\n                    guard photo.id == photos.last?.id else { return }\n                    if isLoading { return }\n                    await loadMore()\n                }\n        }\n    }\n    func loadMore() async {\n        isLoading = true\n        try? await Task.sleep(for: .seconds(1))\n        let start = photos.count + 1\n        photos += (start..<start + 20).map { Photo(id: $0) }\n        isLoading = false\n    }\n}\n\nСтроки `List` ленивые: `.task` строки запускается, когда она выезжает на экран, и снова — при каждом возвращении прокруткой. Проверка `photos.last?.id` оставляет загрузку только последней строке, а `isLoading` не даёт запустить вторую порцию, пока первая в пути. Без проверок каждая строка при каждом появлении звала бы `loadMore()`.",
+  "added": "2026-11-03",
+  "mins": 7
+ },
+ {
+  "id": "uilife-b3",
+  "topics": [
+   "uilife"
+  ],
+  "type": "Устно",
+  "title": "Собеседование: идентичность вью",
+  "prompt": "Объясни как на собеседовании, 5–7 предложений: что такое идентичность вью в SwiftUI, какие у неё два источника, как с ней связан `@State` и почему `ForEach` по индексам или по названию опасен. Приведи один пример бага.",
+  "code": "// Пример из реального приложения: список будильников\n// с переключателем в каждой строке и свайпом «Удалить»",
+  "key": "Вью в SwiftUI — значение, его пересоздают при каждом пересчёте `body`, поэтому «та же вью» определяется не объектом, а идентичностью. Источников два: структурная — место в коде (ветка `if` и ветка `else` — разные вью) и явная — `id` в `ForEach` или модификатор `.id`. Хранилище `@State` привязано к идентичности: пока она та же, состояние живёт, сменилась — SwiftUI удаляет старое и создаёт новое с начальным значением; к ней же привязаны `onAppear` и `.task`. По индексам идентичность строки — номер: удалил свайпом первый будильник, и его включённый переключатель достался будильнику, который сдвинулся на номер 0. По названию два одинаковых «Подъём» получат одну идентичность. Поэтому id берут стабильный и уникальный из модели — `Identifiable`.",
+  "added": "2026-11-03",
+  "mins": 6
+ }
+]
