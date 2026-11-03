@@ -648,6 +648,17 @@ html, html *{cursor:none!important}
 html.phone .out{gap:14px}
 html.phone .out .row-actions{gap:10px 20px}
 html.phone .out .assess{gap:12px 16px}
+/* «Корни»: prereqs recalled before the lesson; «Из этой темы растут» under it */
+.roots-t{font-family:var(--f-mono);font-size:var(--fs-ui);letter-spacing:.06em;color:var(--cyan);text-transform:uppercase}
+.roots-sum{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-family:var(--f-read);font-size:var(--fs-read);line-height:1.5;color:var(--ink-2)}
+.roots-sum li{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.roots-sum b{font-family:var(--f-mono);font-weight:400;font-size:var(--fs-ui);letter-spacing:.04em;color:var(--muted);min-width:9ch}
+.roots-sum li.no b{color:var(--cyan)}
+.grows{flex:1 1 100%;margin:0;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline;font-family:var(--f-read);font-size:var(--fs-label);line-height:1.6;color:var(--muted)}
+.grows button{padding:0;font:inherit;color:var(--cyan);text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(45,226,230,.4)}
+.grows button:hover{text-decoration-color:var(--cyan)}
+.grows i{font-style:normal;color:var(--dim)}
+html.phone .grows button{min-height:32px}
 
 /* tasks */
 .task{border-top:1px solid var(--line);padding:22px 0}
@@ -2220,6 +2231,7 @@ function topicProgress(id){ const c=DATA.content[id]; const steps=c?c.steps:[]; 
    as pm.legacy (migration marker pm.honest); their next SRS review goes through the honest path. */
 let LEGACY = store.get("pm.legacy", {});
 function recallOf(id){ return store.get("pm.recall."+id, null); }   /* {at, v:"ok"|"part"|"no", pass:ts|0} — step 7 by memory */
+function rootOf(id){ return store.get("pm.roots."+id, null)||{}; }    /* {at, v:"ok"|"no"} — last recall of this topic as a root («Корни») of another */
 function outOf(id){ return store.get("pm.out."+id, null); }         /* {at, g:[...], v, pass:ts|0} — «Выгрузка» */
 function gradesOf(id){ return store.get("pm.grade."+id, {}); }       /* {s1:"ok"|"part"|"no", ...} — 3-level self-grade */
 function honestDone(id){ const r=recallOf(id), o=outOf(id); return !!(r && r.pass && o && o.pass); }
@@ -2239,7 +2251,7 @@ function srsOf(id){
   return r;
 }
 function isDue(id){
-  if(statusOf(id)!=="done"){ const r=store.get("pm.srs."+id,null); const o=outOf(id); return !!r && r.due<=Date.now() && !!o && o.v!=="ok"; } /* «нет» in Выгрузка before the topic is done: come back tomorrow */
+  if(statusOf(id)!=="done"){ const r=store.get("pm.srs."+id,null); const o=outOf(id); return !!r && r.due<=Date.now() && ((!!o && o.v!=="ok") || rootOf(id).v==="no"); } /* «нет» in Выгрузка before the topic is done: come back tomorrow */
   const r=srsOf(id); return !!r && r.due<=Date.now(); }
 function srsHold(id){ const r=srsOf(id)||{stage:0,lapses:0}; r.due=Date.now()+DAY; store.set("pm.srs."+id, r); }
 /* one self-grade into the existing SRS: recalled → next rung, partly → same rung tomorrow, no → reset, tomorrow */
@@ -2263,6 +2275,9 @@ function computeStatuses(){
   hotList = topics.map((t,i)=>i).filter(i=>topics[i].b===topics[curIdx].b);
 }
 computeStatuses();
+const TIDX={}; topics.forEach((t,i)=>{ TIDX[t.id]=i; });
+function prereqsOf(id){ const L=(DATA.content[id]||{}).lesson; return ((L && L.prereqs)||[]).filter(p=>p!==id && TIDX[p]!==undefined); }
+const GROWS={}; topics.forEach((t,i)=>prereqsOf(t.id).forEach(p=>{ (GROWS[p]=GROWS[p]||[]).push(i); }));   /* reverse prereqs */
 function nextIdx(i){ for(let j=i+1;j<topics.length;j++) if(topics[j].status!=="dark") return j; return -1; }
 function prevIdx(i){ for(let j=i-1;j>=0;j--) if(topics[j].status!=="dark") return j; return -1; }
 function startCheck(i){ const t=topics[i]; checkMode=t.id; const st=(DATA.content[t.id]||{}).steps||[]; forceStep=Math.max(0, st.findIndex(x=>x.id==="s7")); fxLog("SCAN","NODE://"+t.id.toUpperCase()+" · ПРОВЕРКА ЗНАНИЯ"); openTopic(i,"practice"); }
@@ -2763,10 +2778,11 @@ function doOpen(i, tab){
   if(t.due){ const k7=steps.findIndex(s=>s.id==="s7"); if(k7>=0){ stepIdx=k7; bankIdx=-1; } }
   if(checkMode && checkMode!==t.id) checkMode=null;
   if(forceStep>=0){ stepIdx=Math.min(forceStep, Math.max(0,steps.length-1)); bankIdx=-1; forceStep=-1; }
-  if(t.due && t.status!=="done" && tab!=="cheat" && tab!=="tasks") tab="out";   /* a failed «Выгрузка» is due: start there */
+  if(t.due && t.status!=="done" && tab!=="cheat" && tab!=="tasks" && outQs(t.id).length) tab="out";   /* a failed «Выгрузка» is due: start there */
   refreshTopicNav(i);
-  outSt=null; renderTheory(); renderCheat(); renderPractice(); renderTasks();
+  outSt=null; rootsSt=null; renderTheory(); renderCheat(); renderPractice(); renderTasks();
   if(tab==="out"){ renderOut(); tab="theory"; }
+  else if((!tab || tab==="theory") && !checkMode) openRoots(t.id);
   setTab(tab || "theory");
   focusOn(i); burst(i, 8);
   setMode("topic");
@@ -2933,6 +2949,7 @@ function renderTheory(){
   pane.innerHTML = `<div class="theory${L?" lesson":""}">${c ? (L ? lessonHTML(L) : c.theory) : `<p class="empty">Теория для этой темы ещё не написана. Она появится по тому же шаблону: что это, почему так устроено, последствия и аналогия.</p>`}</div>
     <button type="button" class="more" id="tMore" hidden></button>
     <div class="t-foot">
+      ${growsHTML(t.id)}
       ${nDeep ? `<button class="deepBtn" type="button" id="toDeep"><span>ГЛУБЖЕ ▾</span><small>${nDeep} ${nDeep<5?"РАЗДЕЛА":"РАЗДЕЛОВ"} · ДЛЯ СОБЕСА И MIDDLE</small></button>` : ""}
       ${outQs(t.id).length ? (outPass ? `<button class="ghostbtn" type="button" id="toOut">ВЫГРУЗКА ✓ · ПРОЙТИ ЕЩЁ РАЗ</button>` : `<button class="cta" type="button" id="toOut">ВЫГРУЗКА ▸ <small>${outQs(t.id).length} ${plural(outQs(t.id).length,["ВОПРОС","ВОПРОСА","ВОПРОСОВ"])} ПО ПАМЯТИ</small></button>`) : ""}
       ${c && c.steps.length ? `<button class="${outPass||!outQs(t.id).length?"cta":"ghostbtn"}" type="button" id="toPractice">ЗАПУСТИТЬ ПРАКТИКУ ▸</button>` : ""}
@@ -2950,6 +2967,7 @@ function renderTheory(){
   if($("toPractice")) $("toPractice").addEventListener("click",()=>setTab("practice"));
   if($("toOut")) $("toOut").addEventListener("click",()=>openOut());
   if($("tNext")) $("tNext").addEventListener("click",()=>openTopic(nextIdx));
+  if($("tGrows")) $("tGrows").addEventListener("click",e=>{ const b=e.target.closest("[data-i]"); if(b) openTopic(+b.dataset.i); });
 }
 
 /* ---------- PHONE «Эпизод»: the lesson as a stack of cards, one ## section per screen ----------
@@ -3089,6 +3107,62 @@ function renderOutDone(t, S){
   if($("outNextT")) $("outNextT").addEventListener("click",()=>openTopic(nextIdx(current),"theory"));
   if($("outPractice")) $("outPractice").addEventListener("click",()=>{ const st=DATA.content[id].steps; if(!(rec&&rec.pass)){ const k7=st.findIndex(x=>x.id==="s7"); if(k7>=0){ stepIdx=k7; bankIdx=-1; } } renderPractice(); setTab("practice"); });
 }
+
+/* ---------- «Корни»: before a lesson, each prereq not recalled lately → one question from memory → reveal → вспомнил / нет ---------- */
+const ROOTS_FRESH=3*DAY;
+let rootsSt=null;   /* {id, list:[prereq ids], k, shown, g:[]} */
+function rootQ(p){ const o=DATA.ref.one[p], ch=DATA.ref.cheat[p], t=topics[TIDX[p]];
+  if(o && o.q) return {q:o.q, a:o.a||""};
+  if(ch && ch.length) return {q:"Что главное про «"+t.title+"»? Сформулируй одной фразой.", a:ch[0]};
+  return null; }
+/* last time a topic was pulled from memory: as a root, step 7, «Выгрузка» or an SRS grade */
+function lastRecall(p){ const r=store.get("pm.srs."+p, null);
+  const srsAt = r && r.due ? r.due-SRS_DAYS[Math.min(r.stage||0, SRS_DAYS.length-1)]*DAY : 0;
+  return Math.max(rootOf(p).at||0, (recallOf(p)||{}).at||0, (outOf(p)||{}).at||0, Math.min(srsAt, Date.now())); }
+function rootsDue(id){
+  if(Date.now()-(store.get("pm.rootsSkip."+id, 0)||0) < DAY) return [];
+  return prereqsOf(id).filter(p=>rootQ(p) && Date.now()-lastRecall(p) > ROOTS_FRESH); }
+function openRoots(id){ const list=rootsDue(id); if(!list.length) return false; rootsSt={id, list, k:0, shown:false, g:[]}; renderRoots(); return true; }
+function closeRoots(){ rootsSt=null; renderTheory(); $("winBody").scrollTop=0; }
+function renderRoots(){
+  const S=rootsSt, pane=$("pane-theory"); if(!S) return;
+  stopTyping(); thBlocks=[]; thShown=0;
+  if(S.k>=S.list.length){ renderRootsDone(); return; }
+  const p=S.list[S.k], t=topics[TIDX[p]], q=rootQ(p);
+  pane.innerHTML = `<div class="out roots" id="roots">
+    <div class="out-h"><span>КОРНИ · <b>${S.k+1}</b> / ${S.list.length}</span><button type="button" class="textbtn" id="rootsSkip">ПРОПУСТИТЬ →</button></div>
+    <p class="out-tip">Урок стоит на этих темах. Вспомни ответ по памяти, потом открой его и честно отметь. «Нет» поставит тему в повтор.</p>
+    <div class="roots-t">${BRANCHES[t.b].code} · ${esc(t.title)}</div>
+    <h2 class="out-q" id="rootsQ">${esc(q.q)}</h2>
+    <div class="row-actions" id="rootsActs"><button type="button" class="cta" id="rootsShow">ПОКАЗАТЬ ОТВЕТ</button></div>
+    <div id="rootsKey"></div></div>`;
+  $("rootsSkip").addEventListener("click",()=>{ store.set("pm.rootsSkip."+S.id, Date.now()); closeRoots(); });
+  $("rootsShow").addEventListener("click",()=>{
+    S.shown=true; $("rootsActs").hidden=true;
+    $("rootsKey").innerHTML = `<div class="out-a">${esc(q.a)}</div>
+      <div class="assess"><span class="q">Вспомнил это сам, до ответа?</span><button type="button" class="cta" data-g="ok">ВСПОМНИЛ</button><button type="button" class="ghostbtn" data-g="no">НЕТ</button></div>`;
+    $("rootsKey").querySelectorAll("[data-g]").forEach(b=>b.addEventListener("click",()=>{
+      const v=b.dataset.g; S.g[S.k]=v; store.set("pm.roots."+p, {at:Date.now(), v});
+      if(v==="no"){ srsFail(p); logErr(p, "Корни: "+q.q, "Не вспомнил перед темой «"+topics[TIDX[S.id]].title+"». Ответ: "+q.a); sfx.no(); refreshProgress(); }
+      else sfx.ok();
+      S.k++; S.shown=false; renderRoots(); $("winBody").scrollTop=0; }));
+    const kb=$("rootsKey"); if(kb.scrollIntoView) kb.scrollIntoView({block:"nearest"});
+  });
+}
+function renderRootsDone(){
+  const S=rootsSt, ok=S.g.filter(x=>x==="ok").length, n=S.list.length, miss=S.list.filter((p,k)=>S.g[k]==="no");
+  $("pane-theory").innerHTML = `<div class="out roots" id="roots">
+    <div class="out-h"><span>КОРНИ · ИТОГ</span></div>
+    <div class="out-sum"><span>ВСПОМНИЛ <b>${ok}</b> / ${n}</span></div>
+    <ul class="roots-sum">${S.list.map((p,k)=>`<li class="${S.g[k]==="no"?"no":""}"><b>${S.g[k]==="no"?"В ПОВТОР":"ВСПОМНИЛ"}</b><span>${esc(topics[TIDX[p]].title)}</span></li>`).join("")}</ul>
+    <p class="out-tip">${miss.length ? "Темы с «нет» вернутся в повторе уже завтра. Урок можно читать и сейчас." : "Опора на месте — можно в урок."}</p>
+    <div class="out-acts"><button type="button" class="cta" id="rootsGo">К УРОКУ ▸</button>
+      ${miss.map(p=>`<button type="button" class="ghostbtn" data-i="${TIDX[p]}">ОТКРЫТЬ · ${esc(topics[TIDX[p]].title)}</button>`).join("")}</div></div>`;
+  $("rootsGo").addEventListener("click",closeRoots);
+  $("pane-theory").querySelectorAll(".out-acts [data-i]").forEach(b=>b.addEventListener("click",()=>{ rootsSt=null; openTopic(+b.dataset.i); }));
+}
+function growsHTML(id){ const g=GROWS[id]; if(!g || !g.length) return "";
+  return `<p class="grows" id="tGrows"><span>Из этой темы растут:</span>${g.map((j,k)=>(k?"<i>·</i>":"")+`<button type="button" data-i="${j}">${esc(topics[j].title)}</button>`).join("")}</p>`; }
 
 /* ---------- answer editor: auto-pairs, indent, tab, highlight, key sounds ---------- */
 function attachEditor(ta, hlEl, opts){
@@ -3541,7 +3615,7 @@ function renderRun(){
   $("runShow").addEventListener("click",()=>{ stopTyping();
     $("runTip").outerHTML=`<div class="run-a">${esc(c.a)}</div>`;
     $("runActs").innerHTML=`<button type="button" class="cta" id="runYes">ПОМНЮ</button><button type="button" class="ghostbtn" id="runNo">НЕ ВСПОМНИЛ</button>`;
-    $("runYes").addEventListener("click",()=>{ sfx.ok(); if(c.kind==="review" && honestDone(t.id)) srsPass(t.id); runRes.push(true); flash[c.i]=1.6; burst(c.i,10); refreshProgress(); runIdx++; renderRun(); });
+    $("runYes").addEventListener("click",()=>{ sfx.ok(); if(c.kind==="review" && honestDone(t.id)) srsPass(t.id); else if(c.kind==="review" && rootOf(t.id).v==="no") store.set("pm.roots."+t.id, {at:Date.now(), v:"ok"}); runRes.push(true); flash[c.i]=1.6; burst(c.i,10); refreshProgress(); runIdx++; renderRun(); });
     $("runNo").addEventListener("click",()=>{ sfx.no(); if(t.status==="done" || (c.kind==="review" && store.get("pm.srs."+t.id,null))) srsFail(t.id); if(c.kind!=="warm") logErr(t.id, c.q, "Ран: не вспомнил. Ответ: "+c.a); runRes.push(false); refreshProgress(); runIdx++; renderRun(); });
   });
 }
@@ -3723,7 +3797,7 @@ const DEVICE_KEYS=new Set(["pm.font","pm.codefont","pm.sfx","pm.volAmb","pm.volF
 let lastSnapshot=null;
 function progressKeys(){ const r=[]; try{ for(let k=0;k<localStorage.length;k++){ const key=localStorage.key(k); if(key && key.startsWith("pm.") && !DEVICE_KEYS.has(key)) r.push(key); } }catch(e){} return r; }
 function takeSnapshot(){ const o={}; progressKeys().forEach(k=>{ try{ o[k]=localStorage.getItem(k); }catch(e){} }); return o; }
-function reloadState(){ IMPORTED=store.get("pm.imported",{}); KNOWN=store.get("pm.known",{}); SKIP=store.get("pm.skip",{}); LEGACY=store.get("pm.legacy",{}); migrateHonest(); outSt=null; refreshProgress(); refreshRun(); refreshBackupNote(); }
+function reloadState(){ IMPORTED=store.get("pm.imported",{}); KNOWN=store.get("pm.known",{}); SKIP=store.get("pm.skip",{}); LEGACY=store.get("pm.legacy",{}); migrateHonest(); outSt=null; rootsSt=null; refreshProgress(); refreshRun(); refreshBackupNote(); }
 function restoreSnapshot(snap){ progressKeys().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); Object.entries(snap).forEach(([k,v])=>{ try{ localStorage.setItem(k,v); }catch(e){} }); reloadState(); }
 function topicCount(map){ return Object.keys(map).filter(k=>k.indexOf("pm.steps.")===0 && map[k] && map[k]!=="{}").length; }
 function checkImport(obj){

@@ -66,8 +66,8 @@ const phoneUi = {
     await page.waitForFunction(() => document.getElementById('main').classList.contains('is-topic'), null, { timeout: 5000 });
     await page.waitForTimeout(300);
   },
-  // phone theory is an episode: flip to the finale card (where «Выгрузка» lives)
-  async revealTheory(page) { for (let k = 0; k < 40 && await page.isVisible('#epNext'); k++) { await page.tap('#epNext'); await page.waitForTimeout(40); } },
+  // phone theory: skip «Корни» if shown, then flip the episode to its finale card (where «Выгрузка» lives)
+  async revealTheory(page) { if (await page.isVisible('#rootsSkip')) await page.click('#rootsSkip'); for (let k = 0; k < 40 && await page.isVisible('#epNext'); k++) { await page.tap('#epNext'); await page.waitForTimeout(40); } },
 };
 const desktopUi = {
   async ready(page) { await page.waitForSelector('#inStart', { state: 'visible', timeout: 20000 }); await page.click('#inStart'); await page.waitForTimeout(900); },
@@ -80,7 +80,7 @@ const desktopUi = {
     await page.waitForTimeout(500);
     if (await page.isVisible('#skipType')) await page.click('#skipType');
   },
-  async revealTheory(page) { for (let k = 0; k < 40 && await page.isVisible('#tMore'); k++) { await page.click('#tMore'); await page.waitForTimeout(40); if (await page.isVisible('#skipType')) await page.click('#skipType'); } },
+  async revealTheory(page) { if (await page.isVisible('#rootsSkip')) await page.click('#rootsSkip'); for (let k = 0; k < 40 && await page.isVisible('#tMore'); k++) { await page.click('#tMore'); await page.waitForTimeout(40); if (await page.isVisible('#skipType')) await page.click('#skipType'); } },
 };
 
 async function run() {

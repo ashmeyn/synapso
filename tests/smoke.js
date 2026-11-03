@@ -59,6 +59,16 @@ async function run(opts = {}) {
       if (!(await s.check(`${tag}: topic window opens`, ok))) continue;
       opened++;
 
+      // «Корни»: shown before the lesson iff it has prereqs (nothing recalled in this fresh run), skipped here
+      const pre = (c.lesson && c.lesson.prereqs || []).filter(p => DATA.content[p]);
+      const rootsVis = await page.isVisible('#roots');
+      await s.check(`${tag}: «Корни» shown iff lesson has prereqs`, rootsVis === pre.length > 0, { rootsVis, pre });
+      if (rootsVis) {
+        const n = await page.evaluate(() => (document.querySelector('#roots .out-h span').textContent.match(/\/ (\d+)/) || [])[1]);
+        await s.check(`${tag}: «Корни» asks every prereq`, +n === pre.length, { n, pre });
+        await page.click('#rootsSkip');
+      }
+
       // theory
       await page.click('#tab-theory');
       await revealAll(page);
@@ -78,6 +88,9 @@ async function run(opts = {}) {
       await s.check(`${tag}: >=1 theory section`, th.sections >= 1, th);
       await s.check(`${tag}: all sections rendered`, th.sections === expSec, { rendered: th.sections, expected: expSec });
       await s.check(`${tag}: nothing locked after reveal`, th.locked === 0, th);
+      const grows = topics.filter(x => ((DATA.content[x.id] || {}).lesson || {}).prereqs && DATA.content[x.id].lesson.prereqs.includes(t.id)).map(x => String(x.i));
+      const gl = await page.evaluate(() => [...document.querySelectorAll('#tGrows button[data-i]')].map(b => b.dataset.i));
+      await s.check(`${tag}: «Из этой темы растут» lists reverse prereqs`, gl.join() === grows.join(), { gl, grows });
 
       // cheat sheet
       await page.click('#tab-cheat');

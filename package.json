@@ -10,7 +10,8 @@
     "test:phone": "node tests/run.js phone",
     "test:desktop": "node tests/run.js desktop",
     "test:honest": "node tests/run.js honest",
-    "test:episode": "node tests/run.js episode"
+    "test:episode": "node tests/run.js episode",
+    "test:roots": "node tests/run.js roots"
   },
   "devDependencies": {
     "playwright": "1.63.0"
