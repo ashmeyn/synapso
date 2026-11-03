@@ -29,6 +29,8 @@
   color-scheme:dark;
 }
 html,body{height:100%}
+/* iOS Safari увеличивает шрифт в длинных строках кода (text autosizing) — отключаем */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);margin:0;overflow:hidden}
 *{box-sizing:border-box}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
