@@ -5,10 +5,10 @@
    "bsearch"
   ],
   "type": "Предскажи вывод",
-  "title": "Цены в неотсортированном каталоге",
-  "prompt": "Предскажи оба вывода. Пройди границы первого поиска и объясни, почему результаты разные.",
-  "code": "// indexOf(_:in:) — из урока\nlet prices = [120, 45, 300, 80, 210]\nprint(indexOf(80, in: prices) as Any)\nprint(indexOf(80, in: prices.sorted()) as Any)",
-  "key": "nil\nOptional(1)\n\nПервый поиск: 0..<5, mid 2 (300 > 80) → 0..<2; mid 1 (45 < 80) → 2..<2, кусок пуст — 80 «не найден», хотя он на индексе 3. Поиск отбросил правую часть, полагаясь на порядок, которого нет. После `sorted()` массив `[45, 80, 120, 210, 300]`, и 80 находится на индексе 1.",
+  "title": "Номера заказов не по порядку",
+  "prompt": "Заказы пришли с сервера не по порядку номеров. Предскажи оба вывода. Пройди границы первого поиска и объясни, почему результаты разные.",
+  "code": "// indexOf(_:in:) — из урока\nlet orders = [1204, 1187, 1310, 1195, 1250]\nprint(indexOf(1195, in: orders) as Any)\nprint(indexOf(1195, in: orders.sorted()) as Any)",
+  "key": "nil\nOptional(1)\n\nПервый поиск: 0..<5, mid 2 (1310 > 1195) → 0..<2; mid 1 (1187 < 1195) → 2..<2, кусок пуст — 1195 «не найден», хотя он на индексе 3. Поиск отбросил правую часть, полагаясь на порядок, которого нет. После `sorted()` массив `[1187, 1195, 1204, 1250, 1310]`, и 1195 находится на индексе 1.",
   "added": "2026-11-04",
   "mins": 5
  },
@@ -20,7 +20,7 @@
   "type": "Допиши",
   "title": "Тренировки с выбранной даты",
   "prompt": "Допиши функцию по комментарию за O(log n) и предскажи вывод.",
-  "code": "struct Workout {\n    let day: Int\n    let title: String\n}\n// workouts отсортированы по day. Индекс первой тренировки\n// не раньше дня from — с него начнётся экран «С этой даты».\nfunc firstIndex(from day: Int, in workouts: [Workout]) -> Int {\n    // …\n}\nlet log = [2, 5, 5, 9, 14].map { Workout(day: $0, title: \"Бег\") }\nprint(firstIndex(from: 6, in: log))\nprint(firstIndex(from: 5, in: log))",
+  "code": "struct Workout {\n    let day: Int\n    let title: String\n}\n// workouts отсортированы по day. Индекс первой тренировки\n// не раньше дня from — с него начнётся экран «С этой даты».\nfunc firstIndex(from day: Int, in workouts: [Workout]) -> Int {\n    // …\n}\nlet history = [2, 5, 5, 9, 14].map { Workout(day: $0, title: \"Бег\") }\nprint(firstIndex(from: 6, in: history))\nprint(firstIndex(from: 5, in: history))",
   "key": "func firstIndex(from day: Int, in workouts: [Workout]) -> Int {\n    var low = 0\n    var high = workouts.count\n    while low < high {\n        let mid = low + (high - low) / 2\n        if workouts[mid].day < day {\n            low = mid + 1\n        } else {\n            high = mid\n        }\n    }\n    return low\n}\n\n3\n1\n\nМесто вставки по полю структуры: сравниваем `day`, а не саму тренировку. Для дня 5 ответ — первая из двух тренировок пятого дня, потому что при равенстве сдвигается `high`.",
   "added": "2026-11-04",
   "mins": 7
