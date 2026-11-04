@@ -5,10 +5,10 @@
    "sort"
   ],
   "type": "Предскажи вывод",
-  "title": "Контакты по городам",
-  "prompt": "Контакты сначала отсортировали по имени, потом — по городу. Что напечатает код? Какое свойство сортировки Swift здесь работает?",
-  "code": "struct Contact {\n    let name: String\n    let city: String\n}\nlet contacts = [\n    Contact(name: \"Ира\", city: \"Казань\"),\n    Contact(name: \"Гена\", city: \"Омск\"),\n    Contact(name: \"Аня\", city: \"Казань\"),\n    Contact(name: \"Боря\", city: \"Омск\")\n]\nlet byName = contacts.sorted { $0.name < $1.name }\nlet byCity = byName.sorted { $0.city < $1.city }\nprint(byCity.map(\\.name))",
-  "key": "[\"Аня\", \"Ира\", \"Боря\", \"Гена\"]\n\nВторая сортировка смотрит только на город, но сортировка в Swift стабильная: внутри одного города остаётся порядок, полученный первой сортировкой, — по имени. Надёжнее и понятнее одной сортировкой с составным ключом `(city, name)`.",
+  "title": "Сотрудники по отделам",
+  "prompt": "Сотрудников сначала отсортировали по имени, потом — по отделу. Что напечатает код? Какое свойство сортировки Swift здесь работает?",
+  "code": "struct Employee {\n    let name: String\n    let department: String\n}\nlet staff = [\n    Employee(name: \"Ира\", department: \"Дизайн\"),\n    Employee(name: \"Гена\", department: \"Продажи\"),\n    Employee(name: \"Аня\", department: \"Дизайн\"),\n    Employee(name: \"Боря\", department: \"Продажи\")\n]\nlet byName = staff.sorted { $0.name < $1.name }\nlet byDept = byName.sorted { $0.department < $1.department }\nprint(byDept.map(\\.name))",
+  "key": "[\"Аня\", \"Ира\", \"Боря\", \"Гена\"]\n\nВторая сортировка смотрит только на отдел, но сортировка в Swift стабильная: внутри одного отдела остаётся порядок, полученный первой сортировкой, — по имени. Надёжнее и понятнее одной сортировкой с составным ключом `(department, name)`.",
   "added": "2026-11-04",
   "mins": 5
  },
@@ -21,7 +21,7 @@
   "title": "Медленная загрузка чата",
   "prompt": "История чата загружается пачками по 500 сообщений и заметно тормозит, хотя порядок правильный. Найди причину и почини, сохранив порядок по времени.",
   "code": "struct Message {\n    let id: Int\n    let sentAt: Int\n}\nfinal class ChatHistory {\n    private(set) var messages: [Message] = []\n    func load(_ batch: [Message]) {\n        for message in batch {\n            messages.append(message)\n            messages.sort { $0.sentAt < $1.sentAt }\n        }\n    }\n}",
-  "key": "final class ChatHistory {\n    private(set) var messages: [Message] = []\n    func load(_ batch: [Message]) {\n        messages.append(contentsOf: batch)\n        messages.sort { $0.sentAt < $1.sentAt }\n    }\n}\n\nОшибка не в порядке, а в цене: сортировка внутри цикла выполняется для каждого сообщения. Пачка из k сообщений стоит k сортировок по O(n log n) вместо одной. Результат тот же, если сначала добавить всю пачку, а отсортировать один раз в конце.",
+  "key": "final class ChatHistory {\n    private(set) var messages: [Message] = []\n    func load(_ batch: [Message]) {\n        messages.append(contentsOf: batch)\n        messages.sort { $0.sentAt < $1.sentAt }\n    }\n}\n\nОшибка не в порядке, а в цене: сортировка внутри цикла выполняется для каждого сообщения и каждый раз проходит весь массив — не меньше O(n) на сообщение. Пачка из k сообщений стоит k проходов вместо одной сортировки. Результат тот же, если сначала добавить всю пачку, а отсортировать один раз в конце.",
   "added": "2026-11-04",
   "mins": 6
  },
