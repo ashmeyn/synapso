@@ -1,0 +1,62 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Следи за границами",
+  "prompt": "Для каждого вызова indexOf выпиши low, high и mid на каждом шаге и предскажи, что напечатает код.",
+  "code": "// indexOf(_:in:) — из урока\nlet builds = [5, 9, 12, 18, 26, 31, 44, 50]\nprint(indexOf(9, in: builds) as Any)\nprint(indexOf(13, in: builds) as Any)",
+  "key": "Поиск 9: 0..<8, mid 4 (26 > 9) → 0..<4; mid 2 (12 > 9) → 0..<2; mid 1 — это 9. Печать: Optional(1).\nПоиск 13: 0..<8, mid 4 (26 > 13) → 0..<4; mid 2 (12 < 13) → 3..<4; mid 3 (18 > 13) → 3..<3 — кусок пуст. Печать: nil.\n\nКаждый раз кусок сужается примерно вдвое: для 8 элементов хватает трёх шагов."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Есть ли товар за эту цену",
+  "prompt": "Допиши тело цикла по комментарию и предскажи вывод.",
+  "code": "// Каталог: цены по возрастанию. Есть ли товар ровно за price?\nfunc hasPrice(_ price: Int, in prices: [Int]) -> Bool {\n    var low = 0\n    var high = prices.count\n    while low < high {\n        // …\n    }\n    return false\n}\nprint(hasPrice(450, in: [120, 300, 450, 990]))\nprint(hasPrice(500, in: [120, 300, 450, 990]))",
+  "key": "// Каталог: цены по возрастанию. Есть ли товар ровно за price?\nfunc hasPrice(_ price: Int, in prices: [Int]) -> Bool {\n    var low = 0\n    var high = prices.count\n    while low < high {\n        let mid = low + (high - low) / 2\n        if prices[mid] == price { return true }\n        if prices[mid] < price {\n            low = mid + 1\n        } else {\n            high = mid\n        }\n    }\n    return false\n}\nprint(hasPrice(450, in: [120, 300, 450, 990]))\nprint(hasPrice(500, in: [120, 300, 450, 990]))\n\ntrue\nfalse\n\nКаждая ветка сужает кусок: проверенная середина исключается слева (`mid + 1`) или справа (`high = mid`, правая граница не входит)."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Перепиши поиск сборки",
+  "prompt": "Перепиши findBuild так, чтобы он пользовался тем, что журнал отсортирован. Назови сложность до и после.",
+  "code": "// Журнал сборок отсортирован по возрастанию, запросов много.\nfunc findBuild(_ number: Int, in builds: [Int]) -> Int? {\n    for (index, build) in builds.enumerated() where build == number {\n        return index\n    }\n    return nil\n}",
+  "key": "func findBuild(_ number: Int, in builds: [Int]) -> Int? {\n    var low = 0\n    var high = builds.count\n    while low < high {\n        let mid = low + (high - low) / 2\n        if builds[mid] == number { return mid }\n        if builds[mid] < number {\n            low = mid + 1\n        } else {\n            high = mid\n        }\n    }\n    return nil\n}\n\nБыло O(n): проход проверяет элементы подряд. Стало O(log n): каждый шаг выбрасывает половину. Переписать можно только потому, что журнал отсортирован."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Поиск зависает",
+  "prompt": "Первый вызов печатает результат, а на втором программа зависает. Найди причину и почини, затем предскажи вывод.",
+  "code": "func findBuild(_ number: Int, in builds: [Int]) -> Int? {\n    var low = 0\n    var high = builds.count\n    while low < high {\n        let mid = low + (high - low) / 2\n        if builds[mid] == number { return mid }\n        if builds[mid] < number {\n            low = mid\n        } else {\n            high = mid\n        }\n    }\n    return nil\n}\nprint(findBuild(20, in: [10, 20]) as Any)\nprint(findBuild(25, in: [10, 20]) as Any)",
+  "key": "func findBuild(_ number: Int, in builds: [Int]) -> Int? {\n    var low = 0\n    var high = builds.count\n    while low < high {\n        let mid = low + (high - low) / 2\n        if builds[mid] == number { return mid }\n        if builds[mid] < number {\n            low = mid + 1\n        } else {\n            high = mid\n        }\n    }\n    return nil\n}\nprint(findBuild(20, in: [10, 20]) as Any)\nprint(findBuild(25, in: [10, 20]) as Any)\n\nOptional(1)\nnil\n\nДо правки второй вызов зависал: кусок `1..<2`, середина 1, `20` < 25, `low = mid` оставляет `low` равным 1 — кусок не сужается. Проверенную середину нужно исключить: `low = mid + 1`."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни как на собеседовании (устно)",
+  "prompt": "Ответь вслух или текстом, 4–6 предложений, без кода.",
+  "code": "- Почему бинарный поиск работает только на отсортированном массиве?\n- Почему он стоит O(log n) и сколько шагов нужно на миллион элементов?\n- Зачем полуинтервал low..<high и почему цикл while low < high не зациклится?",
+  "key": "Поиск смотрит в середину и выбрасывает половину, где ответа быть не может; этот вывод верен только при порядке — в неотсортированном массиве поиск молча ошибётся. Каждый шаг делит кусок пополам, поэтому шагов около log₂ n: на миллион — около двадцати. Полуинтервал `low..<high` — это кусок, где ответ ещё может быть; пока он не пуст, берём середину. Обе ветки исключают проверенную середину (`low = mid + 1` или `high = mid`), кусок строго уменьшается, и цикл обязательно закончится."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Первая падающая сборка",
+  "prompt": "Напиши функцию по комментарию и предскажи вывод.",
+  "code": "// История сборок: после какой-то сборки приложение начало падать\n// и падает во всех следующих. crashed[i] — падает ли сборка i.\n// Найди индекс первой падающей сборки за O(log n);\n// если падающих нет — верни crashed.count.\nfunc firstBroken(_ crashed: [Bool]) -> Int {\n    // …\n}\nprint(firstBroken([false, false, false, true, true]))\nprint(firstBroken([false, false]))",
+  "key": "func firstBroken(_ crashed: [Bool]) -> Int {\n    var low = 0\n    var high = crashed.count\n    while low < high {\n        let mid = low + (high - low) / 2\n        if crashed[mid] {\n            high = mid\n        } else {\n            low = mid + 1\n        }\n    }\n    return low\n}\nprint(firstBroken([false, false, false, true, true]))\nprint(firstBroken([false, false]))\n\n3\n2\n\nТа же схема, что у места вставки, только вместо «меньше искомого» — условие «ещё не падает». Работает, потому что массив упорядочен по условию: сначала все false, потом все true.",
+  "points": [
+   "Полуинтервал `low = 0`, `high = crashed.count`, цикл `while low < high`.",
+   "Если `crashed[mid]` — `high = mid` (ответ здесь или левее), иначе `low = mid + 1`.",
+   "Возвращается `low`; падающих нет — это `crashed.count`.",
+   "Вывод: 3 и 2."
+  ]
+ },
+ {
+  "id": "s7",
+  "title": "Ступень 7. Две функции по памяти",
+  "prompt": "Напиши обе функции по комментарию без урока.",
+  "code": "// По памяти, без урока:\n// 1) indexOf(_:in:) -> Int? — индекс числа в отсортированном\n//    массиве или nil;\n// 2) insertionIndex(of:in:) -> Int — первый индекс, где элемент\n//    не меньше value.",
+  "key": "func indexOf(_ target: Int, in sorted: [Int]) -> Int? {\n    var low = 0\n    var high = sorted.count\n    while low < high {\n        let mid = low + (high - low) / 2\n        if sorted[mid] == target { return mid }\n        if sorted[mid] < target {\n            low = mid + 1\n        } else {\n            high = mid\n        }\n    }\n    return nil\n}\nfunc insertionIndex(of value: Int, in sorted: [Int]) -> Int {\n    var low = 0\n    var high = sorted.count\n    while low < high {\n        let mid = low + (high - low) / 2\n        if sorted[mid] < value {\n            low = mid + 1\n        } else {\n            high = mid\n        }\n    }\n    return low\n}\n\nОба цикла держат полуинтервал и сужают его каждым шагом. В `indexOf` — ранний выход при совпадении и `nil` после цикла, в `insertionIndex` — без раннего выхода, ответ — `low`.",
+  "points": [
+   "`indexOf`: `low = 0`, `high = count`, `while low < high`, середина `low + (high - low) / 2`.",
+   "Совпадение — `return mid`; меньше — `low = mid + 1`; больше — `high = mid`; после цикла `nil`.",
+   "`insertionIndex`: тот же цикл без раннего выхода — `<` сдвигает `low = mid + 1`, иначе `high = mid`, ответ `low`."
+  ]
+ }
+]
