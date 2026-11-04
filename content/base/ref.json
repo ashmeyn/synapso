@@ -1,7 +1,7 @@
 {
  "cheat": {
   "opt": [
-   "Optional = enum .some/.none: значение или nil",
+   "Optional — коробка: значение или nil (enum .some/.none); \"\" — не nil",
    "Развернуть: if let, guard let, ??, ?., ! (падает на nil)",
    "guard let — значение живёт после проверки; if let — только в блоке",
    "! допустим, только когда nil = ошибка программиста",
