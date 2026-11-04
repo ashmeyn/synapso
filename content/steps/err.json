@@ -3,8 +3,8 @@
   "id": "s1",
   "title": "Ступень 1. Предскажи исход",
   "prompt": "Какая ветка catch выполнится для строки Встреча:abc и что выведется?",
-  "code": "enum EventImportError: Error { case wrongFormat, invalidDuration }\nfunc parse(_ text: String) throws -> Int {\n    let parts = text.split(separator: \":\")\n    guard parts.count == 2 else { throw EventImportError.wrongFormat }\n    guard let minutes = Int(parts[1]) else {\n        throw EventImportError.invalidDuration\n    }\n    return minutes\n}\ndo { print(try parse(\"Встреча:abc\")) }\ncatch EventImportError.invalidDuration { print(\"Длительность не число\") }\ncatch { print(\"Другой формат\") }",
-  "key": "Будет выведено «Длительность не число». Int(\"abc\") даёт nil, поэтому parse бросает EventImportError.invalidDuration, а соответствующий catch обрабатывает его."
+  "code": "enum EventImportError: Error { case wrongFormat, invalidDuration }\nfunc parse(_ text: String) throws -> Int {\n    let parts = text.split(separator: \":\")\n    guard parts.count == 2 else { throw EventImportError.wrongFormat }\n    guard let minutes = Int(parts[1]) else {\n        throw EventImportError.invalidDuration\n    }\n    return minutes\n}\ndo { print(try parse(\"Встреча:abc\")) }\ncatch EventImportError.invalidDuration { print(\"Проверь длительность\") }\ncatch { print(\"Другой формат\") }",
+  "key": "Будет выведено «Проверь длительность». Int(\"abc\") даёт nil, поэтому parse бросает EventImportError.invalidDuration, а соответствующий catch обрабатывает его."
  },
  {
   "id": "s2",
@@ -36,10 +36,10 @@
  },
  {
   "id": "s6",
-  "title": "Ступень 6. Сохрани исход как Result",
-  "prompt": "Получи Result<(String, Int), Error> для строки Встреча:45 и разберись с ним через switch.",
-  "code": "// Есть функция parse(_:) throws -> (String, Int).\n// Создай outcome через Result { try parse(...) }.\n// Покажи success или failure.",
-  "key": "let outcome: Result<(String, Int), Error> = Result {\n    try parse(\"Встреча:45\")\n}\nswitch outcome {\ncase .success(let item): print(item)\ncase .failure(let error): print(error)\n}\n\nResult хранит исход как значение для передачи или поздней обработки. Для обычного прямого вызова parse проще do/catch."
+  "title": "Ступень 6. Отдай исход в completion",
+  "prompt": "Экран импорта не разбирает строку сам: он передаёт исход разбора в обработчик onImport, а обработчик показывает «Добавлено: Встреча» или причину отказа. Допиши importLine и проверь на «Встреча:45» и «Встреча:abc». Причина ошибки не должна теряться.",
+  "code": "// parse(_:) throws -> (String, Int) и EventImportError — из урока.\nfunc importLine(\n    _ line: String,\n    onImport: (Result<(String, Int), Error>) -> Void\n) {\n    // …\n}\nimportLine(\"Встреча:45\") { outcome in\n    // …\n}",
+  "key": "func importLine(\n    _ line: String,\n    onImport: (Result<(String, Int), Error>) -> Void\n) {\n    onImport(Result { try parse(line) })\n}\nlet show: (Result<(String, Int), Error>) -> Void = { outcome in\n    switch outcome {\n    case .success(let item): print(\"Добавлено: \\(item.0)\")\n    case .failure(let error as EventImportError)\n        where error == .invalidDuration:\n        print(\"Проверь длительность\")\n    case .failure(let error): print(\"Не добавлено: \\(error)\")\n    }\n}\nimportLine(\"Встреча:45\", onImport: show)\nimportLine(\"Встреча:abc\", onImport: show)\n\n«Добавлено: Встреча», затем «Проверь длительность». `Result { try parse(line) }` превращает бросающий вызов в значение, которое можно отдать обработчику; ошибка едет внутри `.failure` и разбирается там же, где показывается."
  },
  {
   "id": "s7",

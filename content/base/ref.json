@@ -68,8 +68,8 @@
    "@State/@Published — тоже обёртки, но их хранилище устроено иначе"
   ],
   "valref": [
-   "struct/enum — value (копия); class — reference (ссылка)",
-   "stack/heap — модель, не гарантия: struct может жить внутри класса или буфера",
+   "struct — value (копия); class — reference (ссылка)",
+   "stack/heap — модель, не гарантия: struct может жить внутри класса или буфера (ГЛУБЖЕ)",
    "value-тип с полем-классом делит этот объект",
    "let у struct запрещает менять её свойства (не объект по вложенной ссылке); у class — только ссылку"
   ],
@@ -222,7 +222,8 @@
    "Task { } — вход в async из синхронного кода; handle можно cancel()",
    "отмена кооперативна: checkCancellation / isCancelled",
    "CancellationError ловим отдельно, не путаем с ошибкой данных",
-   "UI-модель — @MainActor; после await проверь, актуален ли запрос",
+   "UI-модель — @MainActor",
+   "после await проверь, актуален ли запрос (ГЛУБЖЕ)",
    "completion → async: withCheckedThrowingContinuation, resume ровно один раз (ГЛУБЖЕ)"
   ],
   "actor": [
@@ -547,7 +548,7 @@
   ],
   "runloop": [
    "RunLoop = цикл событий потока: ждать → обработать → спать",
-   "Главный поток — RunLoop есть всегда; потоки GCD — нет",
+   "Главный RunLoop запускает приложение; очередь GCD не даёт потока с постоянным RunLoop",
    "scheduledTimer → только .default; при скролле RunLoop в .tracking",
    "Таймер при скролле: RunLoop.main.add(timer, forMode: .common)",
    "Утечка: RunLoop → Timer → замыкание → self; лечить [weak self] + invalidate()",
