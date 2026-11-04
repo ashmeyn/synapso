@@ -22,8 +22,8 @@
  },
  {
   "id": "s4",
-  "title": "Ступень 4. Результат вернули слишком рано",
-  "prompt": "Исправь previewTitle: вместо раннего возврата обновляй модель PreviewScreen через callback. Прогнозируй обе фазы.",
+  "title": "Ступень 4. Перепиши ранний результат",
+  "prompt": "previewTitle возвращает подпись раньше, чем пришёл ответ. Сначала предскажи, что напечатает этот код. Затем перепиши через экран PreviewScreen с методом start(queue:) так, чтобы подпись экрана менялась в момент ответа, очередь не удерживала экран, а повторный finish ничего не менял. Покажи подпись до ответа, после него и после лишнего finish.",
   "code": "final class PreviewQueue {\n    private var pending: ((String) -> Void)?\n    func request(_ completion: @escaping (String) -> Void) {\n        pending = completion\n    }\n    func finish(_ text: String) {\n        let completion = pending\n        pending = nil\n        completion?(text)\n    }\n    func cancel() { pending = nil }\n}\nfunc previewTitle(queue: PreviewQueue) -> String {\n    var title = \"Ожидание\"\n    queue.request { title = $0 }\n    return title\n}\nlet queue = PreviewQueue()\nlet title = previewTitle(queue: queue)\nqueue.finish(\"Тёплый свет\")\nprint(title)",
   "key": "final class PreviewQueue {\n    private var pending: ((String) -> Void)?\n    func request(_ completion: @escaping (String) -> Void) {\n        pending = completion\n    }\n    func finish(_ text: String) {\n        let completion = pending\n        pending = nil\n        completion?(text)\n    }\n    func cancel() { pending = nil }\n}\nfinal class PreviewScreen {\n    private(set) var title = \"Ожидание\"\n    func start(queue: PreviewQueue) {\n        queue.request { [weak self] text in self?.title = text }\n    }\n}\nlet queue = PreviewQueue()\nlet screen = PreviewScreen()\nscreen.start(queue: queue)\nprint(screen.title)\nqueue.finish(\"Тёплый свет\")\nprint(screen.title)\nqueue.finish(\"Лишний ответ\")\nprint(screen.title)\n\nДо правки печаталось «Ожидание». После неё экран меняется только в callback; повторный finish не меняет подпись.",
   "points": [
