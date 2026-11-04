@@ -1,0 +1,62 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Предскажи порядок дел",
+  "prompt": "Предскажи, какой массив названий напечатает код. Объясни порядок задач с одинаковым днём.",
+  "code": "// TodoItem(title:day:priority:) — из урока\nlet items = [\n    TodoItem(title: \"Вынести мусор\", day: 3, priority: 2),\n    TodoItem(title: \"Сдать отчёт\", day: 2, priority: 1),\n    TodoItem(title: \"Полить цветы\", day: 3, priority: 1),\n    TodoItem(title: \"Забрать посылку\", day: 2, priority: 3)\n]\nlet ordered = items.sorted {\n    ($0.day, $0.priority) < ($1.day, $1.priority)\n}\nprint(ordered.map(\\.title))",
+  "key": "[\"Сдать отчёт\", \"Забрать посылку\", \"Полить цветы\", \"Вынести мусор\"]\n\nКортежи сравниваются слева направо: сначала день, при равном дне — приоритет. День 2 раньше дня 3. Внутри дня 2 приоритет 1 раньше 3, внутри дня 3 — приоритет 1 раньше 2."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Правило для покупок",
+  "prompt": "Допиши правило сортировки по комментарию.",
+  "code": "// Экран «Покупки»: сначала то, что нужно раньше (day),\n// при одном дне — более дешёвое (price).\nstruct Purchase {\n    let name: String\n    let day: Int\n    let price: Int\n}\nfunc shoppingOrder(_ list: [Purchase]) -> [Purchase] {\n    list.sorted { a, b in\n        // …\n    }\n}",
+  "key": "// Экран «Покупки»: сначала то, что нужно раньше (day),\n// при одном дне — более дешёвое (price).\nstruct Purchase {\n    let name: String\n    let day: Int\n    let price: Int\n}\nfunc shoppingOrder(_ list: [Purchase]) -> [Purchase] {\n    list.sorted { a, b in\n        if a.day != b.day { return a.day < b.day }\n        return a.price < b.price\n    }\n}\n\nСначала сравнивается главный признак — день; только при равных днях решает цена. Оба сравнения строгие (`<`), поэтому для двух одинаковых покупок правило вернёт `false` в обе стороны. Можно и кортежем: `(a.day, a.price) < (b.day, b.price)`."
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Перепиши двойной цикл",
+  "prompt": "Перепиши функцию без ручных циклов так, чтобы результат был тем же, включая порядок задач с одинаковым днём. Назови сложность до и после.",
+  "code": "// TodoItem — из урока\nfunc byDay(_ input: [TodoItem]) -> [TodoItem] {\n    var items = input\n    for i in 0..<items.count {\n        for j in 0..<items.count - 1 - i {\n            if items[j].day > items[j + 1].day {\n                items.swapAt(j, j + 1)\n            }\n        }\n    }\n    return items\n}",
+  "key": "func byDay(_ input: [TodoItem]) -> [TodoItem] {\n    input.sorted { $0.day < $1.day }\n}\n\nДвойной цикл — сортировка пузырьком: O(n²) и место для ошибки в границах. `sorted(by:)` делает то же за O(n log n) одной строкой, не трогает входной массив и не требует `var`. Задачи с одним днём остаются в исходном порядке и там, и там: пузырёк с `>` не меняет равные местами, а `sorted` стабилен."
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Список не отсортировался",
+  "prompt": "Список после refresh() выглядит неверно. Предскажи, что печатает код сейчас, найди причину и почини.",
+  "code": "// TodoItem — из урока\nvar inbox = [\n    TodoItem(title: \"Купить корм\", day: 2, priority: 2),\n    TodoItem(title: \"Оплатить свет\", day: 1, priority: 3)\n]\nfunc refresh() {\n    inbox.sorted { $0.day < $1.day }\n    print(inbox.map(\\.title))\n}\nrefresh()",
+  "key": "var inbox = [\n    TodoItem(title: \"Купить корм\", day: 2, priority: 2),\n    TodoItem(title: \"Оплатить свет\", day: 1, priority: 3)\n]\nfunc refresh() {\n    inbox.sort { $0.day < $1.day }\n    print(inbox.map(\\.title))\n}\nrefresh()\n\nБыло: [\"Купить корм\", \"Оплатить свет\"] — `sorted` вернул новый массив, и он потерялся (компилятор предупреждает о неиспользованном результате). Стало: [\"Оплатить свет\", \"Купить корм\"]. `inbox` — `var`, поэтому подходит `sort` на месте; другой верный вариант — `inbox = inbox.sorted { … }`."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни как на собеседовании (устно)",
+  "prompt": "Ответь вслух или текстом, 4–6 предложений, без кода.",
+  "code": "- Что возвращает замыкание в sorted(by:) и почему там < а не <=?\n- Чем sorted отличается от sort?\n- Сколько стоит сортировка и почему её не делают после каждого добавления?",
+  "key": "Замыкание отвечает, должен ли первый элемент стоять раньше второго. Правило строгое: для равных элементов «раньше» — ложь в обе стороны, а `<=` нарушает контракт `sorted`, и Swift ничего не гарантирует — на деле перепутается порядок равных. `sorted` возвращает новый массив и годится для `let`, `sort` переставляет элементы на месте и требует `var`. Встроенная сортировка стоит O(n log n) — дороже одного прохода O(n), поэтому список сортируют один раз, когда он готов, а не после каждого добавления."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Таблица рекордов вставками",
+  "prompt": "Напиши сортировку по комментарию и предскажи, что напечатает код.",
+  "code": "// Таблица рекордов: игроки по очкам, больше очков — выше.\n// Без sorted/sort: сортировка вставками руками.\nstruct Player {\n    let name: String\n    let score: Int\n}\nfunc leaderboard(_ input: [Player]) -> [Player] {\n    // …\n}\nlet top = leaderboard([\n    Player(name: \"Аня\", score: 40),\n    Player(name: \"Боря\", score: 90),\n    Player(name: \"Вика\", score: 70)\n])\nprint(top.map(\\.name))",
+  "key": "struct Player {\n    let name: String\n    let score: Int\n}\nfunc leaderboard(_ input: [Player]) -> [Player] {\n    var a = input\n    for i in a.indices.dropFirst() {\n        var j = i\n        while j > 0 && a[j - 1].score < a[j].score {\n            a.swapAt(j - 1, j)\n            j -= 1\n        }\n    }\n    return a\n}\nlet top = leaderboard([\n    Player(name: \"Аня\", score: 40),\n    Player(name: \"Боря\", score: 90),\n    Player(name: \"Вика\", score: 70)\n])\nprint(top.map(\\.name))\n\n[\"Боря\", \"Вика\", \"Аня\"]. Та же схема вставками, но сравниваем `score` и в обратную сторону: элемент сдвигается влево, пока слева стоит игрок с меньшим счётом. `dropFirst()` защищает пустой массив, где `1..<a.count` упал бы.",
+  "points": [
+   "`var a = input` и проход `for i in a.indices.dropFirst()` — первый элемент уже «отсортирован».",
+   "Внутренний `while j > 0 && a[j - 1].score < a[j].score` — сдвиг влево, пока слева меньший счёт (порядок по убыванию).",
+   "`a.swapAt(j - 1, j)` и `j -= 1` внутри цикла; `sorted`/`sort` не используются.",
+   "Вывод: `[\"Боря\", \"Вика\", \"Аня\"]`."
+  ]
+ },
+ {
+  "id": "s7",
+  "title": "Ступень 7. Неделя по памяти",
+  "prompt": "Напиши три функции по комментарию без урока.",
+  "code": "// TodoItem — из урока. По памяти:\n// 1) weekOrder(_:) возвращает новый массив: по дню, при равном\n//    дне — по названию;\n// 2) arrange(_:) переставляет переданный массив на месте по тому\n//    же правилу;\n// 3) insertionSorted(_:) для [Int] без sorted/sort.",
+  "key": "func weekOrder(_ items: [TodoItem]) -> [TodoItem] {\n    items.sorted { ($0.day, $0.title) < ($1.day, $1.title) }\n}\nfunc arrange(_ items: inout [TodoItem]) {\n    items.sort { ($0.day, $0.title) < ($1.day, $1.title) }\n}\nfunc insertionSorted(_ input: [Int]) -> [Int] {\n    var a = input\n    for i in a.indices.dropFirst() {\n        var j = i\n        while j > 0 && a[j - 1] > a[j] {\n            a.swapAt(j - 1, j)\n            j -= 1\n        }\n    }\n    return a\n}\n\n`weekOrder` не трогает вход и возвращает новый массив, `arrange` меняет массив вызывающего через `inout` и `sort`. Правило строгое и составное. Сортировка вставками сдвигает элемент влево, пока слева больший.",
+  "points": [
+   "`weekOrder` — `sorted` с составным строгим правилом (день, затем название), возвращает новый массив.",
+   "`arrange(_ items: inout [TodoItem])` — `items.sort { … }` с тем же правилом, на месте.",
+   "`insertionSorted` — копия в `var`, проход с `dropFirst()`, сдвиг `while j > 0 && a[j - 1] > a[j]` через `swapAt`."
+  ]
+ }
+]
