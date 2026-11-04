@@ -4,6 +4,10 @@
 
 ## Журнал
 
+### 03.11.2026 — новая тема env (чат 6б)
+
+Тема 77: «@Environment: значения сверху вниз» (`env`, J, 60 мин) — ветка SWIFTUI сразу после uilife, ОПЕРАЦИЯ 17, prereqs state, obs, nav, uilife. Урок v2 (читалка книг, аналогия — Wi-Fi в квартире), 7 ступеней (s6, s7 с `points`), банк env-b1…b3 (`.disabled` у предка в фитнес-приложении, `dismiss` не в той вью в такси, устно — системное окружение и превью), шпаргалка, `one`, `follow`, `compare`, `links`, глоссарий, `TNAMES`, связь `CROSS` env–di. Mission тем 17–76 сдвинуты на +1. Ревью отдельным агентом — годно после правок: в «Собираем» `.environment` стоял до `.sheet` (модель не дошла бы до sheet) — порядок исправлен и объяснён; `@Entry` — с Xcode 16, а не iOS 18; `dismiss` — ближайший показ (sheet или push); `isEnabled` — исключение из «ближайший побеждает»; условия s6/s7 дополнены; s5 больше не опирается на ГЛУБЖЕ; s2/s3 и банк переведены на другие приложения, b3 заменён на устный разбор системного окружения.
+
 ### 03.11.2026 — движок разложен на файлы (чат 10)
 
 Этап 2 «Движок»: `engine/template.html` (4446 строк) → разметка 148 строк + `engine/styles.css` (1042), `engine/app.js` (2331), `engine/vendor/` (three.min.js, CopyShader, LuminosityHighPassShader, EffectComposer, RenderPass, ShaderPass, UnrealBloomPass). Куски вырезаны дословно по границам тегов, на их месте маркеры `__INLINE:<путь>__`; `build.py` (`assemble_template`) вставляет их обратно одним проходом по разметке, флаг `--template-out` пишет собранный шаблон (для сверки с `split_lab.py`). Проверка: `dist/index.html`, `dist/artifact.html` и собранный шаблон побайтово равны сборке до разбивки; `npm test` зелёный; скриншоты до/после совпали попиксельно. `tests/merge.js` читает `mergeProgress` из `app.js`.
