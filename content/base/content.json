@@ -76,5 +76,6 @@
  "tca": {},
  "uilife": {},
  "env": {},
- "sort": {}
+ "sort": {},
+ "bsearch": {}
 }
