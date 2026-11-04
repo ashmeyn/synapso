@@ -77,5 +77,6 @@
  "uilife": {},
  "env": {},
  "sort": {},
- "bsearch": {}
+ "bsearch": {},
+ "recur": {}
 }

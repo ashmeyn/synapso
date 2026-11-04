@@ -1,0 +1,72 @@
+[
+ {
+  "id": "s1",
+  "title": "Ступень 1. Открой все матрёшки",
+  "prompt": "Предскажи вывод построчно. Затем ответь: сколько вызовов unpack лежит на стеке в момент, когда печатается «пусто»?",
+  "code": "func unpack(_ n: Int) {\n    if n <= 0 {\n        print(\"пусто\")\n        return\n    }\n    print(\"открыть \\(n)\")\n    unpack(n - 1)\n    print(\"закрыть \\(n)\")\n}\nunpack(3)",
+  "key": "открыть 3\nоткрыть 2\nоткрыть 1\nпусто\nзакрыть 1\nзакрыть 2\nзакрыть 3\n\n«открыть» стоит до рекурсивного вызова — печатается по пути вглубь, 3 → 1. «закрыть» стоит после — печатается, когда вызовы снимаются со стека, в обратном порядке, 1 → 3. В момент «пусто» на стеке четыре вызова: unpack(3), unpack(2), unpack(1) на паузе и unpack(0), который печатает."
+ },
+ {
+  "id": "s2",
+  "title": "Ступень 2. Сумма цифр номера",
+  "prompt": "Допиши функцию рекурсией: базовый случай и шаг. Предскажи вывод.",
+  "code": "// Контрольная сумма заказа: сумма цифр номера.\n// 4093 → 4 + 0 + 9 + 3 = 16. n не отрицательное.\nfunc digitSum(_ n: Int) -> Int {\n    // базовый случай: …\n    // шаг: …\n}\nprint(digitSum(4093))\nprint(digitSum(7))",
+  "key": "func digitSum(_ n: Int) -> Int {\n    if n < 10 { return n }\n    return n % 10 + digitSum(n / 10)\n}\nprint(digitSum(4093))\nprint(digitSum(7))\n\n16\n7\n\nБаза — однозначное число: его сумма цифр — оно само. Шаг: последняя цифра `n % 10` плюс сумма цифр числа без неё, `n / 10`. Каждый шаг убирает одну цифру, поэтому n дойдёт до однозначного. 4093 → 3 + digitSum(409) → 9 + digitSum(40) → 0 + digitSum(4) = 4; обратно 4, 13, 16.",
+  "points": [
+   "База: `if n < 10 { return n }`.",
+   "Шаг: `n % 10 + digitSum(n / 10)` — число без последней цифры меньше.",
+   "Вывод: 16 и 7."
+  ]
+ },
+ {
+  "id": "s3",
+  "title": "Ступень 3. Файлы без своего стека",
+  "prompt": "Перепиши fileCount рекурсией, без массива stack. Предскажи вывод и объясни, где в новой версии хранятся папки, которые ещё предстоит посмотреть.",
+  "code": "struct Folder {\n    let name: String\n    let files: [Int]\n    let subfolders: [Folder]\n}\n// Экран «Хранилище»: сколько файлов в папке со всеми вложенными.\nfunc fileCount(in root: Folder) -> Int {\n    var count = 0\n    var stack = [root]\n    while let folder = stack.popLast() {\n        count += folder.files.count\n        stack.append(contentsOf: folder.subfolders)\n    }\n    return count\n}\nlet raw = Folder(name: \"RAW\", files: [900, 700], subfolders: [])\nlet trips = Folder(name: \"Поездки\", files: [300], subfolders: [raw])\nlet docs = Folder(name: \"Документы\", files: [50], subfolders: [])\nlet home = Folder(name: \"Дом\", files: [10], subfolders: [trips, docs])\nprint(fileCount(in: home))",
+  "key": "func fileCount(in folder: Folder) -> Int {\n    var count = folder.files.count\n    for sub in folder.subfolders {\n        count += fileCount(in: sub)\n    }\n    return count\n}\nprint(fileCount(in: home))\n\n5\n\nДом 1 + Поездки 1 + RAW 2 + Документы 1 = 5. Схема как у totalSize: свои файлы плюс результат той же функции на каждой подпапке. База — папка без подпапок: цикл пустой, новых вызовов нет. Массив stack больше не нужен: непройденные папки «помнит» стек вызовов — каждый вызов на паузе стоит в своём цикле for и продолжит его, когда вложенный вызов вернётся.",
+  "points": [
+   "Свои файлы: `var count = folder.files.count`.",
+   "Цикл по `subfolders`, к счёту добавляется `fileCount(in: sub)`.",
+   "База — папка без подпапок, цикл не выполняется.",
+   "Вывод: 5; непройденные папки хранит стек вызовов."
+  ]
+ },
+ {
+  "id": "s4",
+  "title": "Ступень 4. Таймер падает",
+  "prompt": "Первый вызов отрабатывает, на втором Debug-сборка падает с EXC_BAD_ACCESS. Найди причину, почини и предскажи вывод. Сколько вызовов ticks лежит на стеке одновременно в самый глубокий момент ticks(from: 4) и как это число растёт с n?",
+  "code": "// Таймер разминки: отсчёт секунд с шагом 2.\nfunc ticks(from n: Int) {\n    if n == 0 { return }\n    print(n)\n    ticks(from: n - 2)\n}\nticks(from: 4)\nticks(from: 5)",
+  "key": "func ticks(from n: Int) {\n    if n <= 0 { return }\n    print(n)\n    ticks(from: n - 2)\n}\nticks(from: 4)\nticks(from: 5)\n\n4\n2\n5\n3\n1\n\nС 5 шаг идёт 5, 3, 1, -1, -3… и перепрыгивает ноль: `n == 0` не срабатывает никогда. Каждый вызов занимает ячейку стека, стек переполняется — stack overflow и падение. Базовый случай должен ловить всё «достаточно малое»: `n <= 0`.\n\nВ ticks(from: 4) самый глубокий момент — ticks(0) на базе: на стеке ticks(4), ticks(2), ticks(0), три вызова. С ростом n их около n / 2 + 1 — память O(n), столько же, сколько вызовов."
+ },
+ {
+  "id": "s5",
+  "title": "Ступень 5. Объясни как на собеседовании (устно)",
+  "prompt": "Ответь вслух или текстом, 4–6 предложений, без кода.",
+  "code": "- Что такое рекурсия и из каких двух частей она состоит?\n- Что происходит со стеком, если до базового случая не дойти?\n- Сколько памяти стоит рекурсия и когда лучше написать цикл?",
+  "key": "Рекурсия — функция, которая решает задачу, вызывая себя на меньшей части. У неё базовый случай, где ответ известен сразу, и шаг, который сводит задачу к меньшей и обязан приближать к базе. Каждый вызов занимает ячейку стека вызовов, пока не вернётся; без пути к базе вызовы не кончаются, стек фиксированного размера переполняется — stack overflow, и приложение падает (в Release компилятор иногда превращает последний вызов в цикл, и тогда код зависает — это тот же баг). Память — O(глубины рекурсии): сколько вызовов лежит на стеке одновременно. Для простого линейного счёта цикл проще и не тратит стек, а рекурсия естественна для вложенных данных: папки, комментарии, меню."
+ },
+ {
+  "id": "s6",
+  "title": "Ступень 6. Глубина ветки комментариев",
+  "prompt": "Напиши функцию по комментарию и предскажи вывод.",
+  "code": "struct Comment {\n    let text: String\n    let replies: [Comment]\n}\n// Экран обсуждения сдвигает ответы вправо. Сколько уровней\n// у ветки: комментарий без ответов — 1, иначе 1 плюс глубина\n// самой глубокой ветки среди ответов.\nfunc depth(of comment: Comment) -> Int {\n    // …\n}\nlet c = Comment(text: \"C\", replies: [])\nlet b = Comment(text: \"B\", replies: [c])\nlet a = Comment(text: \"A\", replies: [])\nlet question = Comment(text: \"Вопрос\", replies: [a, b])\nprint(depth(of: question))\nprint(depth(of: a))",
+  "key": "func depth(of comment: Comment) -> Int {\n    var deepest = 0\n    for reply in comment.replies {\n        deepest = max(deepest, depth(of: reply))\n    }\n    return 1 + deepest\n}\nprint(depth(of: question))\nprint(depth(of: a))\n\n3\n1\n\nТа же схема, что у дерева папок, только результаты детей не складываются, а берётся максимум. База — комментарий без ответов: цикл пустой, `deepest` остаётся 0, ответ 1. Для «Вопроса»: a даёт 1, b — 1 + depth(c) = 2, максимум 2, итого 3.",
+  "points": [
+   "`deepest = 0`, цикл по `replies`, `deepest = max(deepest, depth(of: reply))`.",
+   "Ответ `1 + deepest`; без ответов цикл пустой — 1.",
+   "Вывод: 3 и 1."
+  ]
+ },
+ {
+  "id": "s7",
+  "title": "Ступень 7. Две функции по памяти",
+  "prompt": "Напиши обе функции по комментарию без урока.",
+  "code": "struct Folder {\n    let name: String\n    let files: [Int]\n    let subfolders: [Folder]\n}\n// По памяти, без урока:\n// 1) countdown(_:) — печатает «до n» по пути вглубь, «старт»\n//    на дне и «после n» на обратном пути;\n// 2) totalSize(of:) -> Int — размер папки со всеми вложенными.",
+  "key": "func countdown(_ n: Int) {\n    if n <= 0 {\n        print(\"старт\")\n        return\n    }\n    print(\"до \\(n)\")\n    countdown(n - 1)\n    print(\"после \\(n)\")\n}\nfunc totalSize(of folder: Folder) -> Int {\n    var sum = folder.files.reduce(0, +)\n    for sub in folder.subfolders {\n        sum += totalSize(of: sub)\n    }\n    return sum\n}\n\nВ обеих функциях есть база и шаг к ней. В `countdown` база — `n <= 0`, шаг — `n - 1`; печать до вызова идёт вглубь, после — обратно. В `totalSize` база — папка без подпапок, шаг — вызов на каждой подпапке.",
+  "points": [
+   "`countdown`: база `if n <= 0` — «старт» и `return`.",
+   "Печать «до n», вызов `countdown(n - 1)`, печать «после n».",
+   "`totalSize`: сумма своих файлов плюс `totalSize(of: sub)` по каждой подпапке."
+  ]
+ }
+]
