@@ -2,7 +2,7 @@
 
 ## Что это и для кого
 
-Synapso — личная iOS-лаборатория Дана: 3D-карта знаний в виде мозга (79 тем), уроки-миссии, практика по 7 ступеням, банк задач, ран и интервальные повторы. Сайт собирается в один HTML-файл.
+Synapso — личная iOS-лаборатория Дана: 3D-карта знаний в виде мозга (80 тем), уроки-миссии, практика по 7 ступеням, банк задач, ран и интервальные повторы. Сайт собирается в один HTML-файл.
 
 Дан переходит из барменства в iOS-разработку (цель — junior/middle). Приложение построено под его метод recall-first:
 
@@ -15,7 +15,7 @@ Synapso — личная iOS-лаборатория Дана: 3D-карта зн
 
 ## Карта репозитория
 
-1. `content/lessons/<id>.md` — 79 уроков формата v2 (frontmatter + Markdown).
+1. `content/lessons/<id>.md` — 80 уроков формата v2 (frontmatter + Markdown).
 2. `content/steps/<id>.json` — 7 ступеней практики `[{id, title, prompt, code, key}]`.
 3. `content/bank/<id>.bank.json` — банк задач по темам. `zz-live` нарочно последний: сборщик читает файлы по алфавиту.
 4. `content/base/{content,tasks,bank,cases,ref}.json` — данные старой доски. `content.json` задаёт список тем (урок без записи здесь не соберётся), `ref.json` — `cheat` (шпаргалки), `one`, `follow`.
@@ -33,7 +33,7 @@ python3 scripts/build.py --check lab.json # сверить данные с вы�
 npm test                                  # Playwright по dist/index.html
 ```
 
-Ожидаемая строка сборки: 79 topics · 79 lessons · 301 bank tasks (банк может только расти). CI (`.github/workflows/ci.yml`) гоняет сборку и тесты на каждый push и PR. `pages.yml` на push в main собирает и деплоит `dist/index.html` на https://ashmeyn.github.io/synapso/.
+Ожидаемая строка сборки: 80 topics · 80 lessons · 304 bank tasks (банк может только расти). CI (`.github/workflows/ci.yml`) гоняет сборку и тесты на каждый push и PR. `pages.yml` на push в main собирает и деплоит `dist/index.html` на https://ashmeyn.github.io/synapso/.
 
 ## Жёсткие правила
 
