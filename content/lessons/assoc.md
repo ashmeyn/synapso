@@ -32,6 +32,10 @@ struct IDFeed: Feed {
     let ids: [Int]
     func first() -> Int? { ids.first }
 }
+struct NameFeed: Feed {
+    let names: [String]
+    func first() -> String? { names.first }
+}
 ```
 
 IDFeed(ids: [71]).first() имеет тип Int?. В NameFeed такой же контракт обслуживает String?, потому что Item выводится из реализации. Синтаксис имени Item не является generic-параметром самого протокола.

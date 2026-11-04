@@ -22,8 +22,8 @@
  },
  {
   "id": "s4",
-  "title": "Ступень 4. Измени исходную обёртку",
-  "prompt": "change меняет только copy и теряет результат. Исправь метод через volume = requested. Не меняй Clamped на class ради обхода ошибки.",
+  "title": "Ступень 4. Куда ушла запись",
+  "prompt": "После change(150) громкость осталась 50, а признак ограничения — false. Найди, почему запись не дошла до свойства, и почини метод так, чтобы ограничение и признак сработали на исходной обёртке. Не меняй Clamped на class ради обхода ошибки.",
   "code": "@propertyWrapper\nstruct Clamped {\n    private var value: Int\n    private var limited: Bool\n    init(wrappedValue: Int) {\n        value = min(100, max(0, wrappedValue))\n        limited = value != wrappedValue\n    }\n    var wrappedValue: Int {\n        get { value }\n        set {\n            value = min(100, max(0, newValue))\n            limited = value != newValue\n        }\n    }\n    var projectedValue: Bool { limited }\n}\nstruct SoundSettings {\n    @Clamped var volume = 50\n    mutating func change(_ requested: Int) {\n        var copy = _volume\n        copy.wrappedValue = requested\n    }\n}\nvar settings = SoundSettings()\nsettings.change(150)\nprint(settings.volume, settings.$volume)",
   "key": "@propertyWrapper\nstruct Clamped {\n    private var value: Int\n    private var limited: Bool\n    init(wrappedValue: Int) {\n        value = min(100, max(0, wrappedValue))\n        limited = value != wrappedValue\n    }\n    var wrappedValue: Int {\n        get { value }\n        set {\n            value = min(100, max(0, newValue))\n            limited = value != newValue\n        }\n    }\n    var projectedValue: Bool { limited }\n}\nstruct SoundSettings {\n    @Clamped var volume = 50\n    mutating func change(_ requested: Int) {\n        volume = requested\n    }\n}\nvar settings = SoundSettings()\nsettings.change(150)\nprint(settings.volume, settings.$volume)\n\nВывод 100 true; изменение проходит через wrappedValue исходного _volume.",
   "points": [
@@ -42,15 +42,15 @@
  },
  {
   "id": "s6",
-  "title": "Ступень 6. Прими начальный параметр",
-  "prompt": "Напиши SoundSettings.init(startingVolume:) через _volume = Clamped(wrappedValue:). Используй уже объявленный Clamped с проекцией; параметр 150 даёт 100 true.",
-  "code": "@propertyWrapper\nstruct Clamped {\n    private var value: Int\n    private var limited: Bool\n    init(wrappedValue: Int) {\n        value = min(100, max(0, wrappedValue))\n        limited = value != wrappedValue\n    }\n    var wrappedValue: Int {\n        get { value }\n        set {\n            value = min(100, max(0, newValue))\n            limited = value != newValue\n        }\n    }\n    var projectedValue: Bool { limited }\n}\n// Напиши SoundSettings с custom init",
-  "key": "@propertyWrapper\nstruct Clamped {\n    private var value: Int\n    private var limited: Bool\n    init(wrappedValue: Int) {\n        value = min(100, max(0, wrappedValue))\n        limited = value != wrappedValue\n    }\n    var wrappedValue: Int {\n        get { value }\n        set {\n            value = min(100, max(0, newValue))\n            limited = value != newValue\n        }\n    }\n    var projectedValue: Bool { limited }\n}\nstruct SoundSettings {\n    @Clamped var volume: Int\n    init(startingVolume: Int) {\n        _volume = Clamped(wrappedValue: startingVolume)\n    }\n}\nlet settings = SoundSettings(startingVolume: 150)\nprint(settings.volume, settings.$volume)\n\nИнициализация идёт через правило wrapper и сразу сохраняет признак ограничения.",
+  "title": "Ступень 6. Своя обёртка для имени",
+  "prompt": "Перенеси идею Clamped на текст: напиши обёртку по комментарию в коде и предскажи оба вывода.",
+  "code": "// Имя плейлиста не должно начинаться или кончаться пробелами.\n// Напиши свою обёртку Trimmed: обрезает пробелы по краям и при\n// начальном значении, и при записи; $name сообщает, обрезалось ли\n// последнее значение. Проверь на \" Утро \" и затем на \"Вечер\".\nstruct Playlist {\n    // @Trimmed var name = \" Утро \"\n}",
+  "key": "@propertyWrapper\nstruct Trimmed {\n    private var value: String\n    private var trimmed: Bool\n    init(wrappedValue: String) {\n        value = wrappedValue.trimmingCharacters(in: .whitespaces)\n        trimmed = value != wrappedValue\n    }\n    var wrappedValue: String {\n        get { value }\n        set {\n            value = newValue.trimmingCharacters(in: .whitespaces)\n            trimmed = value != newValue\n        }\n    }\n    var projectedValue: Bool { trimmed }\n}\nstruct Playlist {\n    @Trimmed var name = \" Утро \"\n}\nvar list = Playlist()\nprint(list.name, list.$name)\nlist.name = \"Вечер\"\nprint(list.name, list.$name)\n\nУтро true\nВечер false\n\nТа же схема, что у Clamped, на новом правиле: `init(wrappedValue:)` обрабатывает начальное значение, setter `wrappedValue` — каждую запись, `projectedValue` через `$name` сообщает, сработало ли правило в последний раз.",
   "points": [
-   "`@Clamped var volume: Int` — без начального значения, его задаёт init.",
-   "`init(startingVolume:)` пишет в backing storage: `_volume = Clamped(wrappedValue: startingVolume)`.",
-   "Ограничение и признак срабатывают в `init(wrappedValue:)` обёртки: 150 → 100, `limited = true`.",
-   "Вывод: `100 true`."
+   "`@propertyWrapper struct Trimmed` хранит значение и признак; `init(wrappedValue:)` обрезает пробелы уже у начального значения.",
+   "Setter `wrappedValue` обрезает каждую запись и обновляет признак сравнением с запрошенным текстом.",
+   "`var projectedValue: Bool` — `$name` читает признак последнего обрезания.",
+   "Вывод: «Утро true», затем «Вечер false»."
   ]
  },
  {
