@@ -997,6 +997,8 @@ function fitCode(animate){
 }
 (function(){ const pane=document.getElementById("pane-practice"); if(pane) pane.addEventListener("transitionend",e=>{ if(e.target===pane && e.propertyName==="grid-template-columns") requestAnimationFrame(()=>fitCode()); }); })();
 if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>requestAnimationFrame(fitCode));
+/* fonts now arrive after first paint (non-blocking stylesheet): re-fit the code when a font swaps in */
+if(document.fonts && document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", ()=>requestAnimationFrame(fitCode));
 window.addEventListener("resize", ()=>requestAnimationFrame(fitCode));
 
 /* ---------- typewriter ---------- */
