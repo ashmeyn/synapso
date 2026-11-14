@@ -938,7 +938,7 @@ function doOpen(i, tab){
 const WIN_NAMES={theory:"Теория",cheat:"Шпаргалка",practice:"Практика",tasks:"Задания"};
 let winToken=0;
 function setTab(name){
-  const win=$("winBody"); activeTab=name; stopTyping(); exitKb(); refreshTopicNav(current); routeRemember();
+  const win=$("winBody"); activeTab=name; stopTyping(); exitKb(); refreshTopicNav(current); routeRemember(); strictSync();
   ["theory","cheat","practice","tasks"].forEach(n=>$("tab-"+n).setAttribute("aria-selected", n===name));
   $("navTopic").classList.toggle("on", mode==="topic" && name!=="tasks");
   $("navTasks").classList.toggle("on", mode==="topic" && name==="tasks");
@@ -1479,7 +1479,32 @@ if(window.visualViewport){ ["resize","scroll"].forEach(ev=>window.visualViewport
 window.addEventListener("resize",()=>{ if(document.body.classList.contains("kb-on")) updVV(); });
 let practiceRecall=false;   /* the step on screen is a repeat (blind review or a step whose key was seen before) */
 function stepSeen(id, sid, prog, grades){ return !!(store.get("pm.seen."+id, {})[sid] || prog[sid] || grades[sid]); }
-function renderPractice(){ setTimeout(()=>refreshTopicNav(current),0);
+/* ---------- «без подсказок» (review 14.11, item 22): setting pm.strict, off by default ----------
+   While a step is being answered — the field is not empty, or the step is a repeat — the Теория and Шпаргалка tabs stay
+   closed until the key opens. A new step with an empty field is not locked: reading the lesson first is fine. */
+function strictOn(){ return store.get("pm.strict", false)===true; }
+function strictLocked(){ const ta=$("ans"), kb=$("showKey");
+  return strictOn() && mode==="topic" && activeTab==="practice" && !!ta && !!kb && !kb.dataset.open && (ta.value.trim().length>0 || practiceRecall); }
+function strictSync(){ const on=strictLocked();
+  ["theory","cheat"].forEach(n=>{ const b=$("tab-"+n); if(b){ b.classList.toggle("locked", on); on ? b.setAttribute("aria-disabled","true") : b.removeAttribute("aria-disabled"); } });
+  const nt=$("strictNote"); if(nt && !on) nt.hidden=true; }
+function strictRefuse(e){ e.preventDefault(); e.stopImmediatePropagation(); strictSync();
+  let nt=$("strictNote"); const side=document.querySelector("#pane-practice .p-side"); if(!side) return;
+  if(!nt){ nt=document.createElement("div"); nt.id="strictNote"; nt.className="s7note strictnote"; nt.setAttribute("role","status"); }
+  nt.textContent="БЕЗ ПОДСКАЗОК · теория и шпаргалка закрыты, пока не откроешь ключ. Не помнишь — «Не знаю — покажи».";
+  if(nt.parentNode!==side) side.insertBefore(nt, side.firstChild); nt.hidden=false; if(nt.scrollIntoView) nt.scrollIntoView({block:"nearest"}); }
+(function strictInit(){
+  const tabs=document.querySelector(".tabs"); if(!tabs) return;
+  tabs.addEventListener("click", e=>{ const b=e.target.closest && e.target.closest("#tab-theory,#tab-cheat"); if(b && strictLocked()) strictRefuse(e); }, true);
+  tabs.addEventListener("keydown", e=>{ if((e.key==="ArrowLeft" || e.key==="ArrowRight") && strictLocked()) strictRefuse(e); }, true);
+  const after=$("sfxBtn"); if(!after) return;
+  const b=document.createElement("button"); b.type="button"; b.className="fontbtn"; b.id="strictBtn";
+  b.title="Пока отвечаешь на ступень, теория и шпаргалка закрыты до открытия ключа";
+  const label=()=>{ b.textContent="БЕЗ ПОДСКАЗОК: "+(strictOn()?"ВКЛ":"ВЫКЛ"); b.classList.toggle("warn", strictOn()); };
+  b.addEventListener("click",()=>{ store.set("pm.strict", !strictOn()); label(); strictSync(); });
+  after.parentNode.insertBefore(b, after); label();
+})();
+function renderPractice(){ setTimeout(()=>{ refreshTopicNav(current); strictSync(); },0);
   const t=topics[current], c=DATA.content[t.id], pane=$("pane-practice");
   stopTyping();
   if(!c || !c.steps.length){ pane.innerHTML=`<p class="empty">Практика для этой темы ещё не написана.</p>`; return; }
@@ -1588,7 +1613,7 @@ function renderPractice(){ setTimeout(()=>refreshTopicNav(current),0);
     bar.addEventListener("click",e=>{ const b=e.target.closest("button"); if(b) act(b); });
   })();
   ta.addEventListener("input",()=>{ if(kb.dataset.open) return;   /* after the key nothing is saved: the stored answer is the one given before it */
-    store.set(ansKey, ta.value); kb.disabled=answerLeft(ta.value,oral)>0; gate.textContent=gateText(ta.value,oral); });
+    store.set(ansKey, ta.value); kb.disabled=answerLeft(ta.value,oral)>0; gate.textContent=gateText(ta.value,oral); strictSync(); });
   if($("s7out")) $("s7out").addEventListener("click",()=>openOut());
   $("dunno").addEventListener("click",()=>{ if(kb.dataset.open) return; showKeyNow(true); });
   kb.addEventListener("click",()=>{ if(!kb.disabled) showKeyNow(false); });
@@ -1596,6 +1621,7 @@ function renderPractice(){ setTimeout(()=>refreshTopicNav(current),0);
     kb.dataset.open="1"; $("dunno").hidden=true; kb.hidden=true;
     if(blind || redo) store.set(ansKey, "");   /* the key has been seen: the next review starts empty again */
     if(!inBank){ const sn=store.get("pm.seen."+t.id, {}); if(!sn[s.id]){ sn[s.id]=Date.now(); store.set("pm.seen."+t.id, sn); } }
+    strictSync();
     const pc=document.querySelector("#pane-practice .p-code"), wide=pc && pc.querySelector(".term") && $("winBody").classList.contains("fit") && !narrow();
     let keyTerm;
     /* long keys (> 25 lines) carry 3–5 required points: the learner grades against them, the full code stays below */
@@ -1891,7 +1917,7 @@ refreshRun(); refreshBackupNote();
   function codePool(){
     const out=[]; const c = current>=0 ? DATA.content[topics[current].id] : null;
     if(c){ (c.lesson ? c.lesson.base.concat(c.lesson.deeper) : []).forEach(sec=>sec.body.forEach(n=>{ if(n.t==="code") out.push(...n.code.split("\n")); }));
-      (c.steps||[]).forEach(st=>{ if(st.code) out.push(...st.code.split("\n")); if(st.key) out.push(...st.key.split("\n").filter(l=>/[{}()=;]|func |let |var /.test(l))); }); }
+      (c.steps||[]).forEach(st=>{ if(st.code) out.push(...st.code.split("\n")); if(st.key && !strictOn()) out.push(...st.key.split("\n").filter(l=>/[{}()=;]|func |let |var /.test(l))); }); }
     const clean = out.map(l=>l.replace(/\t/g,"    ").trim()).filter(l=>l.length>=8 && l.length<=72 && !/[а-яё]{4,}/i.test(l.replace(/\/\/.*$/,"").replace(/"[^"]*"/g,"")));
     return clean.length>=6 ? clean : FALLBACK;
   }

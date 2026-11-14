@@ -1,7 +1,9 @@
-// Honest practice (review 14.11, leak 1.3), phone and desktop:
+// Honest practice (review 14.11, leak 1.3 and item 22), phone and desktop:
 // 1.3 — once the key of a step has been seen, the step opens with an EMPTY field next time (the unfinished draft of a step
 //       whose key was never opened is still restored); the previous answer is offered only after the key;
 //       text typed after the key is open is not saved (no copying the key into the stored answer).
+// 22  — setting «БЕЗ ПОДСКАЗОК» (pm.strict, off by default): while a step is being answered, the Теория and Шпаргалка
+//       tabs are closed until the key opens.
 'use strict';
 const { Suite, launch, openPage, ensureDist } = require('./lib');
 const { phoneUi, desktopUi, seed, ls } = require('./ui');
@@ -65,6 +67,42 @@ async function suite(ui) {
     f = await field();
     await s.check('old ungraded draft: still restored', f.val === 'DRAFT-S3 not graded yet', f);
 
+    // ---------- 22: «без подсказок» ----------
+    await seed(page, {}); await ui.ready(page);
+    await s.check('strict mode is off by default', (await ls(page, 'pm.strict')) === null && /ВЫКЛ/.test(await js(() => document.getElementById('strictBtn').textContent)));
+    await practice('opt', 0);
+    await page.fill('#ans', 'начал отвечать'); await page.waitForTimeout(100);
+    await js(() => document.getElementById('tab-theory').click()); await page.waitForTimeout(350);
+    await s.check('strict off: Теория opens while answering (as before)', await tabOn('theory'));
+    await js(() => document.getElementById('strictBtn').click()); await page.waitForTimeout(100);
+    await s.check('strict on: stored and shown on the button', (await ls(page, 'pm.strict')) === true && /ВКЛ/.test(await js(() => document.getElementById('strictBtn').textContent)));
+    await js(() => document.getElementById('tab-practice').click()); await page.waitForTimeout(350);
+    f = await field();
+    await s.check('the unfinished draft is still in the field', f.val === 'начал отвечать', f);
+    for (const n of ['theory', 'cheat']) {
+      await js(n => document.getElementById('tab-' + n).click(), n); await page.waitForTimeout(300);
+      await s.check(`strict on: «${n}» stays closed while answering`, (await tabOn('practice')) && !(await tabOn(n)));
+    }
+    const note = await js(() => { const e = document.getElementById('strictNote'); if (!e || e.hidden) return null; const r = e.getBoundingClientRect(); return { t: e.textContent, w: r.width, right: r.right, vw: innerWidth }; });
+    await s.check('strict on: a note says why the tab is closed', !!note && /БЕЗ ПОДСКАЗОК/i.test(note.t) && note.right <= note.vw + 1, note);
+    await js(() => document.getElementById('tab-tasks').click()); await page.waitForTimeout(300);
+    await s.check('strict on: «Задания» is not locked', await tabOn('tasks'));
+    await js(() => document.getElementById('tab-practice').click()); await page.waitForTimeout(350);
+    await js(() => document.getElementById('dunno').click()); await page.waitForTimeout(300);
+    await js(() => document.getElementById('tab-theory').click()); await page.waitForTimeout(350);
+    await s.check('strict on: after the key Теория opens again', await tabOn('theory'));
+    await js(() => document.getElementById('tab-practice').click()); await page.waitForTimeout(350);
+    await js(k => document.querySelector(`.rung[data-step="${k}"]`).click(), 0); await page.waitForTimeout(250);
+    f = await field();
+    await js(() => document.getElementById('tab-cheat').click()); await page.waitForTimeout(300);
+    await s.check('strict on: a step seen before is locked from the start (empty field)', f.val === '' && (await tabOn('practice')), f);
+    await js(k => document.querySelector(`.rung[data-step="${k}"]`).click(), 3); await page.waitForTimeout(250);
+    await js(() => document.getElementById('tab-theory').click()); await page.waitForTimeout(350);
+    await s.check('strict on: a new step with an empty field is not locked yet', await tabOn('theory'));
+    await page.reload(); await ui.ready(page);
+    await s.check('strict mode survives a reload', (await ls(page, 'pm.strict')) === true && /ВКЛ/.test(await js(() => document.getElementById('strictBtn').textContent)));
+    await js(() => document.getElementById('strictBtn').click());
+    await s.check('strict mode can be switched off', (await ls(page, 'pm.strict')) === false);
     await s.check('no page errors', !errors.length, errors.slice(0, 3));
   } finally { await browser.close(); }
   return s.result();
