@@ -1477,6 +1477,8 @@ function guessVV(){ if(!document.body.classList.contains("kb-on") || vvMode!=="v
 function exitKb(){ vvMode="vv"; if(!document.body.classList.contains("kb-on")) return; document.body.classList.remove("kb-on"); const p=$("pane-practice"); if(p) p.classList.remove("kbd","codebig"); requestAnimationFrame(()=>fitCode()); }
 if(window.visualViewport){ ["resize","scroll"].forEach(ev=>window.visualViewport.addEventListener(ev,()=>{ if(!document.body.classList.contains("kb-on")) return; if(vvMode==="guess" && window.visualViewport.height < window.innerHeight*0.85) vvMode="vv"; updVV(); })); }
 window.addEventListener("resize",()=>{ if(document.body.classList.contains("kb-on")) updVV(); });
+let practiceRecall=false;   /* the step on screen is a repeat (blind review or a step whose key was seen before) */
+function stepSeen(id, sid, prog, grades){ return !!(store.get("pm.seen."+id, {})[sid] || prog[sid] || grades[sid]); }
 function renderPractice(){ setTimeout(()=>refreshTopicNav(current),0);
   const t=topics[current], c=DATA.content[t.id], pane=$("pane-practice");
   stopTyping();
@@ -1490,8 +1492,13 @@ function renderPractice(){ setTimeout(()=>refreshTopicNav(current),0);
   /* blind recall: an SRS review or the «Уже знаю» check of step 7 starts from an empty field (own draft key pm.rans.<id>);
      the previous answer (pm.ans.<id>.s7) can be shown only after the key */
   const blind = !inBank && s.id==="s7" && (t.due || checkMode===t.id);
-  const ansKey = inBank ? "pm.bankAns."+s.id : blind ? "pm.rans."+t.id : "pm.ans."+t.id+"."+s.id;
-  const saved = store.get(ansKey, ""), prevAns = blind ? store.get("pm.ans."+t.id+".s7", "") : "";
+  /* review 14.11, leak 1.3: any step whose key has been seen (pm.seen.<id>, or a grade from before this rule) opens with an
+     empty field too. The unfinished draft of a never-revealed step is still restored. The new attempt is drafted in
+     pm.redo.<id>.<step>; pm.ans.<id>.<step> keeps the answer given before the key and is shown only after the key. */
+  const redo = !inBank && !blind && stepSeen(t.id, s.id, prog, grades);
+  const ansKey = inBank ? "pm.bankAns."+s.id : blind ? "pm.rans."+t.id : redo ? "pm.redo."+t.id+"."+s.id : "pm.ans."+t.id+"."+s.id;
+  const saved = store.get(ansKey, ""), prevAns = (blind || redo) ? store.get("pm.ans."+t.id+"."+s.id, "") : "";
+  practiceRecall = blind || redo;
   const oral = inBank ? s.type==="Устно" : s.id==="s5";
   const rec = recallOf(t.id), outP = !!(outOf(t.id)||{}).pass;
   const s7note = !inBank && s.id==="s7" && !blind && rec && rec.pass && !outP && outQs(t.id).length
@@ -1502,7 +1509,7 @@ function renderPractice(){ setTimeout(()=>refreshTopicNav(current),0);
     <div class="split" id="split" role="separator" aria-orientation="vertical" tabindex="0" title="Потяни — изменить ширину · двойной клик — авто"></div>
     <div class="p-side">
       ${inBank ? `<div class="bank-h"><span class="bt">${esc(s.type.toUpperCase())}${s.mins?" · "+s.mins+" МИН":""}</span><span>${bst.ok?"РЕШЕНО ×"+bst.ok:bst.no?"НЕ ВЫШЛО ×"+bst.no:"НОВАЯ"}</span><span class="bnav"><button type="button" class="textbtn" id="bankPrev">◂</button><button type="button" class="textbtn" id="bankNext">ДРУГАЯ ▸</button></span></div>` : ""}
-      ${s7note}${blind ? `<div class="s7note">${t.due?"ПОВТОР ВСЛЕПУЮ":"ПРОВЕРКА ПО ПАМЯТИ"} · поле пустое, ключ закрыт — прошлый ответ покажу после сверки</div>` : ""}
+      ${s7note}${redo ? `<div class="s7note">СТУПЕНЬ УЖЕ ОТКРЫВАЛАСЬ · поле пустое — прошлый ответ покажу после сверки</div>` : ""}${blind ? `<div class="s7note">${t.due?"ПОВТОР ВСЛЕПУЮ":"ПРОВЕРКА ПО ПАМЯТИ"} · поле пустое, ключ закрыт — прошлый ответ покажу после сверки</div>` : ""}
       <h2 class="step-title">${esc(inBank ? s.title : short(s.title))}</h2>
       <p class="prompt">${esc(s.prompt)}</p>
       <div class="answer">
@@ -1580,13 +1587,15 @@ function renderPractice(){ setTimeout(()=>refreshTopicNav(current),0);
     bar.addEventListener("mousedown",e=>{ if(e.target.closest("button")) e.preventDefault(); });
     bar.addEventListener("click",e=>{ const b=e.target.closest("button"); if(b) act(b); });
   })();
-  ta.addEventListener("input",()=>{ if(blind && kb.dataset.open) return; store.set(ansKey, ta.value); if(kb.dataset.open) return; kb.disabled=answerLeft(ta.value,oral)>0; gate.textContent=gateText(ta.value,oral); });
+  ta.addEventListener("input",()=>{ if(kb.dataset.open) return;   /* after the key nothing is saved: the stored answer is the one given before it */
+    store.set(ansKey, ta.value); kb.disabled=answerLeft(ta.value,oral)>0; gate.textContent=gateText(ta.value,oral); });
   if($("s7out")) $("s7out").addEventListener("click",()=>openOut());
   $("dunno").addEventListener("click",()=>{ if(kb.dataset.open) return; showKeyNow(true); });
   kb.addEventListener("click",()=>{ if(!kb.disabled) showKeyNow(false); });
   function showKeyNow(dunno){
     kb.dataset.open="1"; $("dunno").hidden=true; kb.hidden=true;
-    if(blind) store.set(ansKey, "");   /* the key has been seen: the next review starts empty again */
+    if(blind || redo) store.set(ansKey, "");   /* the key has been seen: the next review starts empty again */
+    if(!inBank){ const sn=store.get("pm.seen."+t.id, {}); if(!sn[s.id]){ sn[s.id]=Date.now(); store.set("pm.seen."+t.id, sn); } }
     const pc=document.querySelector("#pane-practice .p-code"), wide=pc && pc.querySelector(".term") && $("winBody").classList.contains("fit") && !narrow();
     let keyTerm;
     /* long keys (> 25 lines) carry 3–5 required points: the learner grades against them, the full code stays below */
@@ -1630,7 +1639,7 @@ function renderPractice(){ setTimeout(()=>refreshTopicNav(current),0);
     const gr=gradesOf(t.id); gr[s.id]=v; store.set("pm.grade."+t.id, gr);
     if(v==="no") backFail("s", t.id, s.id, stepEq(s)); else if(v==="ok") backPass(backKey("s", t.id, s.id));   /* «нет» comes back in the run on day 1 and 3 */
     if(s.id==="s7"){ const r0=recallOf(t.id)||{}; store.set("pm.recall."+t.id, {at:Date.now(), v, pass: v==="ok" ? (r0.pass||Date.now()) : (r0.pass||0)}); }
-    if(blind){ if(v==="ok" && ta.value.trim()) store.set("pm.ans."+t.id+".s7", ta.value); store.set(ansKey, ""); }
+    if(blind || redo){ if(v==="ok" && ta.value.trim()) store.set("pm.ans."+t.id+"."+s.id, ta.value); store.set(ansKey, ""); }
     if(t.due && s.id==="s7") srsGrade(t.id, v);
     v = v==="ok" ? "ok" : "no";   /* pm.steps stays ok/no */
     if(checkMode===t.id && s.id==="s7"){
@@ -2022,6 +2031,7 @@ function mergeProgress(local, incoming){
     if(/^pm\.(recall|out)\./.test(key)) return isObj(a)&&isObj(b) ? attempt(a,b) : a;
     if(/^pm\.roots\./.test(key)) return isObj(a)&&isObj(b) ? (num(b.at)>num(a.at) ? b : a) : a;   /* «Корни»: the latest recall */
     if(/^pm\.rootsSkip\./.test(key)) return Math.max(num(a), num(b)) || a;
+    if(/^pm\.seen\./.test(key)) return isObj(a)&&isObj(b) ? tsMap(a,b,minTs) : a;   /* steps whose key was seen: union, the earliest time */
     if(/^pm\.outRun\./.test(key)) return isObj(a)&&isObj(b) ? (num(b.at)>num(a.at) ? b : a) : a;   /* unfinished «Выгрузка»: the later one */
     if(key==="pm.mapHint") return Math.max(num(a), num(b)) || a;   /* map hint shown on N visits: the larger count */
     /* errors that come back (pm.back): union of entries; per entry the latest miss wins, same miss -> more progress */
@@ -2039,14 +2049,14 @@ function mergeProgress(local, incoming){
     if(key==="pm.runs") return Array.isArray(a)&&Array.isArray(b) ? [...new Set(a.concat(b))].sort().slice(-120) : a;
     if(key==="pm.honest") return isObj(a)&&isObj(b) ? (num(b.at)&&num(b.at)<num(a.at) ? b : a) : a;
     if(/^pm\.outAns\./.test(key)){ if(!Array.isArray(a)||!Array.isArray(b)) return a; const r=a.slice(); b.forEach((x,i)=>{ if(!(r[i]&&String(r[i]).trim())) r[i]=x; }); return r; }
-    if(typeof a==="string") return a.trim() ? a : b;   /* answer drafts: pm.ans.*, pm.rans.*, pm.bankAns.* */
+    if(typeof a==="string") return a.trim() ? a : b;   /* answer drafts: pm.ans.*, pm.rans.*, pm.bankAns.*, pm.redo.* */
     return a;
   }
   /* key order does not matter: {s1,s2} and {s2,s1} are the same progress */
   const canon=v=>JSON.stringify(v, (k,x)=>isObj(x) ? Object.keys(x).sort().reduce((o,kk)=>(o[kk]=x[kk], o), {}) : x);
   /* an incoming value of the wrong kind for its key is skipped (it would break the engine that reads it); unknown keys pass */
-  const KIND=[[/^pm\.(steps|grade|srs|recall|out|outRun|roots|bank)\./,"o"],[/^pm\.(known|legacy|skip|imported|honest|back)$/,"o"],
-    [/^pm\.(err|outAns)\./,"a"],[/^pm\.runs$/,"a"],[/^pm\.(ans|rans|bankAns)\./,"s"],[/^pm\.(doneAt|rootsSkip)\./,"n"],[/^pm\.mapHint$/,"n"]];
+  const KIND=[[/^pm\.(steps|grade|srs|recall|out|outRun|roots|bank|seen)\./,"o"],[/^pm\.(known|legacy|skip|imported|honest|back)$/,"o"],
+    [/^pm\.(err|outAns)\./,"a"],[/^pm\.runs$/,"a"],[/^pm\.(ans|rans|bankAns|redo)\./,"s"],[/^pm\.(doneAt|rootsSkip)\./,"n"],[/^pm\.mapHint$/,"n"]];
   const kindOk=(key,v)=>{ const k=(KIND.find(x=>x[0].test(key))||[])[1];
     return !k || (k==="o" ? isObj(v) : k==="a" ? Array.isArray(v) : k==="s" ? typeof v==="string" : typeof v==="number"); };
   const map={...local}; let skipped=0;
