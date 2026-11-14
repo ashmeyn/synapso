@@ -174,8 +174,12 @@ const fxQueue=[]; function fxLog(tag, text){ fxQueue.push({tag, text}); if(fxQue
 const $ = id => document.getElementById(id);
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 let progDirty=false;   /* progress written since the last gist sync */
+/* a stored value of another kind than the default (null or a list where an object is expected, …) reads as the default:
+   one bad key — from a hand edit, an old file or a sync — must not blank the page (review 14.11, bug 1) */
+function sameKind(v, d){ if(d==null) return v; if(Array.isArray(d)) return Array.isArray(v) ? v : d;
+  if(typeof d==="object") return v && typeof v==="object" && !Array.isArray(v) ? v : d; return typeof v===typeof d ? v : d; }
 const store = {
-  get(k,d){ try{ const v = localStorage.getItem(k); return v==null ? d : JSON.parse(v); }catch(e){ return d; } },
+  get(k,d){ try{ const v = localStorage.getItem(k); return v==null ? d : sameKind(JSON.parse(v), d); }catch(e){ return d; } },
   set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} if(k.indexOf("pm.")===0){ askPersist(); progDirty=true; } }
 };
 /* ask the browser not to evict localStorage (Safari drops it after 7 days without a visit); once per page, on the first progress write */
@@ -289,7 +293,8 @@ function answerLeft(v, oral){ const s=String(v||""); return oral ? Math.max(0, G
 function gateText(v, oral){ const n=answerLeft(v, oral); return n ? "Ключ откроется после ответа · ещё "+n+" "+(oral?plural(n,["слово","слова","слов"]):plural(n,["знак","знака","знаков"])) : ""; }
 function srsPass(id){ fxLog("SRS","NODE://"+id.toUpperCase()+" · ПОВТОР ЗАСЧИТАН"); const r=srsOf(id)||{stage:0,lapses:0}; r.stage=Math.min(SRS_DAYS.length-1, r.stage+1); r.due=Date.now()+SRS_DAYS[r.stage]*DAY; store.set("pm.srs."+id, r); }
 function srsFail(id){ fxLog("SRS","NODE://"+id.toUpperCase()+" · ЛЕСЕНКА СБРОШЕНА"); const r=srsOf(id)||{stage:0,lapses:0}; r.stage=0; r.lapses=(r.lapses||0)+1; r.due=Date.now()+DAY; store.set("pm.srs."+id, r); }
-function logErr(id, q, note){ const list=store.get("pm.err."+id,[]); list.unshift({at:Date.now(), q:String(q).slice(0,400), note:String(note||"").slice(0,600)}); store.set("pm.err."+id, list.slice(0,20)); }
+function errList(id){ return store.get("pm.err."+id,[]).filter(x=>x && typeof x==="object"); }
+function logErr(id, q, note){ const list=errList(id); list.unshift({at:Date.now(), q:String(q).slice(0,400), note:String(note||"").slice(0,600)}); store.set("pm.err."+id, list.slice(0,20)); }
 /* ---------- errors come back (pm.back, pm.err stays as is): an item graded «нет» returns to the daily run on day 1 and day 3 after the miss;
    two «вспомнил» in a row on its due day close it. pm.back = {"<k>:<topic>:<ref>": {t, k, ref, q?, a?, eq, at, ok, next, done?}}
    k: "s" step · "b" bank task · "o" «Проверь себя» question (ref = index) · "q" run card (q/a kept, ref = hash). eq = the pm.err text it matches. */
@@ -298,7 +303,7 @@ function dayStart(ts){ const d=new Date(ts); d.setHours(0,0,0,0); return d.getTi
 function addDays(ts, n){ const d=new Date(dayStart(ts)); d.setDate(d.getDate()+n); return d.getTime(); }
 function daysTo(ts){ return Math.round((dayStart(ts)-dayStart(Date.now()))/DAY); }
 function strHash(s){ let h=5381; s=String(s); for(let i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))|0; return (h>>>0).toString(36); }
-function backAll(){ const m=store.get("pm.back",{}); return m && typeof m==="object" && !Array.isArray(m) ? m : {}; }
+function backAll(){ const m=store.get("pm.back",{}), o={}; Object.keys(m).forEach(k=>{ const e=m[k]; if(e && typeof e==="object" && !Array.isArray(e)) o[k]=e; }); return o; }   /* entries that are not records are dropped */
 function backSave(all){ const now=Date.now(); let ks=Object.keys(all).filter(k=>!all[k].done || now-all[k].done<30*DAY);
   if(ks.length>300) ks=ks.sort((a,b)=>(all[b].at||0)-(all[a].at||0)).slice(0,300);
   const out={}; ks.forEach(k=>out[k]=all[k]); store.set("pm.back", out); }
@@ -1599,7 +1604,7 @@ function renderPractice(){ setTimeout(()=>refreshTopicNav(current),0);
 function renderCheat(){
   const t=topics[current], R=DATA.ref, pane=$("pane-cheat");
   const ch=R.cheat[t.id], one=R.one[t.id], fol=R.follow[t.id]||[], cmp=R.compare[t.id]||[], ln=R.links[t.id]||[];
-  const errs=store.get("pm.err."+t.id,[]);
+  const errs=errList(t.id);
   $("tab-cheat").hidden = !(ch||one||fol.length||cmp.length||ln.length||errs.length);
   const qa=(q,a)=>`<button type="button" class="qa" aria-expanded="false"><span class="q">${esc(q)}</span><span class="a" hidden>${esc(a)}</span></button>`;
   const errHTML = errs.length ? `<h5 class="ch-h err-h">ТВОИ ОШИБКИ · ${errs.length}</h5><ul class="errs">${errs.map((e,k)=>`<li><div><span class="eq">${esc(e.q)}</span>${e.note?`<span class="en">${esc(e.note)}</span>`:""}${(b=>b?`<span class="eb${b.done?" off":""}">${backLabel(b)}</span>`:`<span class="eb off">В РАН НЕ ВЕРНЁТСЯ · ОЦЕНКА НЕ «НЕТ»</span>`)(backFor(t.id, e.q))}</div><span class="ed">${fmtDate(e.at)}</span><button type="button" class="ex" data-k="${k}" title="Разобрался — убрать">✓</button></li>`).join("")}</ul>` : "";
@@ -1611,7 +1616,7 @@ function renderCheat(){
     + (ln.length?`<h5 class="ch-h">МАТЕРИАЛЫ</h5><ul class="ch-links">${ln.map(l=>`<li><a href="${esc(l[1])}" target="_blank" rel="noopener">${esc(l[0])} <span>↗</span></a></li>`).join("")}</ul>`:"");
   pane.innerHTML = (left||right) ? `<div class="ch"><section class="ch-col">${left}</section><section class="ch-col">${right}</section></div>` : `<p class="empty">Шпаргалки для этой темы пока нет.</p>`;
   pane.querySelectorAll(".qa").forEach(b=>b.addEventListener("click",()=>{ const a=b.querySelector(".a"), open=a.hidden; a.hidden=!open; b.setAttribute("aria-expanded",open); }));
-  pane.querySelectorAll(".errs .ex").forEach(b=>b.addEventListener("click",()=>{ const list=store.get("pm.err."+t.id,[]); list.splice(+b.dataset.k,1); store.set("pm.err."+t.id,list); renderCheat(); }));
+  pane.querySelectorAll(".errs .ex").forEach(b=>b.addEventListener("click",()=>{ const list=errList(t.id); list.splice(+b.dataset.k,1); store.set("pm.err."+t.id,list); renderCheat(); }));
 }
 function tasksFor(id){ return DATA.tasks.filter(x=>x.topics.includes(id)); }
 function bankFor(id){ return DATA.bank.filter(x=>x.topics.includes(id)); }
@@ -1983,9 +1988,15 @@ function mergeProgress(local, incoming){
   }
   /* key order does not matter: {s1,s2} and {s2,s1} are the same progress */
   const canon=v=>JSON.stringify(v, (k,x)=>isObj(x) ? Object.keys(x).sort().reduce((o,kk)=>(o[kk]=x[kk], o), {}) : x);
-  const map={...local};
+  /* an incoming value of the wrong kind for its key is skipped (it would break the engine that reads it); unknown keys pass */
+  const KIND=[[/^pm\.(steps|grade|srs|recall|out|roots|bank)\./,"o"],[/^pm\.(known|legacy|skip|imported|honest|back)$/,"o"],
+    [/^pm\.(err|outAns)\./,"a"],[/^pm\.runs$/,"a"],[/^pm\.(ans|rans|bankAns)\./,"s"],[/^pm\.(doneAt|rootsSkip)\./,"n"],[/^pm\.mapHint$/,"n"]];
+  const kindOk=(key,v)=>{ const k=(KIND.find(x=>x[0].test(key))||[])[1];
+    return !k || (k==="o" ? isObj(v) : k==="a" ? Array.isArray(v) : k==="s" ? typeof v==="string" : typeof v==="number"); };
+  const map={...local}; let skipped=0;
   Object.keys(incoming||{}).forEach(key=>{
     const bs=incoming[key], b=P(bs); if(b===undefined) return;
+    if(!kindOk(key, b)){ skipped++; return; }
     if(!(key in local)){ map[key]=bs; return; }
     const a=P(local[key]); if(a===undefined){ map[key]=bs; return; }
     const r=one(key, a, b);
@@ -1995,7 +2006,7 @@ function mergeProgress(local, incoming){
   const kn=P(map["pm.known"]), sk=P(map["pm.skip"]);
   if(isObj(kn) && isObj(sk)){ let d=0; Object.keys(sk).forEach(id=>{ if(num(kn[id])>=num(sk[id])){ delete sk[id]; d++; } }); if(d){ map["pm.skip"]=JSON.stringify(sk); } }
   const changed=Object.keys(map).filter(k=>map[k]!==local[k]).length;
-  return {map, changed};
+  return {map, changed, skipped};
 }
 /* merge:end */
 
@@ -2049,15 +2060,17 @@ function checkImport(obj){
 function applyMerge(incoming, what){
   const note=$("importNote"), snap=takeSnapshot();
   const r=mergeProgress(snap, incoming);
-  if(!r.changed){ note.textContent=what+" · НОВОГО НЕТ, ВСЁ УЖЕ ЕСТЬ НА ЭТОМ УСТРОЙСТВЕ"; return r; }
+  const skipNote = r.skipped ? " · ПРОПУЩЕНО ПОВРЕЖДЁННЫХ ЗАПИСЕЙ: "+r.skipped : "";
+  if(!r.changed){ note.textContent=what+" · НОВОГО НЕТ, ВСЁ УЖЕ ЕСТЬ НА ЭТОМ УСТРОЙСТВЕ"+skipNote; return r; }
   lastSnapshot=snap;
   try{ localStorage.setItem("bk.last", JSON.stringify({at:Date.now(), data:snap})); }catch(e){}
   try{ Object.entries(r.map).forEach(([k,v])=>{ if(snap[k]!==v) localStorage.setItem(k,v); }); }
   catch(err){ restoreSnapshot(snap); note.textContent=what+" НЕ УДАЛСЯ · ВСЁ ВОЗВРАЩЕНО КАК БЫЛО"; r.failed=true; return r; }
   const before=new Set(topics.filter(t=>t.status==="done").map(t=>t.id));
-  reloadState();
+  try{ reloadState(); }
+  catch(err){ try{ restoreSnapshot(snap); }catch(e2){} note.textContent=what+" НЕ УДАЛСЯ · ВСЁ ВОЗВРАЩЕНО КАК БЫЛО"; r.failed=true; return r; }
   topics.forEach((t,i)=>{ if(t.status==="done" && !before.has(t.id)) flash[i]=1.6; });
-  note.innerHTML = what+' · ОБЪЕДИНЕНО, ОБНОВЛЕНО ЗАПИСЕЙ: '+r.changed+' <button type="button" class="fontbtn" id="impUndo">ОТКАТИТЬ</button>';
+  note.innerHTML = what+' · ОБЪЕДИНЕНО, ОБНОВЛЕНО ЗАПИСЕЙ: '+r.changed+skipNote+' <button type="button" class="fontbtn" id="impUndo">ОТКАТИТЬ</button>';
   $("impUndo").addEventListener("click",()=>{ if(lastSnapshot){ restoreSnapshot(lastSnapshot); lastSnapshot=null; note.textContent="ВОЗВРАЩЕНО КАК БЫЛО ДО ОБЪЕДИНЕНИЯ"; } });
   return r;
 }
