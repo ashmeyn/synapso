@@ -1,4 +1,4 @@
-// Content lint (review 14.11, item 5): scripts/lint_content.py and its hook in scripts/build.py.
+// Content lint (review 14.11, item 5): scripts/lint_content.py and its hook in scripts/build.py; the Pages deploy gate (item 6).
 // No browser: a copy of content/ + engine/app.js + scripts/ in a temp dir, one injected violation per rule —
 // the lint must name the rule and the build must stop; the untouched copy must pass.
 'use strict';
@@ -64,6 +64,12 @@ async function run() {
       await s.check('prose in a `code` field is not linted as code', l.status === 0, l.stdout.slice(-300));
     } finally { fs.rmSync(dir, { recursive: true, force: true }); }
   } finally { fs.rmSync(clean, { recursive: true, force: true }); }
+  // deploy gate (review 14.11, item 6): Pages is built only after the test job
+  const pages = fs.readFileSync(path.join(ROOT, '.github', 'workflows', 'pages.yml'), 'utf8');
+  const job = name => { const m = pages.match(new RegExp('\\n  ' + name + ':\\n([\\s\\S]*?)(?=\\n  [a-z]+:\\n|$)')); return m ? m[1] : ''; };
+  await s.check('pages.yml: a test job runs the build and npm test', /scripts\/build\.py/.test(job('test')) && /npm test/.test(job('test')), job('test').slice(0, 200));
+  await s.check('pages.yml: build waits for test', /needs:\s*test/.test(job('build')), job('build').slice(0, 120));
+  await s.check('pages.yml: deploy waits for build', /needs:\s*build/.test(job('deploy')), job('deploy').slice(0, 120));
   return s.result();
 }
 
