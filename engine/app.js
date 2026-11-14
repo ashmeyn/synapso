@@ -1390,7 +1390,7 @@ function attachEditor(ta, hlEl, opts){
   });
   ta.addEventListener("keydown",e=>{
     if(e.key==="Enter" && (e.ctrlKey||e.metaKey) && opts.onSubmit){ e.preventDefault(); opts.onSubmit(); return; }
-    if(e.key==="Escape"){ free=true; return; }
+    if(e.key==="Escape"){ e.stopPropagation(); if(free) ta.blur(); free=true; return; }   /* Esc here never closes the topic: 1st releases Tab, 2nd leaves the field */
     if(e.key!=="Tab"){ free=false; return; }
     if(!code || free || e.ctrlKey || e.metaKey || e.altKey) return;
     e.preventDefault(); tab(e.shiftKey);

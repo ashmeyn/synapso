@@ -1047,3 +1047,6 @@ html.phone .gflash{color:var(--ink)!important;border-color:var(--cyan)!important
 .savewarn b{color:var(--cyan);font-weight:600}
 .savewarn .fontbtn{width:auto;min-height:44px;padding:0 12px}
 html:not(.phone) .savewarn{left:auto;max-width:560px}
+/* desktop answer field: the highlighted copy of a long answer is clipped to the field (the frame keeps overflow:visible for its
+   corner marks, so the scrolled layer used to be painted over the task text) — review 14.11, bug 7 */
+html:not(.phone) #pane-practice .ed{clip-path:inset(0)}
