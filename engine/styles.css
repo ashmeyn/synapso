@@ -1040,3 +1040,10 @@ html.phone .ep-nav #epNext[hidden]{display:none}
 }
 /* phone: «Ключ» pressed too early while typing — the gate line is hidden, so the key button itself says what is missing */
 html.phone .gflash{color:var(--ink)!important;border-color:var(--cyan)!important}
+/* storage refused to write (quota / private mode): one visible warning, phone and desktop (review 14.11, bug 3) */
+.savewarn{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:60;display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:12px 16px;background:var(--bg);border:1px solid var(--cyan);color:var(--ink);font-family:var(--f-body);font-size:var(--fs-ui);line-height:1.5}
+.savewarn[hidden]{display:none}
+.savewarn span{flex:1 1 240px}
+.savewarn b{color:var(--cyan);font-weight:600}
+.savewarn .fontbtn{width:auto;min-height:44px;padding:0 12px}
+html:not(.phone) .savewarn{left:auto;max-width:560px}

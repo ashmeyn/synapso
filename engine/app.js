@@ -180,8 +180,18 @@ function sameKind(v, d){ if(d==null) return v; if(Array.isArray(d)) return Array
   if(typeof d==="object") return v && typeof v==="object" && !Array.isArray(v) ? v : d; return typeof v===typeof d ? v : d; }
 const store = {
   get(k,d){ try{ const v = localStorage.getItem(k); return v==null ? d : sameKind(JSON.parse(v), d); }catch(e){ return d; } },
-  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} if(k.indexOf("pm.")===0){ askPersist(); progDirty=true; } }
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){ saveFailed(k); } if(k.indexOf("pm.")===0){ askPersist(); progDirty=true; } }
 };
+/* the browser refused to write (quota, private mode, blocked storage): say it once instead of losing grades silently (bug 3) */
+let saveWarned=false;
+function saveFailed(k){ if(saveWarned || String(k).indexOf("pm.")!==0) return; saveWarned=true;
+  let w=document.getElementById("saveWarn");
+  if(!w){ w=document.createElement("div"); w.id="saveWarn"; w.className="savewarn"; w.setAttribute("role","alert");
+    w.innerHTML='<span><b>ПРОГРЕСС НЕ СОХРАНЯЕТСЯ.</b> Браузер не даёт записать данные: хранилище переполнено или закрыто (частный режим). Ответы на этой странице пропадут после перезагрузки.</span><button type="button" class="fontbtn" id="saveWarnExp">ЭКСПОРТ ПРОГРЕССА ↓</button><button type="button" class="fontbtn" id="saveWarnX" aria-label="Закрыть">×</button>';
+    document.body.appendChild(w);
+    document.getElementById("saveWarnX").addEventListener("click",()=>{ w.hidden=true; });
+    document.getElementById("saveWarnExp").addEventListener("click",()=>{ const b=document.getElementById("exportBtn"); if(b) b.click(); }); }
+  w.hidden=false; }
 /* ask the browser not to evict localStorage (Safari drops it after 7 days without a visit); once per page, on the first progress write */
 let persistAsked=false;
 function askPersist(){ if(persistAsked) return; persistAsked=true; try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persisted().then(p=>p||navigator.storage.persist()).catch(()=>{}); }catch(e){} }

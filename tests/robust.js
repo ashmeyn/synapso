@@ -2,6 +2,7 @@
 // 1. a pm.* key that holds valid JSON of the wrong type (null instead of an object, an object instead of a list)
 //    must not blank the page — the engine falls back to the default for that key;
 // 2. an import file with such values is merged without them, the app keeps working and survives a reload;
+// 3. when localStorage refuses to write (quota, private mode) the learner is told that progress is not being saved.
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -66,6 +67,23 @@ async function suite(ui) {
     await s.check('import: app works after reload', !errors.length, errors.slice(0, 2));
     fs.rmSync(file, { force: true });
 
+    // ---------- 3. storage refuses to write: a visible warning, once ----------
+    await seed(page, {});
+    await ui.ready(page);
+    await s.check('no warning while storage works', !(await page.evaluate(() => { const w = document.getElementById('saveWarn'); return !!w && !w.hidden; })));
+    await page.evaluate(() => { Storage.prototype.setItem = function () { throw new DOMException('quota', 'QuotaExceededError'); }; });
+    await ui.open(page, 'opt');
+    await tap('#tab-practice'); await page.waitForTimeout(300);
+    await page.evaluate(() => document.getElementById('dunno').click());   // writes a grade
+    await page.waitForTimeout(300);
+    const w = await page.evaluate(() => { const e = document.getElementById('saveWarn'); if (!e || e.hidden) return null;
+      const r = e.getBoundingClientRect(); return { text: e.textContent, w: r.width, h: r.height, in: r.left >= 0 && r.right <= innerWidth + 1 && r.top >= 0 && r.bottom <= innerHeight + 1 }; });
+    await s.check('warning shown when a write fails', !!w && /НЕ СОХРАНЯЕТСЯ/i.test(w.text) && w.in, w);
+    await s.check('warning offers the export', !!w && /ЭКСПОРТ/i.test(w.text), w);
+    await s.check('only one warning', (await page.evaluate(() => document.querySelectorAll('#saveWarn').length)) === 1);
+    await page.evaluate(() => document.getElementById('saveWarnX').click());
+    await s.check('warning can be closed', await page.evaluate(() => document.getElementById('saveWarn').hidden));
+    await s.check('storage failure: no page errors', !errors.length, errors.slice(0, 2));
   } finally { await browser.close(); }
   return s.result();
 }
