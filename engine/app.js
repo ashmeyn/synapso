@@ -1144,6 +1144,15 @@ function renderEpisode(t, c, L, nextI){
 
 /* ---------- «Выгрузка»: the lesson text is closed, the «Проверь себя» questions one by one, answer → reveal → self-grade ---------- */
 let outSt=null;   /* {id, k, g:[grades], dunno, shown} — current run of the screen */
+/* an unfinished «Выгрузка» survives a reload and «← К уроку» (review 14.11, bug 4): pm.outRun.<id> = {at, k, g, d, seen, dunno}
+   k — question index, g — grades so far, d — draft of the current answer, seen — its answer is already open.
+   Removed when the screen is finished; a run left for more than a day starts over. */
+const OUT_RUN_TTL=DAY;
+function outRunLoad(id){ const r=store.get("pm.outRun."+id, null);
+  return r && typeof r==="object" && Array.isArray(r.g) && typeof r.k==="number" && r.k>=0 && r.k===r.g.length && Date.now()-(+r.at||0)<OUT_RUN_TTL ? r : null; }
+function outRunSave(S, draft){ if(typeof draft==="string") S.d=draft;
+  store.set("pm.outRun."+S.id, {at:Date.now(), k:S.k, g:S.g.slice(0,S.k), d:String(S.d||"").slice(0,4000), seen:S.shown?1:0, dunno:S.dunno?1:0}); }
+function outRunClear(id){ try{ localStorage.removeItem("pm.outRun."+id); }catch(e){} }
 function outQs(id){ const L=(DATA.content[id]||{}).lesson; if(!L) return [];
   if(L.check) return L.check;
   const sec=L.base.find(x=>/^Проверь себя/.test(x.h)), ul=sec && sec.body.find(n=>n.t==="ul"); return ul ? ul.items : []; }
@@ -1153,10 +1162,11 @@ function outVerdict(g){ return g.includes("no") ? "no" : g.length && g.every(x=>
 function renderOut(){ setTimeout(()=>refreshTopicNav(current),0);
   const t=topics[current], id=t.id, qs=outQs(id), L=(DATA.content[id]||{}).lesson||{}, pane=$("pane-theory");
   stopTyping(); thBlocks=[]; thShown=0;
-  if(!outSt || outSt.id!==id) outSt={id, k:0, g:[], dunno:false, shown:false};
+  if(!outSt || outSt.id!==id){ const sv=outRunLoad(id);
+    outSt = sv && sv.k<qs.length ? {id, k:sv.k, g:sv.g.slice(), dunno:!!sv.dunno, shown:!!sv.seen, d:String(sv.d||"")} : {id, k:0, g:[], dunno:false, shown:false, d:""}; }
   const S=outSt, n=qs.length;
   if(S.k>=n){ renderOutDone(t, S); return; }
-  const drafts=store.get("pm.outAns."+id, []), draft=S.shown ? (drafts[S.k]||"") : "";
+  const draft=S.d||"", reopen=S.shown;
   pane.innerHTML = `<div class="out" id="out">
     <div class="out-h"><span>ВЫГРУЗКА · ВОПРОС <b>${S.k+1}</b> / ${n}</span><button type="button" class="textbtn" id="outBack">← К УРОКУ</button></div>
     <p class="out-tip">Текст урока закрыт. Вытащи ответ из головы: напиши его или ответь про себя. Потом открой ответ и честно оцени.</p>
@@ -1171,10 +1181,11 @@ function renderOut(){ setTimeout(()=>refreshTopicNav(current),0);
     <div id="outKey"></div></div>`;
   const ta=$("outAns"), btn=$("outShow"), gate=$("outGate");
   const upd=()=>{ const left=answerLeft(ta.value, true); btn.disabled=left>0; gate.textContent=gateText(ta.value, true); };
-  ta.addEventListener("input", upd); upd();
+  ta.addEventListener("input", ()=>{ upd(); if(!S.shown) outRunSave(S, ta.value); }); upd();
   $("outBack").addEventListener("click",()=>{ outSt=null; renderTheory(); $("winBody").scrollTop=0; });
+  const next=()=>{ S.k++; S.shown=false; S.dunno=false; S.d=""; if(S.k<n) outRunSave(S); renderOut(); $("winBody").scrollTop=0; };
   const reveal=dunno=>{
-    S.shown=true; S.dunno=dunno;
+    S.shown=true; S.dunno=dunno; outRunSave(S, ta.value);
     if(ta.value.trim()){ const d=store.get("pm.outAns."+id, []); d[S.k]=ta.value; store.set("pm.outAns."+id, d); }
     ta.readOnly=true; $("outActs").hidden=true;
     const a=L.answers && L.answers[S.k], ch=DATA.ref.cheat[id];
@@ -1183,17 +1194,18 @@ function renderOut(){ setTimeout(()=>refreshTopicNav(current),0);
     $("outKey").innerHTML = ansHTML + (dunno
       ? `<div class="assess"><span class="q">Записано: «нет». Разбери ответ — вопрос вернётся завтра.</span><button type="button" class="cta" id="outNext">${S.k+1<n?"СЛЕДУЮЩИЙ ВОПРОС ▸":"ИТОГ ▸"}</button></div>`
       : `<div class="assess"><span class="q">Насколько ты вспомнил это сам?</span><button type="button" class="cta" data-g="ok">ВСПОМНИЛ</button><button type="button" class="ghostbtn" data-g="part">ЧАСТИЧНО</button><button type="button" class="ghostbtn" data-g="no">НЕТ</button></div>`);
-    if(dunno){ S.g[S.k]="no"; $("outNext").addEventListener("click",()=>{ S.k++; S.shown=false; renderOut(); $("winBody").scrollTop=0; }); }
-    $("outKey").querySelectorAll("[data-g]").forEach(b=>b.addEventListener("click",()=>{ S.g[S.k]=b.dataset.g; S.k++; S.shown=false; renderOut(); $("winBody").scrollTop=0; }));
+    if(dunno){ S.g[S.k]="no"; $("outNext").addEventListener("click",next); }
+    $("outKey").querySelectorAll("[data-g]").forEach(b=>b.addEventListener("click",()=>{ S.g[S.k]=b.dataset.g; next(); }));
     const kb=$("outKey"); if(kb.scrollIntoView) kb.scrollIntoView({block:"nearest"});
   };
   btn.addEventListener("click",()=>reveal(false));
   $("outSilent").addEventListener("click",()=>reveal(false));
   $("outDunno").addEventListener("click",()=>reveal(true));
+  if(reopen) reveal(S.dunno);   /* the answer was already open before the reload: show it again, no second blind try */
 }
 function renderOutDone(t, S){
   const id=t.id, qs=outQs(id), g=S.g.slice(0, qs.length), v=outVerdict(g), now=Date.now();
-  if(!S.saved){ S.saved=true;
+  if(!S.saved){ S.saved=true; outRunClear(id);
     const old=outOf(id)||{}, wasDue=t.due;
     store.set("pm.out."+id, {at:now, g, v, pass: v==="ok" ? (old.pass||now) : (old.pass||0)});
     g.forEach((x,k)=>{ if(x!=="ok") logErr(id, "Выгрузка: "+htmlText(qs[k]), x==="no" ? "Не вспомнил — вопрос вернётся завтра." : "Вспомнил частично — сверь с ответом."); });
@@ -1977,6 +1989,7 @@ function mergeProgress(local, incoming){
     if(/^pm\.(recall|out)\./.test(key)) return isObj(a)&&isObj(b) ? attempt(a,b) : a;
     if(/^pm\.roots\./.test(key)) return isObj(a)&&isObj(b) ? (num(b.at)>num(a.at) ? b : a) : a;   /* «Корни»: the latest recall */
     if(/^pm\.rootsSkip\./.test(key)) return Math.max(num(a), num(b)) || a;
+    if(/^pm\.outRun\./.test(key)) return isObj(a)&&isObj(b) ? (num(b.at)>num(a.at) ? b : a) : a;   /* unfinished «Выгрузка»: the later one */
     if(key==="pm.mapHint") return Math.max(num(a), num(b)) || a;   /* map hint shown on N visits: the larger count */
     /* errors that come back (pm.back): union of entries; per entry the latest miss wins, same miss -> more progress */
     if(key==="pm.back") return isObj(a)&&isObj(b) ? tsMap(a,b,(x,y)=>{ if(!isObj(x)||!isObj(y)) return isObj(x)?x:y;
@@ -1999,7 +2012,7 @@ function mergeProgress(local, incoming){
   /* key order does not matter: {s1,s2} and {s2,s1} are the same progress */
   const canon=v=>JSON.stringify(v, (k,x)=>isObj(x) ? Object.keys(x).sort().reduce((o,kk)=>(o[kk]=x[kk], o), {}) : x);
   /* an incoming value of the wrong kind for its key is skipped (it would break the engine that reads it); unknown keys pass */
-  const KIND=[[/^pm\.(steps|grade|srs|recall|out|roots|bank)\./,"o"],[/^pm\.(known|legacy|skip|imported|honest|back)$/,"o"],
+  const KIND=[[/^pm\.(steps|grade|srs|recall|out|outRun|roots|bank)\./,"o"],[/^pm\.(known|legacy|skip|imported|honest|back)$/,"o"],
     [/^pm\.(err|outAns)\./,"a"],[/^pm\.runs$/,"a"],[/^pm\.(ans|rans|bankAns)\./,"s"],[/^pm\.(doneAt|rootsSkip)\./,"n"],[/^pm\.mapHint$/,"n"]];
   const kindOk=(key,v)=>{ const k=(KIND.find(x=>x[0].test(key))||[])[1];
     return !k || (k==="o" ? isObj(v) : k==="a" ? Array.isArray(v) : k==="s" ? typeof v==="string" : typeof v==="number"); };
