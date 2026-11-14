@@ -538,8 +538,39 @@ function setMode(m){
   applyNodeStyles(); applyEdgeColors();
   if(m==="topic"){ const sw=$("sweep"); sw.classList.remove("go"); void sw.offsetWidth; sw.classList.add("go"); }
   if(PHONE) plistShow(m==="map");
+  routeMode(m);
 }
 window.addEventListener("resize", layout);
+/* ---------- browser «Back» and reload inside a topic (review 14.11, bug 6) ----------
+   An open topic is one history entry ({syn:"topic"}), so «Back» closes the topic instead of leaving the site; closing it
+   with the app's own buttons takes that entry back. Where the topic was open is kept in sessionStorage ("syn.at", this tab
+   only, not progress): a reload returns into the same topic and tab. Nothing here touches pm.* keys. */
+let routeBusy=false, routeWas="intro", routeT=0, routeAt0=null;
+try{ routeAt0=JSON.parse(sessionStorage.getItem("syn.at")||"null"); }catch(e){}   /* read before the first setMode() forgets it */
+function routeState(){ try{ return history.state && history.state.syn; }catch(e){ return null; } }
+function routeRemember(){ try{
+  if(mode==="topic" && current>=0) sessionStorage.setItem("syn.at", JSON.stringify({id:topics[current].id, tab:activeTab, out:!!(outSt && !outSt.saved)}));
+  else if(mode!=="intro") sessionStorage.removeItem("syn.at"); }catch(e){} }
+function routeMode(m){ const was=routeWas; routeWas=m; routeRemember(); if(routeBusy) return;
+  try{
+    if(m==="topic" && was!=="topic"){ if(routeState()!=="topic") history.pushState({syn:"topic"}, ""); }
+    else if(m!=="topic" && was==="topic" && routeState()==="topic"){ routeBusy=true; clearTimeout(routeT); routeT=setTimeout(()=>{ routeBusy=false; }, 600); history.back(); }
+  }catch(e){ routeBusy=false; } }
+window.addEventListener("popstate", ()=>{
+  if(routeBusy){ routeBusy=false; clearTimeout(routeT); return; }   /* our own history.back() after the topic was closed */
+  const st=routeState(); routeBusy=true;
+  try{
+    if(st!=="topic" && mode==="topic"){ if(!$("run").hidden) closeRun(); setMode("map"); }
+    else if(st==="topic" && mode==="map" && current>=0) doOpen(current, activeTab);   /* «Forward» */
+  }catch(e){} routeBusy=false; });
+window.addEventListener("pagehide", routeRemember);
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="hidden") routeRemember(); });
+function routeRestore(){ const at=routeAt0; let nav=null;
+  try{ nav=(performance.getEntriesByType("navigation")[0]||{}).type; }catch(e){}
+  const i = at && typeof at==="object" ? idIndex[at.id] : null;
+  if(i==null || (nav!=="reload" && nav!=="back_forward")){ try{ sessionStorage.removeItem("syn.at"); }catch(e){} return; }
+  try{ if(mode==="intro") setMode("map");   /* desktop: a reload inside a topic skips the intro */
+    doOpen(i, at.out ? "out" : ["theory","cheat","practice","tasks"].includes(at.tab) ? at.tab : "theory"); }catch(e){} }
 
 /* ---------- pointer ---------- */
 canvas.addEventListener("pointerdown", e=>{ dragging=true; moved=0; lastX=e.clientX; lastY=e.clientY; canvas.setPointerCapture(e.pointerId); if(mode==="map") canvas.classList.add("drag"); });
@@ -907,7 +938,7 @@ function doOpen(i, tab){
 const WIN_NAMES={theory:"Теория",cheat:"Шпаргалка",practice:"Практика",tasks:"Задания"};
 let winToken=0;
 function setTab(name){
-  const win=$("winBody"); activeTab=name; stopTyping(); exitKb(); refreshTopicNav(current);
+  const win=$("winBody"); activeTab=name; stopTyping(); exitKb(); refreshTopicNav(current); routeRemember();
   ["theory","cheat","practice","tasks"].forEach(n=>$("tab-"+n).setAttribute("aria-selected", n===name));
   $("navTopic").classList.toggle("on", mode==="topic" && name!=="tasks");
   $("navTasks").classList.toggle("on", mode==="topic" && name==="tasks");
@@ -2362,6 +2393,7 @@ function frame(now){
 })();
 layout(); resize();
 select(curIdx,false); focusOn(curIdx); theta=tTheta; phi=tPhi;
+routeRestore();
 requestAnimationFrame(()=>{ brain.classList.remove("noanim"); });
 if(!PHONE) requestAnimationFrame(frame); /* phone: the 3D brain is never rendered */
 })();

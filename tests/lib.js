@@ -52,6 +52,7 @@ class Suite {
 }
 
 // New context + page with font blocking, rAF counter and error capture.
+// opts.route: keep the remembered topic over reloads (see below).
 // opts.noGL: make canvas.getContext('webgl*') return null so the engine takes its no-WebGL path (much faster under SwiftShader).
 async function openPage(browser, suite, ctxOpts, hash = '', opts = {}) {
   const ctx = await browser.newContext(ctxOpts);
@@ -60,6 +61,9 @@ async function openPage(browser, suite, ctxOpts, hash = '', opts = {}) {
     const g = HTMLCanvasElement.prototype.getContext;
     HTMLCanvasElement.prototype.getContext = function (type, ...a) { return /webgl/i.test(type) ? null : g.call(this, type, ...a); };
   });
+  // A reload inside a topic returns into it (sessionStorage "syn.at"). The suites reload to re-seed storage and expect
+  // the list / intro, so the remembered place is dropped before the page script runs; opts.route keeps it (tests/resume.js).
+  if (!opts.route) await ctx.addInitScript(() => { try { sessionStorage.removeItem('syn.at'); } catch (e) {} });
   await ctx.route(/fonts\.g(oogleapis|static)\.com/, r => r.abort());
   const page = await ctx.newPage();
   const errors = [];
