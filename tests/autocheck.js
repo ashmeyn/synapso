@@ -119,6 +119,24 @@ async function scenario(s, b, ui, theme) {
   await press('noBtn'); await page.waitForTimeout(300);
   j = (await ls(page, 'pm.chk.opt')) || [];
   await s.check(`${tag}: journal — a bank task is logged under its own id`, j.length === 1 && /^opt-b\d$/.test(j[0].ref) && j[0].self === 'no', j);
+  // --- the journal as one file
+  await js(() => { localStorage.setItem('pm.chk.weak', JSON.stringify([{ at: 5, ref: 's4', v: 'no', why: 'not', self: 'ok', disp: 1, ans: 'unowned' }, 'junk']));
+    localStorage.setItem('pm.chk.state', '"damaged"'); document.getElementById('settings').open = true; document.getElementById('settings').dispatchEvent(new Event('toggle')); });
+  const lab = await js(() => { const x = document.getElementById('ackExport'); return { text: x.textContent, hidden: x.hidden }; });
+  await s.check(`${tag}: the settings show «ЖУРНАЛ ПРОВЕРОК» with the number of entries`, !lab.hidden && /ЖУРНАЛ ПРОВЕРОК ↓ · 2/.test(lab.text), lab);
+  const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), js(() => document.getElementById('ackExport').click())]);
+  const file = JSON.parse(require('fs').readFileSync(await dl.path(), 'utf8'));
+  await s.check(`${tag}: one press saves synapso-check-<date>.json`, /^synapso-check-\d{4}-\d\d-\d\d\.json$/.test(dl.suggestedFilename()) && file.app === 'synapso-check' && file.v === 1, dl.suggestedFilename());
+  await s.check(`${tag}: the file has every valid entry, newest first, with topic, task title and kind`, file.entries.length === 2 && file.entries[0].topic === 'opt' && file.entries[1].topic === 'weak'
+    && file.entries[1].kind === 'code' && file.entries[1].title.length > 3 && file.entries[1].ans === 'unowned' && file.entries[0].at > file.entries[1].at, file.entries.map(e => [e.topic, e.ref, e.kind, e.title]));
+  await s.check(`${tag}: the summary counts verdicts, disputes and «неверно, но вспомнил»`, file.summary.entries === 2 && file.summary.disputed === 1 && file.summary.noButGradedOk === 1 && file.summary.no >= 1, file.summary);
+  await s.check(`${tag}: the export does not change the journal`, (await ls(page, 'pm.chk.weak')).length === 2 && /СОХРАНЁН/.test(await js(() => document.getElementById('importNote').textContent)));
+  await js(() => { for (const k of Object.keys(localStorage)) if (k.startsWith('pm.chk.')) localStorage.removeItem(k); document.getElementById('ackExport').click(); });
+  await page.waitForTimeout(200);
+  await s.check(`${tag}: an empty journal says so and saves nothing`, /ЖУРНАЛ ПРОВЕРОК ПУСТ/.test(await js(() => document.getElementById('importNote').textContent)));
+  await js(() => { document.getElementById('ackBtn').click(); });
+  await s.check(`${tag}: setting off and nothing logged — the journal button is hidden`, await js(() => document.getElementById('ackExport').hidden) === true && await ls(page, 'pm.autocheck') === false);
+  await js(() => { document.getElementById('ackBtn').click(); document.getElementById('settings').open = false; });
   if (ui.name === 'phone') await s.check(`${tag}: no animation loop after a verdict`, (await rafRate(page, 1500)) === 0, await rafRate(page, 500));
   await s.check(`${tag}: no page errors`, errors.length === 0, errors.slice(0, 3));
   await s.shot(`autocheck-${ui.name}-${theme}`);

@@ -1599,7 +1599,36 @@ function ackLog(id, ref, st, self, answer){
   const label=()=>{ b.textContent="АВТОПРОВЕРКА: "+(ackOn()?"ВКЛ":"ВЫКЛ"); b.classList.toggle("warn", ackOn()); };
   b.addEventListener("click",()=>{ store.set("pm.autocheck", !ackOn()); label(); });
   after.parentNode.insertBefore(b, after); label();
+  /* one button for the monthly review: the whole journal as a file (the progress export carries it too) */
+  const x=document.createElement("button"); x.type="button"; x.className="fontbtn"; x.id="ackExport";
+  x.title="Журнал автопроверки одним файлом — для ежемесячного разбора вердиктов";
+  const count=()=>ackKeys().reduce((n,k)=>n+ackList(k.slice(7)).length, 0);
+  const xl=()=>{ const n=count(); x.textContent="ЖУРНАЛ ПРОВЕРОК ↓"+(n?" · "+n:""); x.hidden = !ackOn() && !n; };
+  x.addEventListener("click",()=>ackExport().then(xl));
+  b.addEventListener("click", xl); $("settings").addEventListener("toggle", xl);
+  after.parentNode.insertBefore(x, after); xl();
 })();
+function ackKeys(){ const r=[]; try{ for(let k=0;k<localStorage.length;k++){ const key=localStorage.key(k); if(key && key.indexOf("pm.chk.")===0) r.push(key); } }catch(e){} return r.sort(); }
+/* {app:"synapso-check", v:1, at, summary, entries:[{topic, title, kind, at, ref, v, why, self, disp?, q?, ans}]} — newest first.
+   kind (code / predict / oral) and the task title are added here so that the file can be read without the site */
+async function ackExport(){
+  const now=new Date(), name="synapso-check-"+now.toISOString().slice(0,10)+".json", entries=[], note=$("importNote");
+  ackKeys().forEach(key=>{ const id=key.slice(7), c=DATA.content[id], tasks={};
+    ((c && c.steps) || []).forEach(s=>{ tasks[s.id]=s; }); DATA.bank.forEach(b=>{ if(!tasks[b.id]) tasks[b.id]=b; });
+    ackList(id).forEach(e=>{ const t=tasks[e.ref];
+      entries.push(Object.assign({topic:id, title:t ? String(t.title||"") : "", kind:(t && t.check && typeof SynCheck!=="undefined" && SynCheck.kindOf(t.check)) || ""}, e)); }); });
+  entries.sort((a,b)=>(+b.at||0)-(+a.at||0));
+  const n=f=>entries.filter(f).length, summary={entries:entries.length, ok:n(e=>e.v==="ok"), no:n(e=>e.v==="no"), check:n(e=>e.v==="check"), unsure:n(e=>e.v==="unsure"),
+    disputed:n(e=>e.disp===1), okButNotRecalled:n(e=>e.v==="ok" && e.self!=="ok"), noButGradedOk:n(e=>e.v==="no" && e.self==="ok")};
+  if(!entries.length){ if(note) note.textContent="ЖУРНАЛ ПРОВЕРОК ПУСТ · ВКЛЮЧИ АВТОПРОВЕРКУ И ОЦЕНИ ХОТЯ БЫ ОДИН ОТВЕТ"; return; }
+  const json=JSON.stringify({app:"synapso-check", v:1, at:now.toISOString(), summary, entries}, null, 1);
+  let dl=null; try{ dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null; }catch(e){}
+  try{
+    if(dl) await dl.save({filename:name, data:json});
+    else { const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([json],{type:"application/json"})); a.download=name; document.body.appendChild(a); a.click(); a.remove(); }
+    if(note) note.textContent="ЖУРНАЛ ПРОВЕРОК СОХРАНЁН В ФАЙЛ · ЗАПИСЕЙ: "+entries.length;
+  }catch(e){ if(note) note.textContent = e && e.code==="declined" ? "ВЫГРУЗКА ЖУРНАЛА ОТМЕНЕНА" : "НЕ ПОЛУЧИЛОСЬ СОХРАНИТЬ ЖУРНАЛ"; }
+}
 function renderPractice(){ setTimeout(()=>{ refreshTopicNav(current); strictSync(); },0);
   const t=topics[current], c=DATA.content[t.id], pane=$("pane-practice");
   stopTyping();
