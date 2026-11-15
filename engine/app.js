@@ -2078,6 +2078,21 @@ refreshRun(); refreshBackupNote();
 })();
 function isMapMode(){ return mode==="map"; }
 
+/* ---------- NEXT design (review 14.11, items 12–13) ----------
+   html.next is set before first paint by the inline script in template.html (#next / #classic / localStorage "syn.theme").
+   Here: the switch in the settings. The choice is a display setting, not progress: it is not exported or merged. */
+function isNext(){ return document.documentElement.classList.contains("next"); }
+(function nextInit(){
+  const after=$("sfxBtn"); if(!after) return;
+  const b=document.createElement("button"); b.type="button"; b.className="fontbtn"; b.id="themeBtn";
+  b.title="Новый дизайн NEXT: спокойнее, контрастнее, крупные зоны нажатия. Классика остаётся как была";
+  const label=()=>{ b.textContent="ДИЗАЙН: "+(isNext()?"NEXT":"КЛАССИКА"); b.classList.toggle("warn", isNext()); };
+  b.addEventListener("click",()=>{ const on=!isNext(); document.documentElement.classList.toggle("next", on);
+    try{ localStorage.setItem("syn.theme", on?"next":"classic"); }catch(e){}
+    label(); layout(); if(typeof fitCode==="function") fitCode(); wakeLoops(); });
+  after.parentNode.insertBefore(b, after); label();
+})();
+
 /* merge:begin — pure, no DOM/storage (tests/merge.js runs this block in Node).
    mergeProgress(local, incoming): two maps key -> JSON string of pm.* progress, returns {map, changed}.
    Never loses progress: per step/grade the better mark wins (ok > part > no), SRS keeps the later due date,

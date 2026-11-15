@@ -1,0 +1,91 @@
+/* NEXT design (review 14.11, items 12–13). Lives next to the classic look: every rule here is under html.next, which is
+   off by default (#next in the address or «ДИЗАЙН» in the settings turns it on, #classic turns it off).
+   Principle: the same site, quieter — fewer elements, more air, strict type. Nothing here changes data or progress.
+   Order: 1 tokens · 2 decor off · 3 contrast · 4 touch targets · 5 safe area · 6 wide tables · 7 surfaces · 8 practice.
+   The mass mapping of the classic rules to these tokens is generated: engine/theme-next.gen.css. */
+
+/* ---------- 1. tokens ---------- */
+html.next{
+  /* palette: one background, two surfaces, four text levels (all ≥ 4.5:1 on every surface), three lines, one accent */
+  --bg:#050607; --surface:#0A0D10; --surface-2:#10151A;
+  --ink:#F2F4F5; --ink-2:#C4CACF; --muted:#9AA3AB; --dim:#808A93;
+  --line:#1A2026; --line-2:#2B343C; --line-3:#4A555F;
+  --cyan:#2DE2E6; --on-cyan:#031417; --type:#9FEFF1; --code-bg:#080A0C;
+  /* type scale: label / ui / read / h2 / title. Derived from --fs-* so the big-screen scale of scaleUI() still applies */
+  --t-label:calc(var(--fs-label) * 12 / 11); --t-ui:var(--fs-ui); --t-read:var(--fs-read);
+  --t-h2:calc(var(--fs-read) * 4 / 3); --t-title:var(--fs-title);
+  /* spacing: 4-point scale */
+  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px; --s-7:48px;
+  /* one shadow, square corners (keys of the own keyboard keep a small radius), minimal touch target */
+  --t-shadow:0 16px 48px rgba(0,0,0,.6); --t-r:0px; --t-r-key:6px; --t-hit:44px;
+  --step-corner:none;   /* the stepped corner of the main button */
+}
+html.next.phone{ --t-label:12px; --t-ui:14px; --t-read:16px; --t-h2:20px; --t-title:28px; }
+
+/* ---------- 2. decor off: scanlines, corner brackets, sweep, blur ---------- */
+html.next .win::after,html.next .card::after,html.next .sweep,
+html.next .card .cb,html.next .term::before,html.next .term::after,
+html.next:not(.phone) #pane-practice .ed::before,html.next:not(.phone) #pane-practice .ed::after{display:none}
+html.next .card{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--surface)}
+html.next .run{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(3,5,6,.94)}
+html.next .caret{box-shadow:none}
+
+/* ---------- 3. contrast: working text is never below --dim (5.6:1 on --bg) ---------- */
+html.next .wtabs button{color:var(--muted)}
+html.next .wtabs button[aria-selected="true"]{color:var(--ink)}
+html.next .navlist button{color:var(--muted)}
+html.next .navlist button.on{color:var(--ink)}
+html.next .textbtn.dunno{color:var(--muted)}
+/* a locked button stays readable (--dim); the open one is brighter and underlined, so the two do not look alike */
+html.next .textbtn:disabled{color:var(--dim)}
+html.next #showKey:not(:disabled){color:var(--ink);box-shadow:inset 0 -1px var(--cyan)}
+html.next .cta:disabled{background:var(--surface-2);color:var(--dim)}
+html.next .card-route .rnav:disabled,html.next.phone .ep-nav #epPrev:disabled,html.next .judgeBtn:disabled{opacity:1;color:var(--dim)}
+html.next input::placeholder,html.next textarea::placeholder{color:var(--dim);opacity:1}
+
+/* ---------- 4. touch targets: 44px on the phone ---------- */
+html.next.phone .navlist button{min-height:var(--t-hit);padding:0 10px}
+html.next.phone #navMore{min-width:var(--t-hit);min-height:var(--t-hit)}
+html.next.phone .textbtn,html.next.phone .card-x,html.next.phone .rnav,html.next.phone .bank-h .bnav .textbtn,
+html.next.phone .prevans .textbtn,html.next.phone .out-h .textbtn,html.next.phone .s7note .textbtn{min-height:var(--t-hit)}
+html.next.phone .card-x{width:var(--t-hit);height:var(--t-hit)}
+html.next.phone #winClose{min-width:var(--t-hit);min-height:var(--t-hit)}
+/* ladder: 8 circles in a 390 screen are 44 wide only edge to edge, so the row takes the pane's side padding */
+html.next.phone #pane-practice .ladder{gap:0;margin:0 -6px}
+html.next.phone #pane-practice .rung{min-width:0;min-height:var(--t-hit);justify-content:center}
+html.next.phone #pane-practice .ladder::before{top:50%}
+/* «Эпизод» dots: 44 high; the width is what 10+ cards leave on a 390 screen */
+html.next.phone .ep-dots button{height:var(--t-hit)}
+/* own keyboard: 44 high; ten keys in a row cannot be 44 wide on a phone (the system keyboard is not either) */
+html.next.phone .skb-row button,html.next.phone .skb-sug > button,html.next.phone .skb-sug .sug button,
+html.next.phone #pane-practice.kbd.skbm .skb-row button,html.next.phone #pane-practice.kbd.skbm .skb-row.sym button{min-height:var(--t-hit)}
+html.next.phone .symbar button{min-height:var(--t-hit)}
+
+/* ---------- 5. safe area on every side (landscape: the notch is on the left or right) ---------- */
+html.next.phone .nav{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
+html.next.phone #topic{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
+html.next.phone .plist{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
+html.next.phone .ep-nav{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
+html.next.phone .run{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+html.next.phone .palette{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+html.next.phone .savewarn{left:max(12px,env(safe-area-inset-left));right:max(12px,env(safe-area-inset-right))}
+html.next.phone body.kb-on .win-b{padding-left:max(8px,env(safe-area-inset-left));padding-right:max(8px,env(safe-area-inset-right))}
+
+/* ---------- 6. wide tables scroll sideways inside themselves ---------- */
+html.next .ch-cmp{display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+/* ---------- 7. surfaces: fewer frames, more air ---------- */
+html.next .win{background:var(--surface);border-color:var(--line-2)}
+html.next .is-topic .win-b,html.next .win-b{background:var(--surface)}
+html.next .wtabs button{border-right:0;letter-spacing:.04em}
+html.next .wtabs button::before{display:none}
+html.next .wtabs button[aria-selected="true"]{background:transparent;box-shadow:inset 0 -2px var(--cyan)}
+html.next .wtabs button[aria-selected="true"]::after{display:none}
+html.next.phone .wtabs button[aria-selected="true"]{box-shadow:inset 0 -2px var(--cyan)}
+/* the main button: flat cyan, no stepped corner, no glow; one per screen */
+html.next .cta{letter-spacing:.04em}
+html.next .term{border-color:var(--line-2);background:var(--code-bg)}
+html.next.phone .plist{padding-top:var(--s-4)}
+html.next.phone .pl-top{gap:var(--s-3);margin-bottom:var(--s-5)}
+html.next.phone .pl-cont{padding:var(--s-4);border-color:var(--line-2);background:var(--surface);box-shadow:inset 2px 0 var(--cyan)}
+html.next.phone .pl-acts .srchBtn{background:transparent}

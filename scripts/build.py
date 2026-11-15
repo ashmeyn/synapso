@@ -185,6 +185,10 @@ def main():
     import lint_content
     if lint_content.run(ROOT, quiet=True):
         raise SystemExit('content lint failed (see the lines above; rules: scripts/lint_content.py)')
+    # NEXT design: engine/theme-next.gen.css is generated from engine/styles.css and must be current
+    import next_tokens
+    if open(next_tokens.OUT, encoding='utf-8').read() != next_tokens.generate()[0]:
+        raise SystemExit('engine/theme-next.gen.css is out of date: run python3 scripts/next_tokens.py')
     d = build_data()
     t = assemble_template()
     assert t.count('__DATA__') == 1, 'template must contain exactly one __DATA__'
