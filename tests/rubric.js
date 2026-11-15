@@ -30,6 +30,14 @@ const CASES = [
   ['a «wrong» output that equals the expected one', 'contradicts outs', d => editJson(d, 'content/steps/opt.json', j => { const c = step(j, 's1').check; c.wrong[0].out = c.outs[0].slice(); })],
   ['one explanation per output line', 'one text per line', d => editJson(d, 'content/steps/opt.json', j => { step(j, 's1').check.why.pop(); })],
   ['an oral point the key itself does not make', 'contradicts the key', d => editJson(d, 'content/steps/opt.json', j => { step(j, 's5').check.concepts[0].groups = [['такогословавключенет']]; })],
+  // wording (pilot, item 3): «проверь» is a question, and no text hands over the answer before the key is seen
+  ['a «проверь» text that is a statement, not a question', 'must be a question', d => editJson(d, 'content/steps/opt.json', j => { step(j, 's3').check.must[0].ask = 'Ты забыл ранний выход.'; })],
+  ['an oral point without a question', 'must be a question', d => editJson(d, 'content/steps/opt.json', j => { delete step(j, 's5').check.concepts[0].ask; })],
+  ['a misconception without a clarifying question', 'must be a question', d => editJson(d, 'content/steps/opt.json', j => { step(j, 's5').check.false[0].ask = 'Это неверно'; })],
+  ['a mentor note that contains a whole new line of the key', 'gives the answer away', d => editJson(d, 'content/steps/opt.json', j => { step(j, 's3').check.not[0].msg = 'Нужно так: `guard let id else { return nil }` — и всё.'; })],
+  ['a question that contains a whole new line of the key', 'gives the answer away', d => editJson(d, 'content/steps/opt.json', j => { step(j, 's3').check.must[0].ask = 'Есть ли у тебя return "/users/\\(id)"?'; })],
+  ['a «почему» text that contains the fix of a bank task', 'gives the answer away', d => editJson(d, 'content/bank/urls.bank.json', j => { const t = j.find(x => x.id === 'urls-b2'); t.check.must[0].miss = 'Добавь guard chapter.id == selectedID else { return } перед присвоением.'; })],
+  ['a mentor note longer than the limit', 'up to 260 characters', d => editJson(d, 'content/steps/opt.json', j => { step(j, 's3').check.not[0].msg = 'очень '.repeat(60); })],
   ['a rubric of an unknown shape', 'no known shape', d => editJson(d, 'content/bank/opt.bank.json', j => { j.find(x => x.check).check = { for: 'x', hello: 1 }; })],
   ['a bank task: the key changed, the rubric was not reviewed', 'changed after the rubric was written', d => editJson(d, 'content/bank/urls.bank.json', j => { const t = j.find(x => x.check); t.key = t.key.replace('200', '201'); })],
 ];
