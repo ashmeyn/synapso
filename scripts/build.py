@@ -129,8 +129,8 @@ LONG_WITHOUT_POINTS = []
 
 
 def page_check(ch):
-    """The rubric as the page needs it: the `for` stamp is build-time only."""
-    return {k: v for k, v in ch.items() if k != 'for'}
+    """The rubric as the page needs it: the `for` stamp and the `swift` compile hints are build-time only."""
+    return {k: v for k, v in ch.items() if k not in ('for', 'swift')}
 
 
 def rubric_guard():

@@ -1,11 +1,11 @@
 // Runs all browser suites against dist/index.html and prints a compact summary.
-// Usage: node tests/run.js [check|rubric|smoke|phone|desktop|honest|episode|answers|roots|fog|back|merge|practice|robust|resume|lint|editor|fonts|perf|next|recall ...]   (default: all)
+// Usage: node tests/run.js [check|rubric|swift|smoke|phone|desktop|honest|episode|answers|roots|fog|back|merge|practice|robust|resume|lint|editor|fonts|perf|next|recall ...]   (default: all)
 // Env: CHROMIUM_PATH=/path/to/chrome to use a specific Chromium binary.
 'use strict';
 const fs = require('fs');
 const { OUT } = require('./lib');
 
-const SUITES = { lint: './lint', check: './check', rubric: './rubric', merge: './merge', robust: './robust', resume: './resume', editor: './editor', fonts: './fonts', perf: './perf', next: './next', recall: './recall', practice: './practice', phone: './phone', desktop: './desktop', honest: './honest', episode: './episode', answers: './answers', roots: './roots', fog: './fog', back: './back', smoke: './smoke' };
+const SUITES = { lint: './lint', check: './check', rubric: './rubric', swift: './swift', merge: './merge', robust: './robust', resume: './resume', editor: './editor', fonts: './fonts', perf: './perf', next: './next', recall: './recall', practice: './practice', phone: './phone', desktop: './desktop', honest: './honest', episode: './episode', answers: './answers', roots: './roots', fog: './fog', back: './back', smoke: './smoke' };
 
 (async () => {
   const pick = process.argv.slice(2).filter(a => SUITES[a]);
