@@ -89,3 +89,76 @@ html.next.phone .plist{padding-top:var(--s-4)}
 html.next.phone .pl-top{gap:var(--s-3);margin-bottom:var(--s-5)}
 html.next.phone .pl-cont{padding:var(--s-4);border-color:var(--line-2);background:var(--surface);box-shadow:inset 2px 0 var(--cyan)}
 html.next.phone .pl-acts .srchBtn{background:transparent}
+
+/* ---------- 8. practice (review 14.11, item 13) ----------
+   Classic sizes the practice window from JS (sizePractice, fitCode write --pc-w and --code-size inline and shrink the
+   code down to 10.5px). In NEXT the grid sizes itself, the code keeps its size and scrolls inside its box, and after
+   the key the answer and the key stand next to each other. «Keyed» = the key is open: #showKey[data-open]. */
+html.next .term-b{overflow-x:auto}
+html.next #pane-practice .answer textarea{resize:none}
+
+/* three grade buttons: equal and neutral, the flattering one is no louder than the others (the only cyan button in an
+   .assess row is a lone «next step») */
+html.next .assess{gap:var(--s-2) var(--s-2)}
+html.next .assess .q{color:var(--ink-2)}
+html.next .assess .cta:not(:only-of-type),html.next .assess .ghostbtn{flex:1 1 0;min-width:0;min-height:var(--t-hit);padding:0 var(--s-2);
+  background:transparent;border:1px solid var(--line-3);color:var(--ink);font-family:var(--f-mono);font-weight:400;font-size:var(--t-ui);letter-spacing:.04em;text-align:center}
+html.next .assess .cta:not(:only-of-type):hover,html.next .assess .ghostbtn:hover{border-color:var(--ink)}
+/* the grade bar is pinned to the bottom of the scrolling window once the key is open */
+html.next #pane-practice:has(#showKey[data-open]) #keyBox{display:contents}
+html.next #pane-practice:has(#showKey[data-open]) .assess{position:sticky;bottom:0;z-index:4;margin:0;padding:var(--s-3) 0;background:var(--surface);border-top:1px solid var(--line-2)}
+/* nothing to press in these after the key: the answer and the key come closer */
+html.next #pane-practice:has(#showKey[data-open]) .ed-tip,html.next #pane-practice:has(#showKey[data-open]) .row-actions{display:none}
+
+@media (min-width:981px){
+  /* columns: the code takes what its longest line needs, up to half; the answer gets the rest. A hand-dragged split
+     (pm.split → --pc-w) still wins */
+  html.next .win-b.fit #pane-practice:not([hidden]){grid-template-columns:var(--pc-w,fit-content(50%)) 18px minmax(0,1fr)}
+  html.next .win-b.fit #pane-practice.typing:not([hidden]){grid-template-columns:var(--pc-w,fit-content(40%)) 18px minmax(0,1fr)}
+  html.next .win-b.fit .p-code{min-width:280px}
+  html.next .win-b.fit .answer textarea{min-height:clamp(160px,30vh,420px)}
+  /* keyed: one scroll for the whole window; own answer on the left, the key on the right, both at full height */
+  html.next .win-b.fit:has(#showKey[data-open]){overflow-y:auto}
+  html.next .win-b.fit #pane-practice:has(#showKey[data-open]):not([hidden]){height:auto;min-height:100%;grid-template-columns:minmax(0,1fr) 18px minmax(0,1fr);grid-template-rows:none;grid-auto-rows:auto;align-content:start}
+  html.next .win-b.fit #pane-practice:has(#showKey[data-open]) .p-side{display:contents}
+  html.next .win-b.fit #pane-practice:has(#showKey[data-open]) > .ladder{order:0}
+  html.next .win-b.fit #pane-practice:has(#showKey[data-open]) .bank-h,html.next .win-b.fit #pane-practice:has(#showKey[data-open]) .s7note{order:1;grid-column:1/-1}
+  html.next .win-b.fit #pane-practice:has(#showKey[data-open]) .step-title{order:2;grid-column:1/-1;margin:0}
+  html.next .win-b.fit #pane-practice:has(#showKey[data-open]) .prompt{order:3;grid-column:1/-1;margin:0;max-width:none}
+  html.next .win-b.fit #pane-practice:has(#showKey[data-open]) .answer{order:4;grid-column:1;margin:0;align-self:start}
+  html.next .win-b.fit #pane-practice:has(#showKey[data-open]) > .split{order:5;grid-column:2;grid-row:auto;align-self:stretch}
+  html.next .win-b.fit #pane-practice:has(#showKey[data-open]) > .p-code{order:6;grid-column:3;max-height:none;min-width:0;align-self:start}
+  html.next .win-b.fit #pane-practice:has(#showKey[data-open]) .p-code .term-b{overflow-y:visible}
+  html.next .win-b.fit #pane-practice:has(#showKey[data-open]) #keyBox > *{order:7;grid-column:1/-1}
+  html.next .win-b.fit #pane-practice:has(#showKey[data-open]) .assess{order:9;grid-column:1/-1}
+  html.next .win-b.fit #pane-practice:has(#showKey[data-open]) .answer label{min-height:34px;display:flex;align-items:center}   /* level with the key's header */
+  html.next .win-b.fit #pane-practice:has(#showKey[data-open]) .kpoints{max-width:none}
+  html.next .assess .cta:not(:only-of-type),html.next .assess .ghostbtn{flex:0 1 200px}
+}
+/* small desktop windows: the minimap gives its column to the answer */
+@media (min-width:981px) and (max-width:1279px){
+  html.next:not(.phone) #brain.mini{display:none}
+  html.next:not(.phone) #topic{--mini-gap:48px}
+}
+
+/* phone, reading state (not the typing mode): the answer field is on the first screen */
+html.next.phone #topic:has(#tab-practice[aria-selected="true"]) .t-sub{display:none}
+html.next.phone #pane-practice:not(.kbd) .prompt:not(.open){display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden}
+html.next.phone #pane-practice:not(.kbd) .prompt.pmore{position:relative;padding-right:22px}
+html.next.phone #pane-practice:not(.kbd) .prompt.pmore::after{content:"▾";position:absolute;right:2px;bottom:0;color:var(--cyan)}
+html.next.phone #pane-practice:not(.kbd) .prompt.pmore.open::after{content:"▴"}
+html.next.phone #pane-practice:not(.kbd) .p-code .term-b{max-height:min(26vh,220px);overflow:auto}
+html.next.phone #pane-practice:not(.kbd) .answer textarea{min-height:132px}
+html.next.phone #pane-practice .answer .ed{border:1px solid var(--line-2);background:var(--code-bg)}
+html.next.phone #pane-practice .answer .ed:focus-within{border-color:var(--cyan)}
+html.next.phone #pane-practice .answer textarea{border-left:0;padding:10px 12px}
+html.next.phone #pane-practice .ed-hl{padding:10px 12px}
+/* phone, keyed: answer and key one under the other, nothing between them; the grade bar stays at the bottom */
+html.next.phone #pane-practice:has(#showKey[data-open]):not(.kbd) #keyBox > *{order:6}
+html.next.phone #pane-practice:has(#showKey[data-open]):not(.kbd) .assess{order:9;margin:0 -12px;padding:var(--s-2) 12px calc(var(--s-2) + env(safe-area-inset-bottom))}
+html.next.phone #pane-practice:has(#showKey[data-open]):not(.kbd) .assess .q{font-family:var(--f-mono);font-size:var(--t-label);letter-spacing:.04em}
+html.next.phone #pane-practice:has(#showKey[data-open]):not(.kbd) .answer textarea{min-height:0}
+html.next.phone #pane-practice:has(#showKey[data-open]):not(.kbd) .p-code .term-b{max-height:min(20vh,170px)}
+/* the bar sits on the bottom edge of the window: the window's own bottom padding would lift it */
+html.next.phone body:not(.kb-on) .win-b:has(#showKey[data-open]){padding-bottom:0}
+html.next.phone .win-b > #pane-practice:has(#showKey[data-open]){padding-bottom:0}

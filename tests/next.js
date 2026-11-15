@@ -171,6 +171,71 @@ async function run() {
       await ctx.close();
     }
 
+    // ---- item 13: the practice screen ----
+    {
+      const LONG = 'func firstRepeated(_ ids: [Int]) -> Int? {\n    var seen = Set<Int>()\n    for id in ids {\n        if seen.contains(id) {\n            return id\n        }\n        seen.insert(id)\n    }\n    return nil\n}\nlet ids = [4, 8, 15, 8, 4]\nprint(firstRepeated(ids) ?? -1)';
+      // geometry of the practice screen, read in the page
+      const geo = () => { const r = sel => { const e = [...document.querySelectorAll(sel)].find(x => x.getBoundingClientRect().width > 0); if (!e) return null; const q = e.getBoundingClientRect(); return { x: Math.round(q.left), y: Math.round(q.top), r: Math.round(q.right), b: Math.round(q.bottom), w: Math.round(q.width), h: Math.round(q.height) }; };
+        const pane = document.getElementById('pane-practice'), ta = document.getElementById('ans'), code = document.querySelector('#pane-practice .term .ln code');
+        const btn = id => { const e = document.getElementById(id); if (!e) return null; const c = getComputedStyle(e), q = e.getBoundingClientRect(); return { w: Math.round(q.width), h: Math.round(q.height), bg: c.backgroundColor, fg: c.color, bd: c.borderTopColor, fs: c.fontSize, fw: c.fontWeight }; };
+        return { ans: r('#ans'), nav: r('#tNav'), win: r('#winBody'), assess: r('.assess'), key: r('#pane-practice .term[data-v="key"], #keyBox .term, #pane-practice .p-code .term:not([style*="none"])'), mini: r('#brain'),
+          codeFs: code ? parseFloat(getComputedStyle(code).fontSize) : 0, inlineW: pane.style.getPropertyValue('--pc-w'), inlineFs: [...pane.querySelectorAll('.term')].map(t => t.style.getPropertyValue('--code-size')).join(''),
+          taScroll: ta ? ta.scrollHeight - ta.clientHeight : 0, ok: btn('okBtn'), part: btn('partBtn'), no: btn('noBtn') }; };
+      const step4 = async (page, ui) => { await ui.ready(page); await ui.open(page, 'bigo'); await page.click('#tab-practice'); await page.waitForTimeout(600);
+        await page.evaluate(() => document.querySelector('#pane-practice .rung[data-step="3"]').click()); await page.waitForTimeout(900);
+        if (await page.isVisible('#skipType')) await page.click('#skipType'); await page.waitForTimeout(300); };
+      const openKey = async page => { await page.evaluate(a => { const t = document.getElementById('ans'); t.value = a; t.dispatchEvent(new Event('input', { bubbles: true })); document.getElementById('showKey').click(); }, LONG);
+        await page.waitForTimeout(1500); if (await page.isVisible('#skipType')) await page.click('#skipType'); await page.waitForTimeout(400); };
+      const equal = g => g.ok && g.part && g.no && Math.abs(g.ok.w - g.part.w) <= 1 && Math.abs(g.ok.w - g.no.w) <= 1 && g.ok.h === g.part.h && g.ok.h === g.no.h
+        && g.ok.bg === g.part.bg && g.ok.bg === g.no.bg && g.ok.fg === g.part.fg && g.ok.fg === g.no.fg && g.ok.bd === g.no.bd && g.ok.fs === g.no.fs && g.ok.fw === g.no.fw;
+
+      // phone 390×844, a 15-line task
+      {
+        const { ctx, page } = await openPage(browser, s, IPHONE, '#phone');
+        await setTheme(page, 'next'); await page.reload(); await step4(page, phoneUi);
+        let g = await page.evaluate(geo);
+        await s.check('phone practice: the answer field is on the first screen (≥ 100px of it above the bottom line)', g.ans && g.nav && g.nav.y - g.ans.y >= 100, { ansTop: g.ans && g.ans.y, navTop: g.nav && g.nav.y });
+        await s.check('phone practice: code is not smaller than 13px and JS writes no inline code size', g.codeFs >= 13 && !g.inlineFs, { fs: g.codeFs, inline: g.inlineFs });
+        await openKey(page); g = await page.evaluate(geo);
+        await s.check('phone practice: the grade bar is pinned to the bottom of the window', g.assess && Math.abs(g.assess.b - g.win.b) <= 2 && g.assess.b <= g.nav.y + 1, { assess: g.assess, win: g.win });
+        await s.check('phone practice: three grade buttons are equal and look the same', equal(g), { ok: g.ok, part: g.part, no: g.no });
+        await s.check('phone practice: grade buttons are 44px high', g.ok && g.ok.h >= 44, g.ok);
+        await s.check('phone practice: «ВСПОМНИЛ» is not filled with cyan', g.ok && !/45, 226, 230/.test(g.ok.bg), g.ok);
+        const gap = await page.evaluate(() => { const a = document.querySelector('#pane-practice .answer').getBoundingClientRect(), k = document.querySelector('#keyBox .term, #pane-practice .kpoints').getBoundingClientRect(); return Math.round(k.top - a.bottom); });
+        await s.check('phone practice: the key starts right under the answer', gap >= 0 && gap <= 24, gap);
+        await page.evaluate(() => { document.getElementById('winBody').scrollTop = 1e5; }); await page.waitForTimeout(200);
+        g = await page.evaluate(geo);
+        await s.check('phone practice: the bar stays inside the window at the end of the scroll', g.assess && g.assess.b <= g.win.b + 2, { assess: g.assess, win: g.win });
+        await page.evaluate(() => document.getElementById('okBtn').click()); await page.waitForTimeout(600);
+        await s.check('phone practice: «ВСПОМНИЛ» still grades the step', (await page.evaluate(() => { try { return JSON.parse(localStorage.getItem('pm.grade.bigo')).s4; } catch (e) { return null; } })) === 'ok');
+        await ctx.close();
+      }
+      // desktop 1024×768 and 1440×900
+      for (const vp of [{ width: 1024, height: 768 }, { width: 1440, height: 900 }]) {
+        const tag = `desktop ${vp.width}×${vp.height} practice`;
+        const { ctx, page } = await openPage(browser, s, { viewport: vp }, '#desktop');
+        await setTheme(page, 'next'); await page.reload(); await step4(page, desktopUi);
+        let g = await page.evaluate(geo);
+        await s.check(`${tag}: the answer field is at least 320px wide`, g.ans && g.ans.w >= 320, g.ans);
+        await s.check(`${tag}: code is 13px or larger, no inline sizes from JS`, g.codeFs >= 13 && !g.inlineFs && !g.inlineW, { fs: g.codeFs, inlineFs: g.inlineFs, inlineW: g.inlineW });
+        if (vp.width < 1280) await s.check(`${tag}: the minimap gives way to the answer`, !g.mini, g.mini);
+        await openKey(page); g = await page.evaluate(geo);
+        await s.check(`${tag}: own answer and the key stand side by side`, g.ans && g.key && g.ans.r <= g.key.x && Math.abs(g.ans.y - g.key.y) <= 48 && Math.abs(g.ans.w - g.key.w) <= 60, { ans: g.ans, key: g.key });
+        await s.check(`${tag}: the answer is shown in full (no inner scroll)`, g.taScroll <= 2, g.taScroll);
+        await s.check(`${tag}: the grade bar is pinned to the bottom of the window`, g.assess && g.assess.b <= g.win.b + 2 && g.assess.b >= g.win.b - 40, { assess: g.assess, win: g.win });
+        await s.check(`${tag}: three grade buttons are equal and look the same`, equal(g) && !/45, 226, 230/.test(g.ok.bg), { ok: g.ok, part: g.part, no: g.no });
+        await ctx.close();
+      }
+      // classic keeps its own sizing: JS still writes the column width
+      {
+        const { ctx, page } = await openPage(browser, s, { viewport: { width: 1440, height: 900 } }, '#desktop');
+        await step4(page, desktopUi);
+        const g = await page.evaluate(geo);
+        await s.check('classic desktop practice: sizePractice still sets the column width', /px$/.test(g.inlineW), g.inlineW);
+        await ctx.close();
+      }
+    }
+
     // ---- phone: «Эпизод» dots, run close button, own keyboard ----
     {
       const { ctx, page } = await openPage(browser, s, IPHONE, '#phone');

@@ -995,6 +995,7 @@ function fitWidth(term, base, minPx){
 }
 function sizePractice(animate){
   const pane=$("pane-practice"), wb=$("winBody"); if(!pane) return;
+  if(isNext()){ nextSizePractice(pane, wb); return; }   /* NEXT: the CSS grid sizes the columns */
   pane.classList.toggle("anim", animate===true);
   if(narrow() || !wb.classList.contains("fit")){ pane.style.removeProperty("--pc-w"); return; }
   const W=pane.clientWidth; if(W<=0) return;
@@ -1010,6 +1011,7 @@ function sizePractice(animate){
 }
 function fitCode(animate){
   sizePractice(animate===true);
+  if(isNext()){ nextFit(); return; }   /* NEXT: the code is never shrunk, it scrolls inside its box */
   const base=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--code-size"))||14;
   document.querySelectorAll("#pane-practice .term").forEach(term=>{
     term.style.removeProperty("--code-size");
@@ -1587,7 +1589,7 @@ function renderPractice(){ setTimeout(()=>{ refreshTopicNav(current); strictSync
     $("bankPrev").addEventListener("click",()=>{ bankIdx=(bankIdx-1+bank.length)%bank.length; renderPractice(); startTyping("practice"); });
   }
   const ta=$("ans"), kb=$("showKey"), gate=$("gate");
-  pane.classList.remove("typing");
+  pane.classList.remove("typing"); nextPrompt(pane);
   ta.addEventListener("focus",()=>{ if(!pane.classList.contains("typing")){ pane.classList.add("typing"); fitCode(true); } });
   pane.querySelector(".p-code").addEventListener("pointerdown",()=>{ if(pane.classList.contains("typing")){ pane.classList.remove("typing"); fitCode(true); } });
   (function(){ const sp=$("split"); if(!sp) return;
@@ -1670,6 +1672,7 @@ function renderPractice(){ setTimeout(()=>{ refreshTopicNav(current); strictSync
         <button type="button" class="ghostbtn" id="noBtn">НЕТ</button></div>`));
     kb.disabled=true; gate.textContent="";
     fitCode(); typeSeq([{el:keyTerm.querySelector(".term-b"), cps:420}]);
+    if(isNext()) nextKeyed(ta);
     if($("prevBtn")) $("prevBtn").addEventListener("click",()=>{ $("prevBox").innerHTML=terminal(prevAns, "Прошлый ответ", "до этого повтора", {plain:oral || proseCode(prevAns)}); $("prevBtn").hidden=true; });
     if(dunno){ const res=mark("no", false, true); if(res==="check") return;
       $("nextBtn").addEventListener("click",()=>{ if(inBank){ store.set(ansKey, ""); bankIdx=pickBank(t.id, s.id); } else if(stepIdx<steps.length-1) stepIdx++; renderPractice(); startTyping("practice"); }); return; }
@@ -2082,6 +2085,23 @@ function isMapMode(){ return mode==="map"; }
    html.next is set before first paint by the inline script in template.html (#next / #classic / localStorage "syn.theme").
    Here: the switch in the settings. The choice is a display setting, not progress: it is not exported or merged. */
 function isNext(){ return document.documentElement.classList.contains("next"); }
+/* practice in NEXT (item 13). Called only from the isNext() branches of sizePractice / fitCode / renderPractice. */
+function nextSizePractice(pane, wb){
+  pane.classList.remove("anim");
+  const man=+store.get("pm.split",0)||0;   /* a split dragged by hand is still respected */
+  if(man && !narrow() && wb.classList.contains("fit") && !(($("showKey")||{}).dataset||{}).open) pane.style.setProperty("--pc-w", Math.round(man*pane.clientWidth)+"px");
+  else pane.style.removeProperty("--pc-w");
+}
+function nextFit(){
+  document.querySelectorAll("#pane-practice .term").forEach(t=>t.style.removeProperty("--code-size"));
+  const pr=document.querySelector("#pane-practice .prompt"), pane=$("pane-practice");
+  if(pr && PHONE && pane && !pane.classList.contains("kbd")) pr.classList.toggle("pmore", pr.classList.contains("open") || pr.scrollHeight>pr.clientHeight+2);
+}
+/* the key is open: the answer field grows to its text, so answer and key can be read line by line */
+function nextKeyed(ta){ if(!ta) return; ta.style.height="auto"; ta.style.height=Math.max(ta.scrollHeight+2, 44)+"px"; }
+/* phone: a long task text is folded to 3 lines; a tap unfolds it (in the typing mode the classic handler does this) */
+function nextPrompt(pane){ const pr=pane.querySelector(".prompt"); if(!pr || !PHONE) return;
+  pr.addEventListener("click",()=>{ if(!isNext() || pane.classList.contains("kbd") || !pr.classList.contains("pmore")) return; pr.classList.toggle("open"); }); }
 (function nextInit(){
   const after=$("sfxBtn"); if(!after) return;
   const b=document.createElement("button"); b.type="button"; b.className="fontbtn"; b.id="themeBtn";
