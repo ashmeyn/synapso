@@ -1534,6 +1534,60 @@ function strictRefuse(e){ e.preventDefault(); e.stopImmediatePropagation(); stri
   b.addEventListener("click",()=>{ store.set("pm.strict", !strictOn()); label(); strictSync(); });
   after.parentNode.insertBefore(b, after); label();
 })();
+/* ---------- автопроверка (pilot 15.11): setting pm.autocheck, off by default ----------
+   With the setting on and a rubric on the task (step.check / bank.check), the site judges the answer the moment the key
+   opens: engine/check.js → «верно» / «неверно» / «проверь» / «не уверен» (research/autocheck/REPORT.md). It limits the
+   self-grade and never replaces it: «неверно» closes «ВСПОМНИЛ» (unless disputed), «проверь» asks its questions first and
+   a «mistake» answer closes «ВСПОМНИЛ»; the ladder still moves only by the learner's own press. One synchronous call per
+   opened key — no timers, no loops, nothing in the background. Texts of a rubric are plain text: always esc(). */
+function ackOn(){ return store.get("pm.autocheck", false)===true; }
+const ACK_NAME={ok:"ВЕРНО", no:"НЕВЕРНО", check:"ПРОВЕРЬ", unsure:"НЕ УВЕРЕН"};
+function ackSub(res, kind){
+  if(res.v==="ok") return kind==="predict" ? "вывод совпал построчно" : "совпало с ключом или проверенным вариантом";
+  if(res.v==="no") return kind==="predict" ? "вывод другой" : "сайт узнал известную ошибку";
+  if(res.v==="check") return kind==="oral" ? "мыслей ключа в твоём тексте: "+(res.points||[]).filter(p=>p.found).length+" из "+(res.points||[]).length+" — про остальные сайт спрашивает, ты мог сказать иначе" : res.why==="near" ? "сайт не уверен — ответь на вопрос" : "этого сайт не нашёл в твоём ответе — возможно, ты записал иначе";
+  return res.why==="oral-all" ? "все мысли ключа нашлись в твоём тексте — смысл сверь сам" : "сайт не смог оценить — сверь с ключом сам";
+}
+/* mounts the verdict card at the top of #keyBox and takes over the grade buttons; returns the state mark() consults */
+function ackMount(task, answer){
+  if(!ackOn() || !task || !task.check || typeof SynCheck==="undefined") return null;
+  const box=$("keyBox"), okB=$("okBtn"), partB=$("partBtn"), noB=$("noBtn"); if(!box || !okB || !partB || !noB) return null;
+  let res=null; try{ res=SynCheck.verdict(answer, task); }catch(e){ res=null; }
+  if(!res || !ACK_NAME[res.v]) return null;
+  const kind=SynCheck.kindOf(task.check), qs=res.qs||[], st={res, kind, q:qs.map(()=>""), disp:false};
+  st.open=()=>res.v!=="check" || st.q.every(a=>a);
+  st.blocked=()=>res.v==="no" ? !st.disp : res.v==="check" ? st.q.some((a,i)=>a===qs[i].bad) : false;
+  const html=`<div class="ack ack-${res.v}" id="ack" role="status" data-v="${res.v}" data-why="${esc(res.why||"")}">
+    <div class="ack-h"><b>${ACK_NAME[res.v]}</b><span>${esc(ackSub(res, kind))}</span></div>
+    ${(res.msgs||[]).length ? `<ul class="ack-m">${res.msgs.map(m=>`<li>${esc(m)}</li>`).join("")}</ul>` : ""}
+    ${qs.map((q,i)=>`<div class="ack-q" data-q="${i}"><p>${esc(q.q)}</p><div class="ack-a"><button type="button" data-a="yes" aria-pressed="false">ДА</button><button type="button" data-a="no" aria-pressed="false">НЕТ</button></div><p class="ack-why" hidden>${esc(q.why||"")}</p></div>`).join("")}
+    ${res.v==="ok" && kind!=="oral" ? `<div class="ack-f">Пояснение «почему» сайт не проверяет — сверь его с ключом сам.</div>` : ""}
+    ${res.v==="no" ? `<div class="ack-f"><span id="ackLock">«ВСПОМНИЛ» закрыто: сайт нашёл ошибку.</span><button type="button" class="textbtn" id="ackDispute">ПРОВЕРКА ОШИБЛАСЬ</button></div>` : ""}
+    ${res.v==="check" ? `<div class="ack-f"><span id="ackLock"></span></div>` : ""}</div>`;
+  box.insertAdjacentHTML("afterbegin", html);
+  const card=$("ack"), lock=$("ackLock");
+  const sync=()=>{ const open=st.open(), bad=st.blocked();
+    partB.disabled=!open; noB.disabled=!open; okB.disabled=!open || bad;
+    if(res.v==="check" && lock) lock.textContent = !open ? "Ответь на "+(qs.length>1?"вопросы":"вопрос")+" — потом оцени себя." : bad ? "«ВСПОМНИЛ» закрыто: ты сам отметил, чего не хватает." : "Сайт не нашёл — ты подтвердил, что это есть. Оценка за тобой.";
+    if(res.v==="no" && lock) lock.textContent = st.disp ? "Спор записан в журнал. Оценка за тобой." : "«ВСПОМНИЛ» закрыто: сайт нашёл ошибку."; };
+  card.addEventListener("click",e=>{
+    const a=e.target.closest && e.target.closest(".ack-a button");
+    if(a){ const row=a.closest(".ack-q"), i=+row.dataset.q; st.q[i]=a.dataset.a;
+      row.querySelectorAll(".ack-a button").forEach(b=>b.setAttribute("aria-pressed", b===a ? "true" : "false"));
+      const why=row.querySelector(".ack-why"); if(why) why.hidden = !(st.q[i]===qs[i].bad && why.textContent.trim());
+      sync(); return; }
+    if(e.target.id==="ackDispute"){ st.disp=!st.disp; e.target.textContent = st.disp ? "ОТМЕНИТЬ СПОР" : "ПРОВЕРКА ОШИБЛАСЬ"; sync(); } });
+  sync();
+  return st;
+}
+(function ackInit(){
+  const after=$("sfxBtn"); if(!after) return;
+  const b=document.createElement("button"); b.type="button"; b.className="fontbtn"; b.id="ackBtn";
+  b.title="Сайт сам оценивает ответ в темах, где есть рубрика: верно, неверно, проверь, не уверен. Оценку всё равно ставишь ты";
+  const label=()=>{ b.textContent="АВТОПРОВЕРКА: "+(ackOn()?"ВКЛ":"ВЫКЛ"); b.classList.toggle("warn", ackOn()); };
+  b.addEventListener("click",()=>{ store.set("pm.autocheck", !ackOn()); label(); });
+  after.parentNode.insertBefore(b, after); label();
+})();
 function renderPractice(){ setTimeout(()=>{ refreshTopicNav(current); strictSync(); },0);
   const t=topics[current], c=DATA.content[t.id], pane=$("pane-practice");
   stopTyping();
@@ -1647,6 +1701,7 @@ function renderPractice(){ setTimeout(()=>{ refreshTopicNav(current); strictSync
   if($("s7out")) $("s7out").addEventListener("click",()=>openOut());
   $("dunno").addEventListener("click",()=>{ if(kb.dataset.open) return; showKeyNow(true); });
   kb.addEventListener("click",()=>{ if(!kb.disabled) showKeyNow(false); });
+  let chk=null;   /* автопроверка: the verdict of this opened key (null — setting off, no rubric, «не знаю») */
   function showKeyNow(dunno){
     kb.dataset.open="1"; $("dunno").hidden=true; kb.hidden=true;
     if(blind || redo) store.set(ansKey, "");   /* the key has been seen: the next review starts empty again */
@@ -1677,10 +1732,12 @@ function renderPractice(){ setTimeout(()=>{ refreshTopicNav(current); strictSync
     if(dunno){ const res=mark("no", false, true); if(res==="check") return;
       $("nextBtn").addEventListener("click",()=>{ if(inBank){ store.set(ansKey, ""); bankIdx=pickBank(t.id, s.id); } else if(stepIdx<steps.length-1) stepIdx++; renderPractice(); startTyping("practice"); }); return; }
     $("okBtn").addEventListener("click",()=>mark("ok")); $("partBtn").addEventListener("click",()=>mark("part")); $("noBtn").addEventListener("click",()=>mark("no"));
+    chk=ackMount(s, ta.value); if(chk && isNext()) nextKeyed(ta);
   }
   /* v: "ok" вспомнил · "part" частично · "no" нет. pm.steps keeps its old ok/no format (part → no), the 3 levels go to pm.grade.<id>.
      stay: record only, keep the key on screen (the «не знаю — покажи» path) */
   function mark(v, silent, stay){
+    if(chk && !silent && !stay && (!chk.open() || (v==="ok" && chk.blocked()))) return;   /* автопроверка: a closed grade stays closed however it was pressed */
     if(pendingRun===dayKey()){ pendingRun=null; finishRunDay(); }
     if(inBank){
       fxLog(v==="ok"?"OK":"FAIL", "BANK://"+s.id.toUpperCase()+(v==="ok"?" · РЕШЕНО":" · В ЖУРНАЛ")); const st=bankStat(s.id); st[v==="ok"?"ok":"no"]++; st.last=Date.now(); store.set("pm.bank."+s.id, st);

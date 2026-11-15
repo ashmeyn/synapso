@@ -100,6 +100,9 @@ async function run() {
   await s.check('trap: guard … else needs its return', v('guard let id else { nil }\nreturn id', T('func f(id: Int?) -> Int? {\n    // код\n}', 'func f(id: Int?) -> Int? {\n    guard let id else { return nil }\n    return id\n}')) !== 'ok');
   await s.check('trap: a skeleton line cannot be taken in part', v('var second = nil', T('var second = first\n// убери\nprint(1)', 'var second = first\nsecond = nil\nprint(1)')) !== 'ok');
   await s.check('trap: a variant for one hunk does not excuse the other', v('let a = 2', T('// один\nprint(0)\n// два', 'let a = 1\nprint(0)\nlet b = 1', { accept: ['let a = 2'], must: [{ pat: ['let a'], ask: '?', miss: 'm' }] })) !== 'ok');
+  const rb = T('func f(id: Int?) -> String? {\n    // код\n}', 'func f(id: Int?) -> String? {\n    guard let id else { return nil }\n    return "/u/\\(id)"\n}');
+  await s.check('a rebinding under another name is the same code', v('guard let userId = id else { return nil }\nreturn "/u/\\(userId)"', rb) === 'ok' && v('guard let id = id else { return nil }\nreturn "/u/\\(id)"', rb) === 'ok');
+  await s.check('trap: the optional used instead of the unwrapped name', v('guard let userId = id else { return nil }\nreturn "/u/\\(id)"', rb) !== 'ok');
   const two = T('// один\nprint(0)\n// два', 'let a = 1\nprint(0)\nlet b = 1', { accept: [{ code: 'let a = 2 - 1', hunk: 0 }, { code: 'let b = 2 - 1', hunk: 1 }], must: [{ pat: ['let a'], ask: '?', miss: 'm' }] });
   await s.check('variants of different hunks combine', v('let a = 2 - 1\nlet b = 2 - 1', two) === 'ok' && v('let a = 1\nprint(0)\nlet b = 2 - 1', two) === 'ok');
   await s.check('trap: a variant is bound to its hunk', v('let b = 2 - 1\nlet b = 1', two) !== 'ok' && v('let a = 2 - 1', two) !== 'ok');

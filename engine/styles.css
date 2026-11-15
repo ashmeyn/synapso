@@ -695,6 +695,24 @@ html:not(.phone) .t-foot{gap:24px 48px;margin-top:32px;padding-top:24px}
 .kpoints ol{margin:0;padding-left:2.2em;font-size:var(--fs-ui);line-height:1.6;color:var(--ink-2)}
 .kpoints li{margin:0 0 6px}
 .kpoints code{font-family:var(--f-code);color:var(--type);font-variant-ligatures:none;overflow-wrap:anywhere}
+/* автопроверка (pilot 15.11): the verdict card above the key. Monochrome; cyan marks «верно» only */
+.ack{margin:0 0 14px;padding:12px 14px;border:1px solid var(--line-2);border-left:2px solid var(--muted);max-width:68ch;font-size:var(--fs-ui);line-height:1.55;color:var(--ink-2)}
+.ack-ok{border-left-color:var(--cyan)}
+.ack-no{border-left-color:var(--ink)}
+.ack-h{display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline;font-family:var(--f-mono);font-size:var(--fs-label);letter-spacing:.04em;color:var(--muted)}
+.ack-h b{font-weight:400;font-size:var(--fs-ui);color:var(--ink)}
+.ack-ok .ack-h b{color:var(--cyan)}
+.ack ul{margin:8px 0 0;padding-left:1.3em}
+.ack li{margin:0 0 6px;overflow-wrap:anywhere}
+.ack-q{margin-top:10px;padding-top:10px;border-top:1px solid var(--line-2)}
+.ack-q p{margin:0 0 8px;overflow-wrap:anywhere}
+.ack-a{display:flex;gap:10px}
+.ack-a button{min-height:44px;min-width:88px;padding:0 16px;border:1px solid #2A3238;font-family:var(--f-mono);font-size:var(--fs-ui);letter-spacing:.04em;color:var(--ink-2)}
+.ack-a button[aria-pressed="true"]{border-color:var(--cyan);color:var(--cyan)}
+.ack-q .ack-why{margin:8px 0 0;color:var(--ink)}
+.ack-f{margin-top:10px;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;font-size:var(--fs-label);color:var(--muted)}
+.ack-f .textbtn{min-height:44px}
+.assess button:disabled{opacity:.35;cursor:not-allowed}
 .prevans{margin:6px 0 4px}
 .prevans .textbtn{min-height:32px}
 .out{display:flex;flex-direction:column;gap:18px;max-width:68ch}

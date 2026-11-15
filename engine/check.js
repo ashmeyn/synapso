@@ -117,16 +117,27 @@
     }
     return names;
   }
-  function alpha(ts, skelIds) {
-    const names = declared(ts).filter(n => !skelIds.has(n)); if (!names.length) return ts;
-    const map = {}; names.forEach((n, k) => map[n] = "§" + (k + 1));
-    return ts.map((t, i) => {
-      if (t.t !== "id" || !map[t.v]) return t;
+  /* `guard let id` (shorthand; `let id = id` is normalised to it) rebinds a name of the skeleton. It is the same code as
+     `guard let userId = id` with userId used afterwards, so the rebinding is written out as a fresh local: let §n = id.
+     Returns the indices of such sites: the name token after let/var. `self` is left alone (capture topics). */
+  function rebinds(ts, skel) { const at = new Set();
+    for (let i = 0; i + 2 < ts.length; i++) if ((ts[i].v === "let" || ts[i].v === "var") && ts[i + 1].t === "id" && ts[i + 1].v !== "self" && skel.has(ts[i + 1].v) && [",", "else", "{"].includes(ts[i + 2].v)) at.add(i + 1);
+    return at; }
+  /* fresh: names that may be renamed wherever they stand; skel: the skeleton's names (for rebindings) */
+  function alpha(ts, fresh, skel) {
+    const sites = rebinds(ts, skel || new Set()), names = new Set(declared(ts).filter(n => fresh(n)));
+    if (!names.size && !sites.size) return ts;
+    const map = {}, live = {}; let n = 0; const out = [];
+    ts.forEach((t, i) => {
+      if (sites.has(i)) { const id = "§" + (++n); live[t.v] = id; out.push(Object.assign({}, t, { v: id }), Object.assign({}, t, { t: "op", v: "=" }), t); return; }
+      if (t.t !== "id" || !(names.has(t.v) || live[t.v])) { out.push(t); return; }
       const p = ts[i - 1], nx = ts[i + 1];
-      if (p && p.v === "." ) return t;
-      if (nx && nx.v === ":" && p && (p.v === "(" || p.v === ",") && !(ts[i - 2] && ["let", "var"].includes(ts[i - 2].v))) return t;   /* argument label */
-      return Object.assign({}, t, { v: map[t.v] });
+      if ((p && p.v === ".") || (nx && nx.v === ":" && p && (p.v === "(" || p.v === ",") && !(ts[i - 2] && ["let", "var"].includes(ts[i - 2].v)))) { out.push(t); return; }   /* member, argument label */
+      if (live[t.v]) { out.push(Object.assign({}, t, { v: live[t.v] })); return; }
+      if (!map[t.v]) map[t.v] = "§" + (++n);
+      out.push(Object.assign({}, t, { v: map[t.v] }));
     });
+    return out;
   }
 
   /* S equals K with some non-delta (skeleton) tokens dropped: every delta token must be present, nothing foreign */
@@ -149,8 +160,13 @@
     const taken = cur.get(S.length);   /* a nearly full retype with a skeleton line missing is not "the key" */
     return !(skelLines >= 4 && taken < skelLines && taken >= 0.8 * skelLines);
   }
-  /* alpha-rename the key by its delta declarations, then the answer by its own */
-  function alphaKey(K, skelIds) { const dnames = declared(K.filter(t => t.d)); const r = alpha(K, new Set([...skelIds].filter(x => !dnames.includes(x)))); return r.map((t, i) => Object.assign({}, t, { d: K[i].d })); }
+  /* alpha-rename the key by the declarations of its new lines (a name the new lines declare is a local even when the
+     skeleton uses the same word); the tokens added for a rebinding are new tokens of the key */
+  function alphaKey(K, skelIds) {
+    const D = K.filter(t => t.d), sites = rebinds(D, skelIds), short = new Set([...sites].map(i => D[i].v));
+    const dnames = new Set(declared(D).filter(n => !short.has(n)));
+    return alpha(K, n => dnames.has(n) || !skelIds.has(n), skelIds).map(t => t.d === undefined ? Object.assign({}, t, { d: true }) : t);
+  }
 
   /* the key puts part of the answer into comments (e.g. "// 2: second и захват") — tokens cannot verify that */
   function commentAnswer(task) {
@@ -164,7 +180,7 @@
     const keepSelf = /\bself\b/.test((task.code || "") + keyCode(task.key));   /* capture topics: self. is meaningful */
     const skelIds = new Set(toks(task.code || "").filter(t => t.t === "id").map(t => t.v));
     const S0 = toks(codePart(ans), keepSelf); if (!S0.length) return false;
-    const S = alpha(S0, skelIds);
+    const S = alpha(S0, n => !skelIds.has(n), skelIds);
     const keys = [keyDelta(task.code, keyCode(task.key), keepSelf, tk)];
     /* a verified variant stands in for one named hunk of the key; the other hunks stay mandatory —
        a variant alone never excuses the rest of the task */

@@ -162,3 +162,15 @@ html.next.phone #pane-practice:has(#showKey[data-open]):not(.kbd) .p-code .term-
 /* the bar sits on the bottom edge of the window: the window's own bottom padding would lift it */
 html.next.phone body:not(.kb-on) .win-b:has(#showKey[data-open]){padding-bottom:0}
 html.next.phone .win-b > #pane-practice:has(#showKey[data-open]){padding-bottom:0}
+
+/* автопроверка (pilot 15.11): the verdict card in NEXT — same content, NEXT tokens and hit areas */
+html.next .ack{max-width:none;margin:0;padding:var(--s-3);background:var(--surface);border-color:var(--line-2);border-left-color:var(--line-3);font-size:var(--t-ui);color:var(--ink-2)}
+html.next .ack-ok{border-left-color:var(--cyan)}
+html.next .ack-no{border-left-color:var(--ink)}
+html.next .ack-h{font-size:var(--t-label);color:var(--muted)}
+html.next .ack-h b{font-size:var(--t-ui)}
+html.next .ack-a button{min-height:var(--t-hit);border-color:var(--line-3);color:var(--ink);font-size:var(--t-ui)}
+html.next .ack-a button[aria-pressed="true"]{border-color:var(--cyan);color:var(--cyan)}
+html.next .ack-f{font-size:var(--t-label)}
+html.next .ack-f .textbtn{min-height:var(--t-hit)}
+html.next .assess button:disabled{opacity:.4}

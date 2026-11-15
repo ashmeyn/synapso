@@ -187,6 +187,11 @@ html.next .ghostbtn{font-size:var(--t-ui)}
 html.next .s7note{font-size:var(--t-label)}
 html.next .kp-h{font-size:var(--t-label)}
 html.next .kpoints ol{font-size:var(--t-ui)}
+html.next .ack{font-size:var(--t-ui)}
+html.next .ack-h{font-size:var(--t-label)}
+html.next .ack-h b{font-size:var(--t-ui)}
+html.next .ack-a button{font-size:var(--t-ui)}
+html.next .ack-f{font-size:var(--t-label)}
 html.next .out-h{font-size:var(--t-ui)}
 html.next .out-tip{font-size:var(--t-label)}
 html.next .out-q{font-size:var(--t-read)}
