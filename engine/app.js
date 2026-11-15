@@ -1580,6 +1580,18 @@ function ackMount(task, answer){
   sync();
   return st;
 }
+/* journal pm.chk.<topic> (progress: exported, imported and synced, merged as a union): one entry per graded answer that had
+   a verdict — [{at, ref, v, why, self, disp?, q?, ans}], newest first. ref = step id or bank task id; v/why = the verdict;
+   self = the learner's grade; disp = 1 when «неверно» was disputed; q = the answers to the questions ("yn…"); ans = the
+   answer itself, so that the monthly review can label it. Capped: ACK_KEEP entries per topic, ACK_ANS characters per answer. */
+const ACK_KEEP=40, ACK_ANS=1200;
+function ackList(id){ return store.get("pm.chk."+id, []).filter(x=>x && typeof x==="object" && !Array.isArray(x)); }
+function ackLog(id, ref, st, self, answer){
+  const e={at:Date.now(), ref:String(ref), v:st.res.v, why:String(st.res.why||""), self, ans:String(answer||"").slice(0, ACK_ANS)};
+  if(st.disp) e.disp=1;
+  if(st.q.length) e.q=st.q.map(a=>a==="yes"?"y":a==="no"?"n":"-").join("");
+  const list=ackList(id); list.unshift(e); store.set("pm.chk."+id, list.slice(0, ACK_KEEP));
+}
 (function ackInit(){
   const after=$("sfxBtn"); if(!after) return;
   const b=document.createElement("button"); b.type="button"; b.className="fontbtn"; b.id="ackBtn";
@@ -1738,6 +1750,7 @@ function renderPractice(){ setTimeout(()=>{ refreshTopicNav(current); strictSync
      stay: record only, keep the key on screen (the «не знаю — покажи» path) */
   function mark(v, silent, stay){
     if(chk && !silent && !stay && (!chk.open() || (v==="ok" && chk.blocked()))) return;   /* автопроверка: a closed grade stays closed however it was pressed */
+    if(chk && !silent && !stay){ ackLog(t.id, s.id, chk, v, ta.value); chk=null; }
     if(pendingRun===dayKey()){ pendingRun=null; finishRunDay(); }
     if(inBank){
       fxLog(v==="ok"?"OK":"FAIL", "BANK://"+s.id.toUpperCase()+(v==="ok"?" · РЕШЕНО":" · В ЖУРНАЛ")); const st=bankStat(s.id); st[v==="ok"?"ok":"no"]++; st.last=Date.now(); store.set("pm.bank."+s.id, st);
@@ -2193,6 +2206,10 @@ function mergeProgress(local, incoming){
     if(/^pm\.rootsSkip\./.test(key)) return Math.max(num(a), num(b)) || a;
     if(/^pm\.seen\./.test(key)) return isObj(a)&&isObj(b) ? tsMap(a,b,minTs) : a;   /* steps whose key was seen: union, the earliest time */
     if(/^pm\.outRun\./.test(key)) return isObj(a)&&isObj(b) ? (num(b.at)>num(a.at) ? b : a) : a;   /* unfinished «Выгрузка»: the later one */
+    /* autocheck journal (pm.chk.<topic>): union of entries from both devices, newest first, same cap as the engine keeps */
+    if(/^pm\.chk\./.test(key)){ if(!Array.isArray(a)||!Array.isArray(b)) return a; const seen=new Set(), r=[];
+      a.concat(b).forEach(x=>{ if(!isObj(x)) return; const k=num(x.at)+"|"+x.ref; if(seen.has(k)) return; seen.add(k); r.push(x); });
+      return r.sort((x,y)=>num(y.at)-num(x.at)).slice(0,40); }
     if(key==="pm.mapHint") return Math.max(num(a), num(b)) || a;   /* map hint shown on N visits: the larger count */
     /* errors that come back (pm.back): union of entries; per entry the latest miss wins, same miss -> more progress */
     if(key==="pm.back") return isObj(a)&&isObj(b) ? tsMap(a,b,(x,y)=>{ if(!isObj(x)||!isObj(y)) return isObj(x)?x:y;
@@ -2216,7 +2233,7 @@ function mergeProgress(local, incoming){
   const canon=v=>JSON.stringify(v, (k,x)=>isObj(x) ? Object.keys(x).sort().reduce((o,kk)=>(o[kk]=x[kk], o), {}) : x);
   /* an incoming value of the wrong kind for its key is skipped (it would break the engine that reads it); unknown keys pass */
   const KIND=[[/^pm\.(steps|grade|srs|recall|out|outRun|roots|bank|seen)\./,"o"],[/^pm\.(known|legacy|skip|imported|honest|back)$/,"o"],
-    [/^pm\.(err|outAns)\./,"a"],[/^pm\.runs$/,"a"],[/^pm\.(ans|rans|bankAns|redo)\./,"s"],[/^pm\.(doneAt|rootsSkip)\./,"n"],[/^pm\.mapHint$/,"n"]];
+    [/^pm\.(err|outAns|chk)\./,"a"],[/^pm\.runs$/,"a"],[/^pm\.(ans|rans|bankAns|redo)\./,"s"],[/^pm\.(doneAt|rootsSkip)\./,"n"],[/^pm\.mapHint$/,"n"]];
   const kindOk=(key,v)=>{ const k=(KIND.find(x=>x[0].test(key))||[])[1];
     return !k || (k==="o" ? isObj(v) : k==="a" ? Array.isArray(v) : k==="s" ? typeof v==="string" : typeof v==="number"); };
   const map={...local}; let skipped=0;
