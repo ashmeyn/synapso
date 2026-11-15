@@ -1053,3 +1053,5 @@ html:not(.phone) #pane-practice .ed{clip-path:inset(0)}
 /* «без подсказок» (pm.strict): tabs closed while a step is being answered */
 .tabs button.locked{opacity:.45;cursor:not-allowed}
 .strictnote[hidden]{display:none}
+/* run: tip under «ПОВТОРИТЬ ВСЛЕПУЮ» takes its own line */
+#runBlindTip{flex-basis:100%;margin:0}

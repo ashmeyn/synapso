@@ -2,6 +2,8 @@
 // 1.3 — once the key of a step has been seen, the step opens with an EMPTY field next time (the unfinished draft of a step
 //       whose key was never opened is still restored); the previous answer is offered only after the key;
 //       text typed after the key is open is not saved (no copying the key into the stored answer).
+// 1.5 — «ПОМНЮ» on a review card of the run does not move the topic's SRS ladder; «ПОВТОРИТЬ ВСЛЕПУЮ» leads to step 7 with
+//       an empty field: only «ВСПОМНИЛ» after the key moves it up, «НЕТ» resets it to tomorrow, an empty / short answer never moves it up.
 // 22  — setting «БЕЗ ПОДСКАЗОК» (pm.strict, off by default): while a step is being answered, the Теория and Шпаргалка
 //       tabs are closed until the key opens.
 'use strict';
@@ -103,6 +105,64 @@ async function suite(ui) {
     await s.check('strict mode survives a reload', (await ls(page, 'pm.strict')) === true && /ВКЛ/.test(await js(() => document.getElementById('strictBtn').textContent)));
     await js(() => document.getElementById('strictBtn').click());
     await s.check('strict mode can be switched off', (await ls(page, 'pm.strict')) === false);
+
+    // ---------- 1.5: the run's «ПОМНЮ» does not move the topic's ladder; only blind step 7 graded «ВСПОМНИЛ» does ----------
+    const NOW = Date.now(), DAY = 86400000;
+    const dueTopic = () => ({ 'pm.steps.opt': JSON.stringify({ s1: 'ok', s2: 'ok', s3: 'ok', s4: 'ok', s5: 'ok', s6: 'ok', s7: 'ok' }),
+      'pm.recall.opt': JSON.stringify({ at: NOW - 9 * DAY, v: 'ok', pass: NOW - 9 * DAY }), 'pm.out.opt': JSON.stringify({ at: NOW - 9 * DAY, g: ['ok', 'ok', 'ok'], v: 'ok', pass: NOW - 9 * DAY }),
+      'pm.doneAt.opt': JSON.stringify(NOW - 9 * DAY), 'pm.honest': JSON.stringify({ v: 1, at: NOW - 20 * DAY }), 'pm.srs.opt': JSON.stringify({ stage: 2, due: NOW - 1000, lapses: 0 }),
+      'pm.ans.opt.s7': JSON.stringify('PREVIOUS-S7 answer') });
+    const srs = () => ls(page, 'pm.srs.opt');
+    const runCard = async () => { await seed(page, dueTopic()); await ui.ready(page);
+      await js(() => document.getElementById('runBtn').click()); await page.waitForTimeout(300);
+      const kind = await js(() => (document.querySelector('#runBody .run-kind') || {}).textContent || '');
+      await js(() => document.getElementById('runShow').click()); await page.waitForTimeout(200); return kind; };
+    const blindStep = async () => { await js(() => document.getElementById('runBlind').click());
+      await page.waitForFunction(() => document.getElementById('main').classList.contains('is-topic') && !!document.getElementById('ans'), null, { timeout: 8000 });
+      await page.waitForTimeout(1200); };
+
+    let kind = await runCard();
+    await s.check('run: the due topic comes as a review card', /ПОВТОР/.test(kind), kind);
+    await s.check('run: «ПОВТОРИТЬ ВСЛЕПУЮ» is offered on the review card', await js(() => !!document.getElementById('runBlind') && /не засчитывает/.test(document.getElementById('runBlindTip').textContent)));
+    await js(() => document.getElementById('runYes').click()); await page.waitForTimeout(200);
+    let r = await srs();
+    await s.check('run «ПОМНЮ»: the ladder does not move, the topic stays due', r.stage === 2 && r.due === NOW - 1000, r);
+
+    // rule 1: blind step 7 + «ВСПОМНИЛ» after the key moves the ladder up
+    await runCard(); await blindStep();
+    f = await field();
+    await s.check('blind review: step 7, empty field, key closed', (await js(() => (document.querySelector('.rung.on') || {}).dataset.step)) === '6' && f.val === '' && f.dis && !f.keyOpen, f);
+    // rule 3: an empty or too short answer cannot be graded «ВСПОМНИЛ» — the key stays closed, the ladder does not move
+    await s.check('empty answer: no key, no grade buttons, ladder untouched', f.dis && !(await js(() => !!document.getElementById('okBtn'))) && (await srs()).stage === 2);
+    await page.fill('#ans', 'func a()'); await page.waitForTimeout(100);
+    await js(() => document.getElementById('showKey').click()); await page.waitForTimeout(200);
+    f = await field(); r = await srs();
+    await s.check('too short answer: key stays closed, ladder untouched', f.dis && !f.keyOpen && r.stage === 2 && r.due === NOW - 1000, { f, r });
+    await page.fill('#ans', 'func displayName(for user: User) -> String { guard let name = user.name else { return "Гость" }; return name }'); await page.waitForTimeout(100);
+    await js(() => document.getElementById('showKey').click()); await page.waitForTimeout(300);
+    r = await srs();
+    await s.check('key opened, not graded yet: ladder untouched', r.stage === 2 && r.due === NOW - 1000, r);
+    await js(() => document.getElementById('okBtn').click()); await page.waitForTimeout(300);
+    r = await srs();
+    await s.check('rule 1 — «ВСПОМНИЛ» after the key: ladder moves up one rung', r.stage === 3 && r.due > Date.now() + 13 * DAY, r);
+
+    // rule 2: «НЕ ВСПОМНИЛ» resets the ladder to tomorrow — on the blind step and on the run card
+    await runCard(); await blindStep();
+    await page.fill('#ans', 'func displayName(for user: User) -> String { return user.name ?? "Гость" }'); await page.waitForTimeout(100);
+    await js(() => document.getElementById('showKey').click()); await page.waitForTimeout(300);
+    await js(() => document.getElementById('noBtn').click()); await page.waitForTimeout(300);
+    r = await srs();
+    await s.check('rule 2 — «НЕТ» on the blind step: ladder reset, due tomorrow', r.stage === 0 && r.lapses === 1 && Math.abs(r.due - Date.now() - DAY) < 60000, r);
+    await runCard();
+    await js(() => document.getElementById('runNo').click()); await page.waitForTimeout(200);
+    r = await srs();
+    await s.check('rule 2 — «НЕ ВСПОМНИЛ» on the run card: ladder reset, due tomorrow', r.stage === 0 && r.lapses === 1 && Math.abs(r.due - Date.now() - DAY) < 60000, r);
+
+    // rule 3 again: «не знаю — покажи» with an empty field is «нет» — never a step up
+    await runCard(); await blindStep();
+    await js(() => document.getElementById('dunno').click()); await page.waitForTimeout(300);
+    r = await srs();
+    await s.check('rule 3 — empty answer via «не знаю — покажи»: no step up (recorded as «нет», due tomorrow)', r.stage === 0 && !(await js(() => !!document.getElementById('okBtn'))), r);
     await s.check('no page errors', !errors.length, errors.slice(0, 3));
   } finally { await browser.close(); }
   return s.result();

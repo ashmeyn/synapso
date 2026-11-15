@@ -1893,8 +1893,13 @@ function renderRun(){
   typeSeq([{el:body.querySelector(".run-q"),cps:90}]);
   $("runShow").addEventListener("click",()=>{ stopTyping();
     $("runTip").outerHTML=`<div class="run-a">${esc(c.a)}</div>`;
-    $("runActs").innerHTML=`<button type="button" class="cta" id="runYes">ПОМНЮ</button><button type="button" class="ghostbtn" id="runNo">НЕ ВСПОМНИЛ</button>`;
-    $("runYes").addEventListener("click",()=>{ sfx.ok(); if(c.kind==="review" && honestDone(t.id)) srsPass(t.id); else if(c.kind==="review" && rootOf(t.id).v==="no") store.set("pm.roots."+t.id, {at:Date.now(), v:"ok"}); backPass(backKey("q", t.id, strHash(c.q))); runRes.push(true); flash[c.i]=1.6; burst(c.i,10); refreshProgress(); runIdx++; renderRun(); });
+    /* review 14.11, leak 1.5: «ПОМНЮ» on a review card no longer moves the topic's ladder — a flashcard without typing is
+       recognition. The ladder moves only by step 7 written blind and self-graded «ВСПОМНИЛ» (mark → srsGrade); the card offers that step. */
+    const blindBtn = c.kind==="review" && t.due && t.status==="done" && ((DATA.content[t.id]||{}).steps||[]).some(x=>x.id==="s7");
+    $("runActs").innerHTML=`<button type="button" class="cta" id="runYes">ПОМНЮ</button><button type="button" class="ghostbtn" id="runNo">НЕ ВСПОМНИЛ</button>`
+      + (blindBtn ? `<button type="button" class="ghostbtn" id="runBlind">ПОВТОРИТЬ ВСЛЕПУЮ ▸</button><p class="run-tip" id="runBlindTip">«Помню» повтор темы не засчитывает. Лесенку двигает ступень 7 по памяти: напиши ответ, сверь с ключом, оцени «Вспомнил».</p>` : "");
+    if(blindBtn) $("runBlind").addEventListener("click",()=>{ pendingRun=dayKey(); closeRun(); openTopic(c.i,"practice"); });
+    $("runYes").addEventListener("click",()=>{ sfx.ok(); if(c.kind==="review" && rootOf(t.id).v==="no") store.set("pm.roots."+t.id, {at:Date.now(), v:"ok"}); backPass(backKey("q", t.id, strHash(c.q))); runRes.push(true); flash[c.i]=1.6; burst(c.i,10); refreshProgress(); runIdx++; renderRun(); });
     $("runNo").addEventListener("click",()=>{ sfx.no(); if(t.status==="done" || (c.kind==="review" && store.get("pm.srs."+t.id,null))) srsFail(t.id); if(c.kind!=="warm"){ logErr(t.id, c.q, "Ран: не вспомнил. Ответ: "+c.a); backFail("q", t.id, strHash(c.q), c.q, c.q, c.a); } runRes.push(false); refreshProgress(); runIdx++; renderRun(); });
   });
 }
