@@ -1,0 +1,562 @@
+[
+ {
+  "task": "weak.s1",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "Готово 18\nfalse\nЭкран освобождён",
+  "note": "Как в ключе"
+ },
+ {
+  "task": "weak.s1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Готово 18, false, Экран освобождён",
+  "note": "В одну строку"
+ },
+ {
+  "task": "weak.s1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "\"Готово 18\" → false → \"Экран освобождён\"\n\ndelegate не nil, потому что player сильно держит screen и сам держится снаружи через let player.",
+  "note": "С кавычками и пояснением"
+ },
+ {
+  "task": "weak.s1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Готово 18\nЭкран освобождён\nfalse",
+  "note": "Перепутан порядок deinit и print"
+ },
+ {
+  "task": "weak.s1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Готово 18\nfalse",
+  "note": "Пропущено последнее освобождение"
+ },
+ {
+  "task": "weak.s1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Готово 18\nЭкран освобождён\ntrue",
+  "note": "Думает, что после screen = nil экран освобождается и делегат обнуляется"
+ },
+ {
+  "task": "weak.s1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Готово 18\ntrue\nЭкран освобождён",
+  "note": "Считает делегат слабым: true до освобождения"
+ },
+ {
+  "task": "weak.s1",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "Ошибка: утечка памяти, ничего не напечатается",
+  "note": "Неверно по сути"
+ },
+ {
+  "task": "weak.s2",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "weak var delegate: (any DictationDelegate)?\nfunc finish() { delegate?.didFinish() }",
+  "note": "Как в ключе"
+ },
+ {
+  "task": "weak.s2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "    weak var delegate: DictationDelegate?\n    func finish() {\n        delegate?.didFinish()\n    }",
+  "note": "Без any, развёрнутое тело"
+ },
+ {
+  "task": "weak.s2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "weak var delegate: DictationDelegate? = nil\nfunc finish() { self.delegate?.didFinish() }\n\nweak, чтобы player не держал экран.",
+  "note": "Явный nil и self."
+ },
+ {
+  "task": "weak.s2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "var delegate: (any DictationDelegate)?\nfunc finish() { delegate?.didFinish() }",
+  "note": "Нет weak, цикл удержания"
+ },
+ {
+  "task": "weak.s2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "unowned var delegate: (any DictationDelegate)?\nfunc finish() { delegate?.didFinish() }\n\nunowned тоже не удерживает экран.",
+  "note": "unowned вместо weak"
+ },
+ {
+  "task": "weak.s2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "weak let delegate: (any DictationDelegate)?\nfunc finish() { delegate?.didFinish() }",
+  "note": "weak у let"
+ },
+ {
+  "task": "weak.s2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "weak var delegate: DictationDelegate\nfunc finish() { delegate?.didFinish() }",
+  "note": "weak без Optional"
+ },
+ {
+  "task": "weak.s2",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "var onFinish: (() -> Void)?\nfunc finish() { onFinish?() }",
+  "note": "Замыкание вместо слабого делегата"
+ },
+ {
+  "task": "weak.s3",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "protocol DictationDelegate: AnyObject {\n  func didFinish()\n}\nfinal class DictationPlayer {\n  weak var delegate: (any DictationDelegate)?\n  func finish() { delegate?.didFinish() }\n}",
+  "note": "Как в ключе"
+ },
+ {
+  "task": "weak.s3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "protocol DictationDelegate: AnyObject {\n    func didFinish()\n}\n\nfinal class DictationPlayer {\n    weak var delegate: DictationDelegate?\n    func finish() {\n        delegate?.didFinish()\n    }\n}",
+  "note": "Без any, развёрнутое тело"
+ },
+ {
+  "task": "weak.s3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "protocol DictationDelegate: AnyObject { func didFinish() }\nfinal class DictationPlayer {\n    weak var delegate: (any DictationDelegate)?\n    func finish() {\n        if let d = delegate { d.didFinish() }\n    }\n}\n\nAnyObject нужен для weak.",
+  "note": "if let вместо optional chaining"
+ },
+ {
+  "task": "weak.s3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "protocol DictationDelegate { func didFinish() }\nfinal class DictationPlayer {\n  weak var delegate: DictationDelegate?\n  func finish() { delegate?.didFinish() }\n}",
+  "note": "Нет AnyObject: weak не скомпилируется"
+ },
+ {
+  "task": "weak.s3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "protocol DictationDelegate: AnyObject { func didFinish() }\nfinal class DictationPlayer {\n  var delegate: DictationDelegate?\n  func finish() { delegate?.didFinish() }\n}\n\nПротокол для классов.",
+  "note": "Нет weak: цикл удержания"
+ },
+ {
+  "task": "weak.s3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "protocol DictationDelegate: AnyObject { func didFinish() }\nfinal class DictationPlayer {\n  weak var delegate: DictationDelegate\n  func finish() { delegate?.didFinish() }\n}",
+  "note": "weak без Optional"
+ },
+ {
+  "task": "weak.s3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "protocol DictationDelegate: AnyObject {\n  func didFinish()\n}\nfinal class DictationPlayer {\n  weak var delegate: (any DictationDelegate)?\n}",
+  "note": "Забыл метод finish"
+ },
+ {
+  "task": "weak.s3",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "struct DictationPlayer {\n  var screen: DictationScreen\n}",
+  "note": "Нет протокола и weak-делегата"
+ },
+ {
+  "task": "weak.s4",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "return { [weak self] in\n    guard let self else { print(\"Экран закрыт\"); return }\n    print(\"Повтор \\(self.id)\")\n}",
+  "note": "Как в ключе"
+ },
+ {
+  "task": "weak.s4",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "return { [weak self] in\n    if let self = self {\n        print(\"Повтор \\(self.id)\")\n    } else {\n        print(\"Экран закрыт\")\n    }\n}",
+  "note": "if let / else"
+ },
+ {
+  "task": "weak.s4",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "{ [weak self] in\n  guard let strongSelf = self else {\n    print(\"Экран закрыт\")\n    return\n  }\n  print(\"Повтор \\(strongSelf.id)\")\n}\n\nТак экран не удерживается замыканием.",
+  "note": "guard let с другим именем"
+ },
+ {
+  "task": "weak.s4",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "return { [weak self] in\n    print(\"Повтор \\(self?.id ?? 0)\")\n}",
+  "note": "Нет ветки «Экран закрыт»: напечатает «Повтор 0»"
+ },
+ {
+  "task": "weak.s4",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "return { [weak self] in\n    guard let self else { return }\n    print(\"Повтор \\(self.id)\")\n}\n\nweak и guard let, чтобы не упасть.",
+  "note": "Молча выходит без фразы «Экран закрыт»"
+ },
+ {
+  "task": "weak.s4",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "return { [weak self] in\n    print(\"Повтор \\(self.id)\")\n}",
+  "note": "Нет разворачивания Optional self"
+ },
+ {
+  "task": "weak.s4",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "return { [weak self] in\n    guard let self = self {\n        print(\"Экран закрыт\"); return\n    }\n    print(\"Повтор \\(self.id)\")\n}",
+  "note": "В guard нет else"
+ },
+ {
+  "task": "weak.s4",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "return { [self] in\n    print(\"Повтор \\(id)\")\n}",
+  "note": "Сильный захват: экран живёт, фраза не появится"
+ },
+ {
+  "task": "weak.s5",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "Делегат делаем слабым, чтобы не было цикла: экран держит проигрыватель, а проигрыватель держал бы экран. AnyObject нужен, потому что weak работает только для классов. Когда экран закрыли, weak self в replay становится nil, и срабатывает guard — печатается «Экран закрыт». unowned у приватной подсказки можно, потому что она живёт только внутри живой сессии и наружу не уходит. Внешний replay может вызваться позже, и там такой гарантии нет.",
+  "note": "Полный ответ"
+ },
+ {
+  "task": "weak.s5",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Если делегат сильный, получится кольцо: экран → player → экран, и ничего не освободится. weak это разрывает, а AnyObject — чтобы вообще можно было писать weak, это только для классов. После закрытия replay увидит nil вместо self и скажет «Экран закрыт». А подсказка приватная, сидит в сессии и никуда не уходит, поэтому владелец точно жив, unowned безопасен; у replay же, который лежит снаружи, такой уверенности нет — упадёт.",
+  "note": "Полный ответ разговорно"
+ },
+ {
+  "task": "weak.s5",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Слабый, чтобы обратная ссылка не владела экраном — иначе цикл. AnyObject даёт право на weak. replay после закрытия: self стал nil, ветка с «Экран закрыт». unowned оправдан, только когда объект точно переживёт использование: подсказку трогают лишь через живую сессию. replay же отдан наружу и может быть вызван после смерти экрана — для него unowned опасен.",
+  "note": "Полный ответ другим порядком"
+ },
+ {
+  "task": "weak.s5",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Делегат слабый, чтобы не было цикла владения, AnyObject нужен для weak. После закрытия weak self становится nil и replay печатает «Экран закрыт».",
+  "note": "Нет части про unowned у подсказки и внешнего replay"
+ },
+ {
+  "task": "weak.s5",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "weak-делегат нужен, чтобы не было цикла. После закрытия weak-захват даст nil, и replay выберет ветку «Экран закрыт». Подсказке подходит unowned, потому что она приватная и живёт только вместе с сессией, а внешний replay может пережить экран.",
+  "note": "Не объяснено, зачем AnyObject"
+ },
+ {
+  "task": "weak.s5",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Делегат слабый, чтобы он быстрее освобождался. После закрытия weak-замыкание продолжает удерживать экран живым, поэтому replay сработает как обычно. unowned тоже становится nil, просто без Optional, так что подходит везде.",
+  "note": "Ложные утверждения про weak и unowned"
+ },
+ {
+  "task": "weak.s5",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Делегат слабый, чтобы не удерживать экран, AnyObject нужен для weak. replay после закрытия просто ничего не напечатает. unowned у подсказки подходит, потому что он быстрее; внешнему replay он нужен тоже, просто его забыли написать.",
+  "note": "Ложь: replay молчит, unowned «быстрее»"
+ },
+ {
+  "task": "weak.s5",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "Протокол делегата наследуется от AnyObject, поэтому replay — это Optional closure, а подсказка — private lazy var с делегатом. Экран конформит DictationSession.",
+  "note": "Набор терминов без смысла"
+ },
+ {
+  "task": "weak.s6",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "final class DictationHint {\n    unowned let owner: DictationSession\n    init(owner: DictationSession) { self.owner = owner }\n    func show() { print(owner.id) }\n}",
+  "note": "Как в ключе"
+ },
+ {
+  "task": "weak.s6",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "struct DictationHint {\n    unowned let owner: DictationSession\n    func show() { print(owner.id) }\n}\n\nunowned, потому что hint живёт внутри сессии и наружу не уходит, сессия точно жива.",
+  "note": "struct с memberwise init, объяснение"
+ },
+ {
+  "task": "weak.s6",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "final class DictationHint {\n  unowned let owner: DictationSession\n  init(owner: DictationSession) {\n    self.owner = owner\n  }\n  func show() {\n    let value = owner.id\n    print(value)\n  }\n}",
+  "note": "Локальная переменная, развёрнутые строки"
+ },
+ {
+  "task": "weak.s6",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "final class DictationHint {\n    unowned let owner: DictationSession\n    init(owner: DictationSession) { self.owner = owner }\n    func show() { print(owner) }\n}",
+  "note": "Печатает owner вместо owner.id"
+ },
+ {
+  "task": "weak.s6",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "final class DictationHint {\n    weak var owner: DictationSession?\n    init(owner: DictationSession) { self.owner = owner }\n    func show() { print(owner?.id ?? 0) }\n}",
+  "note": "weak вместо требуемого unowned let"
+ },
+ {
+  "task": "weak.s6",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "final class DictationHint {\n    unowned let owner: DictationSession\n    func show() { print(owner.id) }\n}",
+  "note": "Забыл init"
+ },
+ {
+  "task": "weak.s6",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "final class DictationHint {\n    let owner: DictationSession\n    init(owner: DictationSession) { self.owner = owner }\n    func show() { print(owner.id) }\n}\n\nПодсказка хранит сессию.",
+  "note": "Нет unowned: сильный цикл"
+ },
+ {
+  "task": "weak.s6",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "final class DictationHint {\n    func show() { print(18) }\n}",
+  "note": "Нет owner, значение захардкожено"
+ },
+ {
+  "task": "weak.s7",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "final class DictationScreen {\n    let id = 18\n    func makeProgress() -> () -> Void {\n        return { [weak self] in\n            guard let self else { print(\"Экран закрыт\"); return }\n            print(\"Прогресс \\(self.id)\")\n        }\n    }\n    deinit { print(\"Экран освобождён\") }\n}\nvar screen: DictationScreen? = DictationScreen()\nlet replay = screen!.makeProgress()\nreplay()\nscreen = nil\nreplay()",
+  "note": "Как в ключе"
+ },
+ {
+  "task": "weak.s7",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "final class DictationScreen {\n    let id = 18\n    func makeProgress() -> () -> Void {\n        return { [weak self] in\n            if let screen = self { print(\"Прогресс \\(screen.id)\") }\n            else { print(\"Экран закрыт\") }\n        }\n    }\n    deinit { print(\"Экран освобождён\") }\n}\nvar screen: DictationScreen? = DictationScreen()\nlet action = screen!.makeProgress()\naction()\nscreen = nil\naction()",
+  "note": "if let / else, другое имя действия"
+ },
+ {
+  "task": "weak.s7",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "final class DictationScreen {\n  let id: Int = 18\n  func makeProgress() -> () -> Void {\n    { [weak self] in\n      guard let s = self else {\n        print(\"Экран закрыт\")\n        return\n      }\n      print(\"Прогресс \\(s.id)\")\n    }\n  }\n  deinit { print(\"Экран освобождён\") }\n}\nvar screen: DictationScreen? = DictationScreen()\nlet saved = screen!.makeProgress()\nsaved()\nscreen = nil\nsaved()\n\nВывод: Прогресс 18, Экран освобождён, Экран закрыт.",
+  "note": "guard let s, явный тип, неявный return"
+ },
+ {
+  "task": "weak.s7",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "final class DictationScreen {\n    let id = 18\n    func makeProgress() -> () -> Void {\n        return { [weak self] in\n            guard let self else { return }\n            print(\"Прогресс \\(self.id)\")\n        }\n    }\n    deinit { print(\"Экран освобождён\") }\n}\nvar screen: DictationScreen? = DictationScreen()\nlet replay = screen!.makeProgress()\nreplay()\nscreen = nil\nreplay()",
+  "note": "Нет фразы «Экран закрыт»"
+ },
+ {
+  "task": "weak.s7",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "final class DictationScreen {\n    let id = 18\n    func makeProgress() -> () -> Void {\n        return { [weak self] in\n            guard let self else { print(\"Экран закрыт\"); return }\n            print(\"Прогресс \\(self.id)\")\n        }\n    }\n    deinit { print(\"Экран освобождён\") }\n}\nvar screen: DictationScreen? = DictationScreen()\nlet replay = screen!.makeProgress()\nreplay()\nscreen = nil",
+  "note": "Убран поздний вызов"
+ },
+ {
+  "task": "weak.s7",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "final class DictationScreen {\n    let id = 18\n    func makeProgress() -> () -> Void {\n        return { [weak self] in\n            print(\"Прогресс \\(self.id)\")\n        }\n    }\n    deinit { print(\"Экран освобождён\") }\n}\nvar screen: DictationScreen? = DictationScreen()\nlet replay = screen!.makeProgress()\nreplay()\nscreen = nil\nreplay()",
+  "note": "Нет разворачивания weak self"
+ },
+ {
+  "task": "weak.s7",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "final class DictationScreen {\n    let id = 18\n    func makeProgress() -> () -> Void {\n        return { [weak self] in\n            guard let self else { print(\"Экран закрыт\"); return }\n            print(\"Прогресс \\(self.id)\")\n        }\n    }\n    deinit { print(\"Экран освобождён\") }\n}\nlet screen: DictationScreen? = DictationScreen()\nlet replay = screen!.makeProgress()\nreplay()\nscreen = nil\nreplay()\n\nweak нужен, чтобы замыкание не держало экран.",
+  "note": "let вместо var: screen = nil не скомпилируется"
+ },
+ {
+  "task": "weak.s7",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "final class DictationScreen {\n    let id = 18\n    func makeProgress() -> () -> Void {\n        return { print(\"Прогресс \\(self.id)\") }\n    }\n    deinit { print(\"Экран освобождён\") }\n}\nvar screen: DictationScreen? = DictationScreen()\nlet replay = screen!.makeProgress()\nreplay()\nscreen = nil\nreplay()",
+  "note": "Сильный захват: экран не освободится, «Экран закрыт» не появится"
+ },
+ {
+  "task": "weak-b1",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "let receiver = Receiver()\nremote.delegate = receiver\nwithExtendedLifetime(receiver) { remote.signal() }",
+  "note": "Как в ключе"
+ },
+ {
+  "task": "weak-b1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "// держим receiver сильной ссылкой\nlet receiver = Receiver()\nremote.delegate = receiver\nwithExtendedLifetime(receiver) {\n    remote.signal()\n}",
+  "note": "Многострочное замыкание и комментарий"
+ },
+ {
+  "task": "weak-b1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "let remote = LampRemote()\nlet receiver: Receiver = Receiver()\nremote.delegate = receiver\nwithExtendedLifetime(receiver, { remote.signal() })\n\nreceiver живёт до конца signal, delegate остаётся weak.",
+  "note": "Явный тип и замыкание в скобках"
+ },
+ {
+  "task": "weak-b1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let receiver = Receiver()\nremote.delegate = receiver\nremote.signal()",
+  "note": "Нет withExtendedLifetime"
+ },
+ {
+  "task": "weak-b1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let receiver = Receiver()\nremote.delegate = receiver\nwithExtendedLifetime(remote) { remote.signal() }",
+  "note": "Продлевается жизнь remote, а не receiver"
+ },
+ {
+  "task": "weak-b1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "weak var receiver = Receiver()\nremote.delegate = receiver\nwithExtendedLifetime(receiver) { remote.signal() }",
+  "note": "weak у локальной переменной: объект сразу освобождается"
+ },
+ {
+  "task": "weak-b1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let receiver = Receiver()\nwithExtendedLifetime(receiver) { remote.signal() }\n\nReceiver держится сильной ссылкой.",
+  "note": "Забыл назначить delegate"
+ },
+ {
+  "task": "weak-b1",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "print(\"Свет включён\")",
+  "note": "Печатает фразу вместо работы с делегатом"
+ },
+ {
+  "task": "weak-b2",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "final class PlanetModel {\n    let id = 6\n    func makeAction() -> () -> Void {\n        { [weak self] in\n            guard let self else { print(\"Модель удалена\"); return }\n            print(self.id)\n        }\n    }\n}\nvar model: PlanetModel? = PlanetModel()\nlet action = model!.makeAction()\nmodel = nil\naction()",
+  "note": "Как в ключе"
+ },
+ {
+  "task": "weak-b2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "{ [weak self] in\n  if let self { print(self.id) }\n  else { print(\"Модель удалена\") }\n}\n\nweak, потому что кнопка не должна удерживать модель.",
+  "note": "if let / else"
+ },
+ {
+  "task": "weak-b2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "final class PlanetModel {\n    let id = 6\n    func makeAction() -> () -> Void {\n        return { [weak self] in\n            guard let model = self else {\n                print(\"Модель удалена\")\n                return\n            }\n            print(model.id)\n        }\n    }\n}\nvar model: PlanetModel? = PlanetModel()\nlet action = model!.makeAction()\nmodel = nil\naction()",
+  "note": "guard let model = self"
+ },
+ {
+  "task": "weak-b2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "{ [weak self] in\n    guard let self else { return }\n    print(self.id)\n}",
+  "note": "Нет сообщения «Модель удалена»"
+ },
+ {
+  "task": "weak-b2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "final class PlanetModel {\n    let id = 6\n    func makeAction() -> () -> Void {\n        { [weak self] in\n            guard let self else { print(\"Модель удалена\"); return }\n            print(self.id)\n        }\n    }\n}\nvar model: PlanetModel? = PlanetModel()\nlet action = model!.makeAction()\nmodel = nil",
+  "note": "Убран вызов action()"
+ },
+ {
+  "task": "weak-b2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "{ [weak self] in print(self.id) }",
+  "note": "Нет разворачивания Optional"
+ },
+ {
+  "task": "weak-b2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "{ [weak self] in\n    guard let self else { print(\"Модель удалена\") }\n    print(self.id)\n}",
+  "note": "В else guard нет return"
+ },
+ {
+  "task": "weak-b2",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "var model: PlanetModel? = PlanetModel()\nlet action = model!.makeAction()\naction()\nmodel = nil",
+  "note": "Вызов перенесён до model = nil, замыкание не менялось"
+ },
+ {
+  "task": "weak-b3",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "final class ChessMatch {\n    let id = 7\n    func makeHistoryAction() -> () -> Void {\n        { [id = self.id] in print(id) }\n    }\n    deinit { print(\"Партия освобождена\") }\n}\nvar match: ChessMatch? = ChessMatch()\nlet action = match!.makeHistoryAction()\nmatch = nil\naction()",
+  "note": "Как в ключе"
+ },
+ {
+  "task": "weak-b3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func makeHistoryAction() -> () -> Void {\n    return { [capturedID = self.id] in print(capturedID) }\n}",
+  "note": "Другое имя в capture list"
+ },
+ {
+  "task": "weak-b3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "final class ChessMatch {\n  let id = 7\n  func makeHistoryAction() -> () -> Void {\n    return { [id = self.id] () -> Void in\n      print(\"\\(id)\")\n    }\n  }\n  deinit { print(\"Партия освобождена\") }\n}\nvar match: ChessMatch? = ChessMatch()\nlet action = match!.makeHistoryAction()\nmatch = nil\naction()\n\nЗахватили Int, поэтому партия освободится.",
+  "note": "Явная сигнатура и интерполяция"
+ },
+ {
+  "task": "weak-b3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "{ [weak self] in print(self?.id ?? 0) }",
+  "note": "weak даст 0 вместо 7"
+ },
+ {
+  "task": "weak-b3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "{ [self] in print(id) }\n\nПартия остаётся в замыкании.",
+  "note": "Сильный захват self"
+ },
+ {
+  "task": "weak-b3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "{ [id = self.id] in print(self.id) }",
+  "note": "Внутри по-прежнему захватывается self"
+ },
+ {
+  "task": "weak-b3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "{ [id = self.id] print(id) }",
+  "note": "Нет in"
+ },
+ {
+  "task": "weak-b3",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "{ print(7) }",
+  "note": "Захардкоженное число"
+ }
+]

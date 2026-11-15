@@ -1,0 +1,562 @@
+[
+ {
+  "task": "hof.s1",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "[\"Анна\", \"Олег\"]\n[180]\n180",
+  "note": "Результат как в ключе."
+ },
+ {
+  "task": "hof.s1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "recipients: [\"Анна\", \"Олег\"], amounts: [180], reduce вернёт 180. compactMap выкинул \"abc\"",
+  "note": "Те же значения в одну строку."
+ },
+ {
+  "task": "hof.s1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "recipients Анна и Олег, amounts одно число 180, сумма 180",
+  "note": "Описано словами без кавычек."
+ },
+ {
+  "task": "hof.s1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "[\"Анна\"], [180], 180",
+  "note": "Потерян Олег: он проведён."
+ },
+ {
+  "task": "hof.s1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "[\"Анна\", \"Олег\"], [180], 270",
+  "note": "Неверная сумма: Мария не проведена."
+ },
+ {
+  "task": "hof.s1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "[\"Анна\", \"Олег\"], [180, 0], 180",
+  "note": "Считает, что compactMap заменит abc на 0."
+ },
+ {
+  "task": "hof.s1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Приложение упадёт на Int(\"abc\"), compactMap не спасёт",
+  "note": "Int(String) не падает, возвращает nil."
+ },
+ {
+  "task": "hof.s1",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "Анна, Олег, Мария; 180, 90; 270",
+  "note": "filter не применён, взяты все переводы."
+ },
+ {
+  "task": "hof.s2",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "func pieces(_ transfers: [Transfer]) -> ([String], [Int]) {\n    let posted = transfers.filter { $0.posted }\n    let recipients = posted.map { $0.recipient }\n    let amounts = posted.compactMap { Int($0.amountText) }\n    return (recipients, amounts)\n}",
+  "note": "Ключ целиком."
+ },
+ {
+  "task": "hof.s2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "let p = transfers.filter { $0.posted }\nlet names = p.map { $0.recipient }\nlet sums = p.compactMap { Int($0.amountText) }\nreturn (names, sums)",
+  "note": "Другие имена, только тело."
+ },
+ {
+  "task": "hof.s2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func pieces(_ transfers: [Transfer]) -> ([String], [Int]) {\n  let posted = transfers.filter { t in t.posted == true }\n  let recipients = posted.map { t in t.recipient }\n  let amounts = posted.compactMap { t in Int(t.amountText) }\n  return (recipients, amounts)\n}\n\nfilter отсеивает непроведённые, compactMap пропускает те, что не число.",
+  "note": "Явные параметры замыканий."
+ },
+ {
+  "task": "hof.s2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let posted = transfers.filter { !$0.posted }\nlet recipients = posted.map { $0.recipient }\nlet amounts = posted.compactMap { Int($0.amountText) }\nreturn (recipients, amounts)",
+  "note": "Инвертировано условие filter."
+ },
+ {
+  "task": "hof.s2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let posted = transfers.filter { $0.posted }\nlet recipients = posted.map { $0.recipient }\nlet amounts = transfers.compactMap { Int($0.amountText) }\nreturn (recipients, amounts)",
+  "note": "Суммы взяты из всех переводов, а не из проведённых."
+ },
+ {
+  "task": "hof.s2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let posted = transfers.filter { $0.posted }\nlet recipients = posted.map { $0.recipient }\nlet amounts = posted.map { Int($0.amountText)! }\nreturn (recipients, amounts)",
+  "note": "Force unwrap вместо compactMap, упадёт на abc."
+ },
+ {
+  "task": "hof.s2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let posted = transfers.filter { $0.posted }\nlet recipients = posted.map { $0.recipient }\nlet amounts = posted.compactMap { Int($0.amountText) }",
+  "note": "Забыт return."
+ },
+ {
+  "task": "hof.s2",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "return ([\"Анна\"], [180])",
+  "note": "Захардкоженный результат."
+ },
+ {
+  "task": "hof.s3",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "func totalAmount(_ transfers: [Transfer]) -> Int? {\n    let posted = transfers.filter { $0.posted }\n    let amounts = posted.compactMap { Int($0.amountText) }\n    guard amounts.count == posted.count else { return nil }\n    return amounts.reduce(0, +)\n}",
+  "note": "Ключ целиком."
+ },
+ {
+  "task": "hof.s3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "let posted = transfers.filter { $0.posted }\nlet amounts = posted.compactMap { Int($0.amountText) }\nif amounts.count != posted.count { return nil }\nreturn amounts.reduce(0) { $0 + $1 }",
+  "note": "if вместо guard и развёрнутый reduce."
+ },
+ {
+  "task": "hof.s3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func totalAmount(_ transfers: [Transfer]) -> Int? {\n  let posted = transfers.filter { $0.posted }\n  let nums = posted.compactMap { Int($0.amountText) }\n  return nums.count == posted.count ? nums.reduce(0, +) : nil\n}\n\nЕсли count не совпал, значит compactMap потерял запись.",
+  "note": "Тернарный оператор."
+ },
+ {
+  "task": "hof.s3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let posted = transfers.filter { $0.posted }\nlet amounts = posted.compactMap { Int($0.amountText) }\nreturn amounts.reduce(0, +)",
+  "note": "Пропущена проверка количества."
+ },
+ {
+  "task": "hof.s3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let posted = transfers.filter { $0.posted }\nlet amounts = posted.compactMap { Int($0.amountText) }\nguard amounts.count == transfers.count else { return nil }\nreturn amounts.reduce(0, +)",
+  "note": "Сравнение с общим числом переводов, а не проведённых."
+ },
+ {
+  "task": "hof.s3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let posted = transfers.filter { $0.posted }\nlet amounts = posted.compactMap { Int($0.amountText) }\nguard amounts.count = posted.count else { return nil }\nreturn amounts.reduce(0, +)",
+  "note": "Присваивание вместо сравнения."
+ },
+ {
+  "task": "hof.s3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let posted = transfers.filter { $0.posted }\nlet amounts = posted.map { Int($0.amountText)! }\nreturn amounts.reduce(0, +)",
+  "note": "Force unwrap: падение вместо nil."
+ },
+ {
+  "task": "hof.s3",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "return posted.count",
+  "note": "Возвращает количество, а не сумму."
+ },
+ {
+  "task": "hof.s4",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "struct Transfer {\n    let recipient: String\n    let amountText: String\n    let posted: Bool\n}\nlet transfers = [Transfer(recipient: \"Анна\", amountText: \"180\", posted: true),\n                 Transfer(recipient: \"Олег\", amountText: \"abc\", posted: true)]\nlet posted = transfers.filter { $0.posted }\nlet amounts = posted.compactMap { Int($0.amountText) }\nlet totalAmount: Int? = amounts.count == posted.count\n    ? amounts.reduce(0, +) : nil",
+  "note": "Ключ целиком."
+ },
+ {
+  "task": "hof.s4",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "let posted = transfers.filter { $0.posted }\nlet nums = posted.compactMap { Int($0.amountText) }\nvar totalAmount: Int? = nil\nif nums.count == posted.count {\n    totalAmount = nums.reduce(0, +)\n}\nprint(totalAmount as Any)",
+  "note": "var и if вместо тернарного оператора."
+ },
+ {
+  "task": "hof.s4",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "let posted = transfers.filter { $0.posted }\nlet parsed = posted.map { Int($0.amountText) }\nlet totalAmount: Int? = parsed.contains(where: { $0 == nil }) ? nil : parsed.compactMap { $0 }.reduce(0, +)\n\ncompactMap молча выкидывает \"abc\", поэтому видно 180. Если в parsed есть nil, итог nil.",
+  "note": "Проверка nil до суммы."
+ },
+ {
+  "task": "hof.s4",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let posted = transfers.filter { $0.posted }\nlet amounts = posted.compactMap { Int($0.amountText) }\nlet totalAmount = amounts.count == posted.count ? amounts.reduce(0, +) : 0",
+  "note": "При ошибке молча 0 вместо nil."
+ },
+ {
+  "task": "hof.s4",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let posted = transfers.filter { $0.posted }\nlet amounts = posted.compactMap { Int($0.amountText) }\nlet totalAmount: Int? = amounts.isEmpty ? nil : amounts.reduce(0, +)",
+  "note": "Проверка пустоты не ловит потерянную запись."
+ },
+ {
+  "task": "hof.s4",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let posted = transfers.filter { $0.posted }\nlet totalAmount = posted.map { Int($0.amountText)! }.reduce(0, +)\nprint(totalAmount)",
+  "note": "Force unwrap: приложение упадёт."
+ },
+ {
+  "task": "hof.s4",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let posted = transfers.filter { $0.posted }\nlet amounts = posted.compactMap { Int($0.amountText) }\nlet totalAmount: Int? = amounts.count = posted.count ? amounts.reduce(0, +) : nil",
+  "note": "Присваивание вместо сравнения."
+ },
+ {
+  "task": "hof.s4",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "do {\n    print(try posted.reduce(0, +))\n} catch {\n    print(\"ошибка\")\n}",
+  "note": "Не про compactMap; reduce не бросает."
+ },
+ {
+  "task": "hof.s5",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "filter оставляет только часть переводов, map превращает каждый оставшийся в одно значение, а compactMap ещё и выкидывает nil, если преобразование не вышло. Поэтому он опасен: плохая сумма просто пропадёт, и отчёт соврёт. reduce сворачивает все числа в один итог.",
+  "note": "Близко к ключу."
+ },
+ {
+  "task": "hof.s5",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Смотри, filter это сито: что подходит, то остаётся. map берёт каждое и делает из него что-то другое. compactMap так же, но если не получилось (nil), то выбрасывает, и можно потерять платёж и не заметить. А reduce собирает кучу чисел в одно, типа сумму.",
+  "note": "Разговорный полный ответ."
+ },
+ {
+  "task": "hof.s5",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Три разные вещи. Первое: отбор записей и преобразование каждой. Второе: compactMap молча отбрасывает неудачи, значит итог может быть занижен и никто не узнает. Третье: reduce склеивает числа в один результат.",
+  "note": "Другая структура."
+ },
+ {
+  "task": "hof.s5",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "filter оставляет часть, map преобразует каждый, reduce складывает в одно число. compactMap убирает nil.",
+  "note": "Не сказано, чем compactMap опасен."
+ },
+ {
+  "task": "hof.s5",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "filter оставляет часть, map преобразует, compactMap убирает nil и может спрятать ошибку суммы.",
+  "note": "Не объяснено, что делает reduce."
+ },
+ {
+  "task": "hof.s5",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "compactMap опасен потому что он медленный и копирует весь массив, а reduce сворачивает числа в одно. filter оставляет часть, map преобразует.",
+  "note": "Ложная причина опасности compactMap."
+ },
+ {
+  "task": "hof.s5",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "map убирает элементы, которые не подходят, а filter преобразует каждый. compactMap убирает nil, reduce складывает.",
+  "note": "Перепутаны роли filter и map."
+ },
+ {
+  "task": "hof.s5",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "Это всё функции высшего порядка, они принимают замыкания и работают через циклы под капотом, лучше использовать их везде.",
+  "note": "Общие слова без ответа на вопросы."
+ },
+ {
+  "task": "hof.s6",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "let recipients = [\"Анна\", \"Олег\", \"Анна\"]\nlet counts = recipients.reduce(into: [String: Int]()) { result, name in\n    result[name, default: 0] += 1\n}",
+  "note": "Ключ целиком."
+ },
+ {
+  "task": "hof.s6",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "let counts: [String: Int] = recipients.reduce(into: [:]) { $0[$1, default: 0] += 1 }",
+  "note": "Сокращённые аргументы и явный тип."
+ },
+ {
+  "task": "hof.s6",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "let counts = recipients.reduce(into: [String: Int]()) { acc, n in\n    acc[n] = (acc[n] ?? 0) + 1\n}\n\nОдин словарь меняется на каждом шаге, поэтому reduce(into:).",
+  "note": "Через ?? вместо default."
+ },
+ {
+  "task": "hof.s6",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let counts = recipients.reduce(into: [String: Int]()) { result, name in\n    result[name] = 1\n}",
+  "note": "Значение перезаписывается единицей, а не считается."
+ },
+ {
+  "task": "hof.s6",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let counts = Dictionary(grouping: recipients, by: { $0 }).mapValues { $0.count }",
+  "note": "Верный результат, но не через reduce(into:)."
+ },
+ {
+  "task": "hof.s6",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let counts = recipients.reduce(into: [String: Int]()) { result, name in\n    result[name] += 1\n}",
+  "note": "Без default: значение Optional, не скомпилируется."
+ },
+ {
+  "task": "hof.s6",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let counts = recipients.reduce(into: [String: Int]) { result, name in\n    result[name, default: 0] += 1\n}",
+  "note": "Тип вместо значения: пропущены скобки ()."
+ },
+ {
+  "task": "hof.s6",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "let counts = [\"Анна\": 2, \"Олег\": 1]",
+  "note": "Захардкоженный словарь."
+ },
+ {
+  "task": "hof.s7",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "func totalAmount(_ transfers: [Transfer]) -> Int? {\n    let posted = transfers.filter { $0.posted }\n    let amounts = posted.compactMap { Int($0.amountText) }\n    guard posted.count == amounts.count else { return nil }\n    return amounts.reduce(0, +)\n}\n\nfilter отбирает проведённые, map бы преобразовал каждый, compactMap убирает nil, reduce складывает.",
+  "note": "Ключ с пояснением."
+ },
+ {
+  "task": "hof.s7",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func totalAmount(_ transfers: [Transfer]) -> Int? {\n    let posted = transfers.filter { $0.posted }\n    let amounts = posted.compactMap { Int($0.amountText) }\n    if amounts.count != posted.count { return nil }\n    return amounts.reduce(0) { $0 + $1 }\n}",
+  "note": "if вместо guard."
+ },
+ {
+  "task": "hof.s7",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func totalAmount(_ t: [Transfer]) -> Int? {\n  var sum = 0\n  for x in t where x.posted {\n     guard let v = Int(x.amountText) else { return nil }\n     sum += v\n  }\n  return sum\n}",
+  "note": "Цикл вместо цепочки: верно и безопасно."
+ },
+ {
+  "task": "hof.s7",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "func totalAmount(_ transfers: [Transfer]) -> Int? {\n    let amounts = transfers.compactMap { Int($0.amountText) }\n    guard amounts.count == transfers.count else { return nil }\n    return amounts.reduce(0, +)\n}",
+  "note": "Не отфильтрованы непроведённые."
+ },
+ {
+  "task": "hof.s7",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "func totalAmount(_ transfers: [Transfer]) -> Int? {\n    let posted = transfers.filter { $0.posted }\n    let amounts = posted.compactMap { Int($0.amountText) }\n    guard amounts.count == posted.count else { return 0 }\n    return amounts.reduce(0, +)\n\n}\n\nЕсли сумма плохая, возвращаем 0.",
+  "note": "Возвращает 0 вместо nil."
+ },
+ {
+  "task": "hof.s7",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "func totalAmount(_ transfers: [Transfer]) -> Int {\n    let posted = transfers.filter { $0.posted }\n    let amounts = posted.compactMap { Int($0.amountText) }\n    guard amounts.count == posted.count else { return nil }\n    return amounts.reduce(0, +)\n}",
+  "note": "Тип возврата Int вместо Int?, return nil не скомпилируется."
+ },
+ {
+  "task": "hof.s7",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "func totalAmount(_ transfers: [Transfer]) -> Int? {\n    let posted = transfers.filter { $0.posted }\n    return posted.map { Int($0.amountText)! }.reduce(0, +)\n}",
+  "note": "Force unwrap: упадёт на плохой сумме."
+ },
+ {
+  "task": "hof.s7",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "func totalAmount(_ transfers: [Transfer]) -> Int? { return transfers.count }",
+  "note": "Возвращает количество, не сумму."
+ },
+ {
+  "task": "hof-b1",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "let heavyLeft = items\n    .filter { !$0.packed && $0.grams >= 500 }\n    .map { $0.name.uppercased() }\nlet allPacked = items.allSatisfy { $0.packed }\nprint(heavyLeft, allPacked)",
+  "note": "Ключ целиком."
+ },
+ {
+  "task": "hof-b1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "let heavyLeft = items.filter { $0.grams >= 500 && !$0.packed }.map { $0.name.uppercased() }\nlet allPacked = !items.contains { !$0.packed }",
+  "note": "Другой порядок условий и contains."
+ },
+ {
+  "task": "hof-b1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "let heavyLeft = items.filter { item in\n    item.grams >= 500 && item.packed == false\n}.map { item in item.name.uppercased() }\nlet allPacked = items.allSatisfy { item in item.packed }\n\nСначала filter, потом map, чтобы не делать лишнюю работу.",
+  "note": "Явные параметры замыканий."
+ },
+ {
+  "task": "hof-b1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let heavyLeft = items.filter { $0.grams >= 500 }.map { $0.name.uppercased() }\nlet allPacked = items.allSatisfy { $0.packed }",
+  "note": "Нет условия !packed: попадёт уже упакованная куртка."
+ },
+ {
+  "task": "hof-b1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let heavyLeft = items.filter { !$0.packed && $0.grams >= 500 }.map { $0.name.uppercased() }\nlet allPacked = items.contains { $0.packed }",
+  "note": "contains вместо allSatisfy: «хоть что-то упаковано»."
+ },
+ {
+  "task": "hof-b1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let heavyLeft = items.filter { !packed && grams >= 500 }.map { $0.name.uppercased() }",
+  "note": "В замыкании забыт $0 у свойств."
+ },
+ {
+  "task": "hof-b1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let heavyLeft = items.map { $0.name.uppercased() }.filter { $0.grams >= 500 }\nlet allPacked = items.allSatisfy { $0.packed }",
+  "note": "Map раньше filter: у String нет grams."
+ },
+ {
+  "task": "hof-b1",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "let heavyLeft = items.count\nlet allPacked = items.first!.packed",
+  "note": "Не решает: счётчик и один элемент."
+ },
+ {
+  "task": "hof-b2",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "Здоровье\nРигла\nВита\n—",
+  "note": "Вывод как в ключе."
+ },
+ {
+  "task": "hof-b2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Здоровье, Ригла, Вита, — (последняя пустая, nil, поэтому прочерк)",
+  "note": "Те же значения в одну строку."
+ },
+ {
+  "task": "hof-b2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "1. Здоровье 2. Ригла 3. Вита 4. прочерк. Вторая строка ищет ближайшую среди открытых, третья берёт первую открытую по списку",
+  "note": "Нумерованный список и пояснение."
+ },
+ {
+  "task": "hof-b2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Здоровье\nВита\nРигла\n—",
+  "note": "Перепутаны порядок второй и третьей строк."
+ },
+ {
+  "task": "hof-b2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Здоровье\nРигла\nВита\nЗдоровье",
+  "note": "Четвёртая строка неверна: меньше 100 м нет ни одной."
+ },
+ {
+  "task": "hof-b2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Вита\nВита\nВита\n—",
+  "note": "Считает, что min берёт первый элемент."
+ },
+ {
+  "task": "hof-b2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Здоровье\nРигла\nВита\nnil",
+  "note": "Думает, что ?? оставит nil в выводе."
+ },
+ {
+  "task": "hof-b2",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "Ригла\nВита\nЗдоровье\nошибка компиляции",
+  "note": "Неверно по сути."
+ },
+ {
+  "task": "hof-b3",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "map превращает каждый элемент в одно значение и форма остаётся: a) это массив массивов, [[\"INTRO\",\"RAIN\"],[\"SUN\"]]. flatMap склеивает вложенное в один уровень: b) [\"Intro\",\"Rain\",\"Sun\"], c) то же самое. У Optional: d) даёт Int??, потому что map заворачивает Int? ещё раз, а e) Int? со значением 42. А nil из массива убирает compactMap.",
+  "note": "Близко к ключу."
+ },
+ {
+  "task": "hof-b3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Короче, map ничего не плющит: был массив массивов, остался массив массивов, только буквы большие. flatMap плющит в один список из трёх названий, и joined делает то же. С опционалами так же: map поверх Int? даст двойной опционал, flatMap уберёт лишний слой, будет просто Int? от 42. nil выкидывать — это другая функция, compactMap.",
+  "note": "Разговорный полный ответ."
+ },
+ {
+  "task": "hof-b3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Разница в уровнях вложенности. a) сохраняет два уровня, b) и c) оставляют один уровень из названий. d) и e) то же правило на Optional: d) это Optional(Optional(42)), e) один Optional(42). flatMap нужен, когда замыкание само возвращает коллекцию или опционал, а с удалением nil не путать: это compactMap.",
+  "note": "Другой порядок мыслей, всё верно."
+ },
+ {
+  "task": "hof-b3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "map сохраняет вложенность, a) массив массивов. flatMap склеивает в один уровень: b) и c) дают [\"Intro\",\"Rain\",\"Sun\"]. Про Optional ничего не помню.",
+  "note": "Пропущена часть про Optional."
+ },
+ {
+  "task": "hof-b3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "map превращает каждый элемент, d) вернёт Int??, а e) с flatMap Int?. Про массивы: flatMap склеивает.",
+  "note": "Не разобраны строки a), b) и c), нет примеров."
+ },
+ {
+  "task": "hof-b3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "flatMap это то же что map, только быстрее. d) и e) оба вернут Int? со значением 42.",
+  "note": "Ложно: у d) получится Int??."
+ },
+ {
+  "task": "hof-b3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "flatMap нужен чтобы убрать nil из массива, а map nil оставляет. b) и c) тоже самое.",
+  "note": "Путает flatMap и compactMap."
+ },
+ {
+  "task": "hof-b3",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "map про Dictionary, а flatMap про файлы, они обе возвращают Void, поэтому в плеере не нужны.",
+  "note": "Набор терминов без смысла."
+ }
+]

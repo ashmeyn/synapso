@@ -1,0 +1,562 @@
+[
+ {
+  "task": "async.s1",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "Луна: 3 мин\nДля неизвестного id будет ExhibitError.missing, результат получаем через try await.",
+  "note": "Совпадает с ключом по смыслу и значению."
+ },
+ {
+  "task": "async.s1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Выведется Луна: 3 мин, потому что id 21 найден. Неизвестный id кидает ошибку missing, а не возвращает строку, поэтому вызывать надо с try await",
+  "note": "Тот же результат, другими словами."
+ },
+ {
+  "task": "async.s1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "\"Луна: 3 мин\"\nunknown id это throw ExhibitError.missing, а не успешный результат, нужен try await",
+  "note": "Тот же результат, в кавычках и короче."
+ },
+ {
+  "task": "async.s1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Луна: 3 мин\nДля неизвестного id вернётся пустая строка, она тоже успешный результат.",
+  "note": "Значение верно, но неверно объяснён неизвестный id: ошибки нет."
+ },
+ {
+  "task": "async.s1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "3 мин: Луна\nНеизвестный id бросает missing, нужен try await",
+  "note": "Перепутан порядок частей строки."
+ },
+ {
+  "task": "async.s1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Луна: 3 мин. Для неизвестного id вернётся nil, потому что строка опциональная.",
+  "note": "Заблуждение: вместо throw вернётся nil."
+ },
+ {
+  "task": "async.s1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Луна: 21 мин\nПри неверном id просто будет ошибка компиляции",
+  "note": "Минуты взяты из id, ошибка не про выполнение."
+ },
+ {
+  "task": "async.s1",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "Task<String>",
+  "note": "Назван тип задачи, а не результат и причина."
+ },
+ {
+  "task": "async.s2",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "  let title = try await fetchTitle(id: id)\n  let minutes = try await fetchMinutes(id: id)",
+  "note": "Как в ключе, отступ 2 пробела."
+ },
+ {
+  "task": "async.s2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "let title: String = try await fetchTitle(id: id)\nlet minutes: Int = try await fetchMinutes(id: id)",
+  "note": "Явные типы переменных."
+ },
+ {
+  "task": "async.s2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func loadExhibit(id: Int) async throws -> String {\n    let name = try await fetchTitle(id: id)\n    let min = try await fetchMinutes(id: id)\n    return \"\\(name): \\(min) мин\"\n}",
+  "note": "Другие имена локальных переменных, функция целиком."
+ },
+ {
+  "task": "async.s2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let title = try await fetchTitle(id: id)\nlet minutes = await fetchMinutes(id: id)",
+  "note": "Во второй строке пропущен try."
+ },
+ {
+  "task": "async.s2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let title = try await fetchTitle(id: id)\nlet minutes = try? await fetchMinutes(id: id)",
+  "note": "try? гасит ошибку и даёт Optional вместо проброса ошибки."
+ },
+ {
+  "task": "async.s2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let title = try fetchTitle(id: id)\nlet minutes = try fetchMinutes(id: id)\n\nawait тут не нужен, функции же и так throws",
+  "note": "Забыт await у обоих вызовов."
+ },
+ {
+  "task": "async.s2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let title = await try fetchTitle(id: id)\nlet minutes = await try fetchMinutes(id: id)",
+  "note": "Неверный порядок: должно быть try await."
+ },
+ {
+  "task": "async.s2",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "let title = Task { fetchTitle(id: id) }\nlet minutes = Task { fetchMinutes(id: id) }",
+  "note": "Запуск Task вместо ожидания результата."
+ },
+ {
+  "task": "async.s3",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "func loadExhibit(id: Int) async throws -> String {\n  async let title = fetchTitle(id: id)\n  async let minutes = fetchMinutes(id: id)\n  // ждём обоих\n  let values = try await (title, minutes)\n  return \"\\(values.0): \\(values.1) мин\"\n}",
+  "note": "Как в ключе, другие отступы и комментарий."
+ },
+ {
+  "task": "async.s3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func loadExhibit(id: Int) async throws -> String {\n  async let t = fetchTitle(id: id)\n  async let m = fetchMinutes(id: id)\n  let (title, minutes) = try await (t, m)\n  return \"\\(title): \\(minutes) мин\"\n}",
+  "note": "Деструктуризация кортежа вместо values.0."
+ },
+ {
+  "task": "async.s3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n  try Task.checkCancellation()\n  guard id == 21 else { throw ExhibitError.missing }\n  return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n  try Task.checkCancellation()\n  guard id == 21 else { throw ExhibitError.missing }\n  return 3\n}\nfunc loadExhibit(id: Int) async throws -> String {\n  async let title: String = fetchTitle(id: id)\n  async let minutes: Int = fetchMinutes(id: id)\n  let result = try await (title, minutes)\n  return \"\\(result.0): \\(result.1) мин\"\n}",
+  "note": "Явные типы, имя result, весь код целиком."
+ },
+ {
+  "task": "async.s3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "func loadExhibit(id: Int) async throws -> String {\n  async let title = fetchTitle(id: id)\n  async let minutes = fetchMinutes(id: id)\n  let t = try await title\n  let m = try await minutes\n  return \"\\(t): \\(m) мин\"\n}\n\nasync let запускает оба сразу, потом дожидаюсь.",
+  "note": "Два отдельных try await вместо одного для пары."
+ },
+ {
+  "task": "async.s3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "func loadExhibit(id: Int) async -> String {\n  async let title = fetchTitle(id: id)\n  async let minutes = fetchMinutes(id: id)\n  let values = try await (title, minutes)\n  return \"\\(values.0): \\(values.1) мин\"\n}",
+  "note": "В сигнатуре пропущен throws, try не скомпилируется."
+ },
+ {
+  "task": "async.s3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc loadExhibit(id: Int) async throws -> String {\n    async let title = fetchTitle(id: id)\n    async let minutes = fetchMinutes(id: id)\n    let values = try (title, minutes)\n    return \"\\(values.0): \\(values.1) мин\"\n}",
+  "note": "Забыт await при ожидании пары."
+ },
+ {
+  "task": "async.s3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "func loadExhibit(id: Int) async throws -> String{\nasync let title = fetchTitle(id)\nasync let minutes = fetchMinutes(id)\nlet values = try await (title,minutes)\nreturn \"\\(values.0): \\(values.1) мин\"}",
+  "note": "Пропущен label id: у вызовов."
+ },
+ {
+  "task": "async.s3",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "func loadExhibit(id: Int) async throws -> String {\n    return \"Луна: 3 мин\"\n}",
+  "note": "Захардкоженный результат, запросов нет."
+ },
+ {
+  "task": "async.s4",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "func status(id: Int) async -> String {\n  do {\n    let title = try await fetchTitle(id: id)\n    try Task.checkCancellation()\n    return title\n  } catch is CancellationError {\n    return \"Отменено\"\n  } catch {\n    return \"Нет экспоната\"\n  }\n}",
+  "note": "Как в ключе, отступ 2 пробела."
+ },
+ {
+  "task": "async.s4",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "do {\n    let title = try await fetchTitle(id: id)\n    if Task.isCancelled { return \"Отменено\" }\n    return title\n} catch is CancellationError {\n    return \"Отменено\"\n} catch {\n    return \"Нет экспоната\"\n}",
+  "note": "isCancelled вместо checkCancellation."
+ },
+ {
+  "task": "async.s4",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc status(id: Int) async -> String {\n    do {\n        let value = try await fetchTitle(id: id)\n        try Task.checkCancellation()\n        return value\n    } catch is CancellationError {\n        return \"Отменено\"\n    } catch {\n        return \"Нет экспоната\"\n    }\n}\n\nОтдельный catch нужен, чтобы отмена не стала «Нет экспоната».",
+  "note": "Другое имя переменной, код целиком."
+ },
+ {
+  "task": "async.s4",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "do {\n    return try await fetchTitle(id: id)\n} catch is CancellationError {\n    return \"Отменено\"\n} catch {\n    return \"Нет экспоната\"\n}",
+  "note": "Нет проверки отмены после await перед применением результата."
+ },
+ {
+  "task": "async.s4",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "do {\n    let title = try await fetchTitle(id: id)\n    try Task.checkCancellation()\n    return title\n} catch {\n    return \"Нет экспоната\"\n} catch is CancellationError {\n    return \"Отменено\"\n}",
+  "note": "Общий catch стоит раньше, отмена по-прежнему маскируется."
+ },
+ {
+  "task": "async.s4",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "do {\n  let title = try await fetchTitle(id: id)\n  try Task.checkCancellation()\n  return title\n} catch CancellationError {\n  return \"Отменено\"\n} catch {\n  return \"Нет экспоната\"\n}",
+  "note": "В catch пропущен is, это не паттерн."
+ },
+ {
+  "task": "async.s4",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "do{\nlet title = await fetchTitle(id: id)\ntry Task.checkCancellation()\nreturn title\n}catch is CancellationError{\nreturn \"Отменено\"\n}catch{\nreturn \"Нет экспоната\"}",
+  "note": "Забыт try перед await fetchTitle."
+ },
+ {
+  "task": "async.s4",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "func status(id: Int) async -> String {\n    Task.cancel()\n    return \"Отменено\"\n}",
+  "note": "Сама отменяет и всегда возвращает «Отменено»."
+ },
+ {
+  "task": "async.s5",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "Раньше был completion, теперь async-функция просто возвращает результат в ту задачу, что ждёт через await, а try ловит ошибки. async let запускает дочерние задачи в рамках scope, поэтому независимые запросы идут параллельно. Task отменяют через handle.cancel(), а код сам проверяет через checkCancellation или isCancelled.",
+  "note": "Полный ответ близко к ключу."
+ },
+ {
+  "task": "async.s5",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Вместо колбэка мы пишем await и получаем значение прямо в следующей строке, ошибка прилетает как throw. Две async let это два отдельных ребёнка, ни один не ждёт другого, и живут они только внутри функции. Отмену шлёт тот, у кого есть Task, через cancel(), но реально остановиться должен сам код: проверяет isCancelled или бросает checkCancellation.",
+  "note": "Полный ответ другими словами."
+ },
+ {
+  "task": "async.s5",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Результат приходит туда, где стоит await, а если что-то пошло не так, try это поймает. async let стартует запросы сразу и независимо, это дочерние задачи привязанные к области видимости. cancel() у Task только просит остановиться, а останавливается код, когда сам проверит флаг отмены.",
+  "note": "Разговорный пересказ."
+ },
+ {
+  "task": "async.s5",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Результат возвращается туда, где ждут через await, ошибки идут через try. async let запускает независимые запросы как дочерние задачи. Task отменяют вызовом cancel() и он останавливается.",
+  "note": "Не сказано, что код сам проверяет отмену."
+ },
+ {
+  "task": "async.s5",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Await отдаёт результат в ожидающую задачу, try ловит ошибки. Отменяет Task владелец через handle.cancel(), а проверяет код через isCancelled или checkCancellation. async let это про то, что запросы делаются.",
+  "note": "Не объяснено, почему async let независимы (дочерние задачи)."
+ },
+ {
+  "task": "async.s5",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "async отдаёт результат ожидающей задаче, try обрабатывает ошибки. async let запускает запросы. cancel() сразу убивает задачу в любой момент, проверять ничего не нужно.",
+  "note": "Заблуждение: cancel() принудительно останавливает без проверки."
+ },
+ {
+  "task": "async.s5",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "await превращает completion в результат, try ловит ошибки. async let выполняет запросы строго по очереди, второй стартует после первого, поэтому они независимы. Отмену проверяет checkCancellation.",
+  "note": "Заблуждение: async let последовательный."
+ },
+ {
+  "task": "async.s5",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "Это про DispatchQueue и семафоры: completion вызывается на main thread, а ARC считает ссылки на closure, поэтому weak self и retain cycle не дают задаче завершиться.",
+  "note": "Ответ не на тот вопрос."
+ },
+ {
+  "task": "async.s6",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "@MainActor\nfinal class ExhibitScreen {\n  private(set) var text = \"Загрузка\"\n\n  func start(id: Int) -> Task<Void, Never> {\n    Task {\n      do {\n        let value = try await loadExhibit(id: id)\n        try Task.checkCancellation()\n        text = value\n      } catch is CancellationError {\n        text = \"Отменено\"\n      } catch {\n        text = \"Нет экспоната\"\n      }\n    }\n  }\n}",
+  "note": "Как в ключе, другие отступы."
+ },
+ {
+  "task": "async.s6",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "@MainActor\nfinal class ExhibitScreen {\n    private(set) var text: String = \"Загрузка\"\n    func start(id: Int) -> Task<Void, Never> {\n        let task = Task {\n            do {\n                let loaded = try await loadExhibit(id: id)\n                try Task.checkCancellation()\n                self.text = loaded\n            } catch is CancellationError {\n                self.text = \"Отменено\"\n            } catch {\n                self.text = \"Нет экспоната\"\n            }\n        }\n        return task\n    }\n}",
+  "note": "Явный тип, self., Task через переменную."
+ },
+ {
+  "task": "async.s6",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "@MainActor\nclass ExhibitScreen {\n    private(set) var text = \"Загрузка\"\n    func start(id: Int) -> Task<Void, Never> {\n        return Task {\n            do {\n                let value = try await loadExhibit(id: id)\n                try Task.checkCancellation()\n                text = value\n            } catch {\n                if error is CancellationError {\n                    text = \"Отменено\"\n                } else {\n                    text = \"Нет экспоната\"\n                }\n            }\n        }\n    }\n}\n\nВ catch различаю отмену через is.",
+  "note": "Один catch с проверкой is CancellationError."
+ },
+ {
+  "task": "async.s6",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "@MainActor\nfinal class ExhibitScreen {\n    private(set) var text = \"Загрузка\"\n    func start(id: Int) -> Task<Void, Never> {\n        Task {\n            do {\n                let value = try await loadExhibit(id: id)\n                text = value\n            } catch is CancellationError {\n                text = \"Отменено\"\n            } catch {\n                text = \"Нет экспоната\"\n            }\n        }\n    }\n}",
+  "note": "Нет Task.checkCancellation() перед присвоением text."
+ },
+ {
+  "task": "async.s6",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "final class ExhibitScreen {\n    private(set) var text = \"Загрузка\"\n    func start(id: Int) -> Task<Void, Never> {\n        Task {\n            do {\n                let value = try await loadExhibit(id: id)\n                try Task.checkCancellation()\n                text = value\n            } catch is CancellationError {\n                text = \"Отменено\"\n            } catch {\n                text = \"Нет экспоната\"\n            }\n        }\n    }\n}",
+  "note": "Класс без @MainActor."
+ },
+ {
+  "task": "async.s6",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "@MainActor\nfinal class ExhibitScreen {\n    private(set) var text = \"Загрузка\"\n    func start(id: Int) -> Task<Void, Never> {\n        Task {\n            let value = await loadExhibit(id: id)\n            try Task.checkCancellation()\n            text = value\n        }\n    }\n}",
+  "note": "Нет try при вызове throwing-функции и нет do/catch."
+ },
+ {
+  "task": "async.s6",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "@MainActor\nfinal class ExhibitScreen {\n let text = \"Загрузка\"\n func start(id: Int) -> Task<Void, Never> {\n  Task {\n   do {\n    let value = try await loadExhibit(id: id)\n    try Task.checkCancellation()\n    text = value\n   } catch is CancellationError { text = \"Отменено\" }\n   catch { text = \"Нет экспоната\" }\n  }\n }\n}",
+  "note": "text объявлен как let, но потом присваивается."
+ },
+ {
+  "task": "async.s6",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "final class ExhibitScreen {\n  var text = \"\"\n  func start(id: Int) {\n    DispatchQueue.main.async {\n      self.text = \"Луна: 3 мин\"\n    }\n  }\n}",
+  "note": "GCD вместо Task, handle не возвращается."
+ },
+ {
+  "task": "async.s7",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "enum ExhibitError: Error { case missing }\n\nfunc fetchTitle(id: Int) async throws -> String {\n  try Task.checkCancellation()\n  guard id == 21 else { throw ExhibitError.missing }\n  return \"Луна\"\n}\n\nfunc status(id: Int) async -> String {\n  do {\n    let title = try await fetchTitle(id: id)\n    try Task.checkCancellation()\n    return title\n  } catch is CancellationError {\n    return \"Отменено\"\n  } catch {\n    return \"Нет экспоната\"\n  }\n}",
+  "note": "Как в ключе, другие отступы, без fetchMinutes."
+ },
+ {
+  "task": "async.s7",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    if id == 21 { return \"Луна\" }\n    throw ExhibitError.missing\n}\nfunc status(id: Int) async -> String {\n    do {\n        let title = try await fetchTitle(id: id)\n        if Task.isCancelled { return \"Отменено\" }\n        return title\n    } catch is CancellationError {\n        return \"Отменено\"\n    } catch {\n        return \"Нет экспоната\"\n    }\n}",
+  "note": "if вместо guard, isCancelled вместо checkCancellation."
+ },
+ {
+  "task": "async.s7",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc status(id: Int) async -> String {\n    do {\n        let t = try await fetchTitle(id: id)\n        try Task.checkCancellation()\n        return t\n    } catch {\n        return error is CancellationError ? \"Отменено\" : \"Нет экспоната\"\n    }\n}\n\nОтмена и ошибка данных различаются в одном catch.",
+  "note": "Один catch и тернарный оператор."
+ },
+ {
+  "task": "async.s7",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc status(id: Int) async -> String {\n    do {\n        let title = try await fetchTitle(id: id)\n        try Task.checkCancellation()\n        return title\n    } catch is CancellationError {\n        return \"Отменено\"\n    } catch {\n        return \"Нет экспоната\"\n    }\n}",
+  "note": "Источник fetchTitle не проверяет отмену."
+ },
+ {
+  "task": "async.s7",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc status(id: Int) async -> String {\n    do {\n        return try await fetchTitle(id: id)\n    } catch is CancellationError {\n        return \"Отменено\"\n    } catch {\n        return \"Нет экспоната\"\n    }\n}",
+  "note": "В status нет проверки отмены перед применением результата."
+ },
+ {
+  "task": "async.s7",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n  try Task.checkCancellation()\n  guard id = 21 else { throw ExhibitError.missing }\n  return \"Луна\"\n}\nfunc status(id: Int) async -> String {\n  do {\n    let title = try await fetchTitle(id: id)\n    try Task.checkCancellation()\n    return title\n  } catch is CancellationError { return \"Отменено\" }\n  catch { return \"Нет экспоната\" }\n}",
+  "note": "В guard = вместо ==."
+ },
+ {
+  "task": "async.s7",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n  try Task.checkCancellation()\n  guard id == 21 else { throw ExhibitError.missing }\n  return \"Луна\"\n}\nfunc status(id: Int) async -> String {\n  do {\n    let title = await fetchTitle(id: id)\n    try Task.checkCancellation()\n    return title\n  } catch is CancellationError { return \"Отменено\" }\n  catch { return \"Нет экспоната\" }\n}\n\nПроверяю id 21, 99 и отменённую задачу.",
+  "note": "Забыт try перед вызовом fetchTitle."
+ },
+ {
+  "task": "async.s7",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "func status(id: Int) -> String {\n    return \"Луна\"\n}",
+  "note": "Нет ни источника, ни обработки ошибок и отмены."
+ },
+ {
+  "task": "async-b1",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "func audioLabel(id: Int) async throws -> String {\n  do {\n    let minutes = try await fetchMinutes(id: id)\n    return \"Аудио: \\(minutes) мин\"\n  } catch ExhibitError.missing {\n    return \"Аудио недоступно\"\n  }\n}",
+  "note": "Как в ключе, другие отступы."
+ },
+ {
+  "task": "async-b1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc audioLabel(id: Int) async throws -> String {\n    do {\n        let m = try await fetchMinutes(id: id)\n        return \"Аудио: \\(m) мин\"\n    } catch is ExhibitError {\n        return \"Аудио недоступно\"\n    }\n}",
+  "note": "catch is ExhibitError вместо конкретного case; отмена пробрасывается."
+ },
+ {
+  "task": "async-b1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func audioLabel(id: Int) async throws -> String {\n    do {\n        return \"Аудио: \\(try await fetchMinutes(id: id)) мин\"\n    } catch ExhibitError.missing {\n        return \"Аудио недоступно\"\n    }\n}\n\nCancellationError не ловится, поэтому уходит наверх.",
+  "note": "try внутри интерполяции."
+ },
+ {
+  "task": "async-b1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "func audioLabel(id: Int) async throws -> String {\n    do {\n        let minutes = try await fetchMinutes(id: id)\n        return \"Аудио: \\(minutes) мин\"\n    } catch {\n        return \"Аудио недоступно\"\n    }\n}",
+  "note": "Общий catch подменяет и CancellationError."
+ },
+ {
+  "task": "async-b1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "func audioLabel(id: Int) async throws -> String {\n    do {\n        let title = try await fetchTitle(id: id)\n        return \"Аудио: \\(title) мин\"\n    } catch ExhibitError.missing {\n        return \"Аудио недоступно\"\n    }\n}",
+  "note": "Вызван fetchTitle вместо fetchMinutes."
+ },
+ {
+  "task": "async-b1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "func audioLabel(id: Int) async throws -> String {\n  do {\n    let minutes = await fetchMinutes(id: id)\n    return \"Аудио: \\(minutes) мин\"\n  } catch ExhibitError.missing {\n    return \"Аудио недоступно\"\n  }\n}",
+  "note": "Забыт try."
+ },
+ {
+  "task": "async-b1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "func audioLabel(id: Int) async throws -> String {\n  let minutes = try! await fetchMinutes(id: id)\n  return \"Аудио: \\(minutes) мин\"\n}",
+  "note": "try! роняет приложение при missing, ветки заглушки нет."
+ },
+ {
+  "task": "async-b1",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "func audioLabel(id: Int) async throws -> String {\n    return \"Аудио недоступно\"\n}",
+  "note": "Всегда возвращает заглушку."
+ },
+ {
+  "task": "async-b2",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "func titleFromArchive(id: Int) async throws -> String {\n  try await withCheckedThrowingContinuation { continuation in\n    legacyTitle(id: id) { result in\n      continuation.resume(with: result)\n    }\n  }\n}",
+  "note": "Как в ключе, 2 пробела."
+ },
+ {
+  "task": "async-b2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func titleFromArchive(id: Int) async throws -> String {\n    try await withCheckedThrowingContinuation { continuation in\n        legacyTitle(id: id) { result in\n            switch result {\n            case .success(let title):\n                continuation.resume(returning: title)\n            case .failure(let error):\n                continuation.resume(throwing: error)\n            }\n        }\n    }\n}",
+  "note": "switch по Result вместо resume(with:)."
+ },
+ {
+  "task": "async-b2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "enum ArchiveError: Error { case missing }\nfunc legacyTitle(id: Int, done: (Result<String, Error>) -> Void) {\n    done(id == 21 ? .success(\"Луна\") : .failure(ArchiveError.missing))\n}\nfunc titleFromArchive(id: Int) async throws -> String {\n    return try await withCheckedThrowingContinuation { cont in\n        legacyTitle(id: id) { cont.resume(with: $0) }\n    }\n}\n\nResume ровно один раз.",
+  "note": "Сокращённое замыкание с $0, весь код."
+ },
+ {
+  "task": "async-b2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "func titleFromArchive(id: Int) async throws -> String {\n    try await withCheckedThrowingContinuation { continuation in\n        legacyTitle(id: id) { result in\n            if case .success(let title) = result {\n                continuation.resume(returning: title)\n            }\n        }\n    }\n}",
+  "note": "Не обработан failure: continuation никогда не возобновится."
+ },
+ {
+  "task": "async-b2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "func titleFromArchive(id: Int) async throws -> String {\n    try await withCheckedThrowingContinuation { continuation in\n        legacyTitle(id: id) { result in\n            continuation.resume(with: result)\n        }\n        continuation.resume(returning: \"\")\n    }\n}",
+  "note": "Второй resume после callback."
+ },
+ {
+  "task": "async-b2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "func titleFromArchive(id: Int) async throws -> String {\n  return withCheckedThrowingContinuation { continuation in\n    legacyTitle(id: id) { result in\n      continuation.resume(with: result)\n    }\n  }\n}",
+  "note": "Забыт try await перед withCheckedThrowingContinuation."
+ },
+ {
+  "task": "async-b2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "func titleFromArchive(id: Int) async throws -> String {\n  try await withCheckedThrowingContinuation { c in\n    legacyTitle(id: id) { r in\n      c.resume(returning: r)\n    }\n  }\n}",
+  "note": "В resume(returning:) передан Result вместо String."
+ },
+ {
+  "task": "async-b2",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "func titleFromArchive(id: Int) async throws -> String {\n    var title = \"\"\n    legacyTitle(id: id) { result in\n        title = (try? result.get()) ?? \"\"\n    }\n    return title\n}",
+  "note": "Без continuation, ошибка проглочена."
+ },
+ {
+  "task": "async-b3",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "func load(using fetch: (Int) async throws -> String) async throws {\n  let requestedID = selectedID\n  let value = try await fetch(requestedID)\n  try Task.checkCancellation()\n  guard selectedID == requestedID else { return }\n  text = value\n}",
+  "note": "Как в ключе, 2 пробела."
+ },
+ {
+  "task": "async-b3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "if selectedID != requestedID { return }",
+  "note": "if вместо guard, вставляется перед text = value."
+ },
+ {
+  "task": "async-b3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "@MainActor\nfinal class GuideScreen {\n    var selectedID = 21\n    private(set) var text = \"Загрузка\"\n    func load(using fetch: (Int) async throws -> String) async throws {\n        let requestedID = selectedID\n        let value = try await fetch(requestedID)\n        guard requestedID == selectedID else { return }\n        try Task.checkCancellation()\n        text = value\n    }\n}",
+  "note": "guard стоит до checkCancellation, порядок независимых проверок."
+ },
+ {
+  "task": "async-b3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "func load(using fetch: (Int) async throws -> String) async throws {\n    let requestedID = selectedID\n    guard selectedID == requestedID else { return }\n    let value = try await fetch(requestedID)\n    try Task.checkCancellation()\n    text = value\n}",
+  "note": "Проверка стоит до await, всегда истинна."
+ },
+ {
+  "task": "async-b3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "guard selectedID != requestedID else { return }",
+  "note": "Условие перевёрнуто: отбрасывается актуальный ответ."
+ },
+ {
+  "task": "async-b3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "guard selectedID = requestedID else { return }",
+  "note": "= вместо ==."
+ },
+ {
+  "task": "async-b3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "guard selectedID == requestedID { return }\n\nСравниваю id после await.",
+  "note": "Пропущен else у guard."
+ },
+ {
+  "task": "async-b3",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "func load(using fetch: (Int) async throws -> String) async throws {\n    let value = try await fetch(selectedID)\n    selectedID = 21\n    text = value\n}",
+  "note": "Сбрасывает selectedID вместо проверки."
+ }
+]

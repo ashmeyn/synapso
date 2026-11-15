@@ -1,0 +1,85 @@
+[
+ {
+  "id": "opt.s1",
+  "kind": "predict",
+  "title": "Ступень 1. Предскажи вывод",
+  "prompt": "Не запуская код, запиши, что напечатает каждая строка, и какой тип у title. Почему пустая строка ведёт себя не так, как nil?",
+  "code": "let a: String? = nil\nlet b: String? = \"\"\nprint(a ?? \"Гость\")\nprint(b ?? \"Гость\")\nlet title = b ?? \"Гость\"\nprint(title.count)",
+  "key": "Гость\n(пустая строка)\n0\n\ntitle имеет тип String. ?? подставляет запасное значение только при nil. Пустая строка — существующее значение, поэтому она и остаётся."
+ },
+ {
+  "id": "opt.s2",
+  "kind": "code",
+  "title": "Ступень 2. Собери экранное имя",
+  "prompt": "Заполни функцию через if let: непустое имя — вернуть его, nil или пустая строка — «Гость».",
+  "code": "func displayName(_ name: String?) -> String {\n    // 1. есть ли значение?\n    // 2. не пустое ли оно?\n}\n\n// displayName(\"Нора\") → \"Нора\"\n// displayName(nil)    → \"Гость\"\n// displayName(\"\")     → \"Гость\"",
+  "key": "func displayName(_ name: String?) -> String {\n    if let name, !name.isEmpty {\n        return name\n    }\n    return \"Гость\"\n}\n\nif let достаёт String, а !name.isEmpty отдельно проверяет содержимое. nil и \"\" — разные случаи, но экрану здесь подходит одна замена."
+ },
+ {
+  "id": "opt.s3",
+  "kind": "code",
+  "title": "Ступень 3. Ранний выход",
+  "prompt": "Напиши через guard let: нет id — вернуть nil, есть — путь к профилю. Объясни, почему функция возвращает String?.",
+  "code": "func profilePath(id: Int?) -> String? {\n    // твой код\n}\n\n// profilePath(id: 42)  → \"/users/42\"\n// profilePath(id: nil) → nil",
+  "key": "func profilePath(id: Int?) -> String? {\n    guard let id else { return nil }\n    return \"/users/\\(id)\"\n}\n\nПути может не быть — значит, честный тип результата String?. После guard let id — обычный Int до конца функции."
+ },
+ {
+  "id": "opt.s4",
+  "kind": "code",
+  "title": "Ступень 4. Найди падение",
+  "prompt": "Когда приложение упадёт? Исправь так, чтобы без имени показывался «Гость». Что будет при пустой строке?",
+  "code": "struct User { let name: String? }\n\nfunc title(for user: User) -> String {\n    return user.name!\n}",
+  "key": "При User(name: nil) user.name! принудительно разворачивает nil — крэш.\n\nfunc title(for user: User) -> String {\n    user.name ?? \"Гость\"\n}\n\nПри name == \"\" вернётся пустая строка: ?? её не заменяет. Если нужно — проверка isEmpty, как в ступени 2."
+ },
+ {
+  "id": "opt.s5",
+  "kind": "oral",
+  "title": "Ступень 5. Объясни напарнику (устно)",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Ситуация: API прислал пользователя с name: nil.\nОбъясни напарнику:\n1. Что хранит String? и чем nil отличается от \"\"?\n2. Когда if let, когда guard let, когда ???\n3. Почему user.name! — плохая идея здесь?",
+  "key": "1. String? — либо строка, либо её отсутствие (nil). \"\" — строка есть, просто без символов.\n2. if let — развилка внутри кода; guard let — ранний выход, значение нужно дальше; ?? — простое значение по умолчанию.\n3. ! падает при nil, а nil от сервера — нормальная ситуация, не ошибка программиста. Безопасно: name ?? \"Гость\" плюс отдельная проверка пустой строки."
+ },
+ {
+  "id": "opt.s6",
+  "kind": "code",
+  "title": "Ступень 6. Карточка профиля",
+  "prompt": "Верни «Имя · N символов». При nil или пустой строке — «Гость · 0». Используй optional chaining хотя бы раз и назови тип промежуточного результата.",
+  "code": "struct User { let name: String? }\n\nfunc cardTitle(for user: User) -> String {\n    // твой код\n}\n\n// nil    → \"Гость · 0\"\n// \"Нора\" → \"Нора · 4\"\n// \"\"     → \"Гость · 0\"",
+  "key": "func cardTitle(for user: User) -> String {\n    let count: Int? = user.name?.count\n    guard let name = user.name, !name.isEmpty else {\n        return \"Гость · 0\"\n    }\n    return \"\\(name) · \\(count ?? 0)\"\n}\n\nuser.name?.count — Int?: число, если имя есть, иначе nil. В реальном коде после guard проще взять name.count — chaining здесь для тренировки."
+ },
+ {
+  "id": "opt.s7",
+  "kind": "code",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "func displayName(_ name: String?) -> String {\n    // восстанови по памяти: nil и \"\" → \"Гость\"\n}\n\n// + объясни вслух: почему ?? не заменяет \"\"",
+  "key": "func displayName(_ name: String?) -> String {\n    guard let name, !name.isEmpty else { return \"Гость\" }\n    return name\n}\n\n?? срабатывает только на nil. Пустая строка — существующее значение, её проверяют отдельно (isEmpty)."
+ },
+ {
+  "id": "opt-b1",
+  "kind": "predict",
+  "type": "Предскажи вывод",
+  "title": "Объём стакана в трекере воды",
+  "prompt": "Пользователь вводит объём стакана в миллилитрах. Что напечатает цикл? Какой тип у ml и почему сравнение ml == 0 компилируется?",
+  "code": "let inputs = [\"250\", \"\", \" 300\", \"0\"]\nfor text in inputs {\n    let ml = Int(text)\n    print(ml ?? -1, ml == 0)\n}",
+  "key": "250 false\n-1 false\n-1 false\n0 true\n\nml имеет тип Int?: Int(_:) возвращает nil, если строка не число целиком. Пустая строка и « 300» с пробелом — не числа, поэтому ?? подставляет -1. Сравнение Int? с 0 разрешено: 0 оборачивается в Optional, и nil == 0 даёт false, а не краш. Для экрана: пробелы убирают до преобразования, а -1 нельзя показывать как объём."
+ },
+ {
+  "id": "opt-b2",
+  "kind": "code",
+  "type": "Найди ошибку",
+  "title": "Срок доставки посылки",
+  "prompt": "Тестировщик прислал скриншоты карточки посылки: текст выглядит странно и с прогнозом, и без него. Найди причину и почини: без прогноза — «Срок уточняется».",
+  "code": "struct Parcel {\n    let track: String\n    let daysLeft: Int?\n}\nfunc deliveryText(for parcel: Parcel) -> String {\n    \"Осталось \\(parcel.daysLeft) дн.\"\n}\nprint(deliveryText(for: Parcel(track: \"RB12\", daysLeft: 3)))\nprint(deliveryText(for: Parcel(track: \"RB13\", daysLeft: nil)))",
+  "key": "func deliveryText(for parcel: Parcel) -> String {\n    guard let days = parcel.daysLeft else { return \"Срок уточняется\" }\n    return \"Осталось \\(days) дн.\"\n}\n\nИнтерполяция Optional компилируется (только с предупреждением) и печатает «Осталось Optional(3) дн.» и «Осталось nil дн.». Значение разворачивают до вставки в текст: guard let отсекает nil, дальше days — обычный Int. Теперь вывод «Осталось 3 дн.» и «Срок уточняется». ?? 0 здесь не подходит: «Осталось 0 дн.» соврал бы о сроке."
+ },
+ {
+  "id": "opt-b3",
+  "kind": "oral",
+  "type": "Устно",
+  "title": "Тёмная тема: три состояния",
+  "prompt": "Объясни как на собеседовании: сколько состояний у prefersDark и что означает каждое; почему закомментированная строка не компилируется и как экрану выбрать тему.",
+  "code": "struct ThemeSettings {\n    var prefersDark: Bool?   // из настроек аккаунта\n}\nlet settings = ThemeSettings(prefersDark: nil)\nlet systemIsDark = true\n// if settings.prefersDark { ... }   // не компилируется",
+  "key": "Три состояния: true — пользователь выбрал тёмную тему, false — выбрал светлую, nil — ещё не выбирал. Optional добавляет к Bool отдельный ответ «значения нет», поэтому nil нельзя молча считать false. if ждёт Bool, а не Bool?: Swift не решает за нас, что делать при nil. Выбор темы — settings.prefersDark ?? systemIsDark: явный выбор пользователя важнее, при nil следуем системе. Если нужна проверка только явного «да», пишут settings.prefersDark == true."
+ }
+]

@@ -1,0 +1,236 @@
+[
+ {"task": "urls.s1", "check": {
+  "outs": [["HTTP 503"]],
+  "why": ["Статус 503 не равен 200, поэтому decodeChapter бросает LoadError.status(503) до JSONDecoder; catch печатает код."],
+  "wrong": [
+   {"out": ["Первый снег"], "msg": "Ты решил, что раз JSON корректен, глава декодируется. Но статус проверяется раньше тела: при 503 до декодирования дело не доходит."},
+   {"out": ["Другая ошибка"], "msg": "LoadError.status(Int) ловится отдельным catch с шаблоном, он срабатывает раньше общего catch. Общий catch берёт только остальное."},
+   {"out": ["HTTP 200"], "msg": "В ошибку кладётся http.statusCode самого ответа, а он здесь 503, а не 200."}
+  ]
+ }},
+ {"task": "urls.s2", "check": {
+  "accept": [],
+  "must": [
+   {"pat": ["try await session.data(for: request ...)"],
+    "miss": "Не вижу try await session.data(for: request): запрос идёт через переданную сессию и готовый URLRequest, а await обязателен."},
+   {"pat": ["let ($a, $b) = try await session.data(for: request ...)", "let $a = try await session.data(for: request ...)"],
+    "miss": "Результат запроса надо сохранить: это пара из тела и ответа. Без response статус потом не проверить."},
+   {"pat": ["return try decodeChapter(data: ..., response: ...)"],
+    "miss": "Не вижу return try decodeChapter(data:response:): пару из запроса надо целиком передать декодеру, он проверит статус и разберёт тело."}
+  ],
+  "not": [
+   {"pat": ["let ($a, _) = try await", "let (_, $a) = try await"],
+    "msg": "Одна половина пары выброшена. Без response не проверить статус, без data нечего декодировать: нужны обе."},
+   {"pat": ["try?", "try!"],
+    "msg": "try? прячет ошибку, try! роняет приложение. Здесь ошибки должны уходить наверх через простой try."},
+   {"pat": ["URLSession.shared.data(...)"],
+    "msg": "Сессия приходит параметром session. Если брать .shared напрямую, подменить её в тесте не получится."},
+   {"pat": ["catch"],
+    "msg": "catch здесь прячет ошибку. Функция помечена throws, пусть вызывающий код решает, что делать с ней."}
+  ],
+  "complete": true
+ }},
+ {"task": "urls.s3", "check": {
+  "accept": [
+   "func decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    if http.statusCode != 200 {\n        throw LoadError.status(http.statusCode)\n    }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}",
+   "func decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    let decoder = JSONDecoder()\n    return try decoder.decode(Chapter.self, from: data)\n}",
+   "func decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    let chapter = try JSONDecoder().decode(Chapter.self, from: data)\n    return chapter\n}"
+  ],
+  "must": [
+   {"pat": ["response as? HTTPURLResponse"],
+    "miss": "Не вижу приведения response к HTTPURLResponse: у общего URLResponse нет statusCode, без приведения статус не прочитать."},
+   {"pat": ["throw LoadError.notHTTP"],
+    "miss": "Если ответ не HTTP, нужна своя ошибка: бросай notHTTP, а не продолжай и не молчи."},
+   {"pat": ["$a.statusCode == 200", "$a.statusCode != 200", "200 == $a.statusCode", "200 != $a.statusCode"],
+    "miss": "Не вижу проверки статуса именно на 200. Контракт обещает успех только с ним, остальные коды в декодер попадать не должны."},
+   {"pat": ["throw LoadError.status($a.statusCode)"],
+    "miss": "При чужом статусе надо бросить ошибку status с самим кодом: по нему catch в конце печатает «HTTP код»."},
+   {"pat": ["decode(Chapter.self, from: $a)"],
+    "miss": "Не вижу декодирования Chapter из data через JSONDecoder. После проверок функция должна вернуть модель."}
+  ],
+  "not": [
+   {"pat": ["decode(Chapter.self, from: ...) ... statusCode == 200", "decode(Chapter.self, from: ...) ... statusCode != 200"],
+    "msg": "Тело декодируется раньше проверки статуса. Ошибочный ответ с правильным JSON тогда пройдёт как успех: сначала статус, потом JSON."},
+   {"pat": ["..< 300", "contains($a.statusCode)"],
+    "msg": "Диапазон 2xx пропустит, например, 204, а контракт обещает только 200 с телом. По заданию проверяй именно 200."},
+   {"pat": ["try?", "try!", "as! HTTPURLResponse"],
+    "msg": "try? прячет ошибку, try! и as! роняют приложение. Нужна простая проверка с throw на каждом шаге."},
+   {"pat": ["guard $a.statusCode != 200", "if $a.statusCode == 200 { throw"],
+    "msg": "Условие перевёрнуто: ошибку надо бросать при статусе не 200, а пропускать дальше только 200."}
+  ],
+  "complete": true
+ }},
+ {"task": "urls.s4", "check": {
+  "accept": [
+   "func decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    if http.statusCode != 200 {\n        throw LoadError.status(http.statusCode)\n    }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}"
+  ],
+  "must": [
+   {"pat": ["response as? HTTPURLResponse"],
+    "miss": "Не вижу приведения response к HTTPURLResponse: без него statusCode недоступен, и проверять нечего."},
+   {"pat": ["throw LoadError.notHTTP"],
+    "miss": "Для ответа не-HTTP нужна своя ошибка notHTTP. Без неё функция либо падает, либо идёт дальше вслепую."},
+   {"pat": ["$a.statusCode == 200", "$a.statusCode != 200", "200 == $a.statusCode", "200 != $a.statusCode"],
+    "miss": "Не вижу проверки на 200. Именно её не хватало: при 503 глава показывалась, потому что статус не смотрели."},
+   {"pat": ["throw LoadError.status($a.statusCode)"],
+    "miss": "При чужом статусе нужно бросить status с кодом ответа: catch в конце напечатает «HTTP» и номер."}
+  ],
+  "not": [
+   {"pat": ["decode(Chapter.self, from: ...) ... statusCode == 200", "decode(Chapter.self, from: ...) ... statusCode != 200"],
+    "msg": "Проверка статуса стоит после декодирования: к этому моменту глава уже прочитана. Статус надо проверять до JSONDecoder."},
+   {"pat": ["..< 300", "contains($a.statusCode)"],
+    "msg": "Диапазон 2xx шире контракта: тот обещает только 200. Проверяй именно 200."},
+   {"pat": ["try?", "try!", "as! HTTPURLResponse"],
+    "msg": "try? глотает ошибку, try! и as! роняют программу. Здесь нужен throw с понятной ошибкой."},
+   {"pat": ["guard $a.statusCode != 200", "if $a.statusCode == 200 { throw"],
+    "msg": "Условие перевёрнуто: бросать надо при статусе не 200, а на 200 идти дальше к декодированию."}
+  ],
+  "complete": false
+ }},
+ {"task": "urls.s5", "check": {
+  "concepts": [
+   {"label": "response хранится рядом с data, чтобы проверить HTTP-статус до декодирования",
+    "groups": [["статус", "status", "код ответ"], ["до декод", "до тел", "до разбор", "перед декод", "перед тел", "перед разбор", "сначала", "прежде"]],
+    "miss": "Не сказано, зачем нужен response: в нём HTTP-статус, и его проверяют до разбора тела."},
+   {"label": "URLError: отказ транспорта (сеть, соединение)",
+    "groups": [["urlerror"], ["сет", "транспорт", "соедин", "интернет", "доступ", "таймаут", "timeout", "не дошл", "не удалось"]],
+    "miss": "Про URLError не сказано главное: это отказ на уровне транспорта, ответ вообще не получен (сети нет, соединение оборвалось)."},
+   {"label": "LoadError.status: ответ получен, но статус вне контракта",
+    "groups": [["status", "статус"], ["не 200", "не подходящ", "неподходящ", "503", "404", "сервер", "вне контракт", "неуспеш", "ошибочн", "http-ответ", "http ответ", "ответ есть", "ответ пришёл", "ответ пришел"]],
+    "miss": "Про LoadError.status не сказано: ответ пришёл, но с неподходящим кодом (не 200), и сервер сам сообщил об ошибке."},
+   {"label": "DecodingError: успешный ответ с данными неподходящей формы",
+    "groups": [["decodingerror", "decoding"], ["данн", "json", "формат", "структур", "модел", "тип", "не соответств", "не подход", "тел"]],
+    "miss": "Про DecodingError не сказано: статус подошёл, но тело не совпало с моделью, например другой тип или нет поля."},
+   {"label": "await приостанавливает задачу; UI меняют только в нужной изоляции (MainActor)",
+    "groups": [["mainactor", "main actor", "главн", "основн", "изоляц", "main thread"], ["await", "приостанав", "возобнов", "задач", "контекст"]],
+    "miss": "Не сказано про UI: await лишь приостанавливает задачу и не выбирает контекст. Менять интерфейс нужно в MainActor-изоляции."}
+  ],
+  "false": [
+   {"groups": [["await разрешает", "await позволяет", "await делает"], ["ui", "главн", "интерфейс", "main"]],
+    "msg": "Похоже, ты говоришь, что await сам делает безопасным изменение UI. Нет: он только приостанавливает задачу, а изоляцию задаёт MainActor."}
+  ]
+ }},
+ {"task": "urls.s6", "check": {
+  "accept": [
+   "func loadChapter(\n    id: Int, session: URLSession = .shared\n) async throws -> Chapter {\n    guard !Task.isCancelled else { throw CancellationError() }\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/chapters/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    var request = URLRequest(url: url)\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    let (data, response) = try await session.data(for: request)\n    guard !Task.isCancelled else { throw CancellationError() }\n    return try decodeChapter(data: data, response: response)\n}"
+  ],
+  "must": [
+   {"pat": ["Task.checkCancellation() ... session.data(for: request ...)", "Task.isCancelled ... session.data(for: request ...)"],
+    "miss": "Нет проверки отмены до запроса. Если задачу отменили заранее, незачем начинать сетевой вызов."},
+   {"pat": ["session.data(for: request ...) ... Task.checkCancellation() ... decodeChapter(data: ..., response: ...)", "session.data(for: request ...) ... Task.isCancelled ... decodeChapter(data: ..., response: ...)"],
+    "miss": "Нет проверки отмены после await и до decodeChapter. Пока ждали ответ, задачу могли отменить: без проверки вернётся уже ненужная модель."},
+   {"pat": ["Task.checkCancellation()", "throw CancellationError()"],
+    "miss": "Отмена должна выбрасывать CancellationError наверх: через checkCancellation или явный throw, а не превращаться в обычный результат."}
+  ],
+  "not": [
+   {"pat": ["try? Task.checkCancellation()"],
+    "msg": "try? гасит CancellationError, и проверка ничего не останавливает. Нужен обычный try, чтобы ошибка ушла наверх."},
+   {"pat": ["if Task.isCancelled { return ... }", "guard !Task.isCancelled else { return ... }"],
+    "msg": "Возврат вместо ошибки превращает отмену в «успех» или не компилируется. Отмена должна быть брошена как ошибка."},
+   {"pat": ["catch is CancellationError", "catch let $a as CancellationError"],
+    "msg": "Ловить CancellationError внутри и глушить его нельзя: вызывающий код не узнает об отмене. Пусть ошибка идёт наверх."}
+  ],
+  "complete": true
+ }},
+ {"task": "urls.s7", "check": {
+  "accept": [
+   "struct Chapter: Decodable { let id: Int; let duration: Int }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc loadChapter(\n    id: Int, session: URLSession = .shared\n) async throws -> Chapter {\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/chapters/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    let (data, response) = try await session.data(from: url)\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}"
+  ],
+  "must": [
+   {"pat": ["struct Chapter: Decodable ... { ... duration: Int ... }", "struct Chapter: Codable ... { ... duration: Int ... }"],
+    "miss": "Не вижу модели Chapter с полем duration типа Int и протоколом Decodable. Без неё декодировать ответ не во что."},
+   {"pat": ["guard id > 0 else { throw ... } ... guard let $a = URL(string: ...) else { throw ... }", "guard id >= 1 else { throw ... } ... guard let $a = URL(string: ...) else { throw ... }", "if id <= 0 { throw ... } ... guard let $a = URL(string: ...) else { throw ... }", "if id < 1 { throw ... } ... guard let $a = URL(string: ...) else { throw ... }"],
+    "miss": "Нужны две ранние проверки с throw: id должен быть положительным, а адрес собран через guard let URL(string:). Иначе плохой вход молча уйдёт в сеть."},
+   {"pat": ["session: URLSession ... try await session.data(...)"],
+    "miss": "Сессия должна приходить параметром session: URLSession, а запрос идти через try await session.data. Так её можно подменить."},
+   {"pat": ["as? HTTPURLResponse ... statusCode == 200", "as? HTTPURLResponse ... statusCode != 200"],
+    "miss": "Не вижу порядка «приведение к HTTPURLResponse, затем статус именно 200». Без них 204 и 503 пройдут к декодеру."},
+   {"pat": ["decode(Chapter.self, from: $a)"],
+    "miss": "Не вижу JSONDecoder().decode(Chapter.self, from: данные): после проверок ответ надо превратить в модель."}
+  ],
+  "not": [
+   {"pat": ["try?", "try!"],
+    "msg": "try? прячет ошибки, try! роняет приложение. По условию ошибки не скрываются: простой try и throw."},
+   {"pat": ["as! HTTPURLResponse", "URL(string: ...)!"],
+    "msg": "Принудительное приведение или ! роняют приложение при плохих данных. Разворачивай через guard let и бросай ошибку."},
+   {"pat": ["..< 300", "contains($a.statusCode)"],
+    "msg": "Диапазон 2xx пропустит 204, а там тела нет, и декодер упадёт. По контракту нужен именно 200."},
+   {"pat": ["decode(Chapter.self, from: ...) ... statusCode == 200", "decode(Chapter.self, from: ...) ... statusCode != 200"],
+    "msg": "Декодирование идёт раньше проверки статуса. Тело ошибочного ответа читать нельзя: сначала статус, потом JSON."}
+  ],
+  "complete": true
+ }},
+ {"task": "urls-b1", "check": {
+  "accept": [
+   "guard (200..<300).contains(http.statusCode) else { throw LoadError.status(http.statusCode) }",
+   "let (data, response) = try await session.data(for: request, delegate: nil)"
+  ],
+  "must": [
+   {"pat": ["http.statusCode == 200", "200 == http.statusCode", "(200..<300).contains(http.statusCode)", "http.statusCode >= 200 && http.statusCode < 300", "200..<300 ~= http.statusCode"],
+    "miss": "Не вижу условия успешного статуса. В guard стоит то, что должно быть истиной для успеха, иначе 503 пройдёт к декодеру."},
+   {"pat": ["try await session.data(for: request ...)"],
+    "miss": "Не вижу запроса try await session.data(for: request): сеть идёт через переданную сессию и готовый запрос, с await."}
+  ],
+  "not": [
+   {"pat": ["try?", "try!"],
+    "msg": "try? глотает ошибку, try! роняет приложение. Здесь нужен обычный try, ошибка уйдёт наверх по throws."},
+   {"pat": ["statusCode != 200"],
+    "msg": "Условие guard перевёрнуто: он пропускает дальше, когда условие истинно. Для успеха нужно сравнение на равенство."},
+   {"pat": ["URLSession.shared.data(...)"],
+    "msg": "Запрос должен идти через session из параметра, а не через .shared напрямую: так сессию можно подменить."},
+   {"pat": ["statusCode != 503", "statusCode == 503"],
+    "msg": "Проверка одного кода 503 пропускает 404, 500 и другие. Условие должно описывать успех, а не одну известную ошибку."}
+  ],
+  "complete": true
+ }},
+ {"task": "urls-b2", "check": {
+  "accept": [
+   "mutating func apply(_ chapter: Chapter) {\n    if chapter.id == selectedID {\n        title = chapter.title\n    }\n}",
+   "mutating func apply(_ chapter: Chapter) {\n    guard selectedID == chapter.id else { return }\n    title = chapter.title\n}"
+  ],
+  "must": [
+   {"pat": ["chapter.id == selectedID", "selectedID == chapter.id", "chapter.id != selectedID", "selectedID != chapter.id"],
+    "miss": "Не вижу сравнения id пришедшей главы с selectedID. Устаревший ответ можно отличить только сверкой с текущим выбором."},
+   {"pat": ["guard chapter.id == selectedID else { return }", "guard selectedID == chapter.id else { return }", "if chapter.id != selectedID { return }", "if selectedID != chapter.id { return }", "if chapter.id == selectedID { title = chapter.title }", "if selectedID == chapter.id { title = chapter.title }"],
+    "miss": "Сверка должна стоять до присвоения title: чужая глава не применяется вообще. Проверь, что присвоение защищено условием."},
+   {"pat": ["title = chapter.title"],
+    "miss": "Присвоение title = chapter.title для актуальной главы должно остаться: иначе экран вообще не обновится."}
+  ],
+  "not": [
+   {"pat": ["apply(Chapter(id: 12, title: \"Глава 12\")) ... apply(Chapter(id: 13, title: \"Глава 13\"))"],
+    "msg": "Ты поменял порядок ответов. По условию он остаётся прежним: сначала 13, потом 12. Чинится сам apply."},
+   {"pat": ["selectedID = chapter.id"],
+    "msg": "Так выбор подгоняется под пришедший ответ, и защита исчезает. selectedID — то, что хочет пользователь, его не трогают."},
+   {"pat": ["title = \"Глава 13\"", "print(\"Глава 13\")", "chapter.id == 13", "chapter.id != 12", "chapter.id == 12"],
+    "msg": "Подгонка под конкретный пример. Сравнивай с selectedID, а не с константой: проверка должна работать при любом выборе."},
+   {"pat": ["title = chapter.title ... guard", "title = chapter.title ... chapter.id == selectedID"],
+    "msg": "Проверка стоит после присвоения: title уже изменён. Сверку надо сделать до записи."}
+  ],
+  "complete": true
+ }},
+ {"task": "urls-b3", "check": {
+  "accept": [
+   "guard let http = response as? HTTPURLResponse\nelse { throw LoadError.notHTTP }\nif http.statusCode != 200 {\n    throw LoadError.status(http.statusCode)\n}"
+  ],
+  "must": [
+   {"pat": ["response as? HTTPURLResponse"],
+    "miss": "Не вижу приведения response к HTTPURLResponse. У общего URLResponse статуса нет, без приведения проверять нечего."},
+   {"pat": ["throw LoadError.notHTTP"],
+    "miss": "Для ответа не-HTTP не хватает ошибки: бросай notHTTP, иначе такой ответ молча уйдёт к декодеру."},
+   {"pat": ["$a.statusCode == 200", "$a.statusCode != 200", "200 == $a.statusCode", "200 != $a.statusCode"],
+    "miss": "Не вижу сравнения статуса с 200. Контракт запрещает декодировать любые другие коды, в том числе 204."},
+   {"pat": ["throw LoadError.status($a.statusCode)"],
+    "miss": "При статусе не 200 нужно бросить status с самим кодом: так вызывающий код увидит, что именно пришло, например 204."}
+  ],
+  "not": [
+   {"pat": ["decode(LaundryRoom.self, from: ...) ... statusCode == 200", "decode(LaundryRoom.self, from: ...) ... statusCode != 200"],
+    "msg": "Декодирование стоит раньше проверки. Для 204 тела нет, декодер упадёт не с той ошибкой: статус проверяется до JSON."},
+   {"pat": ["..< 300", "contains($a.statusCode)"],
+    "msg": "Диапазон 2xx пропустит 204, а по контракту декодировать можно только 200. Сравнивай именно с 200."},
+   {"pat": ["try?", "try!", "as! HTTPURLResponse"],
+    "msg": "try? прячет ошибку, try! и as! роняют приложение. Нужны проверки с throw на каждом шаге."},
+   {"pat": ["guard $a.statusCode != 200", "if $a.statusCode == 200 { throw"],
+    "msg": "Условие перевёрнуто: бросать надо при статусе не 200, а на 200 идти дальше к декодированию."}
+  ],
+  "complete": true
+ }}
+]

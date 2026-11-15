@@ -1,0 +1,205 @@
+[
+ {"task": "codable.s1", "check": {
+  "outs": [["Кодовые имена", "4", "Без подзаголовка"]],
+  "why": [
+   "title — обычная строка из JSON, декодируется как есть.",
+   "player_count через CodingKeys попадает в playerCount, значение 4.",
+   "subtitle пришёл как null, декодирован в nil, а ?? подставил запасной текст."
+  ],
+  "wrong": [
+   {"out": ["Некорректные данные"], "msg": "Ты решил, что null ломает декодирование. Для Optional-поля null — допустимое значение: оно становится nil, ошибки нет."},
+   {"out": ["Кодовые имена", "4", "nil"], "msg": "print вывел бы nil только для самого Optional. Здесь есть ?? — при nil он подставляет запасной текст."},
+   {"out": ["Кодовые имена", "4", "null"], "msg": "null — это слово из JSON. После декодирования в Swift оно становится nil, и ?? заменяет его запасным текстом."}
+  ]
+ }},
+ {"task": "codable.s2", "check": {
+  "accept": [],
+  "must": [
+   {"pat": ["String?", "Optional<String>"],
+    "miss": "У subtitle нет Optional-типа. Сервер присылает null, поэтому тип должен допускать отсутствие значения."},
+   {"pat": ["\"player_count\""],
+    "miss": "Для playerCount не указан серверный ключ. CodingKeys должен связать свойство с именем из JSON, записанным со змеиным регистром."}
+  ],
+  "not": [
+   {"pat": ["\"playerCount\"", "\"PlayerCount\"", "\"playercount\"", "\"player count\""],
+    "msg": "Это имя свойства, а не ключ JSON. В JSON поле называется иначе, со змеиным регистром — именно его и нужно записать."},
+   {"pat": ["String!"],
+    "msg": "Неявно развёрнутый Optional не про отсутствие значения в данных. Здесь нужен обычный Optional с вопросительным знаком."},
+   {"pat": ["Int?"],
+    "msg": "playerCount в JSON всегда есть, это обязательное поле. Optional нужен только там, где сервер может прислать null."},
+   {"pat": ["subtitle: String ="],
+    "msg": "Значение по умолчанию не заменяет Optional: тип остаётся обязательным, а null из JSON всё равно не даст себя декодировать."}
+  ],
+  "complete": true
+ }},
+ {"task": "codable.s3", "check": {
+  "accept": [],
+  "must": [
+   {"pat": ["do { ... } catch"],
+    "miss": "Нет do/catch. decode и encode бросают ошибки; без catch их нельзя вызвать безопасно, а try! уронит приложение."},
+   {"pat": ["game = try ... decode(Game.self, from: data)"],
+    "miss": "Не вижу первого декодирования исходного JSON в Game. С него начинается проверка в обе стороны."},
+   {"pat": ["try ... encode($a)"],
+    "miss": "Нет кодирования модели обратно в Data. Без этого шага нельзя проверить второе направление Codable."},
+   {"pat": ["restored = try ... decode(Game.self, from: $a)", "restored: Game = try ... decode(Game.self, from: $a)"],
+    "miss": "Нет повторного декодирования в restored из закодированных данных. Именно оно показывает, что кодирование ничего не потеряло."},
+   {"pat": ["print(restored.id) ... print(restored.playerCount)"],
+    "miss": "Выведи по отдельному print сначала id, затем playerCount, но у восстановленной модели restored, а не у исходной."}
+  ],
+  "not": [
+   {"pat": ["try!"],
+    "msg": "try! роняет приложение на плохих данных. Задание просит ловить ошибки через do/catch."},
+   {"pat": ["restored = try ... decode(Game.self, from: data)", "restored: Game = try ... decode(Game.self, from: data)"],
+    "msg": "restored декодируется из исходных данных, а не из результата encode. Так второе направление не проверяется вовсе."},
+   {"pat": ["== json", "json =="],
+    "msg": "Строка после encode может отличаться порядком ключей. Сравнивай значения восстановленной модели, а не текст JSON."}
+  ],
+  "complete": false
+ }},
+ {"task": "codable.s4", "check": {
+  "accept": [],
+  "must": [
+   {"pat": [
+     "#\"\"\"\n{\"id\":5,\"title\":\"Кодовые имена\",\n\"player_count\":4,\"subtitle\":null}\n\"\"\"#",
+     "#\"{\"id\":5,\"title\":\"Кодовые имена\",\"player_count\":4,\"subtitle\":null}\"#",
+     "#\"{\"id\":5,\"title\":\"Кодовые имена\", \"player_count\":4, \"subtitle\":null}\"#"],
+    "miss": "Не вижу исправленной фикстуры: player_count должен быть числом без кавычек, остальные поля трогать не нужно."},
+   {"pat": ["json ="],
+    "miss": "Нет объявления тестового JSON. Исправление нужно внести в сами данные, а не в модель или обработку."}
+  ],
+  "not": [
+   {"pat": ["playerCount: String", "playerCount: Int?"],
+    "msg": "Ты меняешь модель вместо данных. Контракт говорит: число — Int. Сломанный ответ надо чинить в фикстуре."},
+   {"pat": ["try!"],
+    "msg": "try! скрывает ошибку падением приложения. Ошибка данных должна уходить в catch."},
+   {"pat": ["init(from $a: Decoder)", "decode(String.self, forKey: ...)"],
+    "msg": "Свой init(from:), который переваривает строку вместо числа, подгоняет код под плохой ответ. Контракт нужно соблюдать в данных."}
+  ],
+  "complete": false
+ }},
+ {"task": "codable.s5", "check": {
+  "concepts": [
+   {"label": "Codable — чтение и запись (decode + encode)",
+    "groups": [["codable", "encodable", "decodable", "кодабл"], ["encod", "decod", "кодир", "декод", "туда", "обратн", "обе сторон", "в обе", "чтени", "запис"]],
+    "miss": "Не сказано, что Codable — это и чтение (Decodable), и запись (Encodable): одна модель умеет в обе стороны."},
+   {"label": "CodingKeys связывает свойства с ключами JSON",
+    "groups": [["codingkeys", "coding keys", "ключ"], ["имен", "названи", "сопостав", "связ", "маппинг", "snake", "player_count", "свойств", "соответств"]],
+    "miss": "Не объяснено, зачем CodingKeys: он связывает имена свойств в Swift с именами ключей внешнего формата."},
+   {"label": "Optional допускает отсутствие и null",
+    "groups": [["optional", "опционал", "nil"], ["отсутств", "null", "нет ключ", "не прише", "нет значен", "может не быть"]],
+    "miss": "Не сказано, что Optional допускает отсутствие ключа или null, а обязательное поле — нет."},
+   {"label": "Неверный тип — ошибка, её ловят do/catch, а не try!",
+    "groups": [["тип", "type", "строк"], ["ошибк", "error", "throw", "catch", "исключен", "не декод"]],
+    "miss": "Не разобрано, что неверный тип — это ошибка декодирования, и Optional её не убирает. Её ловят в do/catch, а не try!."},
+   {"label": "Round trip сравнивает значения, а не строку JSON",
+    "groups": [["round", "туда", "обратн", "восстанов", "сравнива", "порядок", "кругов"], ["значен", "порядок", "ключей", "не строк", "не точн", "свойств", "модел"]],
+    "miss": "Не сказано, почему round trip проверяют по значениям восстановленной модели: порядок ключей в JSON несущественен."}
+  ],
+  "false": [
+   {"groups": [["optional", "опционал"], ["любой тип", "любую ошибк", "и неверн", "все ошибки", "всё что угодно", "что угодно"]],
+    "msg": "Optional не прощает неверный тип. Он допускает только отсутствие значения или null; строка вместо числа всё равно даст ошибку."}
+  ]
+ }},
+ {"task": "codable.s6", "check": {
+  "accept": [],
+  "must": [
+   {"pat": ["GameMode: Decodable { ... id: Int", "GameMode: Codable { ... id: Int"],
+    "miss": "Не вижу struct GameMode с Decodable и свойством id типа Int. Это основа модели."},
+   {"pat": ["isCooperative: Bool"],
+    "miss": "Нет свойства isCooperative типа Bool. Именно тип Bool не даст принять значение \"true\", присланное строкой."},
+   {"pat": ["isCooperative = \"is_cooperative\""],
+    "miss": "Нет сопоставления isCooperative с ключом JSON. В CodingKeys серверное имя записано со змеиным регистром."},
+   {"pat": ["do { ... decode(GameMode.self, from: $a) ... } catch"],
+    "miss": "Декодирование должно быть внутри do с try и обработкой ошибки через catch, а не через try! или try?."},
+   {"pat": ["print($a.isCooperative)", "print(\"\\($a.isCooperative)\")"],
+    "miss": "Не выведен признак isCooperative декодированной модели. Это итог упражнения."}
+  ],
+  "not": [
+   {"pat": ["try!"],
+    "msg": "try! роняет приложение при плохих данных. Здесь нужна обработка через do/catch."},
+   {"pat": ["isCooperative: String", "isCooperative: Int"],
+    "msg": "Признак — Bool. Менять тип ради строки \"true\" нельзя: задание запрещает принимать значение строкой."},
+   {"pat": ["decode(String.self, forKey: ...)"],
+    "msg": "Ручное чтение строки и превращение её в Bool принимает \"true\" строкой — именно это запрещено. Пусть Bool-декодер отклоняет такие данные."}
+  ],
+  "complete": false
+ }},
+ {"task": "codable.s7", "check": {
+  "accept": [],
+  "must": [
+   {"pat": ["GameCover: Decodable", "GameCover: Codable"],
+    "miss": "Нет struct GameCover с Decodable. Это модель, которую нужно восстановить по памяти."},
+   {"pat": ["coverPath: String?", "coverPath: Optional<String>"],
+    "miss": "coverPath должен быть Optional: в JSON обложки нет, и без Optional декодирование упадёт с ошибкой отсутствующего ключа."},
+   {"pat": ["coverPath = \"cover_path\""],
+    "miss": "Нет сопоставления coverPath с серверным ключом в CodingKeys. Имя ключа записано со змеиным регистром."},
+   {"pat": ["do { ... decode(GameCover.self, from: $a) ... } catch"],
+    "miss": "Нет do/catch с decode. Ошибки данных надо ловить, а не гасить через try! или try?."},
+   {"pat": ["?? \"Нет обложки\"", "else { print(\"Нет обложки\") }", "case .none: print(\"Нет обложки\")", "== nil { print(\"Нет обложки\") }"],
+    "miss": "Не вижу запасного вывода «Нет обложки» для отсутствующего coverPath. Подумай, что оператор или ветка делают при nil."}
+  ],
+  "not": [
+   {"pat": ["try!"],
+    "msg": "try! роняет приложение. Ошибки декодирования должны уходить в catch."},
+   {"pat": ["id: Int?", "title: String?"],
+    "msg": "id и title обязательные. Если сделать их Optional, пропажа поля перестанет быть ошибкой, а задание требует её сохранить."},
+   {"pat": ["decodeIfPresent(Int.self, forKey: .id)", "decodeIfPresent(String.self, forKey: .title)", "id: Int = ...", "title: String = ..."],
+    "msg": "Так обязательные поля подменяются значением по умолчанию, и ошибка пропадает. Для id и title отсутствие должно быть ошибкой."}
+  ],
+  "complete": false
+ }},
+ {"task": "codable-b1", "check": {
+  "outs": [["Фикус", "true"]],
+  "why": [
+   "display_name через CodingKeys попадает в displayName, это «Фикус».",
+   "height_cm был null, поэтому heightCm равно nil, и сравнение с nil даёт true."
+  ],
+  "wrong": [
+   {"out": ["Фикус", "false"], "msg": "Ты решил, что null — это какое-то значение. Для Optional-поля null декодируется как nil, поэтому сравнение с nil истинно."},
+   {"out": ["Некорректные данные"], "msg": "Ты решил, что null ломает декодирование. Для Optional-поля null допустим и становится nil, до catch дело не доходит."},
+   {"out": ["Фикус", "nil"], "msg": "print выводит результат сравнения heightCm == nil, а не сам heightCm. Сравнение даёт Bool, то есть true или false."}
+  ]
+ }},
+ {"task": "codable-b2", "check": {
+  "accept": [
+   "} catch let DecodingError.keyNotFound(key, _) {\n    print(\"Нет ключа: \\(key.stringValue)\")\n} catch let DecodingError.typeMismatch(_, context) {\n    print(\"Неверный тип: \\(context.codingPath.last?.stringValue ?? \"?\")\")\n} catch {\n    print(\"Другая ошибка\")\n}"
+  ],
+  "must": [
+   {"pat": ["catch DecodingError.keyNotFound(...)", "catch let DecodingError.keyNotFound(...)"],
+    "miss": "Нет отдельного catch для отсутствующего ключа. Нужен случай keyNotFound у DecodingError, чтобы отличать пропажу поля от других ошибок."},
+   {"pat": ["catch DecodingError.typeMismatch(...)", "catch let DecodingError.typeMismatch(...)"],
+    "miss": "Нет отдельного catch для несовпадения типа. Нужен случай typeMismatch у DecodingError: для строки вместо числа сработает он."},
+   {"pat": ["stringValue"],
+    "miss": "Имя поля не показано. У ключа и у элементов пути есть stringValue; без него в сообщении будет служебное описание."},
+   {"pat": ["codingPath"],
+    "miss": "Для typeMismatch имя поля берут из контекста ошибки — из его codingPath. Не вижу, чтобы ты его использовал."},
+   {"pat": ["catch { ... }", "catch let $a { ... }"],
+    "miss": "Нет общего catch без шаблона. Если придёт другая ошибка, её никто не обработает, и код не скомпилируется."}
+  ],
+  "not": [
+   {"pat": ["try!"],
+    "msg": "try! при ошибке роняет приложение. Здесь нужно ловить ошибки по видам, а не падать."},
+   {"pat": ["catch DecodingError.keyNotFound(let $a, ...) { print($a) }"],
+    "msg": "print(key) выведет служебное описание ключа целиком. Чтобы получить только имя поля, возьми у ключа его строковое значение."}
+  ],
+  "complete": false
+ }},
+ {"task": "codable-b3", "check": {
+  "accept": [],
+  "must": [
+   {"pat": ["String?", "Optional<String>"],
+    "miss": "winner должен быть Optional: ключа в JSON нет. Без Optional декодирование завершится ошибкой отсутствующего ключа."},
+   {"pat": ["String"],
+    "miss": "Внутри Optional должна быть строка: дальше winner используется как текст с запасным значением через ??."}
+  ],
+  "not": [
+   {"pat": ["String!"],
+    "msg": "String! — не про отсутствие данных: для декодера это не Optional-поле. Нужен обычный Optional с вопросительным знаком."},
+   {"pat": ["id: Int?"],
+    "msg": "id обязателен по заданию. Optional нужен только для winner, иначе пропажа id перестанет считаться ошибкой."},
+   {"pat": ["[String?]", "[String]?", "Int?", "Bool?"],
+    "msg": "Тип Optional выбран неверный. Запасное значение в print — текст, значит, winner хранит строку."}
+  ],
+  "complete": true
+ }}
+]

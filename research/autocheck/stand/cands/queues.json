@@ -1,0 +1,562 @@
+[
+ {
+  "task": "queues.s1",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "Уровень 7\nУровень 8\nГотово",
+  "note": "Вывод как в ключе."
+ },
+ {
+  "task": "queues.s1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Уровень 7, Уровень 8, Готово. async на serial идут по очереди, а sync снаружи ждёт их",
+  "note": "Тот же вывод в одну строку с пояснением."
+ },
+ {
+  "task": "queues.s1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "\"Уровень 7\" \"Уровень 8\" \"Готово\"",
+  "note": "Те же три строки, записаны в кавычках через пробел."
+ },
+ {
+  "task": "queues.s1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Уровень 8\nУровень 7\nГотово",
+  "note": "Перепутан порядок двух задач serial-очереди."
+ },
+ {
+  "task": "queues.s1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Уровень 7\nГотово\nУровень 8",
+  "note": "«Готово» поставлено до второй задачи, хотя sync ждёт обе."
+ },
+ {
+  "task": "queues.s1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Готово\nУровень 7\nУровень 8\nasync не ждёт, поэтому Готово первым",
+  "note": "Не учтено, что внешний sync ждёт предыдущие работы очереди."
+ },
+ {
+  "task": "queues.s1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Уровень 7 и Уровень 8 в любом порядке, async запускает их одновременно, потом Готово",
+  "note": "Считает, что async на serial-очереди не сохраняет порядок."
+ },
+ {
+  "task": "queues.s1",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "Будет deadlock, ничего не напечатается",
+  "note": "Неверно: sync снаружи очереди не блокируется навсегда."
+ },
+ {
+  "task": "queues.s2",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "import Dispatch\nlet queue = DispatchQueue(label: \"levels.export\")\n\nprint(\"До\")\nqueue.sync { print(\"Экспорт 7\") }   // ждём\nprint(\"После\")",
+  "note": "Ключ с другими пробелами и комментарием."
+ },
+ {
+  "task": "queues.s2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "import Dispatch\nlet queue = DispatchQueue(label: \"levels.export\")\nprint(\"До\")\nqueue.sync(execute: { print(\"Экспорт 7\") })\nprint(\"После\")",
+  "note": "sync с явным параметром execute."
+ },
+ {
+  "task": "queues.s2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "queue.sync {\n  print(\"Экспорт 7\")\n}\n\nВывод: До, Экспорт 7, После. При async после \"До\" может быть как Экспорт 7, так и После, вызывающий код не ждёт.",
+  "note": "Фрагмент в несколько строк, верное пояснение."
+ },
+ {
+  "task": "queues.s2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "import Dispatch\nlet queue = DispatchQueue(label: \"levels.export\")\nprint(\"До\")\nqueue.async { print(\"Экспорт 7\") }\nprint(\"После\")",
+  "note": "async вместо sync: порядок не гарантирован."
+ },
+ {
+  "task": "queues.s2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "import Dispatch\nlet queue = DispatchQueue(label: \"levels.export\")\nprint(\"До\")\nprint(\"После\")\nqueue.sync { print(\"Экспорт 7\") }",
+  "note": "sync стоит после «После»: порядок нарушен."
+ },
+ {
+  "task": "queues.s2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "queue.sync { print(\"Экспорт 7\")",
+  "note": "Незакрытая фигурная скобка."
+ },
+ {
+  "task": "queues.s2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "queue.sync { print \"Экспорт 7\" }",
+  "note": "print без скобок, синтаксическая ошибка."
+ },
+ {
+  "task": "queues.s2",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "print(\"Экспорт 7\")\nsleep(1)",
+  "note": "Вместо sync на очереди — sleep, очередь не использована."
+ },
+ {
+  "task": "queues.s3",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "import Dispatch\nlet queue = DispatchQueue(label: \"levels.export\")\n\nfunc encodeLevel(id: Int) -> String {\n    return \"level-\\(id)\"\n}\n\nlet result = queue.sync { encodeLevel(id: 7) }\nprint(result)",
+  "note": "Ключ с развёрнутым return и пустыми строками."
+ },
+ {
+  "task": "queues.s3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func encodeLevel(id: Int) -> String {\n  return \"level-\" + String(id)\n}\nlet r = queue.sync { encodeLevel(id: 7) }\nprint(r)",
+  "note": "Конкатенация вместо интерполяции, другое имя переменной."
+ },
+ {
+  "task": "queues.s3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "import Dispatch\nlet queue = DispatchQueue(label: \"levels.export\")\nfunc encodeLevel(id: Int) -> String { return \"level-\\(id)\" }\nlet level: String = queue.sync { return encodeLevel(id: 7) }\nprint(level)\n\nsync возвращает значение блока, поэтому async-запись в переменную не нужна.",
+  "note": "Явный тип и return в замыкании."
+ },
+ {
+  "task": "queues.s3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "func encodeLevel(id: Int) -> String { \"level-\\(id)\" }\nlet result = encodeLevel(id: 7)\nprint(result)",
+  "note": "Нет queue.sync, нарушено требование задачи."
+ },
+ {
+  "task": "queues.s3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "func encodeLevel(id: Int) -> String { \"level-\\(id)\" }\nvar result = \"\"\nqueue.async { result = encodeLevel(id: 7) }\nprint(result)",
+  "note": "Async-запись в общую переменную, что запрещено условием."
+ },
+ {
+  "task": "queues.s3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "func encodeLevel(id: Int) { \"level-\\(id)\" }\nlet result = queue.sync { encodeLevel(id: 7) }\nprint(result)",
+  "note": "Забыт тип возврата -> String."
+ },
+ {
+  "task": "queues.s3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "func encodeLevel(id: Int) -> String { \"level-\\(id)\" }\nlet result = queue.sync { encodeLevel(7) }\nprint(result)",
+  "note": "Пропущена метка id: при вызове."
+ },
+ {
+  "task": "queues.s3",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "print(\"level-7\")",
+  "note": "Строка выведена напрямую, ни помощника, ни sync."
+ },
+ {
+  "task": "queues.s4",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "import Dispatch\nlet queue = DispatchQueue(label: \"levels.export\")\nfunc encodeLevel() {\n    print(\"Экспорт 7\")\n}\n\nqueue.sync {\n    print(\"Начало\")\n    encodeLevel()\n    print(\"Конец\")\n}",
+  "note": "Ключ с другим форматированием."
+ },
+ {
+  "task": "queues.s4",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func encodeLevel() {\n  print(\"Экспорт 7\")\n}\nqueue.sync {\n  print(\"Начало\")\n  encodeLevel()\n  print(\"Конец\")\n}\n\nВложенного sync на свою очередь больше нет, поэтому deadlock исчез.",
+  "note": "Фрагмент без import, верное исправление."
+ },
+ {
+  "task": "queues.s4",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "import Dispatch\nlet queue = DispatchQueue(label: \"levels.export\")\nfunc encodeLevel() -> Void { print(\"Экспорт 7\") }\nqueue.sync {\n  print(\"Начало\")\n  encodeLevel()\n  print(\"Конец\")\n}",
+  "note": "Явный Void у функции."
+ },
+ {
+  "task": "queues.s4",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "queue.sync {\n    print(\"Начало\")\n    queue.async { print(\"Экспорт 7\") }\n    print(\"Конец\")\n}",
+  "note": "Вложенный sync заменён на async, порядок не гарантирован и encodeLevel не вынесен."
+ },
+ {
+  "task": "queues.s4",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "func encodeLevel() { print(\"Экспорт 7\") }\nqueue.sync {\n    encodeLevel()\n    print(\"Начало\")\n    print(\"Конец\")\n}",
+  "note": "Нарушен порядок: экспорт раньше «Начало»."
+ },
+ {
+  "task": "queues.s4",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "func encodeLevel() { print(\"Экспорт 7\") }\nqueue.sync {\n    print(\"Начало\")\n    encodeLevel\n    print(\"Конец\")\n}",
+  "note": "Функция не вызвана: нет скобок."
+ },
+ {
+  "task": "queues.s4",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "func encodeLevel() { queue.sync { print(\"Экспорт 7\") } }\nqueue.sync {\n    print(\"Начало\")\n    encodeLevel()\n    print(\"Конец\")\n}",
+  "note": "sync на ту же очередь остался внутри функции, deadlock сохранился."
+ },
+ {
+  "task": "queues.s4",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "sleep(1)\nprint(\"Экспорт 7\")",
+  "note": "Не решает проблему вложенного ожидания."
+ },
+ {
+  "task": "queues.s5",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "Serial не даёт своим работам перекрываться, concurrent разрешает. Но это не значит, что есть какой-то конкретный поток или порядок окончания. sync ждёт работу и может вернуть результат, async просто ставит и идёт дальше. Вложенный sync на ту же serial ждёт блок, который не может стартовать, пока внешний не закончится, а он сам ждёт.",
+  "note": "Полный ответ близко к ключу."
+ },
+ {
+  "task": "queues.s5",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Ну смотри, serial это когда задачи по одной, друг на друга не налезают, concurrent можно вместе, только заранее не скажешь кто кончит первым. sync стоишь и ждёшь, получаешь значение; async отправил и пошёл. А если внутри serial-блока ещё sync на неё же, то получается замкнутый круг: внутренняя ждёт, пока освободится очередь, а освободится она только после внешней.",
+  "note": "Разговорный полный ответ."
+ },
+ {
+  "task": "queues.s5",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Очередь бывает последовательная или параллельная: первая не допускает пересечения своих работ, вторая допускает, порядок завершения у параллельной не обещан. Отдельно sync/async: sync блокирует вызывающего до конца работы и отдаёт результат, async возвращается сразу. Вложенный sync на текущую serial зависает, потому что работе внутри некому начаться, пока не завершится блок, который её ждёт.",
+  "note": "Другой порядок мыслей, тот же смысл."
+ },
+ {
+  "task": "queues.s5",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "serial выполняет задачи по одной, concurrent вместе. sync ждёт завершения работы и возвращает результат, async не ждёт. А про вложенный sync я помню только, что так нельзя.",
+  "note": "Нет объяснения, почему вложенный sync ошибочен."
+ },
+ {
+  "task": "queues.s5",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "serial это по одной, concurrent вместе. Вложенный sync на текущую serial зависает: внутренняя работа не начнётся, пока не закончится внешняя, которая её ждёт.",
+  "note": "Не сказано, чем sync отличается от async."
+ },
+ {
+  "task": "queues.s5",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "serial это один поток, concurrent несколько потоков. sync ждёт, async нет. Вложенный sync плохо потому что поток уже занят и его нельзя использовать второй раз.",
+  "note": "Ложно: serial/concurrent про перекрытие работ, а не про число потоков."
+ },
+ {
+  "task": "queues.s5",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "sync выполняется на главном потоке, а async на фоновом, поэтому sync блокирует интерфейс. serial идёт по порядку, concurrent как придётся. Вложенный sync ошибочен, потому что нельзя вызывать главный поток из главного.",
+  "note": "Ложно: sync/async не определяют поток, а ждут или не ждут."
+ },
+ {
+  "task": "queues.s5",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "Очередь это как массив, FIFO. Serial это когда сериализуют данные в JSON, а deadlock это когда память закончилась и приложение закрывается.",
+  "note": "Набор терминов без смысла."
+ },
+ {
+  "task": "queues.s6",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "import Dispatch\nlet queue = DispatchQueue(\n    label: \"levels.export\",\n    attributes: .concurrent\n)\nlet first = DispatchWorkItem {\n    print(\"7:начало\")\n    print(\"7:конец\")\n}\nlet second = DispatchWorkItem {\n    print(\"8:начало\")\n    print(\"8:конец\")\n}\nqueue.async(execute: first)\nqueue.async(execute: second)\nfirst.wait()\nsecond.wait()\nprint(\"Готово\")",
+  "note": "Ключ с атрибутом на отдельной строке."
+ },
+ {
+  "task": "queues.s6",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "attributes: [.concurrent]",
+  "note": "Атрибут в виде набора OptionSet."
+ },
+ {
+  "task": "queues.s6",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "attributes: DispatchQueue.Attributes.concurrent\n\nConcurrent: 7:начало раньше 7:конец, 8:начало раньше 8:конец, Готово последнее. Между работами порядок не задан. Serial: 7:начало, 7:конец, 8:начало, 8:конец, Готово.",
+  "note": "Полное имя типа атрибута и верные гарантии."
+ },
+ {
+  "task": "queues.s6",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "attributes: .initiallyInactive",
+  "note": "Не тот атрибут: очередь неактивна, а не concurrent."
+ },
+ {
+  "task": "queues.s6",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "attributes: .concurrent\nlet first = DispatchWorkItem {\n    print(\"7:начало\")\n    sleep(1)\n    print(\"7:конец\")\n}",
+  "note": "Добавлен sleep, который запрещён условием."
+ },
+ {
+  "task": "queues.s6",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "attributes: concurrent",
+  "note": "Пропущена точка перед concurrent."
+ },
+ {
+  "task": "queues.s6",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "attributes: .serial",
+  "note": "У DispatchQueue.Attributes нет члена serial."
+ },
+ {
+  "task": "queues.s6",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "queue.sync(execute: first)\nqueue.sync(execute: second)",
+  "note": "Очередь не сделана concurrent, атрибут не выбран."
+ },
+ {
+  "task": "queues.s7",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "import Dispatch\nlet queue = DispatchQueue(label: \"levels.export\")\n\nfunc encodeManifest(count: Int) -> String {\n    return \"manifest-\\(count)\"\n}\n\nlet result = queue.sync { encodeManifest(count: 2) }\nprint(result)",
+  "note": "Ключ с развёрнутым return."
+ },
+ {
+  "task": "queues.s7",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "let queue = DispatchQueue(label: \"levels.export\")\nfunc encodeManifest(count: Int) -> String { \"manifest-\" + String(count) }\nlet manifest = queue.sync { return encodeManifest(count: 2) }\nprint(manifest)",
+  "note": "Другие имена и конкатенация."
+ },
+ {
+  "task": "queues.s7",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "import Dispatch\nlet queue = DispatchQueue(label: \"levels.export\")\nfunc encodeManifest(count: Int) -> String { \"manifest-\\(count)\" }\nlet text: String = queue.sync { encodeManifest(count: 2) }\nprint(text)\n\nЧтобы не ждать, нужен async и callback или другой способ вернуть результат.",
+  "note": "Явный тип и верное замечание про async."
+ },
+ {
+  "task": "queues.s7",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "func encodeManifest(count: Int) -> String { \"manifest-\\(count)\" }\nlet result = encodeManifest(count: 2)\nprint(result)",
+  "note": "Нет custom-очереди и sync."
+ },
+ {
+  "task": "queues.s7",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let queue = DispatchQueue(label: \"levels.export\")\nfunc encodeManifest(count: Int) -> String { \"manifest-count\" }\nlet result = queue.sync { encodeManifest(count: 2) }\nprint(result)",
+  "note": "Нет интерполяции: вернётся manifest-count."
+ },
+ {
+  "task": "queues.s7",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let queue = DispatchQueue(label: \"levels.export\")\nfunc encodeManifest(count: Int) { \"manifest-\\(count)\" }\nlet result = queue.sync { encodeManifest(count: 2) }\nprint(result)",
+  "note": "Забыт тип возврата -> String."
+ },
+ {
+  "task": "queues.s7",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let queue = DispatchQueue(label: \"levels.export\")\nfunc encodeManifest(count: Int) -> String { \"manifest-\\(count)\" }\nlet result = queue.sync { encodeManifest(count: 2) }\nprint(queue)",
+  "note": "Печатается queue, а не результат."
+ },
+ {
+  "task": "queues.s7",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "DispatchQueue.main.async { print(\"manifest-2\") }",
+  "note": "Строка выведена литералом через async, функции и sync нет."
+ },
+ {
+  "task": "queues-b1",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "Start, A, B или Start, B, A.\n\nStart идёт до постановки A. async не ждёт, поэтому B и A могут поменяться.",
+  "note": "Ответ как в ключе."
+ },
+ {
+  "task": "queues-b1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Start всегда первый, дальше либо A потом B, либо B потом A",
+  "note": "Те же два порядка, записаны словами."
+ },
+ {
+  "task": "queues-b1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "1) Start, B, A\n2) Start, A, B\nasync не ждёт, тут обе возможны",
+  "note": "Два порядка списком, в обратном порядке перечисления."
+ },
+ {
+  "task": "queues-b1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Только Start, B, A",
+  "note": "Пропущен допустимый порядок Start, A, B."
+ },
+ {
+  "task": "queues-b1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Start, A, B или B, Start, A",
+  "note": "Второй порядок неверен: Start не может быть после B."
+ },
+ {
+  "task": "queues-b1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Всегда Start, A, B, потому что очередь serial и всё идёт по порядку",
+  "note": "Не учтено, что async не ждёт, а B выполняется сразу."
+ },
+ {
+  "task": "queues-b1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Всегда Start, B, A, async откладывает задачу на потом и она точно позже B",
+  "note": "Ложная гарантия порядка для async."
+ },
+ {
+  "task": "queues-b1",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "Start, потом deadlock, потому что sync на этой же очереди",
+  "note": "sync снаружи очереди, deadlock нет."
+ },
+ {
+  "task": "queues-b2",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "import Dispatch\nlet queue = DispatchQueue(label: \"metro.export\", attributes: .concurrent)\n\nlet export = DispatchWorkItem {\n    print(\"Схема\")\n    print(\"Легенда\")\n}\nqueue.async(execute: export)\nexport.wait()",
+  "note": "Ключ с пустой строкой."
+ },
+ {
+  "task": "queues-b2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "let job = DispatchWorkItem {\n  print(\"Схема\")\n  print(\"Легенда\")\n}\nqueue.async(execute: job)\njob.wait()",
+  "note": "Другое имя работы, фрагмент."
+ },
+ {
+  "task": "queues-b2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "import Dispatch\nlet queue = DispatchQueue(label: \"metro.export\", attributes: .concurrent)\nlet all = DispatchWorkItem(block: {\n    print(\"Схема\")\n    print(\"Легенда\")\n})\nqueue.async(execute: all)\nall.wait()\n\nОбе фазы в одном блоке, порядок внутри гарантирован.",
+  "note": "Инициализатор с block:, полный код."
+ },
+ {
+  "task": "queues-b2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let export = DispatchWorkItem {\n    print(\"Легенда\")\n    print(\"Схема\")\n}\nqueue.async(execute: export)\nexport.wait()",
+  "note": "Фазы в обратном порядке."
+ },
+ {
+  "task": "queues-b2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let export = DispatchWorkItem {\n    print(\"Схема\")\n    print(\"Легенда\")\n}\nqueue.async(execute: export)",
+  "note": "Нет export.wait(), условие требует дождаться."
+ },
+ {
+  "task": "queues-b2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let export = { print(\"Схема\"); print(\"Легенда\") }\nqueue.async(execute: export)\nexport.wait()",
+  "note": "Замыкание вместо DispatchWorkItem, у него нет wait()."
+ },
+ {
+  "task": "queues-b2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let export = DispatchWorkItem {\n    print(\"Схема\")\n    print(\"Легенда\")\nqueue.async(execute: export)\nexport.wait()",
+  "note": "Незакрытая фигурная скобка."
+ },
+ {
+  "task": "queues-b2",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "import Dispatch\nlet queue = DispatchQueue(label: \"metro.export\")\nlet map = DispatchWorkItem { print(\"Схема\") }\nlet legend = DispatchWorkItem { print(\"Легенда\") }\nqueue.async(execute: map)\nqueue.async(execute: legend)\nmap.wait()\nlegend.wait()",
+  "note": "Две работы остались, просто убран concurrent; одна работа не создана."
+ },
+ {
+  "task": "queues-b3",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "import Dispatch\nfinal class BookCaption {\n    private let queue = DispatchQueue(label: \"book.caption\")\n    private var title = \"Без названия\"\n    func setTitle(_ value: String) { queue.sync { title = value } }\n    func readTitle() -> String { queue.sync { title } }\n}\nlet caption = BookCaption()\ncaption.setTitle(\"Тихий город\")\nprint(caption.readTitle())",
+  "note": "Ключ целиком."
+ },
+ {
+  "task": "queues-b3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func readTitle() -> String {\n    let t = queue.sync { title }\n    return t\n}",
+  "note": "Результат sync через локальную константу."
+ },
+ {
+  "task": "queues-b3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func readTitle() -> String {\n  var result = \"\"\n  queue.sync { result = title }\n  return result\n}\n\nasync так не может: он вернётся раньше, чем работа выполнится.",
+  "note": "Результат через var внутри sync."
+ },
+ {
+  "task": "queues-b3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "func readTitle() -> String {\n    return title\n}",
+  "note": "Чтение без очереди, нет sync."
+ },
+ {
+  "task": "queues-b3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "func readTitle() -> String {\n    return queue.sync { title.uppercased() }\n}",
+  "note": "Возвращается изменённое значение: не «Тихий город»."
+ },
+ {
+  "task": "queues-b3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "func readTitle() -> String {\n    queue.sync { title }\n    return \"\"\n}",
+  "note": "Результат sync выброшен, возвращается пустая строка."
+ },
+ {
+  "task": "queues-b3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "func readTitle() -> String {\n    return queue.sync(title)\n}",
+  "note": "sync принимает замыкание, а не значение."
+ },
+ {
+  "task": "queues-b3",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "private var title = \"Тихий город\"",
+  "note": "Значение захардкожено, очередь не используется."
+ }
+]

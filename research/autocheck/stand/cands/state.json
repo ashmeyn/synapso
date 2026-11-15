@@ -1,0 +1,562 @@
+[
+ {
+  "task": "state.s1",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "Заметка 41\nЗаказать билеты\nЗаказать билеты\nИзменилось note.title в NoteScreen",
+  "note": "Как в ключе."
+ },
+ {
+  "task": "state.s1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Номер 41, сверху «Заказать билеты», в поле тоже «Заказать билеты». Поменялся title у note (@State).",
+  "note": "Одной строкой."
+ },
+ {
+  "task": "state.s1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Верх: Заметка 41 / Заказать билеты. Поле: Заказать билеты. Единственное, что изменилось — note.title, запись пришла через $note.title.",
+  "note": "Другая подача."
+ },
+ {
+  "task": "state.s1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Заметка 41\nКупить билеты\nЗаказать билеты\nИзменилось title в TitleEditor",
+  "note": "Верхний заголовок не обновился."
+ },
+ {
+  "task": "state.s1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Заметка 41, Заказать билеты, Заказать билеты. Новая строка хранится в @Binding внутри TitleEditor.",
+  "note": "Неверный источник изменения."
+ },
+ {
+  "task": "state.s1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Заметка 41, Купить билеты, Заказать билеты. Text не обновляется сам, пока не перерисуешь экран.",
+  "note": "Заблуждение: Text не перерисуется."
+ },
+ {
+  "task": "state.s1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Заметка Заказать билеты, Заказать билеты, Заказать билеты. Note перезаписался целиком, id тоже поменялся.",
+  "note": "Заблуждение: заменяется id."
+ },
+ {
+  "task": "state.s1",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "Ничего не изменится: title — let, будет ошибка компиляции.",
+  "note": "Неверно: title это var."
+ },
+ {
+  "task": "state.s2",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "import SwiftUI\nstruct Note { let id: Int; var title: String }\nstruct NoteScreen: View {\n  @State private var note = Note(id: 41, title: \"Купить билеты\")\n  var body: some View {\n    VStack {\n      Text(\"Заметка \\(note.id)\")\n      Text(note.title)\n      TextField(\"Заголовок\", text: $note.title)\n    }\n  }\n}",
+  "note": "Ключ с 2 пробелами."
+ },
+ {
+  "task": "state.s2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "@State private var note = Note(id: 41, title: \"Купить билеты\")\n\nTextField(\"Заголовок\", text: $note.title)\n\nState хранит черновик, $ даёт связь.",
+  "note": "Только две изменённые строки."
+ },
+ {
+  "task": "state.s2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "@State private var note: Note = Note(id: 41, title: \"Купить билеты\")\nTextField(\"Заголовок\", text: $note.title)",
+  "note": "Явный тип у note."
+ },
+ {
+  "task": "state.s2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "@State private var note = Note(id: 41, title: \"Купить билеты\")\nTextField(\"Заголовок\", text: note.title)\n\nТут просто строка.",
+  "note": "Нет $, нет связи."
+ },
+ {
+  "task": "state.s2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "@State private var note = Note(id: 41, title: \"Купить билеты\")\nTextField(\"Заголовок\", text: $note.id)",
+  "note": "Связь не с тем свойством."
+ },
+ {
+  "task": "state.s2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "@State var note = Note(id: 41, title: \"Купить билеты\")\nTextField(\"Заголовок\", text: &note.title)",
+  "note": "& вместо $."
+ },
+ {
+  "task": "state.s2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "@Binding private var note = Note(id: 41, title: \"Купить билеты\")\nTextField(\"Заголовок\", text: $note.title)",
+  "note": "@Binding вместо @State."
+ },
+ {
+  "task": "state.s2",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "@State var title = \"\"\nTextField(\"Заголовок\", text: $title)",
+  "note": "Отдельная строка, надпись сверху не меняется."
+ },
+ {
+  "task": "state.s3",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "TitleEditor(title:$note.title)\n@Binding var title:String",
+  "note": "Ключ без пробелов."
+ },
+ {
+  "task": "state.s3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "TitleEditor(title: Binding(get: { note.title }, set: { note.title = $0 }))\n@Binding var title: String\n\nСделал связь руками, чтобы редактор менял родителя.",
+  "note": "Ручной Binding(get:set:)."
+ },
+ {
+  "task": "state.s3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "TitleEditor(title: $note.title)\n\n@Binding var title: String\ninit(title: Binding<String>) { _title = title }",
+  "note": "Явный init с _title."
+ },
+ {
+  "task": "state.s3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "TitleEditor(title: note.title)\n@Binding var title: String",
+  "note": "Передаёт значение вместо связи."
+ },
+ {
+  "task": "state.s3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "import SwiftUI\nstruct Note { let id: Int; var title: String }\nstruct NoteScreen: View {\n    @State private var note = Note(id: 41, title: \"Купить билеты\")\n    var body: some View {\n        VStack {\n            Text(\"Заметка \\(note.id)\")\n            Text(note.title)\n            TitleEditor(title: $note)\n        }\n    }\n}\nstruct TitleEditor: View {\n    @Binding var title: String\n    var body: some View {\n        TextField(\"Заголовок\", text: $title)\n    }\n}",
+  "note": "Передаёт связь на всю заметку."
+ },
+ {
+  "task": "state.s3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "TitleEditor(title: $note.title)\nvar title: String\n\nУ ребёнка просто строка.",
+  "note": "Нет @Binding."
+ },
+ {
+  "task": "state.s3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "import SwiftUI\nstruct Note { let id: Int; var title: String }\nstruct NoteScreen: View {\n  @State private var note = Note(id: 41, title: \"Купить билеты\")\n  var body: some View {\n    VStack {\n      Text(\"Заметка \\(note.id)\")\n      Text(note.title)\n      TitleEditor(title: $note.title)\n    }\n  }\n}\nstruct TitleEditor: View {\n  @Binding let title: String\n  var body: some View {\n    TextField(\"Заголовок\", text: $title)\n  }\n}",
+  "note": "let вместо var у @Binding."
+ },
+ {
+  "task": "state.s3",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "TitleEditor()\n@State var title = \"\"",
+  "note": "Отдельная копия строки."
+ },
+ {
+  "task": "state.s4",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "TitleEditor(title: $note.title) // связь\n@Binding var title: String",
+  "note": "Ключ с комментарием."
+ },
+ {
+  "task": "state.s4",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "TitleEditor(title: Binding(get: { note.title }, set: { note.title = $0 }))\n@Binding var title: String",
+  "note": "Ручной Binding."
+ },
+ {
+  "task": "state.s4",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "import SwiftUI\nstruct Note { let id: Int; var title: String }\nstruct NoteScreen: View {\n    @State private var note = Note(id: 41, title: \"Купить билеты\")\n    var body: some View {\n        VStack {\n            Text(\"Заметка \\(note.id)\")\n            Text(note.title)\n            TitleEditor(title: $note.title)\n        }\n    }\n}\nstruct TitleEditor: View {\n    @Binding var title: String\n    init(title: Binding<String>) { _title = title }\n    var body: some View {\n        TextField(\"Заголовок\", text: $title)\n    }\n}\n\nУбрал второй черновик.",
+  "note": "Полный код с явным init."
+ },
+ {
+  "task": "state.s4",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "TitleEditor(title: $note.title)\n@State private var title = \"Купить билеты\"",
+  "note": "Родитель исправлен, ребёнок остался на @State."
+ },
+ {
+  "task": "state.s4",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "TitleEditor()\n@Binding var title: String\n\nТеперь связь.",
+  "note": "Родитель не передаёт связь."
+ },
+ {
+  "task": "state.s4",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "TitleEditor(title: note.title)\n@Binding var title: String",
+  "note": "Нет $ при передаче."
+ },
+ {
+  "task": "state.s4",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "TitleEditor(title: $note.title)\n@Binding var title = \"Купить билеты\"",
+  "note": "У @Binding не бывает начального значения."
+ },
+ {
+  "task": "state.s4",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "@StateObject private var note = Note(id: 41, title: \"Купить билеты\")",
+  "note": "Note — структура, это не лечит причину."
+ },
+ {
+  "task": "state.s5",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "Черновиком владеет NoteScreen, он @State: это общий источник и для надписи, и для редактора. note.title — просто строка для чтения, а $note.title — Binding, связь на то же свойство, можно читать и писать. Если у ребёнка отдельный @State, то это отдельная строка: поле меняется, а надпись сверху остаётся старой. С @Binding всё синхронно.",
+  "note": "Близко к ключу."
+ },
+ {
+  "task": "state.s5",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Хозяин — родитель, у него живёт note, ребёнок только одалживает. Без доллара — копия значения, прочитал и всё, а с долларом — ручка к оригиналу, через неё можно менять. Если сделать у ребёнка свой @State, будет два разных заголовка: печатаешь в поле, сверху ничего не меняется. Binding это чинит, источник один.",
+  "note": "Другие слова, живая аналогия."
+ },
+ {
+  "task": "state.s5",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Состояние должно жить там, где его читают оба экрана, то есть в NoteScreen. note.title даёт текущее значение, а $note.title даёт доступ на изменение того же поля. Если дочерний view заведёт свой @State, он перестанет зависеть от родителя, и надпись разойдётся с полем. @Binding держит их вместе.",
+  "note": "Другой порядок мыслей."
+ },
+ {
+  "task": "state.s5",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "NoteScreen владеет черновиком, потому что надпись и редактор берут данные от него. note.title — строка для чтения, $note.title — Binding для записи.",
+  "note": "Не сказано, что сломается с отдельным @State."
+ },
+ {
+  "task": "state.s5",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Владелец — NoteScreen, @State. Если у ребёнка свой @State, поле будет менять свою строку, а надпись родителя не изменится.",
+  "note": "Не объяснено note.title и $note.title."
+ },
+ {
+  "task": "state.s5",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Владеет NoteScreen. note.title это String, а $note.title — копия строки, поэтому изменение в ней не доходит до родителя. С отдельным @State всё будет работать, просто чуть медленнее.",
+  "note": "Ложь: $note.title копия."
+ },
+ {
+  "task": "state.s5",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Черновиком владеет TitleEditor, потому что он его редактирует, а родитель только показывает. note.title читает, $note.title пишет. Отдельный @State у ребёнка SwiftUI сам синхронизирует с родителем.",
+  "note": "Ложь про владельца и автосинхронизацию."
+ },
+ {
+  "task": "state.s5",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "@Binding — это класс ObservableObject, нужно подписаться на Combine publisher и вызвать objectWillChange.",
+  "note": "Ответ не по теме."
+ },
+ {
+  "task": "state.s6",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "PinEditor(isPinned: $note.isPinned)\n@Binding var isPinned: Bool\n\nNoteScreen хранит note.",
+  "note": "Ключ."
+ },
+ {
+  "task": "state.s6",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "import SwiftUI\nstruct Note { let id: Int; let title: String; var isPinned: Bool }\nstruct NoteScreen: View {\n    @State private var note = Note(id: 41, title: \"Купить билеты\",\n                                   isPinned: false)\n    var body: some View {\n        VStack {\n            Text(note.title)\n            Text(\"Закреплена: \\(note.isPinned)\")\n            PinEditor(isPinned: Binding(get: { note.isPinned },\n                                        set: { note.isPinned = $0 }))\n        }\n    }\n}\nstruct PinEditor: View {\n    @Binding var isPinned: Bool\n    var body: some View {\n        Toggle(\"Закрепить\", isOn: $isPinned)\n    }\n}",
+  "note": "Полный код, ручной Binding."
+ },
+ {
+  "task": "state.s6",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "PinEditor(isPinned: $note.isPinned)\n\n@Binding var isPinned: Bool\ninit(isPinned: Binding<Bool>) {\n  _isPinned = isPinned\n}",
+  "note": "Явный init с _isPinned."
+ },
+ {
+  "task": "state.s6",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "PinEditor(isPinned: $note.title)\n@Binding var isPinned: Bool\n\nПередаю связь.",
+  "note": "Связь не с тем свойством."
+ },
+ {
+  "task": "state.s6",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "PinEditor(isPinned: note.isPinned)\n@Binding var isPinned: Bool",
+  "note": "Значение вместо связи."
+ },
+ {
+  "task": "state.s6",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "PinEditor(isPinned: $note.isPinned)\nvar isPinned: Bool",
+  "note": "Нет @Binding."
+ },
+ {
+  "task": "state.s6",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "import SwiftUI\nstruct Note { let id: Int; let title: String; var isPinned: Bool }\nstruct NoteScreen: View {\n  @State private var note = Note(id: 41, title: \"Купить билеты\",\n                                 isPinned: false)\n  var body: some View {\n    VStack {\n      Text(note.title)\n      Text(\"Закреплена: \\(note.isPinned)\")\n      PinEditor(isPinned: $note.isPinned)\n    }\n  }\n}\nstruct PinEditor: View {\n  @Binding let isPinned: Bool\n  var body: some View {\n    Toggle(\"Закрепить\", isOn: $isPinned)\n  }\n}",
+  "note": "let вместо var у @Binding."
+ },
+ {
+  "task": "state.s6",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "PinEditor()\n@State var isPinned = false",
+  "note": "Отдельная копия отметки."
+ },
+ {
+  "task": "state.s7",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "import SwiftUI\nstruct Note { let id: Int; let title: String; var text: String }\nstruct NoteScreen: View {\n  @State private var note = Note(id: 45, title: \"Поездка\", text: \"Проверить даты\")\n  var body: some View {\n    VStack {\n      Text(note.title)\n      Text(note.text)\n      NoteTextEditor(text: $note.text)\n    }\n  }\n}\nstruct NoteTextEditor: View {\n  @Binding var text: String\n  var body: some View {\n    TextField(\"Текст заметки\", text: $text)\n  }\n}",
+  "note": "Ключ в другой вёрстке."
+ },
+ {
+  "task": "state.s7",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "import SwiftUI\nstruct Note {\n    let id: Int\n    let title: String\n    var text: String\n}\nstruct NoteScreen: View {\n    @State private var note: Note = Note(id: 45, title: \"Поездка\", text: \"Проверить даты\")\n    var body: some View {\n        VStack(spacing: 8) {\n            Text(note.text)\n            Text(note.title)\n            NoteTextEditor(text: $note.text)\n        }\n        .padding()\n    }\n}\nstruct NoteTextEditor: View {\n    @Binding var text: String\n    var body: some View {\n        TextField(\"Текст\", text: $text)\n    }\n}",
+  "note": "Другой порядок Text и модификатор padding."
+ },
+ {
+  "task": "state.s7",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "import SwiftUI\nstruct Note { let id: Int; let title: String; var text: String }\nstruct NoteScreen: View {\n    @State private var note = Note(id: 45, title: \"Поездка\", text: \"Проверить даты\")\n    var body: some View {\n        VStack {\n            Text(note.title)\n            NoteTextEditor(text: $note.text)\n            Text(note.text)\n        }\n    }\n}\nstruct NoteTextEditor: View {\n    @Binding var text: String\n    init(text: Binding<String>) { _text = text }\n    var body: some View {\n        TextField(\"Заметка\", text: $text)\n    }\n}\n\nРодитель владеет черновиком.",
+  "note": "Явный init и другой порядок."
+ },
+ {
+  "task": "state.s7",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "import SwiftUI\nstruct Note { let id: Int; var title: String; var text: String }\nstruct NoteScreen: View {\n  @State private var note = Note(id: 45, title: \"Поездка\", text: \"Проверить даты\")\n  var body: some View {\n    VStack {\n      Text(note.title)\n      Text(note.text)\n      NoteTextEditor(text: $note.text)\n    }\n  }\n}\nstruct NoteTextEditor: View {\n  @Binding var text: String\n  var body: some View { TextField(\"Текст\", text: $text) }\n}",
+  "note": "title объявлен как var, а должен быть let."
+ },
+ {
+  "task": "state.s7",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "struct Note { let id: Int; let title: String; var text: String }\n@State private var note = Note(id: 45, title: \"Поездка\", text: \"Проверить даты\")\nNoteTextEditor(text: $note.title)\n@Binding var text: String\n\nРодитель хранит, ребёнок меняет.",
+  "note": "Редактор привязан к title."
+ },
+ {
+  "task": "state.s7",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "import SwiftUI\nstruct Note { let id: Int; let title: String; var text: String }\nstruct NoteScreen: View {\n  var note = Note(id: 45, title: \"Поездка\", text: \"Проверить даты\")\n  var body: some View {\n    VStack {\n      Text(note.title)\n      Text(note.text)\n      NoteTextEditor(text: $note.text)\n    }\n  }\n}\nstruct NoteTextEditor: View {\n  @Binding var text: String\n  var body: some View { TextField(\"Текст\", text: $text) }\n}",
+  "note": "Нет @State у родителя."
+ },
+ {
+  "task": "state.s7",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "import SwiftUI\nstruct Note { let id: Int; let title: String; var text: String }\nstruct NoteScreen: View {\n  @State private var note = Note(id: 45, title: \"Поездка\", text: \"Проверить даты\")\n  var body: some View {\n    VStack {\n      Text(note.title)\n      Text(note.text)\n      NoteTextEditor(text: $note.text)\n    }\n  }\n}\nstruct NoteTextEditor: View {\n  @Binding var text: String\n  var body: some View { TextField(\"Текст\", text: text) }\n}",
+  "note": "Нет $ у text в TextField."
+ },
+ {
+  "task": "state.s7",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "struct Note {\n  let id: Int\n  let title: String\n  var text: String\n}\nNote(id: 45, title: \"Поездка\", text: \"Проверить даты\")",
+  "note": "Только модель, без экрана и редактора."
+ },
+ {
+  "task": "state-b1",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "1. Уведомления выключены, переключатель выкл\n2. Уведомления включены, переключатель вкл\n3. Уведомления выключены, переключатель выкл",
+  "note": "Как в ключе по шагам."
+ },
+ {
+  "task": "state-b1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "выключены/выкл → включены/вкл → выключены/выкл",
+  "note": "Одной строкой со стрелками."
+ },
+ {
+  "task": "state-b1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Сначала «Уведомления выключены» и Toggle выкл. Нажал — «Уведомления включены», Toggle вкл. Кнопка «Выключить» снова ставит false, поэтому текст «выключены» и Toggle выкл. Всё идёт через один @State.",
+  "note": "С пояснением на русском."
+ },
+ {
+  "task": "state-b1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Сначала выключены, Toggle выкл. После включения: включены, Toggle вкл. После кнопки: «Уведомления включены», Toggle выкл.",
+  "note": "После кнопки текст не соответствует переключателю."
+ },
+ {
+  "task": "state-b1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Сначала выключены, Toggle выкл. После включения: «Уведомления выключены», Toggle вкл. После кнопки: выключены, Toggle выкл.",
+  "note": "На втором шаге текст не изменился."
+ },
+ {
+  "task": "state-b1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Кнопка не сработает: Binding только для чтения в родителе, после кнопки останется «включены» и Toggle вкл.",
+  "note": "Заблуждение: родитель не может менять."
+ },
+ {
+  "task": "state-b1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Сначала выключены/выкл, потом включены/вкл. После кнопки текст станет «выключены», но Toggle останется включённым — у него своя копия.",
+  "note": "Заблуждение: у Toggle своя копия."
+ },
+ {
+  "task": "state-b1",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "Сначала выкл, потом вкл, потом вкл: кнопка «Выключить» скрывает Toggle.",
+  "note": "Неверно по сути."
+ },
+ {
+  "task": "state-b2",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "import SwiftUI\nstruct CounterScreen: View {\n  @State private var count = 2\n  var body: some View {\n    VStack {\n      Text(\"Напоминаний: \\(count)\")\n      Stepper(\"Количество\", value: $count, in: 1...5)\n    }\n  }\n}",
+  "note": "Ключ с 2 пробелами."
+ },
+ {
+  "task": "state-b2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Stepper(value: $count, in: 1...5) { Text(\"Количество\") }",
+  "note": "Замыкание-подпись вместо строки."
+ },
+ {
+  "task": "state-b2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Stepper(\"Количество\", value: Binding(get: { count }, set: { count = $0 }), in: 1...5)\n\n.constant создаёт фиксированный Binding, поэтому не менялось.",
+  "note": "Ручной Binding(get:set:)."
+ },
+ {
+  "task": "state-b2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Stepper(\"Количество\", value: $count, in: 0...5)\n\nЗаменил constant на $count.",
+  "note": "Изменён диапазон."
+ },
+ {
+  "task": "state-b2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "import SwiftUI\nstruct CounterScreen: View {\n    @State private var count = 2\n    var body: some View {\n        VStack {\n            Text(\"Напоминаний: \\(count)\")\n            Stepper(\"Количество\", value: $count, in: 1...5, step: 2)\n        }\n    }\n}",
+  "note": "Добавлен шаг 2, два нажатия не дадут 4."
+ },
+ {
+  "task": "state-b2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Stepper(\"Количество\", value: count, in: 1...5)",
+  "note": "Нет $, передано значение."
+ },
+ {
+  "task": "state-b2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "import SwiftUI\nstruct CounterScreen: View {\n  var count = 2\n  var body: some View {\n    VStack {\n      Text(\"Напоминаний: \\(count)\")\n      Stepper(\"Количество\", value: &count, in: 1...5)\n    }\n  }\n}",
+  "note": "& вместо $ и нет @State."
+ },
+ {
+  "task": "state-b2",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "Text(\"Напоминаний: \\(count + 1)\")",
+  "note": "Меняет надпись, а не Stepper."
+ },
+ {
+  "task": "state-b3",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "import SwiftUI\nstruct ProfileScreen: View {\n  @State private var name = \"Анна\"\n  var body: some View {\n    VStack {\n      NameLabel(name: name)\n      NameEditor(name: $name)\n    }\n  }\n}\nstruct NameLabel: View {\n  let name: String\n  var body: some View { Text(name) }\n}\nstruct NameEditor: View {\n  @Binding var name: String\n  var body: some View { TextField(\"Имя\", text: $name) }\n}",
+  "note": "Полный код ключа."
+ },
+ {
+  "task": "state-b3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "NameLabel(name: self.name)\nNameEditor(name: self.$name)",
+  "note": "Явный self."
+ },
+ {
+  "task": "state-b3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "NameLabel(name: name)\nNameEditor(name: Binding(get: { name }, set: { name = $0 }))\n\nВ NameLabel значение, в NameEditor связь.",
+  "note": "Ручной Binding."
+ },
+ {
+  "task": "state-b3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "NameLabel(name: $name)\nNameEditor(name: name)",
+  "note": "Перепутаны значение и связь."
+ },
+ {
+  "task": "state-b3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "import SwiftUI\nstruct ProfileScreen: View {\n    @State private var name = \"Анна\"\n    var body: some View {\n        VStack {\n            NameLabel(name: name)\n            NameEditor(name: name)\n        }\n    }\n}\nstruct NameLabel: View {\n    let name: String\n    var body: some View { Text(name) }\n}\nstruct NameEditor: View {\n    @Binding var name: String\n    var body: some View { TextField(\"Имя\", text: $name) }\n}",
+  "note": "Редактору передано значение вместо связи."
+ },
+ {
+  "task": "state-b3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "NameLabel(name: name)\nNameEditor(name: &name)",
+  "note": "& вместо $."
+ },
+ {
+  "task": "state-b3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "NameLabel(name: name)\nNameEditor($name)\n\nВ NameLabel строка, в NameEditor связь.",
+  "note": "Нет метки name:."
+ },
+ {
+  "task": "state-b3",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "@Binding var name: String\n// в NameLabel",
+  "note": "Меняет NameLabel вместо аргументов."
+ }
+]

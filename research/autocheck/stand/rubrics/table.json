@@ -1,0 +1,692 @@
+[
+ {
+  "task": "table.s1",
+  "check": {
+   "outs": [
+    [
+     "Остров",
+     "62 true",
+     "true"
+    ]
+   ],
+   "why": [
+    "Последний configure взял вторую модель, поэтому подпись «Остров».",
+    "id стал 62, а галочка снята: у «Острова» saved равно false, accessoryType равен .none, значит сравнение даёт true.",
+    "prepareForReuse обнулил representedID, и сравнение с nil даёт true."
+   ],
+   "wrong": [
+    {
+     "out": [
+      "Маяки",
+      "61 false",
+      "true"
+     ],
+     "msg": "Ты смотришь на первую модель. Каждый configure перезаписывает всё: после второго вызова в ячейке данные «Острова»."
+    },
+    {
+     "out": [
+      "Остров",
+      "62 false",
+      "true"
+     ],
+     "msg": "Ты решил, что галочка осталась. configure ставит accessoryType заново для каждой модели: у «Острова» saved равно false, значит .none."
+    },
+    {
+     "out": [
+      "Остров",
+      "62 true",
+      "false"
+     ],
+     "msg": "Ты решил, что prepareForReuse не сбросил id. Он вызван вручную и обнуляет representedID, поэтому сравнение с nil истинно."
+    }
+   ]
+  }
+ },
+ {
+  "task": "table.s2",
+  "check": {
+   "accept": [
+    "final class GameSource: NSObject, UITableViewDataSource {\n    let games: [Game]\n    init(games: [Game]) { self.games = games }\n    func tableView(\n        _ tableView: UITableView, numberOfRowsInSection section: Int\n    ) -> Int { return games.count }\n    func tableView(\n        _ tableView: UITableView, cellForRowAt indexPath: IndexPath\n    ) -> UITableViewCell {\n        let cell = tableView.dequeueReusableCell(\n            withIdentifier: \"Game\", for: indexPath\n        ) as! GameCell\n        cell.configure(games[indexPath.row])\n        return cell\n    }\n}\nlet table = UITableView(\n    frame: CGRect(x: 0, y: 0, width: 320, height: 480)\n)\nlet source = GameSource(games: games)\ntable.register(GameCell.self, forCellReuseIdentifier: \"Game\")\ntable.dataSource = source\nprecondition(table.numberOfRows(inSection: 0) == 2)"
+   ],
+   "must": [
+    {
+     "pat": [
+      "-> Int { ... games.count ... }"
+     ],
+     "miss": "numberOfRowsInSection всё ещё возвращает заглушку. Число строк берётся из данных: сколько игр в модели, столько и строк."
+    },
+    {
+     "pat": [
+      "$t.register(GameCell.self, forCellReuseIdentifier: \"Game\")"
+     ],
+     "miss": "Нет register для GameCell под идентификатором «Game». Без регистрации dequeue не знает, какой класс создавать, и приложение упадёт."
+    },
+    {
+     "pat": [
+      "let $s = GameSource(...) ... $t.dataSource = $s",
+      "var $s = GameSource(...) ... $t.dataSource = $s"
+     ],
+     "miss": "Источник нужно сохранить в переменную и присвоить таблице. dataSource слабое: временный объект исчезнет сразу, и таблица останется без данных."
+    },
+    {
+     "pat": [
+      "UITableView(frame: CGRect(x: 0, y: 0, width: 320, height: 480) ...)",
+      "UITableView(frame: CGRect(origin: .zero, size: CGSize(width: 320, height: 480)) ...)"
+     ],
+     "miss": "Не вижу таблицы 320×480: UITableView(frame:) с CGRect нужного размера, иначе проверка идёт на другом размере."
+    },
+    {
+     "pat": [
+      "$t.numberOfRows(inSection: 0) == 2",
+      "$s.tableView($t, numberOfRowsInSection: 0) == 2",
+      "2 == $t.numberOfRows(inSection: 0)",
+      "2 == $s.tableView($t, numberOfRowsInSection: 0)",
+      "print($t.numberOfRows(inSection: 0))",
+      "print($s.tableView($t, numberOfRowsInSection: 0))"
+     ],
+     "miss": "Нет проверки количества: спроси у таблицы или источника число строк в секции 0 и сравни с двумя."
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "$t.dataSource = GameSource(...)"
+     ],
+     "msg": "dataSource слабое: источник, созданный прямо в присваивании, тут же освобождается. Сначала положи его в переменную."
+    },
+    {
+     "pat": [
+      "register(UITableViewCell.self, ...)"
+     ],
+     "msg": "Зарегистрирован базовый UITableViewCell, а в cellForRowAt приводят к GameCell. Регистрировать нужно GameCell."
+    },
+    {
+     "pat": [
+      ") -> Int { 2 }",
+      ") -> Int { return 2 }"
+     ],
+     "msg": "Число строк вбито константой. Если данных станет больше или меньше, таблица соврёт. Бери количество из модели."
+    }
+   ],
+   "complete": true
+  }
+ },
+ {
+  "task": "table.s3",
+  "check": {
+   "accept": [
+    "final class GameSource: NSObject, UITableViewDataSource {\n    let games: [Game]\n    init(games: [Game]) { self.games = games }\n    func tableView(\n        _ tableView: UITableView, numberOfRowsInSection section: Int\n    ) -> Int { return games.count }\n    func tableView(\n        _ tableView: UITableView, cellForRowAt indexPath: IndexPath\n    ) -> UITableViewCell {\n        let cell = tableView.dequeueReusableCell(\n            withIdentifier: \"Game\", for: indexPath\n        ) as! GameCell\n        cell.configure(games[indexPath.row])\n        return cell\n    }\n}\nlet table = UITableView(\n    frame: CGRect(x: 0, y: 0, width: 320, height: 480)\n)\nlet source = GameSource(games: games)\ntable.register(GameCell.self, forCellReuseIdentifier: \"Game\")\ntable.dataSource = source\nlet row = IndexPath(row: 1, section: 0)\nlet cell = source.tableView(table, cellForRowAt: row) as! GameCell\nassert(cell.textLabel?.text == \"Остров\")\nassert(cell.accessoryType == .none)\nassert(cell.representedID == 62)",
+    "final class GameSource: NSObject, UITableViewDataSource {\n    func tableView(\n        _ tableView: UITableView, numberOfRowsInSection section: Int\n    ) -> Int { games.count }\n    func tableView(\n        _ tableView: UITableView, cellForRowAt indexPath: IndexPath\n    ) -> UITableViewCell {\n        guard let cell = tableView.dequeueReusableCell(\n            withIdentifier: \"Game\", for: indexPath\n        ) as? GameCell else { fatalError() }\n        cell.configure(games[indexPath.row])\n        return cell\n    }\n}\nlet table = UITableView(\n    frame: CGRect(x: 0, y: 0, width: 320, height: 480)\n)\nlet source = GameSource()\ntable.register(GameCell.self, forCellReuseIdentifier: \"Game\")\ntable.dataSource = source\nlet row = IndexPath(row: 1, section: 0)\nlet cell = source.tableView(table, cellForRowAt: row) as! GameCell\nassert(cell.textLabel?.text == \"Остров\")\nassert(cell.accessoryType == .none)\nassert(cell.representedID == 62)"
+   ],
+   "must": [
+    {
+     "pat": [
+      "-> Int { ... $a.count ... }"
+     ],
+     "miss": "numberOfRowsInSection не возвращает количество элементов модели. Источник обязан сказать таблице, сколько строк строить."
+    },
+    {
+     "pat": [
+      "let $c = $t.dequeueReusableCell(withIdentifier: \"Game\", for: $p) as! GameCell ... $c.configure($g[$p.row])",
+      "let $c = $t.dequeueReusableCell(withIdentifier: \"Game\", for: $p) as? GameCell ... $c.configure($g[$p.row])"
+     ],
+     "miss": "В cellForRowAt нет цепочки: dequeueReusableCell с идентификатором «Game» и for:, приведение к GameCell и configure игры по indexPath.row."
+    },
+    {
+     "pat": [
+      "let $t = UITableView(frame: CGRect(x: 0, y: 0, width: 320, height: 480) ...) ... $t.register(GameCell.self, forCellReuseIdentifier: \"Game\")",
+      "let $t = UITableView(frame: CGRect(origin: .zero, size: CGSize(width: 320, height: 480)) ...) ... $t.register(GameCell.self, forCellReuseIdentifier: \"Game\")"
+     ],
+     "miss": "Нет таблицы 320×480 с register(GameCell.self, forCellReuseIdentifier: «Game»). Без регистрации dequeue не создаст ячейку."
+    },
+    {
+     "pat": [
+      "let $s = GameSource(...) ... $t.dataSource = $s",
+      "var $s = GameSource(...) ... $t.dataSource = $s"
+     ],
+     "miss": "Источник надо сохранить в переменную и присвоить dataSource: оно слабое, временный объект пропадёт и таблица останется пустой."
+    },
+    {
+     "pat": [
+      "IndexPath(row: 1, section: 0)"
+     ],
+     "miss": "Нет проверки строки 1: создай IndexPath(row: 1, section: 0), вызови cellForRowAt вручную и сверь подпись, галочку и id."
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "$c.configure($g[0])",
+      "$c.configure($g[1])"
+     ],
+     "msg": "Игра берётся по фиксированному номеру. Каждая строка должна получать свою модель по indexPath.row, иначе все ячейки покажут одно и то же."
+    },
+    {
+     "pat": [
+      "$c.configure($g[$p.section])"
+     ],
+     "msg": "indexPath.section — номер секции, а не строки. Секция одна, поэтому все ячейки получат первую игру. Нужен indexPath.row."
+    },
+    {
+     "pat": [
+      "$t.dataSource = GameSource(...)"
+     ],
+     "msg": "dataSource слабое: источник, созданный прямо в присваивании, сразу освобождается. Сохрани его в переменную."
+    },
+    {
+     "pat": [
+      "GameCell(style: ...)"
+     ],
+     "msg": "Ячейка создана вручную. Таблица должна выдавать её через dequeueReusableCell, иначе переиспользование не работает."
+    }
+   ],
+   "complete": false
+  }
+ },
+ {
+  "task": "table.s4",
+  "check": {
+   "accept": [
+    "source.load(id: id) { [weak cell] image in\n    if let cell, cell.representedID == id {\n        cell.imageView?.image = image\n        cell.setNeedsLayout()\n    }\n}",
+    "source.load(id: id) { [weak cell] image in\n    guard cell?.representedID == id else { return }\n    cell?.imageView?.image = image\n    cell?.setNeedsLayout()\n}"
+   ],
+   "must": [
+    {
+     "pat": [
+      "[weak $a] $i in ... guard let $a, $a.representedID == id else { return }",
+      "[weak $a] $i in ... guard let $b = $a, $b.representedID == id else { return }",
+      "[weak $a] $i in ... guard let $a else { return } ... guard $a.representedID == id else { return }",
+      "[weak $a] $i in ... guard $a?.representedID == id else { return }",
+      "[weak $a] $i in ... if let $a, $a.representedID == id { ... }",
+      "[weak $a] $i in ... if let $b = $a, $b.representedID == id { ... }",
+      "[weak $a] $i in ... if $a?.representedID == id { ... }"
+     ],
+     "miss": "В completion нет проверки, что ячейка всё ещё показывает ту игру, чей id захвачен. Сравни representedID ячейки с id запроса внутри замыкания."
+    },
+    {
+     "pat": [
+      "representedID == id else { return } ... imageView?.image = $i",
+      "representedID == id { ... imageView?.image = $i ... }"
+     ],
+     "miss": "Картинку нужно ставить только после проверки id. Если присвоить её раньше, поздний ответ чужой игры всё равно попадёт в ячейку."
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "[weak $a] $i in ... $a?.representedID = id",
+      "[weak $a] $i in ... $a.representedID = id"
+     ],
+     "msg": "Ты присваиваешь representedID в completion: так проверка всегда пройдёт. Его ставит configure, в замыкании id только сравнивают."
+    },
+    {
+     "pat": [
+      "source.finish(id: first.id, image: oldImage) source.finish(id: second.id, image: newImage)",
+      "assert($a.imageView?.image === oldImage)"
+     ],
+     "msg": "Ты правишь проверку, а не код. Ответы должны приходить в заданном порядке, а assert требует newImage: чинить надо requestCover."
+    }
+   ],
+   "complete": true
+  }
+ },
+ {
+  "task": "table.s5",
+  "check": {
+   "concepts": [
+    {
+     "label": "register сообщает таблице, какой класс создавать под идентификатор",
+     "groups": [
+      [
+       "register",
+       "регистр"
+      ],
+      [
+       "класс",
+       "identifier",
+       "идентификатор",
+       "создаёт",
+       "создает",
+       "создавать",
+       "создан"
+      ]
+     ],
+     "miss": "Не сказано, что делает register: он связывает идентификатор с классом ячейки, чтобы таблица знала, что создавать."
+    },
+    {
+     "label": "dequeue достаёт готовую ячейку для переиспользования",
+     "groups": [
+      [
+       "dequeue",
+       "переисп",
+       "reuse"
+      ],
+      [
+       "экземпляр",
+       "уже созда",
+       "существующ",
+       "готов",
+       "из очеред",
+       "из пул",
+       "не созда",
+       "доста",
+       "берёт",
+       "берет",
+       "возвращ"
+      ]
+     ],
+     "miss": "Не сказано про dequeue: он отдаёт уже созданную ячейку для переиспользования или создаёт новую, если свободной нет."
+    },
+    {
+     "label": "configure обязан задать весь контент, prepareForReuse его не заменяет",
+     "groups": [
+      [
+       "configure",
+       "конфигур",
+       "настро",
+       "заполн"
+      ],
+      [
+       "полност",
+       "все ",
+       "всё",
+       "каждый",
+       "целиком",
+       "обязан",
+       "кажд"
+      ]
+     ],
+     "miss": "Не сказано про configure: ячейка переиспользуется, поэтому каждый раз нужно задать всё, а не полагаться на prepareForReuse."
+    },
+    {
+     "label": "prepareForReuse очищает временное состояние и ресурсы",
+     "groups": [
+      [
+       "preparefor",
+       "сброс",
+       "очищ",
+       "подготов"
+      ],
+      [
+       "картин",
+       "изображен",
+       "запрос",
+       "загрузк",
+       "временн",
+       "состоян",
+       "ресурс",
+       "задач",
+       "отмен"
+      ]
+     ],
+     "miss": "Не объяснено, зачем prepareForReuse: он сбрасывает временное состояние и ресурсы (картинку, загрузку), чтобы старое не просочилось."
+    },
+    {
+     "label": "representedID — текущая модель ячейки, selectedID — выбранная игра независимо от строки",
+     "groups": [
+      [
+       "representedid",
+       "represented"
+      ],
+      [
+       "selectedid",
+       "selected",
+       "выбран"
+      ],
+      [
+       "модел",
+       "текущ",
+       "позиц",
+       "независим",
+       "актуальн",
+       "индекс"
+      ]
+     ],
+     "miss": "Не различены representedID и selectedID: первый показывает, чья модель сейчас в ячейке (защита от поздних картинок), второй хранит выбор независимо от позиции строки."
+    }
+   ],
+   "false": [
+    {
+     "groups": [
+      [
+       "preparefor"
+      ],
+      [
+       "вместо configure",
+       "configure не нужен",
+       "configure не нужно",
+       "не нужно вызывать configure",
+       "достаточно preparefor"
+      ]
+     ],
+     "msg": "Похоже, ты говоришь, что prepareForReuse заменяет configure. Нет: configure всё равно обязан задать весь контент, prepareForReuse лишь чистит временное."
+    },
+    {
+     "groups": [
+      [
+       "representedid",
+       "selectedid"
+      ],
+      [
+       "одно и то же",
+       "одно и тоже",
+       "то же самое",
+       "тоже самое"
+      ]
+     ],
+     "msg": "Похоже, ты путаешь representedID и selectedID. Первый описывает ячейку, второй — выбор пользователя. Они хранят разное."
+    }
+   ]
+  }
+ },
+ {
+  "task": "table.s6",
+  "check": {
+   "accept": [],
+   "must": [
+    {
+     "pat": [
+      "UITableViewDataSource, UITableViewDelegate",
+      "UITableViewDelegate, UITableViewDataSource",
+      "extension GameSource: UITableViewDelegate"
+     ],
+     "miss": "GameSource не подписан на UITableViewDelegate. Без этого протокола метод didSelectRowAt не будет вызываться."
+    },
+    {
+     "pat": [
+      "var selectedID"
+     ],
+     "miss": "Нет свойства selectedID. Выбор хранится в источнике, и тип подойдёт Optional: до выбора ничего не выбрано."
+    },
+    {
+     "pat": [
+      "selectedID = $g[$p.row].id ... deselectRow(at: $p, animated: false)",
+      "deselectRow(at: $p, animated: false) ... selectedID = $g[$p.row].id",
+      "let $x = $g[$p.row] ... selectedID = $x.id ... deselectRow(at: $p, animated: false)",
+      "let $x = $g[$p.row] ... deselectRow(at: $p, animated: false) ... selectedID = $x.id"
+     ],
+     "miss": "В didSelectRowAt нужно сохранить id игры из массива по строке и снять выделение без анимации. Проверь оба действия."
+    },
+    {
+     "pat": [
+      "$t.delegate = $s"
+     ],
+     "miss": "Нет table.delegate = source. Таблица сообщает о выборе только своему делегату, и без присваивания didSelectRowAt не вызовется."
+    },
+    {
+     "pat": [
+      "$s.tableView($t, didSelectRowAt: IndexPath(row: 1, section: 0))"
+     ],
+     "miss": "Не вижу ручного выбора строки 1: вызови метод делегата с IndexPath(row: 1, section: 0) и сверь selectedID с 62."
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "selectedID = $p.row",
+      "selectedID = $p.item"
+     ],
+     "msg": "Ты сохраняешь индекс строки, а не id игры. После сортировки или удаления индекс укажет на другую игру. Сохраняй id модели."
+    },
+    {
+     "pat": [
+      "selectedID = 62",
+      "selectedID = 61",
+      "selectedID = $g[1].id",
+      "selectedID = $g[0].id"
+     ],
+     "msg": "Значение вбито константой. Метод должен брать игру из массива по номеру строки, иначе любой выбор даст одно и то же."
+    },
+    {
+     "pat": [
+      "deselectRow(at: $p, animated: true)"
+     ],
+     "msg": "В задании просят снять выделение без анимации: animated здесь должно быть false."
+    }
+   ],
+   "complete": false
+  }
+ },
+ {
+  "task": "table.s7",
+  "check": {
+   "accept": [
+    "import UIKit\nstruct Game {\n    var id: Int\n    var title: String\n    var saved: Bool\n}\nfinal class GameCell: UITableViewCell {\n    var representedID: Int?\n    func configure(_ game: Game) {\n        representedID = game.id\n        textLabel?.text = game.title\n        accessoryType = game.saved ? .checkmark : .none\n        imageView?.image = nil\n    }\n    override func prepareForReuse() {\n        representedID = nil\n        super.prepareForReuse()\n    }\n}\n@MainActor\nfinal class CoverSource {\n    private var pending: [Int: (UIImage) -> Void] = [:]\n    func load(id: Int, done: @escaping (UIImage) -> Void) {\n        pending[id] = done\n    }\n    func finish(id: Int, image: UIImage) {\n        pending[id]?(image)\n        pending[id] = nil\n    }\n}\n@MainActor\nfunc requestCover(cell: GameCell, id: Int, source: CoverSource) {\n    source.load(id: id) { [weak cell] image in\n        guard cell?.representedID == id else { return }\n        cell?.imageView?.image = image\n        cell?.setNeedsLayout()\n    }\n}\n@MainActor\nfunc checkRemembered() {\n    let source = CoverSource()\n    let cell = GameCell(style: .default, reuseIdentifier: \"Game\")\n    cell.configure(Game(id: 61, title: \"Маяки\", saved: true))\n    requestCover(cell: cell, id: 61, source: source)\n    cell.prepareForReuse()\n    cell.configure(Game(id: 63, title: \"Лес\", saved: false))\n    source.finish(id: 61, image: UIImage())\n    assert(cell.representedID == 63)\n    assert(cell.textLabel?.text == \"Лес\")\n    assert(cell.accessoryType == .none)\n    assert(cell.imageView?.image == nil)\n}"
+   ],
+   "must": [
+    {
+     "pat": [
+      "struct Game { ... id: Int ... title: String ... saved: Bool ... }"
+     ],
+     "miss": "Нет структуры Game с полями id, title и saved (в таком порядке): без неё нечем описать модель ячейки."
+    },
+    {
+     "pat": [
+      "func configure(... $g: Game) { ... representedID = $g.id ... textLabel?.text = $g.title ... accessoryType = $g.saved ? .checkmark : .none ... imageView?.image = nil ... }",
+      "func configure(... $g: Game) { ... imageView?.image = nil ... representedID = $g.id ... textLabel?.text = $g.title ... accessoryType = $g.saved ? .checkmark : .none ... }"
+     ],
+     "miss": "configure задаёт не всё: нужны representedID, подпись, галочка (и в положительном, и в отрицательном случае) и очистка картинки. Иначе от прошлой игры останется хвост."
+    },
+    {
+     "pat": [
+      "override func prepareForReuse() { super.prepareForReuse() ... representedID = nil ... }",
+      "override func prepareForReuse() { ... representedID = nil ... super.prepareForReuse() ... }"
+     ],
+     "miss": "prepareForReuse должен вызвать super и сбросить representedID. Тогда ответ, пришедший для старой игры, перестанет подходить ячейке."
+    },
+    {
+     "pat": [
+      "[weak $a] $i in ... guard let $a, $a.representedID == ... else { return } ... imageView?.image = $i",
+      "[weak $a] $i in ... guard let $b = $a, $b.representedID == ... else { return } ... imageView?.image = $i",
+      "[weak $a] $i in ... guard let $a else { return } ... guard $a.representedID == ... else { return } ... imageView?.image = $i",
+      "[weak $a] $i in ... guard $a?.representedID == ... else { return } ... imageView?.image = $i",
+      "[weak $a] $i in ... if let $a, $a.representedID == ... { ... imageView?.image = $i ... }",
+      "[weak $a] $i in ... if let $b = $a, $b.representedID == ... { ... imageView?.image = $i ... }",
+      "[weak $a] $i in ... if $a?.representedID == ... { ... imageView?.image = $i ... }"
+     ],
+     "miss": "В requestCover нет слабого захвата ячейки или проверки id перед записью картинки. Поздний ответ другой игры не должен попасть в переиспользованную ячейку."
+    },
+    {
+     "pat": [
+      "Game(id: 63, title: \"Лес\", saved: false)"
+     ],
+     "miss": "В сценарии нет игры 63 «Лес» без галочки: ячейку нужно переиспользовать для неё, а затем доставить обложку 61."
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "[unowned $a] $i in"
+     ],
+     "msg": "unowned упадёт, если ячейка уже освобождена к приходу ответа. Нужен weak: ячейка может исчезнуть, и это нормально."
+    },
+    {
+     "pat": [
+      "[weak $a] $i in ... $a?.representedID = ...",
+      "[weak $a] $i in ... $a.representedID = ..."
+     ],
+     "msg": "Ты присваиваешь representedID внутри completion: проверка станет бессмысленной. Его ставит configure, в замыкании id только сравнивают."
+    },
+    {
+     "pat": [
+      "[weak $a] $i in ... $a!"
+     ],
+     "msg": "Принудительное разворачивание weak-ссылки упадёт, если ячейки уже нет. Используй guard let или опциональную цепочку."
+    }
+   ],
+   "complete": false
+  }
+ },
+ {
+  "task": "table-b1",
+  "check": {
+   "accept": [
+    "let source = ShoppingSource()\ntable.dataSource = source\nsource.items.removeLast()\ntable.reloadData()\nprecondition(table.numberOfRows(inSection: 0) == 0)\nprecondition(table.dataSource === source)"
+   ],
+   "must": [
+    {
+     "pat": [
+      "let $s = ShoppingSource() ... $t.dataSource = $s",
+      "var $s = ShoppingSource() ... $t.dataSource = $s"
+     ],
+     "miss": "Источник не сохранён в переменную. dataSource слабое: временный ShoppingSource сразу освобождается, и таблица остаётся без данных."
+    },
+    {
+     "pat": [
+      "$s.items.removeAll()",
+      "$s.items.removeLast()",
+      "$s.items.removeFirst()",
+      "$s.items = []",
+      "$s.items.remove(at: 0)",
+      "$s.items.popLast()",
+      "$s.items.removeAll(where: ...)",
+      "$s.items.removeAll(keepingCapacity: ...)"
+     ],
+     "miss": "Не вижу удаления последней позиции из items источника. Модель нужно изменить именно у сохранённого источника."
+    },
+    {
+     "pat": [
+      "$t.reloadData()"
+     ],
+     "miss": "Нет reloadData: таблица сама не узнает, что модель изменилась. После правки данных её надо обновить."
+    },
+    {
+     "pat": [
+      "$s.tableView($t, numberOfRowsInSection: 0) == 0",
+      "$t.numberOfRows(inSection: 0) == 0",
+      "0 == $s.tableView($t, numberOfRowsInSection: 0)",
+      "0 == $t.numberOfRows(inSection: 0)",
+      "print($s.tableView($t, numberOfRowsInSection: 0))",
+      "print($t.numberOfRows(inSection: 0))"
+     ],
+     "miss": "Нет проверки, что строк стало 0. Спроси у источника или таблицы число строк в секции 0, а не вызывай cellForRowAt."
+    },
+    {
+     "pat": [
+      "$t.dataSource === $s",
+      "$s === $t.dataSource",
+      "$t.dataSource != nil"
+     ],
+     "miss": "Нет проверки, что таблица ссылается на сохранённый источник. Сравни table.dataSource с источником по идентичности."
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "cellForRowAt: ..."
+     ],
+     "msg": "Ты вызываешь cellForRowAt для строки, которой нет: массив пуст, индекс выйдет за границы и приложение упадёт. Проверяй количество строк."
+    },
+    {
+     "pat": [
+      "$t.reloadData() $s.items"
+     ],
+     "msg": "reloadData стоит до изменения модели: таблица перечитает старые данные. Сначала измени items, потом обнови таблицу."
+    }
+   ],
+   "complete": true
+  }
+ },
+ {
+  "task": "table-b2",
+  "check": {
+   "accept": [
+    "func tableView(\n    _ tableView: UITableView, didSelectRowAt indexPath: IndexPath\n) {\n    selectedID = places[indexPath.row].id\n    tableView.deselectRow(at: indexPath, animated: false)\n}\nfunc selectedName() -> String? {\n    guard let id = selectedID else { return nil }\n    return places.first { $0.id == id }?.name\n}",
+    "func tableView(\n    _ tableView: UITableView, didSelectRowAt indexPath: IndexPath\n) {\n    let place = places[indexPath.row]\n    selectedID = place.id\n    tableView.deselectRow(at: indexPath, animated: false)\n}\nfunc selectedName() -> String? {\n    for place in places where place.id == selectedID {\n        return place.name\n    }\n    return nil\n}"
+   ],
+   "must": [
+    {
+     "pat": [
+      "selectedID = $a[$b.row].id",
+      "let $x = $a[$b.row] ... selectedID = $x.id"
+     ],
+     "miss": "В didSelectRowAt сохраняется не id места. Нужно взять место из массива по строке и записать его id: индекс после сортировки поплывёт."
+    },
+    {
+     "pat": [
+      "places.first { ... id == $a ... }?.name",
+      "places.first { ... $a == $b.id ... }?.name",
+      "places.first(where: { ... id == $a ... })?.name",
+      "places.first(where: { ... $a == $b.id ... })?.name",
+      "places.filter { ... id == $a ... }.first?.name",
+      "for $p in places where $p.id == selectedID { return $p.name }",
+      "for $p in places { if $p.id == selectedID { return $p.name } }",
+      "places.firstIndex { ... id == $a ... }",
+      "places.firstIndex(where: { ... id == $a ... })"
+     ],
+     "miss": "selectedName не ищет место по сохранённому id. Нужно найти в массиве место с нужным id и вернуть его имя, nil допустим, если места нет."
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "places[selectedID]",
+      "places[selectedID!]"
+     ],
+     "msg": "selectedID — это id места, а не позиция в массиве. Подставлять его как индекс нельзя: id 92 не равно индексу 1."
+    },
+    {
+     "pat": [
+      "selectedID = 92",
+      "selectedID = 91"
+     ],
+     "msg": "Выбор вбит константой. Метод должен сохранять id того места, по которому нажали, по строке из indexPath."
+    }
+   ],
+   "complete": true
+  }
+ },
+ {
+  "task": "table-b3",
+  "check": {
+   "accept": [
+    "return { [weak self] image in\n    guard let self else { return }\n    guard self.representedID == id else { return }\n    guard self.requestVersion == version else { return }\n    self.imageView?.image = image\n}",
+    "return { [weak self] image in\n    guard let self, self.representedID == id else { return }\n    if self.requestVersion == version {\n        self.imageView?.image = image\n    }\n}"
+   ],
+   "must": [
+    {
+     "pat": [
+      "requestVersion == version",
+      "version == requestVersion"
+     ],
+     "miss": "Нет сравнения версии запроса с текущей. Версия, запомненная при создании замыкания, должна совпадать с requestVersion на момент ответа."
+    },
+    {
+     "pat": [
+      "requestVersion == version else { return }",
+      "version == requestVersion else { return }",
+      "if requestVersion == version { ... }",
+      "if version == requestVersion { ... }",
+      "if requestVersion != version { return }",
+      "if version != requestVersion { return }"
+     ],
+     "miss": "Сравнение не отсекает ответ: если версия не совпала, замыкание должно выйти, не трогая картинку. Проверь guard или if."
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "version == version",
+      "requestVersion == requestVersion"
+     ],
+     "msg": "Ты сравниваешь значение само с собой, это всегда истина. Сравнивать нужно запомненную version с текущей requestVersion."
+    },
+    {
+     "pat": [
+      "guard ... version != requestVersion ... else { return }",
+      "guard ... requestVersion != version ... else { return }"
+     ],
+     "msg": "Условие перевёрнуто: guard пропускает только когда условие истинно, а ты оставляешь устаревшие ответы. Нужно «версия совпала»."
+    },
+    {
+     "pat": [
+      "if requestVersion == version { return }",
+      "if version == requestVersion { return }"
+     ],
+     "msg": "Здесь выход происходит при совпадении версий, то есть отбрасывается актуальный ответ. Выходить нужно, когда версия не совпала."
+    }
+   ],
+   "complete": true
+  }
+ }
+]
