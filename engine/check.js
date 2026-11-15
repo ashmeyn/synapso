@@ -306,7 +306,7 @@
               that means a mistake; `why` is shown after that answer
      unsure — nothing to say: compare with the key yourself
      null   — the task has no rubric (or it is marked `self`): the site stays silent */
-  function kindOf(ch) { return !ch || ch.self ? null : ch.outs ? "predict" : ch.concepts ? "oral" : "code"; }
+  function kindOf(ch) { return !ch || typeof ch !== "object" || ch.self ? null : ch.outs ? "predict" : ch.concepts ? "oral" : ch.must ? "code" : null; }
   function verdict(ans, task) {
     const ch = task && task.check, kind = kindOf(ch); if (!kind) return null;
     ans = typeof ans === "string" ? ans : "";

@@ -4,48 +4,532 @@
   "title": "Ступень 1. Найди живого делегата",
   "prompt": "Назови точный вывод, включая последнее освобождение. Почему после screen = nil делегат не nil? Последняя строка очищает связь для завершения теста.",
   "code": "protocol DictationDelegate: AnyObject {\n    func didFinish()\n}\nfinal class DictationPlayer {\n    var delegate: (any DictationDelegate)?\n    func finish() { delegate?.didFinish() }\n}\nfinal class DictationScreen: DictationDelegate {\n    let id = 18\n    let player = DictationPlayer()\n    init() { player.delegate = self }\n    func didFinish() { print(\"Готово \\(id)\") }\n    deinit { print(\"Экран освобождён\") }\n}\nvar screen: DictationScreen? = DictationScreen()\nlet player = screen!.player\nplayer.finish()\nscreen = nil\nprint(player.delegate == nil)\nplayer.delegate = nil",
-  "key": "Готово 18\nfalse\nЭкран освобождён\n\nПроигрыватель держит экран через сильный delegate. Очистка delegate разрывает эту связь; внешний player не удерживает экран после неё."
+  "key": "Готово 18\nfalse\nЭкран освобождён\n\nПроигрыватель держит экран через сильный delegate. Очистка delegate разрывает эту связь; внешний player не удерживает экран после неё.",
+  "check": {
+   "for": "f15542bc22",
+   "outs": [
+    [
+     "Готово 18",
+     "false",
+     "Экран освобождён"
+    ]
+   ],
+   "why": [
+    "finish() вызывает didFinish у делегата, это экран, он печатает свой id.",
+    "delegate у player сильный и всё ещё держит экран, поэтому после screen = nil он не nil, сравнение даёт false.",
+    "Последняя строка обнуляет delegate: последняя сильная ссылка на экран исчезает, и вызывается deinit."
+   ],
+   "wrong": [
+    {
+     "out": [
+      "Готово 18",
+      "Экран освобождён",
+      "true"
+     ],
+     "msg": "Ты решил, что экран освободился на screen = nil. Но delegate сильный и держит его: освобождение случится только после player.delegate = nil."
+    },
+    {
+     "out": [
+      "Готово 18",
+      "false"
+     ],
+     "msg": "Забыто последнее освобождение. Когда delegate обнулён, у экрана не остаётся владельцев, и deinit печатает свою строку."
+    },
+    {
+     "out": [
+      "Готово 18",
+      "true",
+      "Экран освобождён"
+     ],
+     "msg": "Ты считаешь delegate слабым. Здесь он обычное свойство, то есть сильная ссылка: после screen = nil он остаётся не nil."
+    }
+   ]
+  }
  },
  {
   "id": "s2",
   "title": "Ступень 2. Заполни слабую связь",
   "prompt": "Допиши weak var delegate с Optional протокола AnyObject и вызов finish через optional chaining. Экран и проверка уже даны.",
   "code": "protocol DictationDelegate: AnyObject {\n    func didFinish()\n}\nfinal class DictationPlayer {\n    // Объяви слабого делегата\n    func finish() { /* Сообщи делегату */ }\n}\nfinal class DictationScreen: DictationDelegate {\n    let id = 18\n    let player = DictationPlayer()\n    init() { player.delegate = self }\n    func didFinish() { print(\"Готово \\(id)\") }\n    deinit { print(\"Экран освобождён\") }\n}\nvar screen: DictationScreen? = DictationScreen()\nlet player = screen!.player\nplayer.finish()\nscreen = nil\nprint(player.delegate == nil)",
-  "key": "protocol DictationDelegate: AnyObject {\n    func didFinish()\n}\nfinal class DictationPlayer {\n    weak var delegate: (any DictationDelegate)?\n    func finish() { delegate?.didFinish() }\n}\nfinal class DictationScreen: DictationDelegate {\n    let id = 18\n    let player = DictationPlayer()\n    init() { player.delegate = self }\n    func didFinish() { print(\"Готово \\(id)\") }\n    deinit { print(\"Экран освобождён\") }\n}\nvar screen: DictationScreen? = DictationScreen()\nlet player = screen!.player\nplayer.finish()\nscreen = nil\nprint(player.delegate == nil)\n\nВывод: «Готово 18», «Экран освобождён», true. Обратная связь не стала владельцем экрана."
+  "key": "protocol DictationDelegate: AnyObject {\n    func didFinish()\n}\nfinal class DictationPlayer {\n    weak var delegate: (any DictationDelegate)?\n    func finish() { delegate?.didFinish() }\n}\nfinal class DictationScreen: DictationDelegate {\n    let id = 18\n    let player = DictationPlayer()\n    init() { player.delegate = self }\n    func didFinish() { print(\"Готово \\(id)\") }\n    deinit { print(\"Экран освобождён\") }\n}\nvar screen: DictationScreen? = DictationScreen()\nlet player = screen!.player\nplayer.finish()\nscreen = nil\nprint(player.delegate == nil)\n\nВывод: «Готово 18», «Экран освобождён», true. Обратная связь не стала владельцем экрана.",
+  "check": {
+   "for": "40dd3c6838",
+   "accept": [
+    "weak var delegate: DictationDelegate?\nfunc finish() { delegate?.didFinish() }",
+    "weak var delegate: (any DictationDelegate)? = nil\nfunc finish() { delegate?.didFinish() }"
+   ],
+   "must": [
+    {
+     "pat": [
+      "weak var delegate: (any DictationDelegate)?",
+      "weak var delegate: DictationDelegate?",
+      "weak var delegate: (any DictationDelegate)? = nil",
+      "weak var delegate: DictationDelegate? = nil"
+     ],
+     "miss": "Не вижу слабого свойства делегата с типом Optional от протокола. Без слабой ссылки проигрыватель будет держать экран.",
+     "ask": "Сделал ли ты ссылку проигрывателя на делегата слабой и Optional?"
+    },
+    {
+     "pat": [
+      "delegate?.didFinish()"
+     ],
+     "miss": "Вызов делегата должен идти через optional chaining: после исчезновения экрана delegate станет nil, и вызов тихо пропустится.",
+     "ask": "Вызываешь ли ты метод делегата через optional chaining?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "unowned var delegate",
+      "unowned let delegate",
+      "weak let delegate"
+     ],
+     "msg": "Здесь нужен weak var: ссылка обнуляется сама и допускает nil. unowned при мёртвом объекте упадёт, а weak let не компилируется."
+    },
+    {
+     "pat": [
+      "delegate!.didFinish()",
+      "delegate!"
+     ],
+     "msg": "Force unwrap: после освобождения экрана delegate станет nil, и приложение упадёт. Вызывай через ?."
+    },
+    {
+     "pat": [
+      "weak var delegate: DictationScreen",
+      "weak var delegate: DictationScreen?"
+     ],
+     "msg": "Делегат описан протоколом, а не конкретным экраном: так проигрыватель ни от чего экранного не зависит."
+    }
+   ]
+  }
  },
  {
   "id": "s3",
   "title": "Ступень 3. Напиши контракт делегата",
   "prompt": "Самостоятельно напиши DictationDelegate: AnyObject с didFinish и DictationPlayer с weak var delegate и finish. Добавь данные определения перед экраном.",
   "code": "// Напиши протокол и проигрыватель\nfinal class DictationScreen: DictationDelegate {\n    let id = 18\n    let player = DictationPlayer()\n    init() { player.delegate = self }\n    func didFinish() { print(\"Готово \\(id)\") }\n    deinit { print(\"Экран освобождён\") }\n}\nvar screen: DictationScreen? = DictationScreen()\nlet player = screen!.player\nplayer.finish()\nscreen = nil\nprint(player.delegate == nil)",
-  "key": "protocol DictationDelegate: AnyObject {\n    func didFinish()\n}\nfinal class DictationPlayer {\n    weak var delegate: (any DictationDelegate)?\n    func finish() { delegate?.didFinish() }\n}\nfinal class DictationScreen: DictationDelegate {\n    let id = 18\n    let player = DictationPlayer()\n    init() { player.delegate = self }\n    func didFinish() { print(\"Готово \\(id)\") }\n    deinit { print(\"Экран освобождён\") }\n}\nvar screen: DictationScreen? = DictationScreen()\nlet player = screen!.player\nplayer.finish()\nscreen = nil\nprint(player.delegate == nil)\n\nПисьменно восстановлены ограничение AnyObject и слабое Optional-свойство; оба нужны для обратной связи."
+  "key": "protocol DictationDelegate: AnyObject {\n    func didFinish()\n}\nfinal class DictationPlayer {\n    weak var delegate: (any DictationDelegate)?\n    func finish() { delegate?.didFinish() }\n}\nfinal class DictationScreen: DictationDelegate {\n    let id = 18\n    let player = DictationPlayer()\n    init() { player.delegate = self }\n    func didFinish() { print(\"Готово \\(id)\") }\n    deinit { print(\"Экран освобождён\") }\n}\nvar screen: DictationScreen? = DictationScreen()\nlet player = screen!.player\nplayer.finish()\nscreen = nil\nprint(player.delegate == nil)\n\nПисьменно восстановлены ограничение AnyObject и слабое Optional-свойство; оба нужны для обратной связи.",
+  "check": {
+   "for": "7d3ea0cdf2",
+   "accept": [
+    "protocol DictationDelegate: AnyObject {\n    func didFinish()\n}\nfinal class DictationPlayer {\n    weak var delegate: DictationDelegate?\n    func finish() {\n        if let delegate { delegate.didFinish() }\n    }\n}",
+    "protocol DictationDelegate: class {\n    func didFinish()\n}\nclass DictationPlayer {\n    weak var delegate: (any DictationDelegate)?\n    func finish() { delegate?.didFinish() }\n}"
+   ],
+   "must": [
+    {
+     "pat": [
+      "protocol DictationDelegate: AnyObject ... { ... }",
+      "protocol DictationDelegate: class ... { ... }"
+     ],
+     "miss": "Протокол не ограничен классами. weak работает только для ссылочных типов, поэтому нужно ограничение AnyObject.",
+     "ask": "Ограничил ли ты протокол только классами, чтобы работала слабая ссылка?"
+    },
+    {
+     "pat": [
+      "protocol DictationDelegate ... { ... func didFinish() ... }"
+     ],
+     "miss": "В протоколе не вижу требования didFinish(): именно его проигрыватель будет вызывать у делегата.",
+     "ask": "Есть ли в протоколе требование didFinish?"
+    },
+    {
+     "pat": [
+      "class DictationPlayer ... { ... }"
+     ],
+     "miss": "Не вижу класса DictationPlayer. Проигрыватель должен быть классом: экран хранит его и ему же назначает делегата.",
+     "ask": "Объявил ли ты DictationPlayer классом?"
+    },
+    {
+     "pat": [
+      "weak var delegate: (any DictationDelegate)?",
+      "weak var delegate: DictationDelegate?",
+      "weak var delegate: (any DictationDelegate)? = nil",
+      "weak var delegate: DictationDelegate? = nil"
+     ],
+     "miss": "Не вижу слабого делегата: нужен weak var с типом Optional от протокола. Иначе проигрыватель и экран будут держать друг друга.",
+     "ask": "Сделал ли ты делегата в проигрывателе слабым Optional-свойством?"
+    },
+    {
+     "pat": [
+      "func finish() { ... delegate?.didFinish() ... }",
+      "func finish() { if let $a = delegate { $a.didFinish() } }",
+      "func finish() { guard let $a = delegate else { return } $a.didFinish() }",
+      "func finish() { ... delegate.didFinish() ... }"
+     ],
+     "miss": "В finish не вижу безопасного вызова didFinish у optional-делегата: через optional chaining или развёртывание, без force unwrap.",
+     "ask": "Вызываешь ли ты didFinish у делегата без force unwrap?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "unowned var delegate",
+      "unowned let delegate",
+      "weak let delegate"
+     ],
+     "msg": "Для делегата-Optional нужен weak var. unowned не обнуляется и при мёртвом экране упадёт, weak let не компилируется."
+    },
+    {
+     "pat": [
+      "protocol DictationDelegate {"
+     ],
+     "msg": "Протокол без AnyObject: weak на нём не скомпилируется, он может описывать и структуры. Ограничь его классами."
+    },
+    {
+     "pat": [
+      "struct DictationPlayer"
+     ],
+     "msg": "weak имеет смысл только в классе: у структуры нет общей идентичности, а экран получает ссылку на один и тот же проигрыватель."
+    },
+    {
+     "pat": [
+      "delegate!.didFinish()",
+      "delegate!"
+     ],
+     "msg": "Force unwrap делегата упадёт, когда экран исчезнет. Вызывай через optional chaining."
+    }
+   ]
+  }
  },
  {
   "id": "s4",
   "title": "Ступень 4. Действие пережило экран",
   "prompt": "В replay выбран unowned, но его вызывают после screen = nil. Исправь захват на weak и обработай исчезнувший экран фразой «Экран закрыт». Не убирай второй вызов.",
   "code": "final class DictationScreen {\n    let id = 18\n    func makeReplay() -> () -> Void {\n        return { [unowned self] in\n            print(\"Повтор \\(self.id)\")\n        }\n    }\n    deinit { print(\"Экран освобождён\") }\n}\nvar screen: DictationScreen? = DictationScreen()\nlet replay = screen!.makeReplay()\nreplay()\nscreen = nil\nreplay()",
-  "key": "final class DictationScreen {\n    let id = 18\n    func makeReplay() -> () -> Void {\n        return { [weak self] in\n            guard let self else { print(\"Экран закрыт\"); return }\n            print(\"Повтор \\(self.id)\")\n        }\n    }\n    deinit { print(\"Экран освобождён\") }\n}\nvar screen: DictationScreen? = DictationScreen()\nlet replay = screen!.makeReplay()\nreplay()\nscreen = nil\nreplay()\n\nСначала «Повтор 18», затем «Экран освобождён», затем «Экран закрыт». Исходник аварийно завершается при последнем обращении к освобождённому self."
+  "key": "final class DictationScreen {\n    let id = 18\n    func makeReplay() -> () -> Void {\n        return { [weak self] in\n            guard let self else { print(\"Экран закрыт\"); return }\n            print(\"Повтор \\(self.id)\")\n        }\n    }\n    deinit { print(\"Экран освобождён\") }\n}\nvar screen: DictationScreen? = DictationScreen()\nlet replay = screen!.makeReplay()\nreplay()\nscreen = nil\nreplay()\n\nСначала «Повтор 18», затем «Экран освобождён», затем «Экран закрыт». Исходник аварийно завершается при последнем обращении к освобождённому self.",
+  "check": {
+   "for": "817ddfff4f",
+   "accept": [
+    "return { [weak self] in\n    if let self {\n        print(\"Повтор \\(self.id)\")\n    } else {\n        print(\"Экран закрыт\")\n    }\n}"
+   ],
+   "must": [
+    {
+     "pat": [
+      "[weak self]"
+     ],
+     "miss": "Захват не стал слабым. Замени unowned на weak: действие живёт дольше экрана, и self внутри должен уметь стать nil.",
+     "ask": "Заменил ли ты unowned на weak в захвате self?"
+    },
+    {
+     "pat": [
+      "guard let self else { ... print(\"Экран закрыт\") ... }",
+      "guard let $a = self else { ... print(\"Экран закрыт\") ... }",
+      "if let self { ... } else { ... print(\"Экран закрыт\") ... }",
+      "if let $a = self { ... } else { ... print(\"Экран закрыт\") ... }"
+     ],
+     "miss": "Не вижу ветки для исчезнувшего экрана: развернуть self безопасно и в запасной ветке напечатать «Экран закрыт».",
+     "ask": "Есть ли у тебя ветка для исчезнувшего экрана с напечатанной фразой «Экран закрыт»?"
+    },
+    {
+     "pat": [
+      "print(\"Повтор \\(self.id)\")",
+      "print(\"Повтор \\(id)\")",
+      "print(\"Повтор \\(strongSelf.id)\")"
+     ],
+     "miss": "Не вижу печати «Повтор» с id для живого экрана. Эта ветка должна остаться: при живом экране вывод прежний.",
+     "ask": "Сохранил ли ты печать «Повтор» с id для живого экрана?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "unowned"
+     ],
+     "msg": "unowned остаётся: при позднем вызове self уже освобождён, и вызов упадёт. Нужен weak, который становится nil."
+    },
+    {
+     "pat": [
+      "self!"
+     ],
+     "msg": "Force unwrap слабого self упадёт точно так же, как unowned. Развёртывай через guard let или if let."
+    },
+    {
+     "pat": [
+      "guard let self else { return }",
+      "guard let $a = self else { return }"
+     ],
+     "msg": "Молчаливый return: экран закрыт, но сообщения нет. По заданию в этой ветке надо напечатать фразу."
+    }
+   ]
+  }
  },
  {
   "id": "s5",
   "title": "Ступень 5. Объясни время жизни",
   "prompt": "Своими словами, как на собесе: что → почему → последствия.",
   "code": "Почему делегат слабый? Что случится с replay после закрытия? Почему private-подсказке подходит unowned, а внешнему replay — нет?",
-  "key": "weak-делегат разрывает обратное сильное владение; AnyObject разрешает слабую ссылку на экземпляр класса. После закрытия weak-захват становится nil и replay выбирает ветку «Экран закрыт». unowned у приватной подсказки оправдан интерфейсом: её используют только через живую сессию и не отдают наружу. У внешнего replay этой гарантии нет."
+  "key": "weak-делегат разрывает обратное сильное владение; AnyObject разрешает слабую ссылку на экземпляр класса. После закрытия weak-захват становится nil и replay выбирает ветку «Экран закрыт». unowned у приватной подсказки оправдан интерфейсом: её используют только через живую сессию и не отдают наружу. У внешнего replay этой гарантии нет.",
+  "check": {
+   "for": "36eb230da0",
+   "concepts": [
+    {
+     "label": "делегат слабый, чтобы не было цикла сильных ссылок",
+     "groups": [
+      [
+       "слаб",
+       "weak"
+      ],
+      [
+       "цикл",
+       "retain",
+       "сильн",
+       "удержива",
+       "взаимн",
+       "утечк",
+       "держат друг"
+      ]
+     ],
+     "miss": "Не сказано главное: если делегат сильный, экран и проигрыватель держат друг друга, и память не освободится. Слабая ссылка разрывает цикл.",
+     "ask": "Сказал ли ты, что делегат слабый, чтобы не возник цикл сильных ссылок?"
+    },
+    {
+     "label": "AnyObject позволяет weak: протокол только для классов",
+     "groups": [
+      [
+       "anyobject"
+      ],
+      [
+       "класс",
+       "ссылочн",
+       "weak",
+       "слаб"
+      ]
+     ],
+     "miss": "Не упомянут AnyObject: weak возможен только для экземпляров классов, поэтому протокол ограничивают классами.",
+     "ask": "Упомянул ли ты, что AnyObject нужен, потому что weak работает только для классов?"
+    },
+    {
+     "label": "после закрытия weak-захват становится nil, replay идёт в ветку «Экран закрыт»",
+     "groups": [
+      [
+       "nil",
+       "обнул",
+       "пуст",
+       "исчез",
+       "не существ",
+       "освобожд"
+      ],
+      [
+       "weak",
+       "слаб"
+      ],
+      [
+       "закрыт",
+       "guard",
+       "ветк",
+       "else",
+       "не упад",
+       "не крэш",
+       "не краш"
+      ]
+     ],
+     "miss": "Не сказано, что будет с replay: слабый self после закрытия становится nil, и действие уходит в ветку «Экран закрыт», не падая.",
+     "ask": "Сказал ли ты, что после закрытия weak self становится nil и replay идёт в ветку «Экран закрыт»?"
+    },
+    {
+     "label": "unowned допустим только при гарантии, что объект ещё жив",
+     "groups": [
+      [
+       "unowned"
+      ],
+      [
+       "гарант",
+       "жив",
+       "пережив",
+       "не отда",
+       "крэш",
+       "краш",
+       "упад",
+       "освобожд",
+       "не станов",
+       "не обнул"
+      ]
+     ],
+     "miss": "Про unowned не сказано условие: он не обнуляется, поэтому годится только там, где объект гарантированно жив дольше замыкания.",
+     "ask": "Объяснил ли ты, при каком условии unowned безопасен?"
+    },
+    {
+     "label": "приватной подсказке unowned подходит: её не отдают наружу, живёт при живой сессии; у внешнего replay такой гарантии нет",
+     "groups": [
+      [
+       "гарант",
+       "жив",
+       "пережить",
+       "переживёт",
+       "переживет",
+       "private",
+       "приват",
+       "внутрен"
+      ],
+      [
+       "внешн",
+       "снаружи",
+       "наружу",
+       "сохран",
+       "хранят",
+       "хранит",
+       "отдан",
+       "отдают",
+       "отдаёт",
+       "отдает",
+       "нет"
+      ]
+     ],
+     "miss": "Не объяснено различие: подсказка приватная и не переживёт сессию, поэтому unowned безопасен. Внешний replay сохраняют и вызывают позже, гарантии жизни нет.",
+     "ask": "Объяснил ли ты, чем приватная подсказка с unowned отличается от внешнего replay?"
+    }
+   ],
+   "false": [
+    {
+     "groups": [
+      [
+       "слаб",
+       "weak"
+      ],
+      [
+       "чтобы экран не освобожд",
+       "чтобы не освобожд",
+       "не даёт освобод",
+       "не дает освобод",
+       "чтобы экран жил",
+       "чтобы экран остав"
+      ]
+     ],
+     "msg": "Слабая ссылка нужна не для того, чтобы экран жил дольше. Наоборот: она не удерживает его, и экран может освободиться.",
+     "ask": "Ты имел в виду, что слабая ссылка нужна, чтобы экран жил дольше?"
+    }
+   ]
+  }
  },
  {
   "id": "s6",
   "title": "Ступень 6. Выбери связь для подсказки",
   "prompt": "Напиши DictationHint с unowned let owner: DictationSession и show, который печатает owner.id. Почему здесь подходит unowned? Сессия не возвращает hint наружу, а showHint выполняется только при живой сессии.",
   "code": "// Напиши DictationHint\nfinal class DictationSession {\n    let id = 18\n    private lazy var hint = DictationHint(owner: self)\n    func showHint() { hint.show() }\n}\nlet session = DictationSession()\nsession.showHint()",
-  "key": "final class DictationHint {\n    unowned let owner: DictationSession\n    init(owner: DictationSession) { self.owner = owner }\n    func show() { print(owner.id) }\n}\nfinal class DictationSession {\n    let id = 18\n    private lazy var hint = DictationHint(owner: self)\n    func showHint() { hint.show() }\n}\nlet session = DictationSession()\nsession.showHint()\n\nВывод 18. Подсказка не может пережить сессию через публичный интерфейс и используется при живом владельце. Если условие изменится, выбор нужно пересмотреть."
+  "key": "final class DictationHint {\n    unowned let owner: DictationSession\n    init(owner: DictationSession) { self.owner = owner }\n    func show() { print(owner.id) }\n}\nfinal class DictationSession {\n    let id = 18\n    private lazy var hint = DictationHint(owner: self)\n    func showHint() { hint.show() }\n}\nlet session = DictationSession()\nsession.showHint()\n\nВывод 18. Подсказка не может пережить сессию через публичный интерфейс и используется при живом владельце. Если условие изменится, выбор нужно пересмотреть.",
+  "check": {
+   "for": "bd11c9d989",
+   "must": [
+    {
+     "pat": [
+      "class DictationHint ... { ... }"
+     ],
+     "miss": "Не вижу класса DictationHint. Подсказка хранится в lazy var сессии и создаётся как DictationHint(owner: self), поэтому нужен класс.",
+     "ask": "Есть ли у тебя класс DictationHint?"
+    },
+    {
+     "pat": [
+      "unowned let owner: DictationSession"
+     ],
+     "miss": "Не вижу неизменяемого unowned-свойства owner с типом сессии. Это связь без владения: подсказка не держит сессию, цикла нет.",
+     "ask": "Есть ли в нём неизменяемое unowned-свойство owner с типом сессии?"
+    },
+    {
+     "pat": [
+      "init(owner: DictationSession) { ... owner = owner ... }",
+      "init(owner $a: DictationSession) { ... owner = $a ... }"
+     ],
+     "miss": "Не вижу init(owner:) с присвоением свойства. Сессия создаёт подсказку вызовом DictationHint(owner: self), метка owner нужна.",
+     "ask": "Есть ли у тебя init с меткой owner, присваивающий свойство?"
+    },
+    {
+     "pat": [
+      "func show() { ... print(owner.id) ... }"
+     ],
+     "miss": "Не вижу метода show, который печатает owner.id. Через него showHint сессии выводит 18.",
+     "ask": "Есть ли у тебя метод show, печатающий id владельца?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "weak let owner",
+      "weak var owner"
+     ],
+     "msg": "Задание просит unowned let. weak let не компилируется, а weak var заставил бы работать с Optional, хотя владелец тут всегда жив."
+    },
+    {
+     "pat": [
+      "owner: DictationSession?"
+     ],
+     "msg": "Тип owner сделан Optional, хотя связь должна быть неопциональной. Тогда owner.id не скомпилируется без развёртывания."
+    },
+    {
+     "pat": [
+      "owner?.id",
+      "owner!.id"
+     ],
+     "msg": "owner неопциональный: ни ?, ни ! тут не нужны. Если пришлось их писать, тип свойства задан неверно."
+    }
+   ]
+  }
  },
  {
   "id": "s7",
   "title": "Проверка по памяти",
   "prompt": "Без подсказок и без урока. Верно — отметь тему.",
   "code": "По памяти создай DictationScreen с id 18, deinit «Экран освобождён» и makeProgress(), возвращающим действие с weak self. Живой экран печатает «Прогресс 18», исчезнувший — «Экран закрыт». Сохрани действие снаружи, вызови до и после screen = nil; восстанови guard let, не удаляя поздний вызов.",
-  "key": "final class DictationScreen {\n    let id = 18\n    func makeProgress() -> () -> Void {\n        return { [weak self] in\n            guard let self else { print(\"Экран закрыт\"); return }\n            print(\"Прогресс \\(self.id)\")\n        }\n    }\n    deinit { print(\"Экран освобождён\") }\n}\nvar screen: DictationScreen? = DictationScreen()\nlet replay = screen!.makeProgress()\nreplay()\nscreen = nil\nreplay()\n\nВывод: «Прогресс 18», «Экран освобождён», «Экран закрыт». Это другое событие диктанта с тем же контрактом позднего вызова."
+  "key": "final class DictationScreen {\n    let id = 18\n    func makeProgress() -> () -> Void {\n        return { [weak self] in\n            guard let self else { print(\"Экран закрыт\"); return }\n            print(\"Прогресс \\(self.id)\")\n        }\n    }\n    deinit { print(\"Экран освобождён\") }\n}\nvar screen: DictationScreen? = DictationScreen()\nlet replay = screen!.makeProgress()\nreplay()\nscreen = nil\nreplay()\n\nВывод: «Прогресс 18», «Экран освобождён», «Экран закрыт». Это другое событие диктанта с тем же контрактом позднего вызова.",
+  "check": {
+   "for": "ae24b54c98",
+   "accept": [
+    "final class DictationScreen {\n    let id = 18\n    func makeProgress() -> () -> Void {\n        return { [weak self] in\n            if let self {\n                print(\"Прогресс \\(self.id)\")\n            } else {\n                print(\"Экран закрыт\")\n            }\n        }\n    }\n    deinit { print(\"Экран освобождён\") }\n}\nvar screen: DictationScreen? = DictationScreen()\nlet replay = screen!.makeProgress()\nreplay()\nscreen = nil\nreplay()"
+   ],
+   "must": [
+    {
+     "pat": [
+      "class DictationScreen ... { ... id = 18 ... deinit { ... print(\"Экран освобождён\") ... } ... }",
+      "class DictationScreen ... { ... id: Int = 18 ... deinit { ... print(\"Экран освобождён\") ... } ... }",
+      "class DictationScreen ... { ... deinit { ... print(\"Экран освобождён\") ... } ... id = 18 ... }",
+      "class DictationScreen ... { ... deinit { ... print(\"Экран освобождён\") ... } ... id: Int = 18 ... }"
+     ],
+     "miss": "В классе DictationScreen должны быть свойство id со значением 18 и deinit, который печатает «Экран освобождён». Не вижу одного из них.",
+     "ask": "Есть ли в классе экрана свойство id со значением 18 и deinit с нужным текстом?"
+    },
+    {
+     "pat": [
+      "guard let self else { ... print(\"Экран закрыт\") ... }",
+      "guard let $a = self else { ... print(\"Экран закрыт\") ... }",
+      "if let self { ... } else { ... print(\"Экран закрыт\") ... }",
+      "if let $a = self { ... } else { ... print(\"Экран закрыт\") ... }"
+     ],
+     "miss": "Не вижу развёртывания слабого self с запасной веткой: если экрана нет, надо напечатать «Экран закрыт», а не обращаться к id.",
+     "ask": "Есть ли у тебя безопасное развёртывание self с веткой «Экран закрыт»?"
+    },
+    {
+     "pat": [
+      "print(\"Прогресс \\(self.id)\")",
+      "print(\"Прогресс \\(id)\")",
+      "print(\"Прогресс \\(strongSelf.id)\")"
+     ],
+     "miss": "Для живого экрана не вижу печати «Прогресс» с id. Эта ветка должна работать при первом вызове.",
+     "ask": "Печатаешь ли ты «Прогресс» с id для живого экрана?"
+    },
+    {
+     "pat": [
+      "let $a = screen!.makeProgress() ... $a() ... screen = nil ... $a()",
+      "var $a = screen!.makeProgress() ... $a() ... screen = nil ... $a()",
+      "let $a = screen?.makeProgress() ... $a?() ... screen = nil ... $a?()",
+      "let $a = screen!.makeProgress() $a() screen = nil $a()"
+     ],
+     "miss": "Действие надо сохранить в переменную вне экрана и вызвать дважды: до screen = nil и после него. Поздний вызов убирать нельзя.",
+     "ask": "Сохраняешь ли ты действие вне экрана и вызываешь ли его до и после screen = nil?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "unowned"
+     ],
+     "msg": "unowned: после screen = nil поздний вызов обратится к освобождённому экрану и упадёт. Нужен слабый захват."
+    },
+    {
+     "pat": [
+      "guard let self else { return }",
+      "guard let $a = self else { return }"
+     ],
+     "msg": "Молчаливый return: «Экран закрыт» не напечатается. По условию в этой ветке есть вывод."
+    }
+   ]
+  }
  }
 ]

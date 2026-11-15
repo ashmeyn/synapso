@@ -8,7 +8,62 @@
   "title": "Велостанция",
   "prompt": "Заполни сетевой шаг и проверку ответа. GET станции 12 при 200 возвращает {\"id\":12,\"available\":3}; 503 нельзя декодировать как успех.",
   "code": "import Foundation\nstruct BikeStation: Decodable { let id: Int; let available: Int }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeBikeStation(\n    data: Data, response: URLResponse\n) throws -> BikeStation {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard /* успешный статус */ else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(BikeStation.self, from: data)\n}\nfunc loadBikeStation(\n    id: Int, session: URLSession = .shared\n) async throws -> BikeStation {\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/bike-stations/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    var request = URLRequest(url: url)\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    let (data, response) = /* запрос */\n    return try decodeBikeStation(data: data, response: response)\n}",
-  "key": "import Foundation\nstruct BikeStation: Decodable { let id: Int; let available: Int }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeBikeStation(\n    data: Data, response: URLResponse\n) throws -> BikeStation {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(BikeStation.self, from: data)\n}\nfunc loadBikeStation(\n    id: Int, session: URLSession = .shared\n) async throws -> BikeStation {\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/bike-stations/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    var request = URLRequest(url: url)\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    let (data, response) = try await session.data(for: request)\n    return try decodeBikeStation(data: data, response: response)\n}\n\nЛокальный ответ 200 даёт available 3. Статус проверяется до данных."
+  "key": "import Foundation\nstruct BikeStation: Decodable { let id: Int; let available: Int }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeBikeStation(\n    data: Data, response: URLResponse\n) throws -> BikeStation {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(BikeStation.self, from: data)\n}\nfunc loadBikeStation(\n    id: Int, session: URLSession = .shared\n) async throws -> BikeStation {\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/bike-stations/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    var request = URLRequest(url: url)\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    let (data, response) = try await session.data(for: request)\n    return try decodeBikeStation(data: data, response: response)\n}\n\nЛокальный ответ 200 даёт available 3. Статус проверяется до данных.",
+  "check": {
+   "for": "08453f4d56",
+   "accept": [
+    "guard (200..<300).contains(http.statusCode) else { throw LoadError.status(http.statusCode) }",
+    "let (data, response) = try await session.data(for: request, delegate: nil)"
+   ],
+   "must": [
+    {
+     "pat": [
+      "http.statusCode == 200",
+      "200 == http.statusCode",
+      "(200..<300).contains(http.statusCode)",
+      "http.statusCode >= 200 && http.statusCode < 300",
+      "200..<300 ~= http.statusCode"
+     ],
+     "miss": "Не вижу условия успешного статуса. В guard стоит то, что должно быть истиной для успеха, иначе 503 пройдёт к декодеру.",
+     "ask": "Есть ли у тебя условие успешного статуса для пропуска дальше к декодеру?"
+    },
+    {
+     "pat": [
+      "try await session.data(for: request ...)"
+     ],
+     "miss": "Не вижу сетевого запроса: он идёт через переданную сессию с готовым запросом и с await.",
+     "ask": "Выполняешь ли ты сетевой запрос через переданную сессию с await?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "try?",
+      "try!"
+     ],
+     "msg": "try? глотает ошибку, try! роняет приложение. Здесь нужен обычный try, ошибка уйдёт наверх по throws."
+    },
+    {
+     "pat": [
+      "statusCode != 200"
+     ],
+     "msg": "Условие guard перевёрнуто: он пропускает дальше, когда условие истинно. Для успеха нужно сравнение на равенство."
+    },
+    {
+     "pat": [
+      "URLSession.shared.data(...)"
+     ],
+     "msg": "Запрос должен идти через session из параметра, а не через .shared напрямую: так сессию можно подменить."
+    },
+    {
+     "pat": [
+      "statusCode != 503",
+      "statusCode == 503"
+     ],
+     "msg": "Проверка одного кода 503 пропускает 404, 500 и другие. Условие должно описывать успех, а не одну известную ошибку."
+    }
+   ]
+  }
  },
  {
   "id": "urls-b2",
@@ -19,7 +74,76 @@
   "title": "Быстрый выбор главы аудиокниги",
   "prompt": "Экран уже выбрал 13. Сначала пришёл ответ 13, потом 12. Исправь применение по актуальному selectedID, не меняя порядок ответов. UI и сеть здесь не запускаются.",
   "code": "struct Chapter { let id: Int; let title: String }\nstruct ChapterScreen {\n    var selectedID = 13\n    private(set) var title = \"Загрузка\"\n    mutating func apply(_ chapter: Chapter) {\n        title = chapter.title\n    }\n}\nvar screen = ChapterScreen()\nscreen.apply(Chapter(id: 13, title: \"Глава 13\"))\nscreen.apply(Chapter(id: 12, title: \"Глава 12\"))\nprint(screen.title)",
-  "key": "struct Chapter { let id: Int; let title: String }\nstruct ChapterScreen {\n    var selectedID = 13\n    private(set) var title = \"Загрузка\"\n    mutating func apply(_ chapter: Chapter) {\n        guard chapter.id == selectedID else { return }\n        title = chapter.title\n    }\n}\nvar screen = ChapterScreen()\nscreen.apply(Chapter(id: 13, title: \"Глава 13\"))\nscreen.apply(Chapter(id: 12, title: \"Глава 12\"))\nprint(screen.title)\n\nДо правки «Глава 12», после — «Глава 13». Сверяем текущий выбор при применении, а не только захваченный id запроса. Повторы запросов того же id потребуют дополнительного номера запроса."
+  "key": "struct Chapter { let id: Int; let title: String }\nstruct ChapterScreen {\n    var selectedID = 13\n    private(set) var title = \"Загрузка\"\n    mutating func apply(_ chapter: Chapter) {\n        guard chapter.id == selectedID else { return }\n        title = chapter.title\n    }\n}\nvar screen = ChapterScreen()\nscreen.apply(Chapter(id: 13, title: \"Глава 13\"))\nscreen.apply(Chapter(id: 12, title: \"Глава 12\"))\nprint(screen.title)\n\nДо правки «Глава 12», после — «Глава 13». Сверяем текущий выбор при применении, а не только захваченный id запроса. Повторы запросов того же id потребуют дополнительного номера запроса.",
+  "check": {
+   "for": "0d1ca83981",
+   "accept": [
+    "mutating func apply(_ chapter: Chapter) {\n    if chapter.id == selectedID {\n        title = chapter.title\n    }\n}",
+    "mutating func apply(_ chapter: Chapter) {\n    guard selectedID == chapter.id else { return }\n    title = chapter.title\n}"
+   ],
+   "must": [
+    {
+     "pat": [
+      "chapter.id == selectedID",
+      "selectedID == chapter.id",
+      "chapter.id != selectedID",
+      "selectedID != chapter.id"
+     ],
+     "miss": "Не вижу сравнения id пришедшей главы с selectedID. Устаревший ответ можно отличить только сверкой с текущим выбором.",
+     "ask": "Сравниваешь ли ты id пришедшей главы с текущим selectedID?"
+    },
+    {
+     "pat": [
+      "guard chapter.id == selectedID else { return }",
+      "guard selectedID == chapter.id else { return }",
+      "if chapter.id != selectedID { return }",
+      "if selectedID != chapter.id { return }",
+      "if chapter.id == selectedID { title = chapter.title }",
+      "if selectedID == chapter.id { title = chapter.title }"
+     ],
+     "miss": "Сверка должна стоять до присвоения title: чужая глава не применяется вообще. Проверь, что присвоение защищено условием.",
+     "ask": "Стоит ли эта сверка до присвоения title, чтобы чужая глава не применялась?"
+    },
+    {
+     "pat": [
+      "title = chapter.title"
+     ],
+     "miss": "Присвоение title = chapter.title для актуальной главы должно остаться: иначе экран вообще не обновится.",
+     "ask": "Остаётся ли присвоение заголовка для актуальной главы?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "apply(Chapter(id: 12, title: \"Глава 12\")) ... apply(Chapter(id: 13, title: \"Глава 13\"))"
+     ],
+     "msg": "Ты поменял порядок ответов. По условию он остаётся прежним: сначала 13, потом 12. Чинится сам apply."
+    },
+    {
+     "pat": [
+      "selectedID = chapter.id"
+     ],
+     "msg": "Так выбор подгоняется под пришедший ответ, и защита исчезает. selectedID — то, что хочет пользователь, его не трогают."
+    },
+    {
+     "pat": [
+      "title = \"Глава 13\"",
+      "print(\"Глава 13\")",
+      "chapter.id == 13",
+      "chapter.id != 12",
+      "chapter.id == 12"
+     ],
+     "msg": "Подгонка под конкретный пример. Сравнивай с selectedID, а не с константой: проверка должна работать при любом выборе."
+    },
+    {
+     "pat": [
+      "title = chapter.title ... guard",
+      "title = chapter.title ... chapter.id == selectedID"
+     ],
+     "msg": "Проверка стоит после присвоения: title уже изменён. Сверку надо сделать до записи."
+    }
+   ]
+  }
  },
  {
   "id": "urls-b3",
@@ -30,6 +154,76 @@
   "title": "Свободные стиральные машины",
   "prompt": "Восстанови проверку HTTP и именно 200 до decode. GET комнаты 12 отдаёт {\"id\":12,\"available\":2}. Для 204 контракт запрещает декодирование.",
   "code": "import Foundation\nstruct LaundryRoom: Decodable { let id: Int; let available: Int }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeLaundryRoom(\n    data: Data, response: URLResponse\n) throws -> LaundryRoom {\n    // Проверь тип ответа и статус\n    return try JSONDecoder().decode(LaundryRoom.self, from: data)\n}\nfunc loadLaundryRoom(\n    id: Int, session: URLSession = .shared\n) async throws -> LaundryRoom {\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/laundry-rooms/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    var request = URLRequest(url: url)\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    let (data, response) = try await session.data(for: request)\n    return try decodeLaundryRoom(data: data, response: response)\n}",
-  "key": "import Foundation\nstruct LaundryRoom: Decodable { let id: Int; let available: Int }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeLaundryRoom(\n    data: Data, response: URLResponse\n) throws -> LaundryRoom {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(LaundryRoom.self, from: data)\n}\nfunc loadLaundryRoom(\n    id: Int, session: URLSession = .shared\n) async throws -> LaundryRoom {\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/laundry-rooms/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    var request = URLRequest(url: url)\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    let (data, response) = try await session.data(for: request)\n    return try decodeLaundryRoom(data: data, response: response)\n}\n\navailable равен 2 только после успешного HTTP и декодирования. Для 204 получим LoadError.status(204)."
+  "key": "import Foundation\nstruct LaundryRoom: Decodable { let id: Int; let available: Int }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeLaundryRoom(\n    data: Data, response: URLResponse\n) throws -> LaundryRoom {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(LaundryRoom.self, from: data)\n}\nfunc loadLaundryRoom(\n    id: Int, session: URLSession = .shared\n) async throws -> LaundryRoom {\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/laundry-rooms/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    var request = URLRequest(url: url)\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    let (data, response) = try await session.data(for: request)\n    return try decodeLaundryRoom(data: data, response: response)\n}\n\navailable равен 2 только после успешного HTTP и декодирования. Для 204 получим LoadError.status(204).",
+  "check": {
+   "for": "18548d8eee",
+   "accept": [
+    "guard let http = response as? HTTPURLResponse\nelse { throw LoadError.notHTTP }\nif http.statusCode != 200 {\n    throw LoadError.status(http.statusCode)\n}\nreturn try JSONDecoder().decode(LaundryRoom.self, from: data)"
+   ],
+   "must": [
+    {
+     "pat": [
+      "response as? HTTPURLResponse"
+     ],
+     "miss": "Не вижу приведения response к HTTPURLResponse. У общего URLResponse статуса нет, без приведения проверять нечего.",
+     "ask": "Приводишь ли ты response к HTTP-ответу, чтобы был доступен статус?"
+    },
+    {
+     "pat": [
+      "throw LoadError.notHTTP"
+     ],
+     "miss": "Для ответа не-HTTP не хватает ошибки: бросай notHTTP, иначе такой ответ молча уйдёт к декодеру.",
+     "ask": "Есть ли у тебя отдельная ошибка для ответа, который не HTTP?"
+    },
+    {
+     "pat": [
+      "$a.statusCode == 200",
+      "$a.statusCode != 200",
+      "200 == $a.statusCode",
+      "200 != $a.statusCode"
+     ],
+     "miss": "Не вижу сравнения статуса с 200. Контракт запрещает декодировать любые другие коды, в том числе 204.",
+     "ask": "Сравниваешь ли ты статус ответа именно с 200?"
+    },
+    {
+     "pat": [
+      "throw LoadError.status($a.statusCode)"
+     ],
+     "miss": "При статусе не 200 нужно бросить status с самим кодом: так вызывающий код увидит, что именно пришло, например 204.",
+     "ask": "Бросаешь ли ты ошибку статуса вместе с самим кодом ответа?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "decode(LaundryRoom.self, from: ...) ... statusCode == 200",
+      "decode(LaundryRoom.self, from: ...) ... statusCode != 200"
+     ],
+     "msg": "Декодирование стоит раньше проверки. Для 204 тела нет, декодер упадёт не с той ошибкой: статус проверяется до JSON."
+    },
+    {
+     "pat": [
+      "..< 300",
+      "contains($a.statusCode)"
+     ],
+     "msg": "Диапазон 2xx пропустит 204, а по контракту декодировать можно только 200. Сравнивай именно с 200."
+    },
+    {
+     "pat": [
+      "try?",
+      "try!",
+      "as! HTTPURLResponse"
+     ],
+     "msg": "try? прячет ошибку, try! и as! роняют приложение. Нужны проверки с throw на каждом шаге."
+    },
+    {
+     "pat": [
+      "guard $a.statusCode != 200",
+      "if $a.statusCode == 200 { throw"
+     ],
+     "msg": "Условие перевёрнуто: бросать надо при статусе не 200, а на 200 идти дальше к декодированию."
+    }
+   ]
+  }
  }
 ]

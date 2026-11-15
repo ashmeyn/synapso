@@ -8,7 +8,62 @@
   "title": "Аудиогид без записи",
   "prompt": "Добавь audioLabel: отсутствие экспоната означает «Аудио недоступно», но CancellationError должна уйти вызывающему коду. Не подменяй любой Error заглушкой.",
   "code": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\n// Напиши audioLabel(id:)",
-  "key": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc audioLabel(id: Int) async throws -> String {\n    do {\n        let minutes = try await fetchMinutes(id: id)\n        return \"Аудио: \\(minutes) мин\"\n    } catch ExhibitError.missing {\n        return \"Аудио недоступно\"\n    }\n}\n\nДля 21 «Аудио: 3 мин», для 99 заглушка. Отмена не перехвачена catch ExhibitError.missing."
+  "key": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc audioLabel(id: Int) async throws -> String {\n    do {\n        let minutes = try await fetchMinutes(id: id)\n        return \"Аудио: \\(minutes) мин\"\n    } catch ExhibitError.missing {\n        return \"Аудио недоступно\"\n    }\n}\n\nДля 21 «Аудио: 3 мин», для 99 заглушка. Отмена не перехвачена catch ExhibitError.missing.",
+  "check": {
+   "for": "d0d4fd728f",
+   "accept": [
+    "func audioLabel(id: Int) async throws -> String {\n    do {\n        let minutes = try await fetchMinutes(id: id)\n        return \"Аудио: \\(minutes) мин\"\n    } catch is ExhibitError {\n        return \"Аудио недоступно\"\n    }\n}"
+   ],
+   "must": [
+    {
+     "pat": [
+      "func audioLabel(id: Int) async throws -> String"
+     ],
+     "miss": "У audioLabel должно быть throws: CancellationError нужно отдать вызывающему коду, а в неброской функции это невозможно.",
+     "ask": "Объявил ли ты audioLabel так, чтобы он мог пробросить ошибку вызывающему?"
+    },
+    {
+     "pat": [
+      "catch ExhibitError.missing { ... \"Аудио недоступно\" ... }",
+      "catch is ExhibitError { ... \"Аудио недоступно\" ... }",
+      "catch let $a as ExhibitError { ... \"Аудио недоступно\" ... }"
+     ],
+     "miss": "Нет узкого catch для отсутствия экспоната с текстом «Аудио недоступно». Ловить нужно именно этот случай, остальное пусть летит дальше.",
+     "ask": "Ловишь ли ты только ошибку отсутствия экспоната, а не любую ошибку?"
+    },
+    {
+     "pat": [
+      "do { ... try await fetchMinutes(id: id) ... } catch",
+      "do { ... try await fetchTitle(id: id) ... } catch"
+     ],
+     "miss": "Вызов источника должен быть внутри блока do, чтобы ошибку отсутствия можно было поймать узким catch.",
+     "ask": "Стоит ли вызов источника внутри блока do, чтобы ошибку можно было поймать?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "catch { ... \"Аудио недоступно\" ... }"
+     ],
+     "msg": "Пустой catch ловит всё, и отмена превращается в заглушку. Лови только ошибку отсутствия, CancellationError должна уйти наверх."
+    },
+    {
+     "pat": [
+      "try? await fetchMinutes(id: id)",
+      "try? await fetchTitle(id: id)",
+      "try! await fetchMinutes(id: id)",
+      "try! await fetchTitle(id: id)"
+     ],
+     "msg": "try? прячет любую ошибку, в том числе отмену, try! роняет приложение. Нужен try внутри do с узким catch."
+    },
+    {
+     "pat": [
+      "func audioLabel(id: Int) async -> String"
+     ],
+     "msg": "Без throws функция не может отдать отмену вызывающему. Сигнатура должна быть async throws."
+    }
+   ]
+  }
  },
  {
   "id": "async-b2",
@@ -19,7 +74,74 @@
   "title": "Архив музейных подписей",
   "prompt": "Объявленный legacyTitle отвечает ровно один раз и синхронно. Оберни его через withCheckedThrowingContinuation в titleFromArchive. Не делай resume ещё раз после callback.",
   "code": "enum ArchiveError: Error { case missing }\nfunc legacyTitle(id: Int, done: (Result<String, Error>) -> Void) {\n    done(id == 21 ? .success(\"Луна\") : .failure(ArchiveError.missing))\n}\n// Напиши async-адаптер",
-  "key": "enum ArchiveError: Error { case missing }\nfunc legacyTitle(id: Int, done: (Result<String, Error>) -> Void) {\n    done(id == 21 ? .success(\"Луна\") : .failure(ArchiveError.missing))\n}\nfunc titleFromArchive(id: Int) async throws -> String {\n    try await withCheckedThrowingContinuation { continuation in\n        legacyTitle(id: id) { result in\n            continuation.resume(with: result)\n        }\n    }\n}\n\nСинхронный callback допустим: 21 даёт «Луна», 99 выбрасывает ArchiveError.missing. Адаптер сам не добавляет поддержку отмены источника."
+  "key": "enum ArchiveError: Error { case missing }\nfunc legacyTitle(id: Int, done: (Result<String, Error>) -> Void) {\n    done(id == 21 ? .success(\"Луна\") : .failure(ArchiveError.missing))\n}\nfunc titleFromArchive(id: Int) async throws -> String {\n    try await withCheckedThrowingContinuation { continuation in\n        legacyTitle(id: id) { result in\n            continuation.resume(with: result)\n        }\n    }\n}\n\nСинхронный callback допустим: 21 даёт «Луна», 99 выбрасывает ArchiveError.missing. Адаптер сам не добавляет поддержку отмены источника.",
+  "check": {
+   "for": "b0b2e197c6",
+   "accept": [
+    "func titleFromArchive(id: Int) async throws -> String {\n    try await withCheckedThrowingContinuation { continuation in\n        legacyTitle(id: id) { result in\n            switch result {\n            case .success(let title):\n                continuation.resume(returning: title)\n            case .failure(let error):\n                continuation.resume(throwing: error)\n            }\n        }\n    }\n}",
+    "func titleFromArchive(id: Int) async throws -> String {\n    let title: String = try await withCheckedThrowingContinuation { continuation in\n        legacyTitle(id: id) { result in\n            continuation.resume(with: result)\n        }\n    }\n    return title\n}"
+   ],
+   "must": [
+    {
+     "pat": [
+      "func titleFromArchive(id: Int) async throws -> String"
+     ],
+     "miss": "Сигнатура адаптера не та: titleFromArchive(id:) — async throws, возвращает String. Ошибка из callback должна выходить как throw.",
+     "ask": "Является ли адаптер асинхронной функцией, которая умеет бросать ошибку и возвращает String?"
+    },
+    {
+     "pat": [
+      "try await withCheckedThrowingContinuation { ... }",
+      "try await withCheckedThrowingContinuation({ ... })"
+     ],
+     "miss": "Нет try await withCheckedThrowingContinuation: именно он превращает callback в async-результат, и при ошибке из callback бросает её.",
+     "ask": "Оборачиваешь ли ты callback через вариант continuation, умеющий бросать ошибку?"
+    },
+    {
+     "pat": [
+      "legacyTitle(id: id) { ... }",
+      "legacyTitle(id: id, done: { ... })"
+     ],
+     "miss": "Не вижу вызова legacyTitle внутри continuation: callback-функцию нужно вызвать, а в её замыкании отдать результат.",
+     "ask": "Вызываешь ли ты callback-функцию внутри continuation?"
+    },
+    {
+     "pat": [
+      "legacyTitle(id: id) { $r in ... $c.resume(with: $r) ... }",
+      "legacyTitle(id: id, done: { $r in ... $c.resume(with: $r) ... })",
+      "legacyTitle(id: id) { ... $c.resume(returning: $v) ... $c.resume(throwing: $e) ... }",
+      "legacyTitle(id: id) { ... $c.resume(throwing: $e) ... $c.resume(returning: $v) ... }",
+      "legacyTitle(id: id, done: { ... $c.resume(returning: $v) ... $c.resume(throwing: $e) ... })",
+      "legacyTitle(id: id, done: { ... $c.resume(throwing: $e) ... $c.resume(returning: $v) ... })",
+      "legacyTitle(id: id) { $r in switch $r { ... $c.resume(returning: $v) ... $c.resume(throwing: $e) ... } }"
+     ],
+     "miss": "Не вижу resume внутри callback: continuation нужно возобновить результатом ровно один раз, иначе функция зависнет или упадёт.",
+     "ask": "Возобновляешь ли ты continuation результатом ровно один раз внутри callback?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "legacyTitle(id: id) { ... } $c.resume(...)",
+      "legacyTitle(id: id, done: { ... }) $c.resume(...)"
+     ],
+     "msg": "resume стоит после вызова legacyTitle: continuation возобновляется второй раз. Возобновлять можно ровно один раз, внутри callback."
+    },
+    {
+     "pat": [
+      "withCheckedContinuation"
+     ],
+     "msg": "withCheckedContinuation не умеет бросать ошибку: callback может вернуть failure, поэтому нужен вариант Throwing."
+    },
+    {
+     "pat": [
+      "try? await withCheckedThrowingContinuation",
+      "try! await withCheckedThrowingContinuation"
+     ],
+     "msg": "try? прячет ошибку архива, try! роняет приложение. Адаптер должен пробросить ошибку вызывающему."
+    }
+   ]
+  }
  },
  {
   "id": "async-b3",
@@ -30,6 +152,64 @@
   "title": "Выбор на экране маршрута экскурсии",
   "prompt": "Пока fetch приостановлен, selectedID сменился с 21 на 22. Не позволяй ответу для 21 обновить text; сохрани id до await и проверь после. Источник передаётся как объявленный параметр.",
   "code": "@MainActor\nfinal class GuideScreen {\n    var selectedID = 21\n    private(set) var text = \"Загрузка\"\n    func load(using fetch: (Int) async throws -> String) async throws {\n        let requestedID = selectedID\n        let value = try await fetch(requestedID)\n        try Task.checkCancellation()\n        text = value\n    }\n}",
-  "key": "@MainActor\nfinal class GuideScreen {\n    var selectedID = 21\n    private(set) var text = \"Загрузка\"\n    func load(using fetch: (Int) async throws -> String) async throws {\n        let requestedID = selectedID\n        let value = try await fetch(requestedID)\n        try Task.checkCancellation()\n        guard selectedID == requestedID else { return }\n        text = value\n    }\n}\n\nПри смене выбора старый ответ пропускается. Для неизменного выбора text получает результат."
+  "key": "@MainActor\nfinal class GuideScreen {\n    var selectedID = 21\n    private(set) var text = \"Загрузка\"\n    func load(using fetch: (Int) async throws -> String) async throws {\n        let requestedID = selectedID\n        let value = try await fetch(requestedID)\n        try Task.checkCancellation()\n        guard selectedID == requestedID else { return }\n        text = value\n    }\n}\n\nПри смене выбора старый ответ пропускается. Для неизменного выбора text получает результат.",
+  "check": {
+   "for": "c31b38f24f",
+   "accept": [
+    "if selectedID == requestedID {\n    text = value\n}",
+    "guard requestedID == selectedID else { return }\ntext = value"
+   ],
+   "must": [
+    {
+     "pat": [
+      "selectedID == $a",
+      "$a == selectedID",
+      "selectedID != $a",
+      "$a != selectedID"
+     ],
+     "miss": "Нет сравнения текущего selectedID с id, сохранённым до await. Без него ответ для 21 запишется, даже если выбор уже сменился.",
+     "ask": "Сравниваешь ли ты текущий selectedID с id, сохранённым до await?"
+    },
+    {
+     "pat": [
+      "guard selectedID == $a else { return }",
+      "guard $a == selectedID else { return }",
+      "if selectedID != $a { return }",
+      "if $a != selectedID { return }",
+      "if selectedID == $a { ... }",
+      "if $a == selectedID { ... }"
+     ],
+     "miss": "Не вижу выхода при несовпадении: если выбор сменился, ответ нужно молча пропустить и не трогать text.",
+     "ask": "Выходишь ли ты без записи в text, если выбор сменился?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "fetch(selectedID)"
+     ],
+     "msg": "Источник вызывается с текущим selectedID, а не с сохранённым до await: сохранённый id нужен, чтобы после await понять, что выбор сменился."
+    },
+    {
+     "pat": [
+      "let $a = selectedID guard selectedID == $a else { return }",
+      "let $a = selectedID if selectedID == $a { ... }"
+     ],
+     "msg": "Проверка стоит до await и всегда истинна: выбор может смениться только пока функция приостановлена. Сравнивай после await."
+    },
+    {
+     "pat": [
+      "try await fetch($a) let $b = selectedID"
+     ],
+     "msg": "id запоминается после await, когда выбор уже мог смениться. Сохранять его надо до вызова, иначе сравнивать нечего."
+    },
+    {
+     "pat": [
+      "text = $a guard selectedID == $b else { return }"
+     ],
+     "msg": "text уже записан до проверки: устаревший ответ успевает попасть на экран. Сначала проверка, потом присваивание."
+    }
+   ]
+  }
  }
 ]

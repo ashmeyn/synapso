@@ -4,35 +4,380 @@
   "title": "Ступень 1. Прочитай готовый результат",
   "prompt": "loadExhibit вызывают из async-контекста с id 21. Что вернётся? Почему unknown id нельзя считать успешной строкой?",
   "code": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc loadExhibit(id: Int) async throws -> String {\n    let title = try await fetchTitle(id: id)\n    let minutes = try await fetchMinutes(id: id)\n    return \"\\(title): \\(minutes) мин\"\n}",
-  "key": "Луна: 3 мин. Для неизвестного id возникает ExhibitError.missing; результат нужно получить через try await."
+  "key": "Луна: 3 мин. Для неизвестного id возникает ExhibitError.missing; результат нужно получить через try await.",
+  "check": {
+   "for": "3fa238fcc6",
+   "outs": [
+    [
+     "Луна: 3 мин"
+    ]
+   ],
+   "why": [
+    "id равен 21: оба guard проходят, fetchTitle даёт «Луна», fetchMinutes даёт 3, строка собирается из них. Для другого id была бы брошена ExhibitError.missing, а не строка."
+   ],
+   "wrong": [
+    {
+     "out": [
+      "Луна: 21 мин"
+     ],
+     "msg": "Ты подставил id вместо минут. Минуты возвращает fetchMinutes (там 3), а id — лишь аргумент запроса."
+    },
+    {
+     "out": [
+      "Нет экспоната"
+     ],
+     "msg": "Такой строки в loadExhibit нет: для id 21 guard проходят, а для чужого id была бы брошена ошибка, а не строка."
+    },
+    {
+     "out": [
+      "ExhibitError.missing"
+     ],
+     "msg": "Ошибка бросается только при id, отличном от 21. Для 21 обе проверки проходят и функция возвращает строку."
+    }
+   ]
+  }
  },
  {
   "id": "s2",
   "title": "Ступень 2. Заполни последовательный вызов",
   "prompt": "Восстанови try await в loadExhibit. Обе локальные функции уже включены в код.",
   "code": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc loadExhibit(id: Int) async throws -> String {\n    let title = /* Ошибка и ожидание */ fetchTitle(id: id)\n    let minutes = /* Ошибка и ожидание */ fetchMinutes(id: id)\n    return \"\\(title): \\(minutes) мин\"\n}",
-  "key": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc loadExhibit(id: Int) async throws -> String {\n    let title = try await fetchTitle(id: id)\n    let minutes = try await fetchMinutes(id: id)\n    return \"\\(title): \\(minutes) мин\"\n}\n\nПоследовательные запросы дают «Луна: 3 мин» для id 21."
+  "key": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc loadExhibit(id: Int) async throws -> String {\n    let title = try await fetchTitle(id: id)\n    let minutes = try await fetchMinutes(id: id)\n    return \"\\(title): \\(minutes) мин\"\n}\n\nПоследовательные запросы дают «Луна: 3 мин» для id 21.",
+  "check": {
+   "for": "f915b6c9f4",
+   "must": [
+    {
+     "pat": [
+      "let $a = try await fetchTitle(id: id)"
+     ],
+     "miss": "Нет try await перед fetchTitle: функция async throws, без ожидания и обработки ошибки результат не получить. Смотри порядок слов: сначала try, потом await.",
+     "ask": "Ждёшь ли ты результат запроса названия, обрабатывая возможную ошибку?"
+    },
+    {
+     "pat": [
+      "let $a = try await fetchMinutes(id: id)"
+     ],
+     "miss": "Нет try await перед fetchMinutes: вызов async throws функции без них не скомпилируется. Здесь вызовы идут по очереди, один за другим.",
+     "ask": "Ждёшь ли ты результат запроса минут, обрабатывая возможную ошибку?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "await try"
+     ],
+     "msg": "Порядок должен быть try await: try относится ко всему выражению и стоит первым, как в остальных вызовах."
+    },
+    {
+     "pat": [
+      "try? await",
+      "try! await"
+     ],
+     "msg": "try? прячет ошибку (получишь Optional), try! уронит приложение. Здесь нужен обычный try: ошибка уходит вызывающему."
+    },
+    {
+     "pat": [
+      "async let"
+     ],
+     "msg": "Это ступень про последовательные вызовы: await на каждом шаге. async let — тема следующей ступени."
+    }
+   ]
+  }
  },
  {
   "id": "s3",
   "title": "Ступень 3. Запусти независимые запросы",
   "prompt": "Перепиши loadExhibit с двумя async let и одним try await для пары. Самостоятельно напиши функцию после источников.",
   "code": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\n// Напиши loadExhibit(id:)",
-  "key": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc loadExhibit(id: Int) async throws -> String {\n    async let title = fetchTitle(id: id)\n    async let minutes = fetchMinutes(id: id)\n    let values = try await (title, minutes)\n    return \"\\(values.0): \\(values.1) мин\"\n}\n\nЗапросы независимы; результат «Луна: 3 мин», порядок их исполнения не обещаем."
+  "key": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc loadExhibit(id: Int) async throws -> String {\n    async let title = fetchTitle(id: id)\n    async let minutes = fetchMinutes(id: id)\n    let values = try await (title, minutes)\n    return \"\\(values.0): \\(values.1) мин\"\n}\n\nЗапросы независимы; результат «Луна: 3 мин», порядок их исполнения не обещаем.",
+  "check": {
+   "for": "6360979767",
+   "accept": [
+    "async let title = fetchTitle(id: id)\nasync let minutes = fetchMinutes(id: id)\nlet (t, m) = try await (title, minutes)\nreturn \"\\(t): \\(m) мин\""
+   ],
+   "must": [
+    {
+     "pat": [
+      "async let $a = fetchTitle(id: id)",
+      "async let $a: String = fetchTitle(id: id)"
+     ],
+     "miss": "Нет async let для fetchTitle: без него запрос не стартует как дочерняя задача и не пойдёт параллельно со вторым.",
+     "ask": "Запускаешь ли ты запрос названия как дочернюю задачу, чтобы он шёл параллельно?"
+    },
+    {
+     "pat": [
+      "async let $a = fetchMinutes(id: id)",
+      "async let $a: Int = fetchMinutes(id: id)"
+     ],
+     "miss": "Нет async let для fetchMinutes: запросы независимы, оба должны стартовать до первого ожидания.",
+     "ask": "Запускаешь ли ты запрос минут как дочернюю задачу до первого ожидания?"
+    },
+    {
+     "pat": [
+      "try await ($a, $b)"
+     ],
+     "miss": "Не вижу одного try await для пары: результаты async let забирают вместе, одной строкой, иначе ожидание дробится.",
+     "ask": "Забираешь ли ты результаты обоих запросов одним ожиданием для пары?"
+    },
+    {
+     "pat": [
+      "\"\\($a.0): \\($a.1) мин\"",
+      "\"\\($a): \\($b) мин\""
+     ],
+     "miss": "Не вижу итоговой строки «название: минуты мин» из полученной пары. Проверь, что собираешь результат из двух значений.",
+     "ask": "Собираешь ли ты итоговую строку из названия и минут из полученной пары?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "try? await",
+      "try! await"
+     ],
+     "msg": "try? даёт Optional и прячет ошибку, try! роняет приложение. Нужен обычный try await."
+    },
+    {
+     "pat": [
+      "Task { ... }",
+      "Task.detached { ... }"
+     ],
+     "msg": "loadExhibit уже async: отдельный Task здесь ломает структурность (отмена и ошибки не дойдут). Для параллели хватает async let."
+    },
+    {
+     "pat": [
+      "DispatchQueue",
+      "DispatchGroup"
+     ],
+     "msg": "Это старый стиль с очередями. Задание про async let: запросы запускаются как дочерние задачи без DispatchQueue."
+    }
+   ]
+  }
  },
  {
   "id": "s4",
   "title": "Ступень 4. Не маскируй отмену",
   "prompt": "Задача отменена до вызова status(id: 21). Сейчас источник выбрасывает CancellationError, а status возвращает «Нет экспоната». Добавь отдельный catch для отмены и проверку перед применением результата.",
   "code": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc status(id: Int) async -> String {\n    do {\n        return try await fetchTitle(id: id)\n    } catch {\n        return \"Нет экспоната\"\n    }\n}",
-  "key": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc status(id: Int) async -> String {\n    do {\n        let title = try await fetchTitle(id: id)\n        try Task.checkCancellation()\n        return title\n    } catch is CancellationError {\n        return \"Отменено\"\n    } catch {\n        return \"Нет экспоната\"\n    }\n}\n\nДля отменённой задачи «Отменено», для id 99 «Нет экспоната», для id 21 «Луна»."
+  "key": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc status(id: Int) async -> String {\n    do {\n        let title = try await fetchTitle(id: id)\n        try Task.checkCancellation()\n        return title\n    } catch is CancellationError {\n        return \"Отменено\"\n    } catch {\n        return \"Нет экспоната\"\n    }\n}\n\nДля отменённой задачи «Отменено», для id 99 «Нет экспоната», для id 21 «Луна».",
+  "check": {
+   "for": "48cd73fc52",
+   "accept": [
+    "func status(id: Int) async -> String {\n    do {\n        let title = try await fetchTitle(id: id)\n        if Task.isCancelled { return \"Отменено\" }\n        return title\n    } catch is CancellationError {\n        return \"Отменено\"\n    } catch {\n        return \"Нет экспоната\"\n    }\n}",
+    "func status(id: Int) async -> String {\n    do {\n        let title = try await fetchTitle(id: id)\n        try Task.checkCancellation()\n        return title\n    } catch {\n        if error is CancellationError { return \"Отменено\" }\n        return \"Нет экспоната\"\n    }\n}"
+   ],
+   "must": [
+    {
+     "pat": [
+      "is CancellationError { ... }",
+      "as CancellationError { ... }",
+      "as? CancellationError { ... }"
+     ],
+     "miss": "Нет отдельной ветки для CancellationError. Общий catch свалит отмену в «Нет экспоната», и отмену не отличить от ошибки данных.",
+     "ask": "Есть ли у тебя отдельная ветка для CancellationError, не совпадающая с общей ошибкой?"
+    },
+    {
+     "pat": [
+      "try await fetchTitle(id: id) try Task.checkCancellation()",
+      "try await fetchTitle(id: id) if Task.isCancelled",
+      "try await fetchTitle(id: id) guard !Task.isCancelled"
+     ],
+     "miss": "Нет проверки отмены сразу после await, до return. Пока задачу ждали, её могли отменить, и устаревший результат нельзя применять.",
+     "ask": "Проверяешь ли ты отмену сразу после await, до возврата результата?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "is CancellationError { return \"Нет экспоната\" }",
+      "is CancellationError { ... \"Нет экспоната\" ... }",
+      "as CancellationError { ... \"Нет экспоната\" ... }"
+     ],
+     "msg": "Ветка отмены возвращает ту же заглушку, что и ошибка данных: отмена маскируется. Верни для неё своё значение."
+    },
+    {
+     "pat": [
+      "catch { ... } catch is CancellationError",
+      "catch { ... } catch let $a as CancellationError"
+     ],
+     "msg": "Общий catch стоит раньше: он перехватит всё, и ветка отмены никогда не сработает. Конкретные catch идут перед общим."
+    },
+    {
+     "pat": [
+      "try? await fetchTitle",
+      "try? Task.checkCancellation()"
+     ],
+     "msg": "try? превращает любую ошибку, в том числе отмену, в nil: do/catch ничего не увидит. Нужен обычный try."
+    }
+   ]
+  }
  },
  {
   "id": "s5",
   "title": "Ступень 5. Объясни жизненный цикл",
   "prompt": "Своими словами, как на собесе: что → почему → последствия.",
   "code": "Как completion превращается в результат try await? Почему два async let независимы? Кто отменяет Task и кто проверяет отмену?",
-  "key": "async возвращает результат в ожидающую задачу; try обрабатывает ошибки. async let запускает связанные со scope дочерние задачи для независимых запросов. handle.cancel просит отменить Task; checkCancellation или isCancelled дают коду возможность остановиться."
+  "key": "async возвращает результат в ожидающую задачу; try обрабатывает ошибки. async let запускает связанные со scope дочерние задачи для независимых запросов. handle.cancel просит отменить Task; checkCancellation или isCancelled дают коду возможность остановиться.",
+  "check": {
+   "for": "0344d2e19a",
+   "concepts": [
+    {
+     "label": "await приостанавливает функцию и возвращает результат вместо completion",
+     "groups": [
+      [
+       "await",
+       "ожида",
+       "ждёт",
+       "ждет",
+       "приостан",
+       "suspend"
+      ],
+      [
+       "результат",
+       "значени",
+       "возвращ",
+       "return",
+       "completion",
+       "колбэк",
+       "замыкан"
+      ]
+     ],
+     "miss": "Не сказано главное: await приостанавливает функцию и отдаёт результат в то же место кода, вместо того чтобы передавать его в completion.",
+     "ask": "Сказал ли ты, что await приостанавливает функцию и отдаёт результат на то же место кода?"
+    },
+    {
+     "label": "try: ошибка выбрасывается и обрабатывается (throws/catch)",
+     "groups": [
+      [
+       "try",
+       "throw",
+       "ошиб",
+       "error"
+      ],
+      [
+       "проброс",
+       "пробрас",
+       "выбрас",
+       "перехват",
+       "catch",
+       "обрабат",
+       "бросa",
+       "бросает",
+       "поймать"
+      ]
+     ],
+     "miss": "Не хватает про ошибки: try нужен, потому что async-функция может выбросить ошибку, и её обрабатывают через catch или пробрасывают дальше.",
+     "ask": "Объяснил ли ты, что try нужен, потому что async-функция может выбросить ошибку?"
+    },
+    {
+     "label": "async let запускает независимые дочерние задачи, они идут параллельно",
+     "groups": [
+      [
+       "async let",
+       "дочерн",
+       "child",
+       "параллел",
+       "одновремен",
+       "конкурент",
+       "независим"
+      ],
+      [
+       "запуска",
+       "стартуют",
+       "стартует",
+       "создаёт",
+       "создает",
+       "сразу",
+       "не ждут",
+       "не ждёт",
+       "scope",
+       "област",
+       "структурн",
+       "structured"
+      ]
+     ],
+     "miss": "Не объяснено, почему async let независимы: каждый запускается как дочерняя задача сразу, не дожидаясь соседа, и привязан к своей области.",
+     "ask": "Объяснил ли ты, что async let запускает независимые дочерние задачи сразу, без ожидания соседа?"
+    },
+    {
+     "label": "Task отменяет тот, у кого есть handle (cancel)",
+     "groups": [
+      [
+       "cancel",
+       "отмен"
+      ],
+      [
+       "handle",
+       "хендл",
+       "хэндл",
+       "владел",
+       "вызывающ",
+       "родител",
+       "снаружи",
+       "запустивш",
+       "держит",
+       "сохран",
+       "cancel()"
+      ]
+     ],
+     "miss": "Не сказано, кто отменяет: Task отменяет тот, у кого есть его handle, вызывая cancel().",
+     "ask": "Сказал ли ты, что Task отменяет тот, у кого есть его handle?"
+    },
+    {
+     "label": "отмена кооперативная: код сам проверяет и останавливается",
+     "groups": [
+      [
+       "checkcancellation",
+       "iscancelled",
+       "проверя",
+       "проверк",
+       "кооператив"
+      ],
+      [
+       "остан",
+       "прерыв",
+       "выход",
+       "выйти",
+       "заверш",
+       "сам",
+       "бросa"
+      ]
+     ],
+     "miss": "Не сказано, кто проверяет отмену: cancel лишь просит остановиться, а сам код проверяет её (checkCancellation или isCancelled) и выходит.",
+     "ask": "Объяснил ли ты, что отмена кооперативная: код сам проверяет её и останавливается?"
+    }
+   ],
+   "false": [
+    {
+     "groups": [
+      [
+       "автоматически остан",
+       "автоматически прекращ",
+       "автоматически заверш",
+       "сам остановится",
+       "сама остановится",
+       "само остановится",
+       "сразу убива",
+       "сразу остан"
+      ]
+     ],
+     "msg": "Похоже, ты считаешь, что cancel останавливает задачу сам. Нет: он только ставит флаг, а остановиться должен сам код через checkCancellation или isCancelled.",
+     "ask": "Ты имел в виду, что cancel сам останавливает задачу без проверки в коде?"
+    },
+    {
+     "groups": [
+      [
+       "async let"
+      ],
+      [
+       "друг за другом",
+       "по очереди"
+      ]
+     ],
+     "msg": "Похоже, ты говоришь, что async let идут по очереди. Наоборот: они стартуют сразу и работают одновременно, поэтому независимы.",
+     "ask": "Ты имел в виду, что async let выполняются по очереди, друг за другом?"
+    }
+   ]
+  }
  },
  {
   "id": "s6",
@@ -45,13 +390,166 @@
    "`start(id:)` синхронный, возвращает `Task<Void, Never>`: внутри `Task { … }`, и этот handle отдаётся наружу для `cancel()`.",
    "В `do`: `try await loadExhibit(id: id)`, затем `try Task.checkCancellation()` и только потом `text = value`.",
    "`catch is CancellationError` → «Отменено» стоит раньше общего `catch` → «Нет экспоната»."
-  ]
+  ],
+  "check": {
+   "for": "975ff30fec",
+   "accept": [
+    "@MainActor\nfinal class ExhibitScreen {\n    private(set) var text = \"Загрузка\"\n    func start(id: Int) -> Task<Void, Never> {\n        Task {\n            do {\n                let value = try await loadExhibit(id: id)\n                if Task.isCancelled {\n                    text = \"Отменено\"\n                    return\n                }\n                text = value\n            } catch is CancellationError {\n                text = \"Отменено\"\n            } catch {\n                text = \"Нет экспоната\"\n            }\n        }\n    }\n}"
+   ],
+   "must": [
+    {
+     "pat": [
+      "@MainActor final class ExhibitScreen ... { ... var text ... }",
+      "@MainActor class ExhibitScreen ... { ... var text ... }"
+     ],
+     "miss": "Нет @MainActor-класса ExhibitScreen с var text. Модель экрана должна жить на главном акторе: text обновляется для интерфейса.",
+     "ask": "Есть ли у тебя класс экрана на главном акторе со свойством text?"
+    },
+    {
+     "pat": [
+      "func start(id: Int) -> Task<Void, Never>",
+      "func start(id: Int) -> Task<(), Never>"
+     ],
+     "miss": "Сигнатура start(id:) не та: метод синхронный и возвращает Task<Void, Never>, чтобы вызывающий мог сделать cancel().",
+     "ask": "Возвращает ли синхронный start задачу, чтобы вызывающий мог её отменить?"
+    },
+    {
+     "pat": [
+      "catch is CancellationError { ... \"Отменено\" ... }",
+      "catch let $a as CancellationError { ... \"Отменено\" ... }",
+      "catch { ... is CancellationError { ... \"Отменено\" ... } ... }"
+     ],
+     "miss": "Нет ветки CancellationError с текстом «Отменено». Отмена — не ошибка данных, её нужно показать отдельно.",
+     "ask": "Есть ли отдельная ветка для CancellationError с текстом «Отменено»?"
+    },
+    {
+     "pat": [
+      "catch { ... \"Нет экспоната\" ... }"
+     ],
+     "miss": "Нет общего catch с текстом «Нет экспоната»: остальные ошибки должны попасть в text, иначе выброс уйдёт в пустоту.",
+     "ask": "Есть ли общий catch с текстом «Нет экспоната» для остальных ошибок?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "text = try await loadExhibit(id: id)"
+     ],
+     "msg": "Результат записывается в text сразу после await, без проверки отмены. Отменённая задача перезапишет экран устаревшим ответом."
+    },
+    {
+     "pat": [
+      "catch { ... } catch is CancellationError",
+      "catch { ... } catch let $a as CancellationError"
+     ],
+     "msg": "Общий catch стоит раньше ветки отмены и перехватит всё. Конкретный catch для CancellationError идёт первым."
+    },
+    {
+     "pat": [
+      "Task.detached { ... }"
+     ],
+     "msg": "Task.detached отрывается от главного актора: обновлять text станет небезопасно. Здесь нужен обычный Task, он наследует актор."
+    },
+    {
+     "pat": [
+      "func start(id: Int) async"
+     ],
+     "msg": "start(id:) должен быть синхронным и возвращать Task: так кнопка вызывает его без await и получает handle для cancel()."
+    }
+   ]
+  }
  },
  {
   "id": "s7",
   "title": "Проверка по памяти",
   "prompt": "Без подсказок и без урока. Верно — отметь тему.",
   "code": "Восстанови status(id:) и локальный fetchTitle: id 21 даёт «Луна», другой id выбрасывает ExhibitError.missing. Источник и код перед применением результата проверяют отмену. Status возвращает «Отменено» для CancellationError и «Нет экспоната» для ошибки данных.",
-  "key": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc status(id: Int) async -> String {\n    do {\n        let title = try await fetchTitle(id: id)\n        try Task.checkCancellation()\n        return title\n    } catch is CancellationError {\n        return \"Отменено\"\n    } catch {\n        return \"Нет экспоната\"\n    }\n}\n\nПроверь успешный id, отсутствующий id и задачу с уже выставленным флагом отмены."
+  "key": "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return \"Луна\"\n}\nfunc fetchMinutes(id: Int) async throws -> Int {\n    try Task.checkCancellation()\n    guard id == 21 else { throw ExhibitError.missing }\n    return 3\n}\nfunc status(id: Int) async -> String {\n    do {\n        let title = try await fetchTitle(id: id)\n        try Task.checkCancellation()\n        return title\n    } catch is CancellationError {\n        return \"Отменено\"\n    } catch {\n        return \"Нет экспоната\"\n    }\n}\n\nПроверь успешный id, отсутствующий id и задачу с уже выставленным флагом отмены.",
+  "check": {
+   "for": "2323801b7e",
+   "accept": [
+    "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    try Task.checkCancellation()\n    if id == 21 { return \"Луна\" }\n    throw ExhibitError.missing\n}\nfunc status(id: Int) async -> String {\n    do {\n        let title = try await fetchTitle(id: id)\n        if Task.isCancelled { return \"Отменено\" }\n        return title\n    } catch is CancellationError {\n        return \"Отменено\"\n    } catch {\n        return \"Нет экспоната\"\n    }\n}",
+    "enum ExhibitError: Error { case missing }\nfunc fetchTitle(id: Int) async throws -> String {\n    guard !Task.isCancelled else { throw CancellationError() }\n    if id == 21 { return \"Луна\" }\n    throw ExhibitError.missing\n}\nfunc status(id: Int) async -> String {\n    do {\n        let title = try await fetchTitle(id: id)\n        try Task.checkCancellation()\n        return title\n    } catch {\n        if error is CancellationError { return \"Отменено\" }\n        return \"Нет экспоната\"\n    }\n}"
+   ],
+   "must": [
+    {
+     "pat": [
+      "enum ExhibitError: Error { ... case missing ... }"
+     ],
+     "miss": "Нет своего типа ошибки для отсутствующего экспоната. Без него выбрасывать нечего.",
+     "ask": "Есть ли у тебя собственный тип ошибки для отсутствующего экспоната?"
+    },
+    {
+     "pat": [
+      "func fetchTitle(id: Int) async throws -> String { ... try Task.checkCancellation() ... }",
+      "func fetchTitle(id: Int) async throws -> String { ... if Task.isCancelled { throw CancellationError() } ... }",
+      "func fetchTitle(id: Int) async throws -> String { ... guard !Task.isCancelled else { throw CancellationError() } ... }"
+     ],
+     "miss": "fetchTitle не проверяет отмену: источник должен сам остановиться и бросить CancellationError, иначе отмена до него не дойдёт.",
+     "ask": "Проверяет ли fetchTitle отмену и сам останавливается с CancellationError?"
+    },
+    {
+     "pat": [
+      "guard id == 21 else { throw ExhibitError.missing } ... return \"Луна\"",
+      "if id == 21 { ... return \"Луна\" ... } ... throw ExhibitError.missing",
+      "if id != 21 { throw ExhibitError.missing } ... return \"Луна\"",
+      "if id == 21 { ... \"Луна\" ... } else { throw ExhibitError.missing }",
+      "switch id { ... case 21: ... \"Луна\" ... default: ... throw ExhibitError.missing ... }"
+     ],
+     "miss": "fetchTitle не делает главное: для id 21 вернуть «Луна», для любого другого бросить ExhibitError.missing. Проверь обе ветки.",
+     "ask": "Возвращает ли fetchTitle «Луна» для id 21 и бросает ошибку для любого другого?"
+    },
+    {
+     "pat": [
+      "catch is CancellationError { ... \"Отменено\" ... } catch { ... \"Нет экспоната\" ... }",
+      "catch let $a as CancellationError { ... \"Отменено\" ... } catch { ... \"Нет экспоната\" ... }",
+      "catch { ... is CancellationError { ... \"Отменено\" ... } ... \"Нет экспоната\" ... }",
+      "catch { ... as? CancellationError { ... \"Отменено\" ... } ... \"Нет экспоната\" ... }"
+     ],
+     "miss": "В status нет разделения ошибок: CancellationError даёт «Отменено», любая другая ошибка — «Нет экспоната». Отмена идёт отдельной веткой.",
+     "ask": "Различаешь ли ты в status отмену и ошибку данных разными результатами?"
+    },
+    {
+     "pat": [
+      "try await fetchTitle(id: id) try Task.checkCancellation()",
+      "try await fetchTitle(id: id) if Task.isCancelled",
+      "try await fetchTitle(id: id) guard !Task.isCancelled"
+     ],
+     "miss": "В status нет проверки отмены сразу после await: перед применением результата нужно убедиться, что задачу не отменили.",
+     "ask": "Проверяешь ли ты в status отмену сразу после await?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "try? await fetchTitle",
+      "try? Task.checkCancellation()",
+      "try! await fetchTitle",
+      "try! Task.checkCancellation()"
+     ],
+     "msg": "try? глотает ошибку и отмену, try! роняет приложение. Нужен обычный try внутри do/catch."
+    },
+    {
+     "pat": [
+      "is CancellationError { ... \"Нет экспоната\" ... }",
+      "as CancellationError { ... \"Нет экспоната\" ... }"
+     ],
+     "msg": "Отмена возвращает «Нет экспоната»: ты маскируешь её под ошибку данных. Отмена должна давать «Отменено»."
+    },
+    {
+     "pat": [
+      "catch { ... } catch is CancellationError",
+      "catch { ... } catch let $a as CancellationError"
+     ],
+     "msg": "Общий catch стоит раньше ветки отмены и перехватит всё. Конкретные catch идут перед общим."
+    },
+    {
+     "pat": [
+      "func status(id: Int) async throws -> String"
+     ],
+     "msg": "status не должен бросать: обе ошибки превращаются в строки внутри самой функции. throws в сигнатуре не нужен."
+    }
+   ]
+  }
  }
 ]

@@ -8,7 +8,62 @@
   "title": "Подключение пульта лампы",
   "prompt": "Делегат создан слишком ненадолго. Сохрани Receiver в сильном local receiver до завершения сигнала через withExtendedLifetime(receiver). Оставь delegate слабым: цель — обеспечить владельца, а не вернуть сильную обратную связь.",
   "code": "protocol LampDelegate: AnyObject { func didChange() }\nfinal class LampRemote {\n    weak var delegate: (any LampDelegate)?\n    func signal() { delegate?.didChange() }\n}\nfinal class Receiver: LampDelegate {\n    func didChange() { print(\"Свет включён\") }\n}\nlet remote = LampRemote()\n// Создай receiver, назначь delegate и удержи на время signal",
-  "key": "protocol LampDelegate: AnyObject { func didChange() }\nfinal class LampRemote {\n    weak var delegate: (any LampDelegate)?\n    func signal() { delegate?.didChange() }\n}\nfinal class Receiver: LampDelegate {\n    func didChange() { print(\"Свет включён\") }\n}\nlet remote = LampRemote()\nlet receiver = Receiver()\nremote.delegate = receiver\nwithExtendedLifetime(receiver) { remote.signal() }\n\nВывод «Свет включён». У получателя есть сильный владелец на время события; weak остаётся обратной связью."
+  "key": "protocol LampDelegate: AnyObject { func didChange() }\nfinal class LampRemote {\n    weak var delegate: (any LampDelegate)?\n    func signal() { delegate?.didChange() }\n}\nfinal class Receiver: LampDelegate {\n    func didChange() { print(\"Свет включён\") }\n}\nlet remote = LampRemote()\nlet receiver = Receiver()\nremote.delegate = receiver\nwithExtendedLifetime(receiver) { remote.signal() }\n\nВывод «Свет включён». У получателя есть сильный владелец на время события; weak остаётся обратной связью.",
+  "check": {
+   "for": "424c0bb8eb",
+   "accept": [
+    "let receiver = Receiver()\nremote.delegate = receiver\nremote.signal()\nwithExtendedLifetime(receiver) {}"
+   ],
+   "must": [
+    {
+     "pat": [
+      "let receiver = Receiver()",
+      "var receiver = Receiver()"
+     ],
+     "miss": "Не вижу локальной сильной переменной receiver с созданным Receiver. Слабый delegate сам объект не удерживает, нужен владелец.",
+     "ask": "Есть ли у тебя локальная сильная переменная receiver с созданным Receiver?"
+    },
+    {
+     "pat": [
+      "remote.delegate = receiver"
+     ],
+     "miss": "Получатель не назначен делегату пульта. Без этого signal() некому будет передать событие.",
+     "ask": "Назначаешь ли ты получателя делегатом пульта?"
+    },
+    {
+     "pat": [
+      "withExtendedLifetime(receiver) { ... remote.signal() ... }",
+      "withExtendedLifetime(receiver, { ... remote.signal() ... })",
+      "remote.signal() ... withExtendedLifetime(receiver) { ... }"
+     ],
+     "miss": "Не вижу удержания receiver на время сигнала через withExtendedLifetime: вызов signal должен быть внутри него, иначе объект могут освободить раньше.",
+     "ask": "Удерживаешь ли ты receiver на время сигнала через withExtendedLifetime?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "remote.delegate = Receiver()",
+      "withExtendedLifetime(Receiver())",
+      "Receiver().signal()"
+     ],
+     "msg": "Получатель создан прямо в присваивании. Делегат слабый, а других владельцев нет: объект исчезнет сразу, и сигнал не дойдёт."
+    },
+    {
+     "pat": [
+      "remote.signal() ... remote.delegate = receiver"
+     ],
+     "msg": "Сигнал отправлен до назначения делегата: на этот момент получателя у пульта ещё нет, и вывода не будет."
+    },
+    {
+     "pat": [
+      "withExtendedLifetime(receiver) { } ... remote.signal()",
+      "withExtendedLifetime(receiver) {} ... remote.signal()"
+     ],
+     "msg": "Сигнал вызван после withExtendedLifetime: удержание уже закончилось. Либо signal внутри замыкания, либо удержание после него."
+    }
+   ]
+  }
  },
  {
   "id": "weak-b2",
@@ -19,7 +74,63 @@
   "title": "Вращение модели планеты",
   "prompt": "Кнопка останется в панели после удаления модели. Замени unowned на weak, для исчезнувшей модели напечатай «Модель удалена», не убирай action().",
   "code": "final class PlanetModel {\n    let id = 6\n    func makeAction() -> () -> Void {\n        { [unowned self] in print(self.id) }\n    }\n}\nvar model: PlanetModel? = PlanetModel()\nlet action = model!.makeAction()\nmodel = nil\naction()",
-  "key": "final class PlanetModel {\n    let id = 6\n    func makeAction() -> () -> Void {\n        { [weak self] in\n            guard let self else { print(\"Модель удалена\"); return }\n            print(self.id)\n        }\n    }\n}\nvar model: PlanetModel? = PlanetModel()\nlet action = model!.makeAction()\nmodel = nil\naction()\n\nВывод «Модель удалена». Сохранённая кнопка не имеет гарантии жизни модели."
+  "key": "final class PlanetModel {\n    let id = 6\n    func makeAction() -> () -> Void {\n        { [weak self] in\n            guard let self else { print(\"Модель удалена\"); return }\n            print(self.id)\n        }\n    }\n}\nvar model: PlanetModel? = PlanetModel()\nlet action = model!.makeAction()\nmodel = nil\naction()\n\nВывод «Модель удалена». Сохранённая кнопка не имеет гарантии жизни модели.",
+  "check": {
+   "for": "0e377c8c2e",
+   "accept": [
+    "{ [weak self] in\n    if let self {\n        print(self.id)\n    } else {\n        print(\"Модель удалена\")\n    }\n}"
+   ],
+   "must": [
+    {
+     "pat": [
+      "[weak self]"
+     ],
+     "miss": "Захват остался несобственным. Кнопка живёт дольше модели, поэтому self внутри должен быть слабым и уметь стать nil.",
+     "ask": "Захватываешь ли ты self слабо в действии кнопки?"
+    },
+    {
+     "pat": [
+      "guard let self else { ... print(\"Модель удалена\") ... }",
+      "guard let $a = self else { ... print(\"Модель удалена\") ... }",
+      "if let self { ... } else { ... print(\"Модель удалена\") ... }",
+      "if let $a = self { ... } else { ... print(\"Модель удалена\") ... }"
+     ],
+     "miss": "Не вижу ветки для удалённой модели: развернуть self безопасно и в запасной ветке напечатать «Модель удалена».",
+     "ask": "Есть ли у тебя ветка для удалённой модели с напечатанной фразой «Модель удалена»?"
+    },
+    {
+     "pat": [
+      "print(self.id)",
+      "print(strongSelf.id)",
+      "print($a.id)"
+     ],
+     "miss": "Живая ветка потерялась: при существующей модели действие по-прежнему должно печатать её id.",
+     "ask": "Сохранил ли ты печать id для живой модели?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "unowned"
+     ],
+     "msg": "unowned остаётся: модель удалена, а кнопка вызывает действие, и обращение к освобождённому объекту обрушит приложение."
+    },
+    {
+     "pat": [
+      "guard let self else { return }",
+      "guard let $a = self else { return }"
+     ],
+     "msg": "Молчаливый return: по заданию для исчезнувшей модели надо напечатать фразу, а не просто выйти."
+    },
+    {
+     "pat": [
+      "self?.id",
+      "self!.id"
+     ],
+     "msg": "self? даёт Optional в выводе, а self! падает на nil. Сначала разверни self через guard let или if let."
+    }
+   ]
+  }
  },
  {
   "id": "weak-b3",
@@ -30,6 +141,46 @@
   "title": "Локальная партия шахмат",
   "prompt": "Сейчас действие удерживает партию, хотя нужно сохранить только её id. Захвати id значением в capture list, не self: действие после закрытия должно по-прежнему печатать 7. Не заменяй поведение молчанием через weak.",
   "code": "final class ChessMatch {\n    let id = 7\n    func makeHistoryAction() -> () -> Void {\n        { print(self.id) }\n    }\n    deinit { print(\"Партия освобождена\") }\n}\nvar match: ChessMatch? = ChessMatch()\nlet action = match!.makeHistoryAction()\nmatch = nil\naction()",
-  "key": "final class ChessMatch {\n    let id = 7\n    func makeHistoryAction() -> () -> Void {\n        { [id = self.id] in print(id) }\n    }\n    deinit { print(\"Партия освобождена\") }\n}\nvar match: ChessMatch? = ChessMatch()\nlet action = match!.makeHistoryAction()\nmatch = nil\naction()\n\nВывод «Партия освобождена», 7. Действию нужен снимок Int, а не живой объект партии."
+  "key": "final class ChessMatch {\n    let id = 7\n    func makeHistoryAction() -> () -> Void {\n        { [id = self.id] in print(id) }\n    }\n    deinit { print(\"Партия освобождена\") }\n}\nvar match: ChessMatch? = ChessMatch()\nlet action = match!.makeHistoryAction()\nmatch = nil\naction()\n\nВывод «Партия освобождена», 7. Действию нужен снимок Int, а не живой объект партии.",
+  "check": {
+   "for": "05152075fe",
+   "must": [
+    {
+     "pat": [
+      "[$a = self.id]"
+     ],
+     "miss": "Не вижу capture list со значением id: действие должно получить копию числа, а не ссылку на партию.",
+     "ask": "Захватываешь ли ты в capture list само значение id, а не self?"
+    },
+    {
+     "pat": [
+      "[$a = self.id] in print($a)"
+     ],
+     "miss": "Внутри замыкания надо печатать захваченную копию, а не self.id: иначе self всё равно будет захвачен.",
+     "ask": "Печатаешь ли ты внутри замыкания захваченную копию, а не свойство self?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "[weak self]"
+     ],
+     "msg": "weak self сделает self nil после закрытия, и действие ничего не напечатает. А нужно по-прежнему вывести 7: для этого захвати само значение id."
+    },
+    {
+     "pat": [
+      "[unowned self]"
+     ],
+     "msg": "unowned self упадёт при вызове после освобождения партии. Действию нужен только id, поэтому self вообще не захватывай."
+    },
+    {
+     "pat": [
+      "[self]",
+      "[$a = self]"
+     ],
+     "msg": "Так ты удерживаешь всю партию, а нужно лишь число. Захвати id значением, и партия освободится независимо от действия."
+    }
+   ]
+  }
  }
 ]

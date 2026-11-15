@@ -13,9 +13,11 @@ Data shape (what the engine reads from __DATA__):
                  check   = questions (HTML) from the first list of «## Проверь себя»
                  answers = items of the optional «## Ответы к «Проверь себя»» section (same order as check;
                            not part of base; key absent while the lesson has no answers)
-  steps[i]     = {id, title, prompt, code, key, points?}; points = 3–5 required items (HTML) for keys > 25 lines
+  steps[i]     = {id, title, prompt, code, key, points?, check?}; points = 3–5 required items (HTML) for keys > 25 lines
+                 check = the autocheck rubric (docs/content-format.md, «Рубрика автопроверки»): plain text, never HTML;
+                 scripts/check_rubrics.js verifies it against the key before the build; its `for` stamp stays out of the page
   tasks, cases, ref = base/*.json
-  bank         = base/bank.json + content/bank/*.bank.json in file-name order (zz-live goes last on purpose)
+  bank         = base/bank.json + content/bank/*.bank.json in file-name order (zz-live goes last on purpose); check? as in steps
 """
 import glob, html, json, os, re, shutil, sys
 
@@ -126,6 +128,23 @@ LONG_KEY = 25  # a key longer than this needs «points»: 3–5 required items t
 LONG_WITHOUT_POINTS = []
 
 
+def page_check(ch):
+    """The rubric as the page needs it: the `for` stamp is build-time only."""
+    return {k: v for k, v in ch.items() if k != 'for'}
+
+
+def rubric_guard():
+    """scripts/check_rubrics.js (Node, the page's own engine): a rubric that contradicts its key, or a key changed
+    without the rubric being reviewed and stamped again, stops the build."""
+    import subprocess
+    try:
+        r = subprocess.run(['node', P('scripts', 'check_rubrics.js')], capture_output=True, text=True)
+    except FileNotFoundError:
+        raise SystemExit('the rubric guard needs Node.js (scripts/check_rubrics.js): install node or add it to PATH')
+    if r.returncode:
+        raise SystemExit((r.stdout + r.stderr).strip() + '\nrubric guard failed (rules: scripts/check_rubrics.js, docs/content-format.md)')
+
+
 def build_data():
     d = {k: load(k) for k in ('content', 'tasks', 'bank', 'cases', 'ref')}
     for path in sorted(glob.glob(P('content', 'lessons', '*.md'))):
@@ -147,6 +166,8 @@ def build_data():
                     s['points'] = [inline(x) for x in pts]
                 elif lines > LONG_KEY:
                     LONG_WITHOUT_POINTS.append(f'{sid}/{s["id"]}')
+                if 'check' in s:
+                    s['check'] = page_check(s['check'])
             d['content'][sid]['steps'] = steps
     if LONG_WITHOUT_POINTS:
         raise SystemExit(f'keys longer than {LONG_KEY} lines need «points» (3–5 items): ' + ', '.join(LONG_WITHOUT_POINTS))
@@ -157,7 +178,8 @@ def build_data():
             have.add(x['id'])
             d['bank'].append({'id': x['id'], 'topics': x['topics'], 'type': x['type'], 'title': x['title'],
                               'prompt': x['prompt'], 'code': x['code'], 'key': x['key'],
-                              'added': x.get('added', '2026-10-11'), 'mins': x.get('mins', 6)})
+                              'added': x.get('added', '2026-10-11'), 'mins': x.get('mins', 6),
+                              **({'check': page_check(x['check'])} if 'check' in x else {})})
     return d
 
 
@@ -189,6 +211,7 @@ def main():
     import next_tokens
     if open(next_tokens.OUT, encoding='utf-8').read() != next_tokens.generate()[0]:
         raise SystemExit('engine/theme-next.gen.css is out of date: run python3 scripts/next_tokens.py')
+    rubric_guard()
     d = build_data()
     t = assemble_template()
     assert t.count('__DATA__') == 1, 'template must contain exactly one __DATA__'
