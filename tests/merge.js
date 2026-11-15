@@ -57,6 +57,14 @@ async function unit(s) {
   // «Корни»: the latest recall of a root wins, the latest skip wins
   r = merge(J({ 'pm.roots.opt': { at: T0, v: 'no' }, 'pm.rootsSkip.coll': T0 }), J({ 'pm.roots.opt': { at: T0 + 5, v: 'ok' }, 'pm.rootsSkip.coll': T0 + 9 }));
   await s.check('roots: latest recall and skip win', P(r.map, 'pm.roots.opt').v === 'ok' && P(r.map, 'pm.rootsSkip.coll') === T0 + 9, r.map);
+  // unfinished «Выгрузка» (pm.outRun): the later run wins
+  r = merge(J({ 'pm.outRun.opt': { at: T0, k: 1, g: ['ok'], d: 'local' } }), J({ 'pm.outRun.opt': { at: T0 + 5, k: 2, g: ['ok', 'no'], d: 'remote' } }));
+  await s.check('outRun: the later unfinished run wins', P(r.map, 'pm.outRun.opt').k === 2, r.map);
+  // incoming values of the wrong kind are skipped and counted, good ones still merge
+  r = merge(J({ 'pm.steps.opt': { s1: 'ok' } }), { 'pm.steps.coll': 'null', 'pm.runs': '{"a":1}', 'pm.known': '7', 'pm.err.opt': '"x"', 'pm.ans.opt.s1': '5',
+    'pm.doneAt.opt': '"y"', 'pm.steps.func': JSON.stringify({ s2: 'ok' }), 'pm.future.key': '[1]' });
+  await s.check('wrong-kind incoming values are skipped', r.skipped === 6 && !('pm.steps.coll' in r.map) && !('pm.runs' in r.map) && !('pm.known' in r.map), r);
+  await s.check('good and unknown keys still merge next to bad ones', P(r.map, 'pm.steps.func').s2 === 'ok' && 'pm.future.key' in r.map, r.map);
   r = merge(J({ 'pm.mapHint': 1 }), J({ 'pm.mapHint': 2 }));
   await s.check('map hint: larger visit count wins', P(r.map, 'pm.mapHint') === 2, r.map);
   r = merge(J({ 'pm.mapHint': 2 }), J({ 'pm.mapHint': 0 }));

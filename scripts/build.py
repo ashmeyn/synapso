@@ -179,6 +179,12 @@ def assemble_template():
 
 
 def main():
+    # format rules the parser does not enforce (line length, empty lines in code, mission numbers, bank types…):
+    # scripts/lint_content.py; violations outside scripts/lint_baseline.json stop the build
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import lint_content
+    if lint_content.run(ROOT, quiet=True):
+        raise SystemExit('content lint failed (see the lines above; rules: scripts/lint_content.py)')
     d = build_data()
     t = assemble_template()
     assert t.count('__DATA__') == 1, 'template must contain exactly one __DATA__'

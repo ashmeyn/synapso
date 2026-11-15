@@ -10,7 +10,8 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Handjet:wght@300..700&family=IBM+Plex+Mono:wght@400;600&family=JetBrains+Mono:wght@400;500;700&display=block">
+<!-- fonts must not block the page: the stylesheet loads as media="print" (non-blocking) and is switched on when it arrives; display=swap shows text in the fallback font meanwhile -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Handjet:wght@300..700&family=IBM+Plex+Mono:wght@400;600&family=JetBrains+Mono:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
 <style>__INLINE:styles.css__</style>
 
 <div class="xcur" id="cur" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b><span id="curTxt"></span></div>
