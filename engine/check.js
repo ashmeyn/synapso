@@ -86,9 +86,17 @@
     while (i < n && j < m) { if (a[i] === b[j]) { keep[j] = true; i++; j++; } else if (d[i + 1][j] >= d[i][j + 1]) i++; else j++; }
     return keep;
   }
+  /* which lines of b (the key) come from a (the skeleton). The common head and the common tail are settled first: a skeleton
+     «func … {  // твой код  }» keeps its own closing brace, and the braces the answer adds inside stay new */
+  function keptLines(a, b) {
+    let p = 0; while (p < a.length && p < b.length && a[p] === b[p]) p++;
+    let q = 0; while (q < a.length - p && q < b.length - p && a[a.length - 1 - q] === b[b.length - 1 - q]) q++;
+    const mid = lcsKeep(a.slice(p, a.length - q), b.slice(p, b.length - q));
+    return b.map((x, k) => k < p || k >= b.length - q || mid[k - p]);
+  }
   /* key tokens with .d = true for tokens of new/changed lines */
   function keyDelta(code, key, keepSelf, tk) {
-    const A = lineSigs(code || "", keepSelf, tk), B = lineSigs(key, keepSelf, tk), keep = lcsKeep(A.map(x => x.sig), B.map(x => x.sig)), out = [];
+    const A = lineSigs(code || "", keepSelf, tk), B = lineSigs(key, keepSelf, tk), keep = keptLines(A.map(x => x.sig), B.map(x => x.sig)), out = [];
     B.forEach((l, k) => l.ts.forEach(t => out.push({ t: t.t, v: t.v, line: t.line, d: !keep[k] })));
     return out;
   }
@@ -149,6 +157,8 @@
     const cm = src => (src || "").split("\n").map(l => { const m = l.replace(/"(?:\\.|[^"\\])*"/g, '""').match(/\/\/\s*(.*)$/); return m ? m[1].trim() : ""; }).filter(Boolean);
     const sk = new Set(cm(task.code)); return cm(keyCode(task.key)).some(c => !sk.has(c));
   }
+  /* a verified variant: a string (replaces hunk 0) or {code, hunk, before, after} */
+  function acceptOf(a) { return typeof a === "string" ? { code: a, hunk: 0, before: 0, after: 0 } : { code: String((a && a.code) || ""), hunk: (a && a.hunk) | 0, before: (a && a.before) | 0, after: (a && a.after) | 0 }; }
   function exactMatch(ans, task, accept, tk) {
     const toks = tk || toksDefault;
     const keepSelf = /\bself\b/.test((task.code || "") + keyCode(task.key));   /* capture topics: self. is meaningful */
@@ -156,19 +166,33 @@
     const S0 = toks(codePart(ans), keepSelf); if (!S0.length) return false;
     const S = alpha(S0, skelIds);
     const keys = [keyDelta(task.code, keyCode(task.key), keepSelf, tk)];
-    /* a verified variant stands in for one new hunk of the key; the other hunks stay mandatory —
+    /* a verified variant stands in for one named hunk of the key; the other hunks stay mandatory —
        a variant alone never excuses the rest of the task */
     /* spliced before normalisation, so a variant reads the same in its place as the learner's own text does */
     const rawTk = (src, ks) => normalize(tokenize(src), ks, true);
     const R0 = accept && accept.length ? keyDelta(task.code, keyCode(task.key), keepSelf, tk ? tk : rawTk) : [], hunks = [];
     R0.forEach((t, i) => { if (t.d && !(R0[i - 1] && R0[i - 1].d)) hunks.push([i, i]); if (t.d) hunks[hunks.length - 1][1] = i; });
-    (accept || []).forEach(a => {
-      const A = (tk ? tk(a, keepSelf) : rawTk(a, keepSelf)).map(t => Object.assign({}, t, { d: true, line: 1e6 + t.line })); if (!A.length) return;
-      hunks.forEach(h => keys.push(normalize(R0.slice(0, h[0]).concat(A, R0.slice(h[1] + 1)), keepSelf)));
+    /* per hunk: the key's own lines or one of its variants; every combination is a right answer (at most 24 are tried).
+       A variant may also swallow whole key lines next to its hunk (`before` / `after`), e.g. an if/else around a kept line */
+    const alts = hunks.map(() => []);
+    (accept || []).forEach(a0 => {
+      const a = acceptOf(a0), h0 = hunks[a.hunk]; if (!h0 || !a.code) return;
+      const A = (tk ? tk(a.code, keepSelf) : rawTk(a.code, keepSelf)).map(t => Object.assign({}, t, { d: true, line: 1e6 + t.line })); if (!A.length) return;
+      let from = h0[0], to = h0[1];
+      for (let n = a.after; n > 0 && to + 1 < R0.length; n--) { const l = R0[to + 1].line; while (to + 1 < R0.length && R0[to + 1].line === l) to++; }
+      for (let n = a.before; n > 0 && from > 0; n--) { const l = R0[from - 1].line; while (from > 0 && R0[from - 1].line === l) from--; }
+      alts[a.hunk].push({ from, to, A });
     });
+    const combos = [[]]; alts.forEach((list, h) => { const n = combos.length; for (let c = 0; c < n && combos.length < 24; c++) list.forEach(x => { if (combos.length < 24) combos.push(combos[c].concat([x])); }); });
+    combos.slice(1).forEach(c => { let out = [], at = 0, okc = true;
+      c.slice().sort((x, y) => x.from - y.from).forEach(x => { if (x.from < at) { okc = false; return; } out = out.concat(R0.slice(at, x.from), x.A); at = x.to + 1; });
+      if (okc) keys.push(normalize(out.concat(R0.slice(at)), keepSelf)); });
     /* a fragment that starts with `return` is the same fragment inside its block, where the lone return is dropped */
     const forms = [[S0, S]]; if (S0[0].v === "return" && S0.length > 1) forms.push([S0.slice(1), S.slice(1)]);
-    return keys.some(K => { const KA = alphaKey(K, skelIds); return forms.some(f => coversKey(f[0], K) || coversKey(f[1], KA)); });
+    /* brackets: when the new part of the key is balanced on its own, an answer with an unclosed (or extra) bracket is not it —
+       e.g. the function header retyped without its closing brace */
+    const balOk = K => !balanced(K.filter(t => t.d)) || balanced(S0);
+    return keys.some(K => { if (!balOk(K)) return false; const KA = alphaKey(K, skelIds); return forms.some(f => coversKey(f[0], K) || coversKey(f[1], KA)); });
   }
 
   /* ---------- token patterns: `$a` one identifier (consistent), `...` any run that does not leave the enclosing brackets ---------- */
@@ -329,6 +353,6 @@
     return { v: "unsure", why: r.why, msgs: [], qs: [] };
   }
 
-  const api = { verdict, kindOf, commentAnswer, tokenize, normalize, toks, str, codePart, keyCode, keyDelta, exactMatch, hasPat, anyPat, balanced, nearKey, checkCode, checkPredict, lineSigs };
+  const api = { verdict, kindOf, acceptOf, commentAnswer, tokenize, normalize, toks, str, codePart, keyCode, keyDelta, exactMatch, hasPat, anyPat, balanced, nearKey, checkCode, checkPredict, lineSigs };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.SynCheck = api;
 })(typeof self !== "undefined" ? self : this);

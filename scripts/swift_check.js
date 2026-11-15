@@ -35,7 +35,7 @@ function units(topics) {
     if (kind === 'predict') out.push({ topic, ref, name: 'program', src: wrap(s.code || ''), outs: ch.outs, run: hint.run !== false });
     else if (kind === 'code') {
       out.push({ topic, ref, name: 'key', src: wrap(C.keyCode(s.key)) });
-      (ch.accept || []).forEach((a, j) => out.push({ topic, ref, name: 'accept[' + j + ']', src: wrap(G.variants({ code: s.code, key: s.key }, a)[hint['hunk' + j] || 0]) }));
+      (ch.accept || []).forEach((a, j) => { const v = G.variant({ code: s.code, key: s.key }, a); if (v != null) out.push({ topic, ref, name: 'accept[' + j + ']', src: wrap(v) }); });
     }
   };
   for (const f of fs.readdirSync(path.join(ROOT, 'content', 'steps')).sort()) { const t = f.replace('.json', ''); if (!f.endsWith('.json') || (topics.length && !topics.includes(t))) continue;

@@ -12,8 +12,14 @@
   "check": {
    "for": "08453f4d56",
    "accept": [
-    "guard (200..<300).contains(http.statusCode) else { throw LoadError.status(http.statusCode) }",
-    "let (data, response) = try await session.data(for: request, delegate: nil)"
+    {
+     "code": "guard (200..<300).contains(http.statusCode) else { throw LoadError.status(http.statusCode) }",
+     "hunk": 0
+    },
+    {
+     "code": "let (data, response) = try await session.data(for: request, delegate: nil)",
+     "hunk": 1
+    }
    ],
    "must": [
     {
@@ -78,8 +84,12 @@
   "check": {
    "for": "0d1ca83981",
    "accept": [
-    "mutating func apply(_ chapter: Chapter) {\n    if chapter.id == selectedID {\n        title = chapter.title\n    }\n}",
-    "mutating func apply(_ chapter: Chapter) {\n    guard selectedID == chapter.id else { return }\n    title = chapter.title\n}"
+    {
+     "code": "if chapter.id == selectedID {\n    title = chapter.title\n}",
+     "hunk": 0,
+     "after": 1
+    },
+    "guard selectedID == chapter.id else { return }"
    ],
    "must": [
     {

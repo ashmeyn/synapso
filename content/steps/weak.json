@@ -199,7 +199,11 @@
   "check": {
    "for": "817ddfff4f",
    "accept": [
-    "return { [weak self] in\n    if let self {\n        print(\"Повтор \\(self.id)\")\n    } else {\n        print(\"Экран закрыт\")\n    }\n}"
+    {
+     "code": "return { [weak self] in\n    if let self {\n        print(\"Повтор \\(self.id)\")\n    } else {\n        print(\"Экран закрыт\")\n    }",
+     "hunk": 0,
+     "after": 1
+    }
    ],
    "must": [
     {

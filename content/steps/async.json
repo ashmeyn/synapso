@@ -34,7 +34,10 @@
      ],
      "msg": "Ошибка бросается только при id, отличном от 21. Для 21 обе проверки проходят и функция возвращает строку."
     }
-   ]
+   ],
+   "swift": {
+    "after": "print(try await loadExhibit(id: 21))"
+   }
   }
  },
  {
@@ -93,7 +96,7 @@
   "check": {
    "for": "6360979767",
    "accept": [
-    "async let title = fetchTitle(id: id)\nasync let minutes = fetchMinutes(id: id)\nlet (t, m) = try await (title, minutes)\nreturn \"\\(t): \\(m) мин\""
+    "func loadExhibit(id: Int) async throws -> String {\n    async let title = fetchTitle(id: id)\n    async let minutes = fetchMinutes(id: id)\n    let (t, m) = try await (title, minutes)\n    return \"\\(t): \\(m) мин\"\n}"
    ],
    "must": [
     {

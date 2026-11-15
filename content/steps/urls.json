@@ -428,7 +428,14 @@
   "check": {
    "for": "5ab14b8cff",
    "accept": [
-    "func loadChapter(\n    id: Int, session: URLSession = .shared\n) async throws -> Chapter {\n    guard !Task.isCancelled else { throw CancellationError() }\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/chapters/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    var request = URLRequest(url: url)\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    let (data, response) = try await session.data(for: request)\n    guard !Task.isCancelled else { throw CancellationError() }\n    return try decodeChapter(data: data, response: response)\n}"
+    {
+     "code": "guard !Task.isCancelled else { throw CancellationError() }",
+     "hunk": 0
+    },
+    {
+     "code": "guard !Task.isCancelled else { throw CancellationError() }",
+     "hunk": 1
+    }
    ],
    "must": [
     {
@@ -496,7 +503,7 @@
   "check": {
    "for": "e7f0dd7fae",
    "accept": [
-    "struct Chapter: Decodable { let id: Int; let duration: Int }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc loadChapter(\n    id: Int, session: URLSession = .shared\n) async throws -> Chapter {\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/chapters/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    let (data, response) = try await session.data(from: url)\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}"
+    "import Foundation\nstruct Chapter: Decodable { let id: Int; let duration: Int }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc loadChapter(\n    id: Int, session: URLSession = .shared\n) async throws -> Chapter {\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/chapters/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    let (data, response) = try await session.data(from: url)\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}"
    ],
    "must": [
     {

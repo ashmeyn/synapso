@@ -115,7 +115,10 @@
      ],
      "msg": "Force unwrap: для посылки без прогноза приложение упадёт. Развёртывай безопасно и отдельно обработай nil."
     }
-   ]
+   ],
+   "swift": {
+    "prelude": "struct Parcel {\n    let track: String\n    let daysLeft: Int?\n}"
+   }
   }
  },
  {

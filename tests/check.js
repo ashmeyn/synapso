@@ -100,6 +100,14 @@ async function run() {
   await s.check('trap: guard … else needs its return', v('guard let id else { nil }\nreturn id', T('func f(id: Int?) -> Int? {\n    // код\n}', 'func f(id: Int?) -> Int? {\n    guard let id else { return nil }\n    return id\n}')) !== 'ok');
   await s.check('trap: a skeleton line cannot be taken in part', v('var second = nil', T('var second = first\n// убери\nprint(1)', 'var second = first\nsecond = nil\nprint(1)')) !== 'ok');
   await s.check('trap: a variant for one hunk does not excuse the other', v('let a = 2', T('// один\nprint(0)\n// два', 'let a = 1\nprint(0)\nlet b = 1', { accept: ['let a = 2'], must: [{ pat: ['let a'], ask: '?', miss: 'm' }] })) !== 'ok');
+  const two = T('// один\nprint(0)\n// два', 'let a = 1\nprint(0)\nlet b = 1', { accept: [{ code: 'let a = 2 - 1', hunk: 0 }, { code: 'let b = 2 - 1', hunk: 1 }], must: [{ pat: ['let a'], ask: '?', miss: 'm' }] });
+  await s.check('variants of different hunks combine', v('let a = 2 - 1\nlet b = 2 - 1', two) === 'ok' && v('let a = 1\nprint(0)\nlet b = 2 - 1', two) === 'ok');
+  await s.check('trap: a variant is bound to its hunk', v('let b = 2 - 1\nlet b = 1', two) !== 'ok' && v('let a = 2 - 1', two) !== 'ok');
+  const wrap = T('func f() {\n    work()\n}', 'func f() {\n    guard ready else { return }\n    work()\n}', { accept: [{ code: 'if ready {\n    work()\n}', hunk: 0, after: 1 }], must: [{ pat: ['ready'], ask: '?', miss: 'm' }] });
+  await s.check('a variant can swallow the kept line it wraps', v('if ready { work() }', wrap) === 'ok' && v('func f() {\n  if ready {\n    work()\n  }\n}', wrap) === 'ok');
+  await s.check('trap: the swallowed line is not accepted twice', v('if ready {\n    work()\n}\nwork()', wrap) !== 'ok');
+  await s.check('trap: a retyped header without its closing brace', v('func f() -> Int {\n    return 1', T('func f() -> Int {\n    // код\n}', 'func f() -> Int {\n    return 1\n}')) !== 'ok');
+  await s.check('the skeleton keeps its own closing brace: inner braces are new', v('if a {\n    return 1\n}\nreturn 2', T('func f() -> Int {\n    // код\n}', 'func f() -> Int {\n    if a {\n        return 1\n    }\n    return 2\n}')) === 'ok' && v('if a {\n    return 1\nreturn 2', T('func f() -> Int {\n    // код\n}', 'func f() -> Int {\n    if a {\n        return 1\n    }\n    return 2\n}')) !== 'ok');
   await s.check('renamed locals and spacing are forgiven', v('guard let x=id else{return nil}\nreturn x', T('func f(id: Int?) -> Int? {\n    // код\n}', 'func f(id: Int?) -> Int? {\n    guard let value = id else { return nil }\n    return value\n}')) === 'ok');
   if (process.argv.includes('--report')) report(all, st);
   return { name: s.name, passed: s.passed, failed: s.failed, warnings: s.warnings };

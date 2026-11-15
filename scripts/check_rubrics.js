@@ -45,22 +45,25 @@ function issues(task, opts) {
     must.forEach((m, i) => {
       if (!Array.isArray(m.pat) || !m.pat.length || !m.pat.every(p => isStr(p, 400))) return err(`must[${i}].pat must be a non-empty list of patterns`);
       if (!C.anyPat(K, m.pat, lits)) err(`must[${i}] contradicts the key: the key itself does not have «${m.pat[0]}»`);
-      acc.forEach((a, j) => { if (typeof a === 'string' && !variants(task, a).some(v => C.anyPat(raw(v), m.pat, lits))) err(`must[${i}] contradicts accept[${j}]: the verified variant does not have «${m.pat[0]}»`); });
+      acc.forEach((a, j) => { const v = variant(task, a); if (v != null && !C.anyPat(raw(v), m.pat, lits)) err(`must[${i}] contradicts accept[${j}]: the verified variant does not have «${m.pat[0]}»`); });
       if (!isAsk(m.ask)) err(`must[${i}].ask must be a question (ends with «?», up to 160 characters)`);
       if (!isStr(m.miss, 260)) err(`must[${i}].miss must be a text up to 260 characters`);
     });
     not.forEach((m, i) => {
       if (!Array.isArray(m.pat) || !m.pat.length || !m.pat.every(p => isStr(p, 400))) return err(`not[${i}].pat must be a non-empty list of patterns`);
       if (C.anyPat(D, m.pat, lits)) err(`not[${i}] contradicts the key: the key matches the «mistake» «${m.pat.join(' | ')}»`);
-      acc.forEach((a, j) => { if (typeof a === 'string' && C.anyPat(raw(a), m.pat, lits)) err(`not[${i}] contradicts accept[${j}]`); });
+      acc.forEach((a, j) => { if (C.anyPat(raw(C.acceptOf(a).code), m.pat, lits)) err(`not[${i}] contradicts accept[${j}]`); });
       if (!isStr(m.msg, 260)) err(`not[${i}].msg must be a text up to 260 characters`);
     });
     if (!Array.isArray(acc)) err('accept must be a list');
-    else acc.forEach((a, j) => {
-      if (!isStr(a, 4000)) return err(`accept[${j}] must be a code fragment`);
-      if (C.exactMatch(a, { code: task.code, key: task.key }, [])) err(`accept[${j}] is the key itself — remove it`);
-      const vs = variants(task, a).map(x => C.verdict(x, task)); if (!vs.some(v => v && (v.v === 'ok' || v.why === 'comments'))) err(`accept[${j}] does not fit: it must replace exactly one new hunk of the key (the engine says ${vs[0] && vs[0].v}/${vs[0] && vs[0].why})`);
-    });
+    else { const nh = hunksOf(task).hunks.length; acc.forEach((a0, j) => {
+      const a = C.acceptOf(a0);
+      if (!isStr(a.code, 4000)) return err(`accept[${j}] must be a code fragment (a string or {code, hunk, before, after})`);
+      if (nh > 1 && (typeof a0 === 'string' || !Number.isInteger(a0.hunk))) return err(`accept[${j}]: the key adds ${nh} hunks — say which one the variant replaces: {"code": "…", "hunk": 0…${nh - 1}}`);
+      if (a.hunk < 0 || a.hunk >= nh || a.before < 0 || a.after < 0) return err(`accept[${j}]: hunk ${a.hunk} does not exist (the key adds ${nh})`);
+      if (C.exactMatch(a.code, { code: task.code, key: task.key }, [])) return err(`accept[${j}] is the key itself — remove it`);
+      const v = C.verdict(variant(task, a0), task); if (!v || !(v.v === 'ok' || v.why === 'comments')) err(`accept[${j}] does not fit in place of hunk ${a.hunk} (the engine says ${v && v.v}/${v && v.why})`);
+    }); }
     const kv = C.verdict(key, task); if (!kv || !(kv.v === 'ok' || kv.why === 'comments')) err(`the key itself is not accepted (${kv && kv.v}/${kv && kv.why})`);
     /* texts must not hand over the answer: no new line of the key, whole, inside a message */
     const lines = {}; D.forEach(t => (lines[t.line] = lines[t.line] || []).push(t.v));
@@ -89,14 +92,21 @@ function issues(task, opts) {
   } else err('check has no known shape (must / outs / concepts / self)');
   return E;
 }
-/* the key with one new hunk replaced by an accept variant — the same rule the engine uses */
-function variants(task, a) {
+/* the hunks of new lines in the key: [[firstLine, lastLine], …] (comment-only and blank lines between new lines do not split a hunk) */
+function hunksOf(task) {
   const key = C.keyCode(task.key || ''), K = C.keyDelta(task.code, key, true, raw), lines = key.split('\n');
   const dl = [...new Set(K.filter(t => t.d).map(t => t.line))].sort((x, y) => x - y), hunks = [];
   dl.forEach(l => { const h = hunks[hunks.length - 1]; if (h && !lines.slice(h[1] + 1, l).some(x => x.trim() && !/^\s*\/\//.test(x))) h[1] = l; else hunks.push([l, l]); });
-  const sub = (from, to) => lines.slice(0, from).concat(a.split('\n'), lines.slice(to + 1)).join('\n');
-  const out = hunks.map(h => sub(h[0], h[1]));
-  return out.length ? out : [a];
+  return { lines, hunks };
+}
+/* the whole key with a verified variant in its place — the text Swift compiles, the same placement the engine uses */
+function variant(task, a0) {
+  const a = C.acceptOf(a0), { lines, hunks } = hunksOf(task), h = hunks[a.hunk]; if (!h) return null;
+  const code = l => lines[l].trim() && !/^\s*\/\//.test(lines[l]);
+  let from = h[0], to = h[1];
+  for (let n = a.after; n > 0; n--) { do to++; while (to < lines.length - 1 && !code(to)); }
+  for (let n = a.before; n > 0; n--) { do from--; while (from > 0 && !code(from)); }
+  return lines.slice(0, Math.max(0, from)).concat(a.code.split('\n'), lines.slice(Math.min(lines.length, to + 1))).join('\n');
 }
 
 function files() {
@@ -119,7 +129,7 @@ function stampTopics(topics) {
   return n;
 }
 
-module.exports = { issues, stamp, variants, verifyAll, raw };
+module.exports = { issues, stamp, variant, hunksOf, verifyAll, raw };
 if (require.main === module) {
   const a = process.argv.slice(2);
   if (a[0] === '--stamp') { if (a.length < 2) { console.error('usage: node scripts/check_rubrics.js --stamp <topic> [<topic> ...]'); process.exit(2); } console.log('stamped rubrics: ' + stampTopics(a.slice(1))); }
