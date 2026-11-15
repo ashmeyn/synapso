@@ -1055,3 +1055,11 @@ html:not(.phone) #pane-practice .ed{clip-path:inset(0)}
 .strictnote[hidden]{display:none}
 /* run: tip under «ПОВТОРИТЬ ВСЛЕПУЮ» takes its own line */
 #runBlindTip{flex-basis:100%;margin:0}
+
+/* ---------- render budget (review 14.11, item 14) ----------
+   The faint lines over the topic window used to drift 34px in 14s: a background-position animation, i.e. a style recalc
+   and a repaint of the whole window 60 times a second while reading. The lines stay, the drift is off. (winscan never
+   showed: windrift animates the same property and wins.) */
+.win::after{animation:none}
+/* in a topic the map overlay is hidden with the minimap: its endless animations (selection ring, card dot) only cost */
+#brain.mini .marker,#brain.mini .card-id i{animation:none}

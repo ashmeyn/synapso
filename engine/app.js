@@ -168,7 +168,7 @@ const reduceScr = window.matchMedia("(prefers-reduced-motion: reduce)").matches 
 document.addEventListener("mouseover", e=>{ const b=e.target.closest && e.target.closest(".wtabs button, .cta, .contBtn, .runBtn, .navlist button, .deepBtn, .blabel, .ghostbtn, .more, .nbr .links button, .fontbtn, .settings summary, .kswap, .tn-b, .card-nav .textbtn, .card-x, .bank-h .textbtn"); if(b && !(e.relatedTarget && b.contains(e.relatedTarget))) scramble(b); });
 
 /* ---------- background event log ---------- */
-const fxQueue=[]; function fxLog(tag, text){ fxQueue.push({tag, text}); if(fxQueue.length>6) fxQueue.shift(); }
+const fxQueue=[]; function fxLog(tag, text){ fxQueue.push({tag, text}); if(fxQueue.length>6) fxQueue.shift(); if(typeof wakeLoops==="function") wakeLoops(); }
 
 /* ---------- helpers ---------- */
 const $ = id => document.getElementById(id);
@@ -507,6 +507,30 @@ function focusOn(i){ const x=pos[i*3], y=pos[i*3+1], z=pos[i*3+2], l=Math.hypot(
 
 /* ---------- mode & layout ---------- */
 var mode = "intro";
+/* ---------- render budget (review 14.11, item 14) ----------
+   Every animation loop is a makeLoop(step, needed): it re-arms requestAnimationFrame only while needed() is true and the
+   tab is visible, so a resting screen runs no rAF at all. wakeLoops() gives each loop one more frame (it stops again by
+   itself); call it when something the loops draw has changed. kickScene(ms) keeps the 3D scene alive for a moment in a
+   topic, where it is only the still minimap. */
+var loops=[], sceneUntil=0;
+function makeLoop(step, needed){
+  let on=false, id=0;
+  function tick(now){ id=0; on=false; step(now); if(needed(now) && !document.hidden){ on=true; id=requestAnimationFrame(tick); } }
+  const L={ wake(){ if(!on && !document.hidden){ on=true; id=requestAnimationFrame(tick); } }, stop(){ if(id) cancelAnimationFrame(id); id=0; on=false; } };
+  loops.push(L); return L;
+}
+function wakeLoops(){ for(const L of loops||[]) L.wake(); }
+function kickScene(ms){ sceneUntil=Math.max(sceneUntil, performance.now()+(ms||1800)); wakeLoops(); }
+document.addEventListener("visibilitychange",()=>{ for(const L of loops){ if(document.hidden) L.stop(); else L.wake(); } });
+/* sizes of the map overlay boxes, kept by a ResizeObserver so the map loop never reads layout (offsetWidth in a loop
+   that also writes styles forces a layout per read) */
+const boxOf=new Map();
+const boxRO=new ResizeObserver(es=>{ for(const e of es){ const b=e.borderBoxSize && e.borderBoxSize[0]; boxOf.set(e.target, b ? [Math.round(b.inlineSize), Math.round(b.blockSize)] : [e.target.offsetWidth, e.target.offsetHeight]); } });
+function boxW(el){ const b=boxOf.get(el); return b && b[0] ? b[0] : el.offsetWidth; }
+function boxH(el){ const b=boxOf.get(el); return b && b[1] ? b[1] : el.offsetHeight; }
+let canvasRect=null;
+function canvasBox(){ return canvasRect || (canvasRect=canvas.getBoundingClientRect()); }
+window.addEventListener("resize",()=>{ canvasRect=null; });
 function narrow(){ return window.innerWidth < 980; } /* see also PHONE (top of script): touch + small screen -> list instead of 3D map, no rAF loops */
 const appEl=document.querySelector(".app");
 function scaleUI(){
@@ -539,6 +563,7 @@ function setMode(m){
   if(m==="topic"){ const sw=$("sweep"); sw.classList.remove("go"); void sw.offsetWidth; sw.classList.add("go"); }
   if(PHONE) plistShow(m==="map");
   routeMode(m);
+  canvasRect=null; kickScene();
 }
 window.addEventListener("resize", layout);
 /* ---------- browser «Back» and reload inside a topic (review 14.11, bug 6) ----------
@@ -628,27 +653,29 @@ const labels = BRANCHES.map((br,bi)=>{
   b.addEventListener("mouseenter",()=>setHighlight(bi)); b.addEventListener("mouseleave",()=>setHighlight(-1));
   b.addEventListener("focus",()=>setHighlight(bi)); b.addEventListener("blur",()=>setHighlight(-1));
   b.addEventListener("click",()=>select(topics.findIndex(t=>t.b===bi),true));
-  overlay.appendChild(b); return b;
+  overlay.appendChild(b); boxRO.observe(b); return b;
 });
 const labelPos = bcenters.map(c=>shape(c[0]*1.18,c[1]*1.18,c[2]*1.18));
-const hemiLabels = [["ЯЗЫК И ИНЖЕНЕРИЯ",-1],["ПЛАТФОРМА iOS",1]].map(([txt,side])=>{ const d=document.createElement("div"); d.className="hlabel"; d.textContent=txt; overlay.appendChild(d); return {el:d, p:[side*1.55,1.02,0]}; });
+const hemiLabels = [["ЯЗЫК И ИНЖЕНЕРИЯ",-1],["ПЛАТФОРМА iOS",1]].map(([txt,side])=>{ const d=document.createElement("div"); d.className="hlabel"; d.textContent=txt; overlay.appendChild(d); boxRO.observe(d); return {el:d, p:[side*1.55,1.02,0]}; });
 let nbShown=[];
 const nbLabels = Array.from({length:8},()=>{ const d=document.createElement("div"); d.className="nlabel"; d.hidden=true; overlay.appendChild(d); return d; });
 const marker=$("marker");
 const leaderSvg=document.createElementNS("http://www.w3.org/2000/svg","svg"); leaderSvg.setAttribute("class","leaders"); overlay.appendChild(leaderSvg);
 const tLabs = topics.map(t=>{ const d=document.createElement("div"); d.className="tlab"; d.innerHTML=`<span class="tn"><i class="tk">${String(t.k+1).padStart(2,"0")}</i>${esc(t.title)}<em class="nxt">ДАЛЬШЕ</em></span><span class="ts">${esc(t.sub)}</span><span class="need"></span>`; overlay.appendChild(d); return {el:d, w:0, h:0, line:null, need:d.querySelector(".need"), needKey:null}; });
-let labBranch=-1;
+let labBranch=-1, labFonts=0;
+if(document.fonts && document.fonts.addEventListener) document.fonts.addEventListener("loadingdone",()=>{ labFonts++; });
 function layoutTopicLabels(breath){
   const ab = hoverNode>=0 ? topics[hoverNode].b : highlight;
-  if(ab!==labBranch){ tLabs.forEach(L=>{ L.el.classList.remove("on","back"); L.el.style.opacity=""; if(L.line){ L.line.remove(); L.line=null; } }); labBranch=ab; labels.forEach((l,q)=>l.style.visibility = (ab>=0 && q===ab) ? "hidden" : ""); }
+  if(ab!==labBranch){ tLabs.forEach(L=>{ L.el.classList.remove("on","back"); L.sig=null; L.el.style.opacity=""; if(L.line){ L.line.remove(); L.line=null; } }); labBranch=ab; labels.forEach((l,q)=>l.style.visibility = (ab>=0 && q===ab) ? "hidden" : ""); }
   if(ab<0) return;
   const items=[]; let cx=0, cy=0;
   topics.forEach((t,i)=>{ if(t.b!==ab) return; const p=[pos[i*3]*breath,pos[i*3+1]*breath,pos[i*3+2]*breath]; const [x,y]=project(...p); items.push({i,x,y,f:facing(...p)}); cx+=x; cy+=y; });
   cx/=items.length; cy/=items.length;
-  const card=$("card"), cr = (cardOn && !card.hidden) ? {l:cardX-12, t:cardY-12, r:cardX+card.offsetWidth+12, b:cardY+card.offsetHeight+12} : null;
+  const card=$("card"), cr = (cardOn && !card.hidden) ? {l:cardX-12, t:cardY-12, r:cardX+boxW(card)+12, b:cardY+boxH(card)+12} : null;
   items.forEach(it=>{ const L=tLabs[it.i], t=topics[it.i]; L.el.classList.add("on"); L.el.classList.toggle("hot", it.i===hoverNode); L.el.classList.toggle("done", t.status==="done"); L.el.classList.toggle("dark", t.status==="dark"); L.el.classList.toggle("fog", !!t.fog);
     const nk = t.fog ? t.miss.join(",") : ""; if(L.needKey!==nk){ L.needKey=nk; L.need.innerHTML = nk ? "В ТУМАНЕ · СНАЧАЛА <b>"+missNames(t).map(esc).join(" · ")+"</b>" : ""; } L.el.classList.toggle("nx", it.i===curIdx);
-    L.w=L.el.offsetWidth; L.h=L.el.offsetHeight; it.side = it.x>=cx ? 1 : -1; it.ly = it.y + (it.y-cy)*0.25; });
+    /* the size depends only on these classes and the text: measure when they change, not every frame */
+    const sig=(it.i===hoverNode)+"|"+t.status+"|"+!!t.fog+"|"+nk+"|"+(it.i===curIdx)+"|"+W+"|"+labFonts; if(L.sig!==sig || !L.w){ L.sig=sig; L.w=L.el.offsetWidth; L.h=L.el.offsetHeight; } it.side = it.x>=cx ? 1 : -1; it.ly = it.y + (it.y-cy)*0.25; });
   const place=it=>{ const L=tLabs[it.i]; it.lx = it.side>0 ? it.x+26 : it.x-26-L.w; };
   items.forEach(it=>{ place(it); if(cr){ const L=tLabs[it.i]; if(it.lx<cr.r && it.lx+L.w>cr.l && it.ly+L.h/2>cr.t && it.ly-L.h/2<cr.b){ it.side=-it.side; place(it); } } });
   [1,-1].forEach(side=>{ const col=items.filter(it=>it.side===side).sort((a,b)=>a.ly-b.ly); for(let k=1;k<col.length;k++){ const prev=col[k-1], gap=(tLabs[prev.i].h+tLabs[col[k].i].h)/2+4; if(col[k].ly-prev.ly<gap) col[k].ly=prev.ly+gap; }
@@ -693,7 +720,7 @@ function linkList(ul, i, onPick){
     b.innerHTML="<span>"+esc(topics[j].title)+"</span><em>"+BRANCHES[topics[j].b].code+"</em>";
     b.addEventListener("click",()=>onPick(j)); li.appendChild(b); ul.appendChild(li); });
 }
-let cardOn=false, cardX=0, cardY=0, cardSnap=true;
+let cardOn=false, cardX=0, cardY=0, cardSnap=true; boxRO.observe($("card"));
 function showCard(){ const c=$("card"); const was=cardOn; cardOn=true; c.hidden=false; if(!was) cardSnap=true; c.classList.remove("pop"); void c.offsetWidth; c.classList.add("pop"); }
 function hideCard(){ cardOn=false; $("card").hidden=true; $("lead").style.opacity=0; renderTrack(); }
 $("cClose").addEventListener("click",hideCard);
@@ -707,6 +734,7 @@ function select(i, fly){
   for(let k=0;k<4;k++) spawn(i,-1,0); flash[i]=1.4;
   if(fly) focusOn(i);
   showCard();
+  kickScene();
 }
 $("cta").addEventListener("click",()=>{ const t=topics[selected]; if(t && t.fog) select(t.miss[0], true); else openTopic(selected); });   /* in fog: the main button leads to the missing prereq */
 $("cAnyway").addEventListener("click",()=>openTopic(selected));
@@ -783,7 +811,7 @@ function refreshProgress(){
   topics.forEach(t=>{ if(t.status==="done" && !before.has(t.id) && !store.get("pm.doneAt."+t.id,0)) store.set("pm.doneAt."+t.id, Date.now()); });
   topics.forEach(t=>{ if(t.status==="done") srsOf(t.id); });
   computeStatuses();
-  applyNodeStyles(); applyEdgeColors(); refreshUI();
+  applyNodeStyles(); applyEdgeColors(); refreshUI(); kickScene();
 }
 /* ---------- PHONE: a plain scrollable topic list replaces the 3D map (no WebGL, no rAF) ---------- */
 let plEl=null, plOpen=null, plScroll=0;
@@ -911,7 +939,7 @@ function setPracticeSup(id){ const c=DATA.content[id], steps=c?c.steps:[], p=pro
   $("supPractice").textContent = steps.length ? steps.filter(s=>p[s.id]==="ok").length+"/"+steps.length+(nb?" +"+nb:"") : ""; }
 function doOpen(i, tab){
   if(selected!==i) select(i,false);
-  current=i; const t=topics[i], br=BRANCHES[t.b], c=DATA.content[t.id];
+  current=i; const t=topics[i], br=BRANCHES[t.b], c=DATA.content[t.id]; wakeLoops();
   const inBranch = topics.filter(x=>x.b===t.b).length;
   $("tCrumb").innerHTML = crumbHTML(t, br, inBranch);
   $("tTitle").textContent = t.title; $("tSub").textContent = t.sub;
@@ -967,6 +995,7 @@ function fitWidth(term, base, minPx){
 }
 function sizePractice(animate){
   const pane=$("pane-practice"), wb=$("winBody"); if(!pane) return;
+  if(isNext()){ nextSizePractice(pane, wb); return; }   /* NEXT: the CSS grid sizes the columns */
   pane.classList.toggle("anim", animate===true);
   if(narrow() || !wb.classList.contains("fit")){ pane.style.removeProperty("--pc-w"); return; }
   const W=pane.clientWidth; if(W<=0) return;
@@ -982,6 +1011,7 @@ function sizePractice(animate){
 }
 function fitCode(animate){
   sizePractice(animate===true);
+  if(isNext()){ nextFit(); return; }   /* NEXT: the code is never shrunk, it scrolls inside its box */
   const base=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--code-size"))||14;
   document.querySelectorAll("#pane-practice .term").forEach(term=>{
     term.style.removeProperty("--code-size");
@@ -1559,7 +1589,7 @@ function renderPractice(){ setTimeout(()=>{ refreshTopicNav(current); strictSync
     $("bankPrev").addEventListener("click",()=>{ bankIdx=(bankIdx-1+bank.length)%bank.length; renderPractice(); startTyping("practice"); });
   }
   const ta=$("ans"), kb=$("showKey"), gate=$("gate");
-  pane.classList.remove("typing");
+  pane.classList.remove("typing"); nextPrompt(pane);
   ta.addEventListener("focus",()=>{ if(!pane.classList.contains("typing")){ pane.classList.add("typing"); fitCode(true); } });
   pane.querySelector(".p-code").addEventListener("pointerdown",()=>{ if(pane.classList.contains("typing")){ pane.classList.remove("typing"); fitCode(true); } });
   (function(){ const sp=$("split"); if(!sp) return;
@@ -1642,6 +1672,7 @@ function renderPractice(){ setTimeout(()=>{ refreshTopicNav(current); strictSync
         <button type="button" class="ghostbtn" id="noBtn">НЕТ</button></div>`));
     kb.disabled=true; gate.textContent="";
     fitCode(); typeSeq([{el:keyTerm.querySelector(".term-b"), cps:420}]);
+    if(isNext()) nextKeyed(ta);
     if($("prevBtn")) $("prevBtn").addEventListener("click",()=>{ $("prevBox").innerHTML=terminal(prevAns, "Прошлый ответ", "до этого повтора", {plain:oral || proseCode(prevAns)}); $("prevBtn").hidden=true; });
     if(dunno){ const res=mark("no", false, true); if(res==="check") return;
       $("nextBtn").addEventListener("click",()=>{ if(inBank){ store.set(ansKey, ""); bankIdx=pickBank(t.id, s.id); } else if(stepIdx<steps.length-1) stepIdx++; renderPractice(); startTyping("practice"); }); return; }
@@ -1941,13 +1972,14 @@ refreshRun(); refreshBackupNote();
     pool=codePool(); poolFor=current;
     lanes=[]; for(let y=LINE*0.8; y<h; y+=LINE){ const L={y, v:(28+Math.random()*95)*(Math.random()<0.5?1:-1), a:0.06+Math.random()*0.08, segs:[]}; fillLane(L); lanes.push(L); }
   }
-  let rsT=0; new ResizeObserver(()=>{ clearTimeout(rsT); rsT=setTimeout(()=>{ const r=host.getBoundingClientRect(); if(Math.abs(r.width-w)>2 || Math.abs(r.height-h)>2) init(); },60); }).observe(host);
-  host.addEventListener("pointermove",e=>{ overBg = e.target===host; inWin = !overBg && !!(e.target.closest && e.target.closest(".win, .t-head, #topic > *")); const r=host.getBoundingClientRect(); bx=e.clientX-r.left; by=e.clientY-r.top; },{passive:true});
-  host.addEventListener("pointerleave",()=>{ overBg=false; inWin=false; });
+  let rsT=0; new ResizeObserver(()=>{ clearTimeout(rsT); rsT=setTimeout(()=>{ const r=host.getBoundingClientRect(); if(Math.abs(r.width-w)>2 || Math.abs(r.height-h)>2){ init(); bgLoop.wake(); } },60); }).observe(host);
+  host.addEventListener("pointermove",e=>{ overBg = e.target===host; inWin = !overBg && !!(e.target.closest && e.target.closest(".win, .t-head, #topic > *")); const r=host.getBoundingClientRect(); bx=e.clientX-r.left; by=e.clientY-r.top; moveAt=performance.now(); bgLoop.wake(); },{passive:true});
+  host.addEventListener("pointerleave",()=>{ overBg=false; inWin=false; bgLoop.wake(); });
+  let moveAt=0;
   host.addEventListener("pointerdown",e=>{ if(e.target!==host) return; const r=host.getBoundingClientRect(); wave={x:e.clientX-r.left, y:e.clientY-r.top, t:0}; sfx.ping(); fxLog("SCAN","ПРИНУДИТЕЛЬНАЯ РАСШИФРОВКА"); });
   function draw(now){
     const dt=Math.min(0.05,(now-last)/1000); last=now;
-    if(mode!=="topic"){ requestAnimationFrame(draw); return; }
+    if(mode!=="topic") return;
     if(!w || poolFor!==current) init();
     cx.clearRect(0,0,w,h);
     cx.font=FONT_PX+"px "+getComputedStyle(document.documentElement).getPropertyValue("--f-code"); cx.textBaseline="middle";
@@ -2003,10 +2035,12 @@ refreshRun(); refreshBackupNote();
       return true; });
     if(cIn){ const hg=cx.createRadialGradient(cxp,cyp,0,cxp,cyp,R); hg.addColorStop(0,"rgba(45,226,230,.07)"); hg.addColorStop(1,"rgba(45,226,230,0)"); cx.fillStyle=hg; cx.fillRect(cxp-R,cyp-R,R*2,R*2); }
     const g=cx.createRadialGradient(w*0.45,h*0.5,Math.min(w,h)*0.2,w*0.5,h*0.5,Math.max(w,h)*0.75); g.addColorStop(0,"rgba(5,6,7,0)"); g.addColorStop(1,"rgba(5,6,7,.5)"); cx.fillStyle=g; cx.fillRect(0,0,w,h);
-    requestAnimationFrame(draw);
   }
-  requestAnimationFrame(draw);
-  const _setMode=setMode; setMode=function(m){ const was=mode; _setMode(m); if(m==="topic" && was!=="topic"){ init(); logs=[]; logNext=1.2; } };
+  /* at rest the backdrop is a still frame; it moves while the cursor is on the empty background (and a few seconds after
+     it stops there), while a scan wave or an event line is on screen, and while it fades as the cursor enters the window */
+  const bgLoop=makeLoop(draw, now=>mode==="topic" && ((overBg && now-moveAt<4000) || !!wave || logs.length>0 || fxQueue.length>0 || Math.abs((inWin?1:0)-calm)>0.01 || poolFor!==current));
+  bgLoop.wake();
+  const _setMode=setMode; setMode=function(m){ const was=mode; _setMode(m); if(m==="topic" && was!=="topic"){ init(); logs=[]; logNext=1.2; bgLoop.wake(); } };
 })();
 
 /* ---------- global cursor ---------- */
@@ -2019,7 +2053,7 @@ refreshRun(); refreshBackupNote();
   document.documentElement.addEventListener("mouseleave",()=>{ inside=false; });
   document.addEventListener("pointerdown",e=>{ down=true; const r=document.createElement("div"); r.className="xcur-ring"; r.style.left=e.clientX+"px"; r.style.top=e.clientY+"px"; document.body.appendChild(r); setTimeout(()=>r.remove(),500); });
   document.addEventListener("pointerup",()=>{ down=false; });
-  let last=performance.now();
+  let last=performance.now(), settled=false, locked=false, busyUntil=0;
   function loop(now){
     const dt=Math.min(0.05,(now-last)/1000); last=now;
     let tx=x, ty=y, tw=28, th=28, mode="";
@@ -2036,9 +2070,47 @@ refreshRun(); refreshBackupNote();
     cur.style.transform=`translate(${(px-cw/2).toFixed(1)}px,${(py-ch/2).toFixed(1)}px) scale(${sc})`;
     cur.className="xcur"+(inside?" on":"")+(mode?" "+mode:"")+(down?" down":"");
     window.curPos={x:px,y:py,inside};
-    requestAnimationFrame(loop);
+    settled = Math.abs(tx-px)<0.05 && Math.abs(ty-py)<0.05 && Math.abs(tw-cw)<0.05 && Math.abs(th-ch)<0.05; locked = mode==="lock";
   }
-  requestAnimationFrame(loop);
+  /* the cursor box moves only until it reaches its target; on the map a locked node keeps moving with the brain */
+  const curLoop=makeLoop(loop, now=>!settled || now<busyUntil || (locked && isMapMode()));
+  const stir=()=>{ busyUntil=performance.now()+700; curLoop.wake(); };
+  ["pointermove","pointerdown","pointerup","pointerleave","wheel","keydown","keyup","click"].forEach(n=>document.addEventListener(n,stir,{passive:true}));
+  document.addEventListener("scroll",stir,{passive:true,capture:true}); window.addEventListener("resize",stir);
+  curLoop.wake();
+})();
+function isMapMode(){ return mode==="map"; }
+
+/* ---------- NEXT design (review 14.11, items 12–13) ----------
+   html.next is set before first paint by the inline script in template.html (#next / #classic / localStorage "syn.theme").
+   Here: the switch in the settings. The choice is a display setting, not progress: it is not exported or merged. */
+function isNext(){ return document.documentElement.classList.contains("next"); }
+/* practice in NEXT (item 13). Called only from the isNext() branches of sizePractice / fitCode / renderPractice. */
+function nextSizePractice(pane, wb){
+  pane.classList.remove("anim");
+  const man=+store.get("pm.split",0)||0;   /* a split dragged by hand is still respected */
+  if(man && !narrow() && wb.classList.contains("fit") && !(($("showKey")||{}).dataset||{}).open) pane.style.setProperty("--pc-w", Math.round(man*pane.clientWidth)+"px");
+  else pane.style.removeProperty("--pc-w");
+}
+function nextFit(){
+  document.querySelectorAll("#pane-practice .term").forEach(t=>t.style.removeProperty("--code-size"));
+  const pr=document.querySelector("#pane-practice .prompt"), pane=$("pane-practice");
+  if(pr && PHONE && pane && !pane.classList.contains("kbd")) pr.classList.toggle("pmore", pr.classList.contains("open") || pr.scrollHeight>pr.clientHeight+2);
+}
+/* the key is open: the answer field grows to its text, so answer and key can be read line by line */
+function nextKeyed(ta){ if(!ta) return; ta.style.height="auto"; ta.style.height=Math.max(ta.scrollHeight+2, 44)+"px"; }
+/* phone: a long task text is folded to 3 lines; a tap unfolds it (in the typing mode the classic handler does this) */
+function nextPrompt(pane){ const pr=pane.querySelector(".prompt"); if(!pr || !PHONE) return;
+  pr.addEventListener("click",()=>{ if(!isNext() || pane.classList.contains("kbd") || !pr.classList.contains("pmore")) return; pr.classList.toggle("open"); }); }
+(function nextInit(){
+  const after=$("sfxBtn"); if(!after) return;
+  const b=document.createElement("button"); b.type="button"; b.className="fontbtn"; b.id="themeBtn";
+  b.title="Новый дизайн NEXT: спокойнее, контрастнее, крупные зоны нажатия. Классика остаётся как была";
+  const label=()=>{ b.textContent="ДИЗАЙН: "+(isNext()?"NEXT":"КЛАССИКА"); b.classList.toggle("warn", isNext()); };
+  b.addEventListener("click",()=>{ const on=!isNext(); document.documentElement.classList.toggle("next", on);
+    try{ localStorage.setItem("syn.theme", on?"next":"classic"); }catch(e){}
+    label(); layout(); if(typeof fitCode==="function") fitCode(); wakeLoops(); });
+  after.parentNode.insertBefore(b, after); label();
 })();
 
 /* merge:begin — pure, no DOM/storage (tests/merge.js runs this block in Node).
@@ -2262,7 +2334,7 @@ $("navTopic").addEventListener("click",()=>openTopic(current>=0?current:selected
 $("navTasks").addEventListener("click",()=>openTopic(current>=0?current:selected,"tasks"));
 
 /* ---------- resize ---------- */
-function resize(){ W=Math.max(1,brain.clientWidth); H=Math.max(1,brain.clientHeight); renderer.setSize(W,H,false);
+function resize(){ W=Math.max(1,brain.clientWidth); H=Math.max(1,brain.clientHeight); renderer.setSize(W,H,false); canvasRect=null; kickScene();
   if(!PHONE && !composer && THREE.EffectComposer && THREE.UnrealBloomPass && THREE.RenderPass){ try{ composer=new THREE.EffectComposer(renderer); composer.addPass(new THREE.RenderPass(scene,camera)); bloomPass=new THREE.UnrealBloomPass(new THREE.Vector2(W,H), 0.95, 0.55, 0.16); composer.addPass(bloomPass); }catch(e){ composer=null; } }
   if(composer){ composer.setSize(W,H); bloomPass.strength = mode==="topic" ? 0.7 : mode==="intro" ? 1.2 : 0.95; } camera.aspect=W/H; camera.fov = (W<600 && mode==="map") ? 52 : 40; camera.updateProjectionMatrix(); uScale.value = Math.max(0.55, Math.min(1, W/700)); }
 new ResizeObserver(resize).observe(brain);
@@ -2322,15 +2394,15 @@ function frame(now){
   hSize.array[0]=40+Math.sin(time*2.2)*8; hAlpha.array[0]= mode==="intro" ? 0 : 0.16+Math.sin(time*2.2)*0.05; hSize.needsUpdate=true; hAlpha.needsUpdate=true;
   if(composer) composer.render(); else renderer.render(scene,camera);
   if(mode==="map"){
-    hemiLabels.forEach(hl=>{ const [sx,sy]=project(hl.p[0],hl.p[1],hl.p[2]); const f=facing(hl.p[0],hl.p[1],hl.p[2]); const hw=hl.el.offsetWidth/2+16; hl.el.style.left=Math.min(W-hw,Math.max(hw,sx))+"px"; hl.el.style.top=Math.min(H-60,Math.max(100,sy))+"px"; hl.el.style.opacity=Math.max(0.15,Math.min(0.75,0.45+f*0.4)); });
+    hemiLabels.forEach(hl=>{ const [sx,sy]=project(hl.p[0],hl.p[1],hl.p[2]); const f=facing(hl.p[0],hl.p[1],hl.p[2]); const hw=boxW(hl.el)/2+16; hl.el.style.left=Math.min(W-hw,Math.max(hw,sx))+"px"; hl.el.style.top=Math.min(H-60,Math.max(100,sy))+"px"; hl.el.style.opacity=Math.max(0.15,Math.min(0.75,0.45+f*0.4)); });
     labels.forEach((l,q)=>{ const p=labelPos[q]; const [sx,sy]=project(p[0]*breath,p[1]*breath,p[2]*breath); const f=facing(p[0],p[1],p[2]);
-      const hw=l.offsetWidth/2+12; l.style.left=Math.min(W-hw,Math.max(hw,sx))+"px"; l.style.top=Math.min(H-70,Math.max(100,sy))+"px";
+      const hw=boxW(l)/2+12; l.style.left=Math.min(W-hw,Math.max(hw,sx))+"px"; l.style.top=Math.min(H-70,Math.max(100,sy))+"px";
       l.style.opacity = highlight===q ? 1 : (labBranch>=0 ? 0.08 : Math.max(0.12,Math.min(0.9,0.5+f*0.5))); });
     const sp=[pos[selected*3]*breath,pos[selected*3+1]*breath,pos[selected*3+2]*breath]; const [mx,my]=project(...sp);
     marker.style.left=mx+"px"; marker.style.top=my+"px"; marker.style.opacity = facing(...sp)<-0.35?0.15:1;
     drawRoute(breath);
-    { if(hoverNode>=0 && mIn){ const hp=project(pos[hoverNode*3]*breath,pos[hoverNode*3+1]*breath,pos[hoverNode*3+2]*breath); const cr=canvas.getBoundingClientRect(); window.mapLock={x:cr.left+hp[0], y:cr.top+hp[1], id:topics[hoverNode].id}; } else window.mapLock=null; }
-    if(cardOn){ const c=$("card"), cw=c.offsetWidth, ch=c.offsetHeight, back=facing(...sp)<-0.35;
+    { if(hoverNode>=0 && mIn){ const hp=project(pos[hoverNode*3]*breath,pos[hoverNode*3+1]*breath,pos[hoverNode*3+2]*breath); const cr=canvasBox(); window.mapLock={x:cr.left+hp[0], y:cr.top+hp[1], id:topics[hoverNode].id}; } else window.mapLock=null; }
+    if(cardOn){ const c=$("card"), cw=boxW(c), ch=boxH(c), back=facing(...sp)<-0.35;
       let right = mx+64+cw < W-24; let tx = right ? mx+64 : mx-64-cw; tx=Math.max(16,Math.min(W-cw-16,tx));
       let ty = Math.max(84, Math.min(H-ch-24, my-ch*0.32));
       if(cardSnap){ cardX=tx; cardY=ty; cardSnap=false; } else { cardX+=(tx-cardX)*0.16; cardY+=(ty-cardY)*0.16; }
@@ -2342,8 +2414,9 @@ function frame(now){
     layoutTopicLabels(breath);
     nbShown.forEach((j,q)=>{ const el=nbLabels[q]; const p=[pos[j*3]*breath,pos[j*3+1]*breath,pos[j*3+2]*breath]; const [x,y]=project(...p); el.style.left=x+"px"; el.style.top=y+"px"; el.style.opacity = facing(...p)<-0.35?0.25:0.95; });
   }
-  requestAnimationFrame(frame);
 }
+/* the scene runs on the map and the intro; in a topic it is the still minimap and renders only for a moment after a change */
+const sceneLoop = PHONE ? null : makeLoop(frame, now=>mode!=="topic" || now<sceneUntil);
 /* boot */
 (function bootLog(){
   const el=$("boot"); if(!el) return; el.remove(); return;
@@ -2384,7 +2457,6 @@ function frame(now){
   window.addEventListener("pointermove",e=>{ if(mode!=="intro") return; const r=host.getBoundingClientRect(); mx=e.clientX-r.left; my=e.clientY-r.top; },{passive:true});
   let rsT=0; window.addEventListener("resize",()=>{ clearTimeout(rsT); rsT=setTimeout(init,120); });
   function draw(now){
-    requestAnimationFrame(draw);
     const dt=Math.min(0.05,(now-last)/1000); last=now;
     if(mode!=="intro"){ return; }
     if(!w) init();
@@ -2416,7 +2488,7 @@ function frame(now){
       }
     }
   }
-  requestAnimationFrame(draw);
+  makeLoop(draw, ()=>mode==="intro").wake();   /* runs only on the intro screen; setMode wakes every loop */
 })();
 (function introScreen(){
   if(PHONE){ setMode("map"); return; } /* phone: start directly in the topic list */
@@ -2438,5 +2510,5 @@ layout(); resize();
 select(curIdx,false); focusOn(curIdx); theta=tTheta; phi=tPhi;
 routeRestore();
 requestAnimationFrame(()=>{ brain.classList.remove("noanim"); });
-if(!PHONE) requestAnimationFrame(frame); /* phone: the 3D brain is never rendered */
+if(sceneLoop) kickScene(); /* phone: the 3D brain is never rendered */
 })();
