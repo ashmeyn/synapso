@@ -117,8 +117,8 @@
     },
     {
      "pat": [
-      "if let $a = name, $a.isEmpty",
-      "if let name, name.isEmpty"
+      "if let $a = name, $a.isEmpty {",
+      "if let name, name.isEmpty {"
      ],
      "msg": "Условие перевёрнуто: ветка с именем должна работать, когда строка НЕ пустая."
     }

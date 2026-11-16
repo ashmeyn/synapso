@@ -15,7 +15,7 @@ const PILOT = ['opt', 'state', 'urls', 'weak', 'async'];
 // engine does not judge: the label says «bad», the verdict «ok» is the documented limit (REPORT.md, section 3).
 const PROSE_ONLY = ['opt#6', 'state#4', 'arc#43', 'async#3', 'async#5'];
 // Known false «неверно» (right answers written unusually). The list may only shrink.
-const KNOWN_FALSE_NO = ['opt#9', 'urls#57', 'table#2'];
+const KNOWN_FALSE_NO = ['table#2'];
 // Floors measured on 15.11 (see docs/history.md); a lower number means the engine lost something.
 const FLOOR = { okCode: 0.40, okPredict: 0.60, sameCode: 0.80, flaggedBadCode: 0.85 };
 
