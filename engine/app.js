@@ -1497,7 +1497,9 @@ function buildSkb(host, ed, act, src){
 /* phone typing mode: the practice window fills the area above the on-screen keyboard */
 let vvMode="vv";   /* vv: follow visualViewport · full: own keyboard, whole screen · guess: system keyboard the page cannot measure */
 function updVV(){ if(vvMode!=="vv") return; const vv=window.visualViewport, st=document.documentElement.style; st.setProperty("--vvh", Math.round(vv?vv.height:window.innerHeight)+"px"); st.setProperty("--vvt", Math.round(vv?vv.offsetTop:0)+"px"); }
-function fullVV(){ vvMode="full"; const st=document.documentElement.style; st.setProperty("--vvh", window.innerHeight+"px"); st.setProperty("--vvt","0px"); }
+/* own keyboard: no system keyboard to dodge, so the window follows the viewport itself (100% of the fixed box), not a
+   pixel height frozen at focus — the host app can resize the view later and the bottom row used to fall off (16.11) */
+function fullVV(){ vvMode="full"; const st=document.documentElement.style; st.setProperty("--vvh","100%"); st.setProperty("--vvt","0px"); }
 let baseH=window.innerHeight;
 window.addEventListener("resize",()=>{ if(!document.body.classList.contains("kb-on")) baseH=window.innerHeight; });
 function guessVV(){ if(!document.body.classList.contains("kb-on") || vvMode!=="vv") return; const vv=window.visualViewport;
