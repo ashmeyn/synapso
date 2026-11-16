@@ -65,6 +65,22 @@ async function unit(s) {
     'pm.doneAt.opt': '"y"', 'pm.steps.func': JSON.stringify({ s2: 'ok' }), 'pm.future.key': '[1]' });
   await s.check('wrong-kind incoming values are skipped', r.skipped === 6 && !('pm.steps.coll' in r.map) && !('pm.runs' in r.map) && !('pm.known' in r.map), r);
   await s.check('good and unknown keys still merge next to bad ones', P(r.map, 'pm.steps.func').s2 === 'ok' && 'pm.future.key' in r.map, r.map);
+  // autocheck journal (pm.chk.<topic>, pilot 15.11): union of both devices, newest first, capped; bad entries and bad kinds dropped
+  const E = (at, ref, v) => ({ at, ref, v, why: 'exact', self: 'ok', ans: 'x' });
+  r = merge(J({ 'pm.chk.opt': [E(T0 + 3, 's3', 'ok'), E(T0 + 1, 's2', 'no')] }), J({ 'pm.chk.opt': [E(T0 + 2, 's4', 'check'), E(T0 + 1, 's2', 'no'), 'junk', null, 7] }));
+  let jr = P(r.map, 'pm.chk.opt');
+  await s.check('journal: union of entries, the shared one once, newest first', jr.length === 3 && jr.map(x => x.ref).join() === 's3,s4,s2', jr);
+  await s.check('journal: junk entries of the other side do not get in', jr.every(x => x && typeof x === 'object'), jr);
+  await s.check('journal: merge is symmetric', merge(J({ 'pm.chk.opt': [E(T0 + 2, 's4', 'check')] }), J({ 'pm.chk.opt': [E(T0 + 3, 's3', 'ok')] })).map['pm.chk.opt'] === merge(J({ 'pm.chk.opt': [E(T0 + 3, 's3', 'ok')] }), J({ 'pm.chk.opt': [E(T0 + 2, 's4', 'check')] })).map['pm.chk.opt']);
+  r = merge(J({ 'pm.chk.opt': Array.from({ length: 30 }, (x, i) => E(T0 + 100 + i, 's1', 'ok')) }), J({ 'pm.chk.opt': Array.from({ length: 30 }, (x, i) => E(T0 + i, 's2', 'no')) }));
+  jr = P(r.map, 'pm.chk.opt');
+  await s.check('journal: capped at 40, the newest kept', jr.length === 40 && jr[0].at === T0 + 129 && jr.filter(x => x.ref === 's1').length === 30, jr.length);
+  r = merge(J({ 'pm.chk.opt': [E(T0, 's1', 'ok')] }), { 'pm.chk.opt': '{"at":1}', 'pm.chk.state': '"text"', 'pm.chk.urls': '5', 'pm.chk.weak': JSON.stringify([E(T0, 's1', 'no')]) });
+  await s.check('journal: a value of the wrong kind is skipped and counted, a good one merges', r.skipped === 3 && P(r.map, 'pm.chk.opt').length === 1 && !('pm.chk.state' in r.map) && !('pm.chk.urls' in r.map) && P(r.map, 'pm.chk.weak').length === 1, r);
+  r = merge({ 'pm.chk.opt': '{"broken":true}' }, J({ 'pm.chk.opt': [E(T0, 's1', 'ok')] }));
+  await s.check('journal: a damaged local value is left alone, nothing throws', r.map['pm.chk.opt'] === '{"broken":true}', r.map);
+  r = merge(J({ 'pm.autocheck': true }), J({ 'pm.autocheck': false }));
+  await s.check('the «Автопроверка» setting of this device wins', P(r.map, 'pm.autocheck') === true && r.changed === 0, r);
   r = merge(J({ 'pm.mapHint': 1 }), J({ 'pm.mapHint': 2 }));
   await s.check('map hint: larger visit count wins', P(r.map, 'pm.mapHint') === 2, r.map);
   r = merge(J({ 'pm.mapHint': 2 }), J({ 'pm.mapHint': 0 }));
@@ -115,6 +131,8 @@ async function inPage(s, browser) {
       'pm.steps.opt': JSON.stringify({ s1: 'no', s2: 'ok', s3: 'ok' }),
       'pm.srs.opt': JSON.stringify({ stage: 0, due: Date.now() + 9 * 86400000, lapses: 1 }),
       'pm.steps.func': JSON.stringify({ s1: 'ok' }),
+      'pm.chk.opt': JSON.stringify([{ at: 5, ref: 's3', v: 'no', why: 'not', self: 'part', ans: 'id!' }]),
+      'pm.chk.state': JSON.stringify({ not: 'a list' }),
       'pm.font': JSON.stringify('theirs') } };
     await page.evaluate(() => { document.getElementById('settings').open = true; });
     await page.setInputFiles('#importFile', { name: 'synapso.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(file)) });
@@ -130,20 +148,26 @@ async function inPage(s, browser) {
     await s.check('import: local-only topic kept', !!got.coll, got);
     await s.check('import: file-only topic added', !!got.func, got);
     await s.check('import: device settings untouched', got.font === 'mine', got.font);
+    const jn = await page.evaluate(() => ({ opt: JSON.parse(localStorage.getItem('pm.chk.opt') || 'null'), state: localStorage.getItem('pm.chk.state'), note: document.getElementById('importNote').textContent }));
+    await s.check('import: the autocheck journal comes with the file', Array.isArray(jn.opt) && jn.opt.length === 1 && jn.opt[0].ref === 's3', jn.opt);
+    await s.check('import: a journal of the wrong kind is skipped and reported', jn.state === null && /ПРОПУЩЕНО ПОВРЕЖДЁННЫХ ЗАПИСЕЙ: 1/.test(jn.note), jn);
     await dom('#impUndo');
     const undone = await page.evaluate(() => ({ opt: JSON.parse(localStorage.getItem('pm.steps.opt')), func: localStorage.getItem('pm.steps.func') }));
     await s.check('import: undo restores the state before', undone.opt.s2 === 'no' && !undone.opt.s3 && undone.func === null, undone);
-    await page.evaluate(() => localStorage.setItem('pm.gist', JSON.stringify({ token: 'ghp_secret', id: 'g0' })));
+    await page.evaluate(() => { localStorage.setItem('pm.gist', JSON.stringify({ token: 'ghp_secret', id: 'g0' }));
+      localStorage.setItem('pm.chk.opt', JSON.stringify([{ at: 9, ref: 's2', v: 'ok', why: 'exact', self: 'ok', ans: 'x' }])); localStorage.setItem('pm.autocheck', 'true'); });
     const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), dom('#exportBtn')]);
     const exp = JSON.parse(fs.readFileSync(await dl.path(), 'utf8')).data;
     await s.check('export never contains the gist token or device keys', !('pm.gist' in exp) && !('pm.font' in exp) && !JSON.stringify(exp).includes('ghp_secret'), Object.keys(exp));
+    await s.check('export carries the autocheck journal and the setting', JSON.parse(exp['pm.chk.opt'] || '[]').length === 1 && exp['pm.autocheck'] === 'true', Object.keys(exp));
     await page.evaluate(() => localStorage.removeItem('pm.gist'));
     await page.reload();
     await page.waitForFunction(() => !!document.getElementById('importFile'), null, { timeout: 15000 });
     await page.evaluate(() => { document.getElementById('settings').open = true; });
 
     // ---- gist sync against a mocked api.github.com ----
-    let remote = { 'pm.steps.opt': JSON.stringify({ s4: 'ok' }), 'pm.steps.dead': JSON.stringify({ s1: 'ok' }) };
+    let remote = { 'pm.steps.opt': JSON.stringify({ s4: 'ok' }), 'pm.steps.dead': JSON.stringify({ s1: 'ok' }),
+      'pm.chk.opt': JSON.stringify([{ at: 20, ref: 's4', v: 'check', why: 'miss', self: 'no', q: 'n', ans: 'y' }]), 'pm.chk.weak': '"damaged"' };
     const calls = [];
     await ctx.route('https://api.github.com/**', async route => {
       const req = route.request(), u = new URL(req.url()), m = req.method();
@@ -166,6 +190,9 @@ async function inPage(s, browser) {
     await s.check('gist: found the existing gist by file name', after.gist && after.gist.id === 'g1', after.gist);
     await s.check('gist: remote progress merged in', after.opt.s4 === 'ok' && after.opt.s1 === 'ok' && !!after.dead, after);
     await s.check('gist: merged progress written back', JSON.parse(remote['pm.steps.opt'] || '{}').s1 === 'ok' && !!remote['pm.steps.coll'], Object.keys(remote));
+    const gj = await page.evaluate(() => ({ opt: JSON.parse(localStorage.getItem('pm.chk.opt') || '[]'), weak: localStorage.getItem('pm.chk.weak') }));
+    await s.check('gist: journals of both devices are united, here and in the gist', gj.opt.map(x => x.ref).join() === 's4,s2' && JSON.parse(remote['pm.chk.opt'] || '[]').length === 2, gj);
+    await s.check('gist: a damaged journal from the gist is not taken', gj.weak === null, gj);
     await s.check('gist: token never uploaded', !Object.keys(remote).some(k => k === 'pm.gist') && !JSON.stringify(remote).includes('ghp_test'));
     await s.check('gist: GET then PATCH', calls.includes('GET /gists/g1') && calls.includes('PATCH /gists/g1'), calls);
     // wrong token: clear message, nothing changed

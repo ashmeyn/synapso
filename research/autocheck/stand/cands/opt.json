@@ -1,0 +1,562 @@
+[
+ {
+  "task": "opt.s1",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "Гость\n\n0\ntitle — String",
+  "note": "Тот же вывод и тип, что в ключе."
+ },
+ {
+  "task": "opt.s1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Гость, (пустая строка), 0. title это String, потому что ?? срабатывает только на nil",
+  "note": "Вывод в одну строку с пояснением."
+ },
+ {
+  "task": "opt.s1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "1) \"Гость\"\n2) \"\"\n3) 0\nТип String",
+  "note": "Значения в кавычках, пронумерованы."
+ },
+ {
+  "task": "opt.s1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Гость\nГость\n0\nString",
+  "note": "Вторая строка неверна: пустая строка не заменяется."
+ },
+ {
+  "task": "opt.s1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "(пусто)\nГость\n0\nString",
+  "note": "Перепутан порядок первых двух строк."
+ },
+ {
+  "task": "opt.s1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Гость\nГость\n5\ntitle String. ?? заменит и пустую строку тоже",
+  "note": "Заблуждение: ?? заменяет пустую строку."
+ },
+ {
+  "task": "opt.s1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Гость\n\n0\ntitle типа String?, потому что b опциональный",
+  "note": "Неверный тип title: после ?? это String."
+ },
+ {
+  "task": "opt.s1",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "Ошибка компиляции, потому что a равно nil",
+  "note": "Неверно по сути: код компилируется."
+ },
+ {
+  "task": "opt.s2",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "func displayName(_ name: String?) -> String {\n  if let name, !name.isEmpty {\n    return name\n  }\n\n  return \"Гость\"\n}",
+  "note": "Ключ, другие отступы и пустая строка."
+ },
+ {
+  "task": "opt.s2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "if let n = name, n.isEmpty == false { return n }\nreturn \"Гость\"\n\nСначала разворачиваю, потом проверяю содержимое.",
+  "note": "if let с другим именем и сравнением с false."
+ },
+ {
+  "task": "opt.s2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func displayName(_ name: String?) -> String {\n    if let value = name {\n        return value.isEmpty ? \"Гость\" : value\n    }\n    return \"Гость\"\n}",
+  "note": "Тернарный оператор внутри if let."
+ },
+ {
+  "task": "opt.s2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "if let name {\n return name\n}\nreturn \"Гость\"\n\nПроверяю только на nil.",
+  "note": "Пустая строка возвращается как есть."
+ },
+ {
+  "task": "opt.s2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "if let name, name.isEmpty {\n return name\n}\nreturn \"Гость\"",
+  "note": "Инвертировано условие isEmpty."
+ },
+ {
+  "task": "opt.s2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "if let name, !name.isEmpty {\n  return name\n}",
+  "note": "Нет return \"Гость\" в конце функции."
+ },
+ {
+  "task": "opt.s2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "func displayName(_ name: String?) -> String {\n if let name, !name.isEmpty {\n  return name\n }\n return \"Гость\"",
+  "note": "Не закрыта фигурная скобка функции."
+ },
+ {
+  "task": "opt.s2",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "func displayName(_ name: String?) -> String {\n  return name\n}",
+  "note": "Не обрабатывает nil вовсе, не компилируется."
+ },
+ {
+  "task": "opt.s3",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "func profilePath(id: Int?) -> String? {\n  guard let id else {\n    return nil\n  }\n  return \"/users/\\(id)\"\n}",
+  "note": "Ключ в другой вёрстке."
+ },
+ {
+  "task": "opt.s3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "guard let userId = id else { return nil }\nreturn \"/users/\" + String(userId)\n\nРезультат String?, потому что пути может не быть.",
+  "note": "Конкатенация вместо интерполяции."
+ },
+ {
+  "task": "opt.s3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func profilePath(id: Int?) -> String? {\n    guard let id = id else {\n        return nil\n    }\n    let path = \"/users/\\(id)\"\n    return path\n}",
+  "note": "Явное id = id и промежуточная константа."
+ },
+ {
+  "task": "opt.s3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "guard let id else { return \"\" }\nreturn \"/users/\\(id)\"",
+  "note": "При nil возвращает пустую строку, а не nil."
+ },
+ {
+  "task": "opt.s3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "guard let id else { return nil }\nreturn \"/user/\\(id)\"\n\nТип String? нужен, чтобы вернуть nil.",
+  "note": "Опечатка в пути: /user вместо /users."
+ },
+ {
+  "task": "opt.s3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "guard let id else { return nil }\nreturn \"/users/\\(id!)\"",
+  "note": "Force unwrap уже развёрнутого Int."
+ },
+ {
+  "task": "opt.s3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "guard let id else { nil }\nreturn \"/users/\\(id)\"\n\nТип String? потому что может не быть.",
+  "note": "В else нет return."
+ },
+ {
+  "task": "opt.s3",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "if id == nil { print(\"нет id\") }",
+  "note": "Ничего не возвращает, другая идея."
+ },
+ {
+  "task": "opt.s4",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "func title(for user: User) -> String {\n  return user.name ?? \"Гость\"\n}",
+  "note": "Ключ с явным return."
+ },
+ {
+  "task": "opt.s4",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "if let n = user.name { return n }\nreturn \"Гость\"",
+  "note": "if let вместо ??."
+ },
+ {
+  "task": "opt.s4",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func title(for user: User) -> String {\n    guard let name = user.name else { return \"Гость\" }\n    return name\n}\n\nУпадёт, когда name = nil. Пустая строка вернётся как есть.",
+  "note": "guard let вместо ??."
+ },
+ {
+  "task": "opt.s4",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "return user.name ?? \"\"",
+  "note": "Запасное значение пустая строка, не «Гость»."
+ },
+ {
+  "task": "opt.s4",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "if let name = user.name, name.isEmpty { return name }\nreturn \"Гость\"",
+  "note": "Условие перевёрнуто: имена заменяются на «Гость»."
+ },
+ {
+  "task": "opt.s4",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "return user.name! ?? \"Гость\"",
+  "note": "Оставлен !, крэш при nil сохранился."
+ },
+ {
+  "task": "opt.s4",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "func title(for user: User) -> String {\n  user.name ? \"Гость\" : user.name\n}",
+  "note": "Optional используется как Bool."
+ },
+ {
+  "task": "opt.s4",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "do {\n return try user.name\n} catch {\n return \"Гость\"\n}",
+  "note": "Optional не бросает ошибок, do/catch не нужен."
+ },
+ {
+  "task": "opt.s5",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "String? это либо строка, либо её нет вообще, nil. А \"\" — строка есть, просто пустая. if let беру, когда нужна развилка, guard let — когда надо выйти рано и значение нужно дальше, ?? — запасное значение. user.name! плох: при nil упадёт, а nil с сервера — обычное дело. Лучше name ?? \"Гость\" и отдельно проверить isEmpty.",
+  "note": "Близко к ключу своими словами."
+ },
+ {
+  "task": "opt.s5",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Optional — коробочка: внутри строка или пусто. Пустая строка — это не пусто, коробка с чем-то, просто без букв. Если надо ветвиться — if let, если без значения дальше идти нельзя — guard let раньше выходит. Для дефолта удобно ??. А ! просто крашит приложение при nil, а сервер вполне может прислать nil, так что вместо него ?? плюс проверка на пустое.",
+  "note": "Другая аналогия и порядок мыслей."
+ },
+ {
+  "task": "opt.s5",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Короче, String? может не содержать строки вообще, это nil, а \"\" — это строка нулевой длины. if let — обычная ветка, guard let — выкидывает из функции сразу, и дальше работаешь с готовым значением, ?? — быстрый дефолт. Силой разворачивать нельзя: сервер прислал nil, и привет крэш. Ставлю дефолт и проверяю isEmpty.",
+  "note": "Разговорный пересказ всех трёх пунктов."
+ },
+ {
+  "task": "opt.s5",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "String? — это строка или nil, а \"\" — строка без символов. if let для ветвления, guard let для раннего выхода, ?? для значения по умолчанию. ! плох, потому что при nil приложение упадёт, поэтому пишем name ?? \"Гость\".",
+  "note": "Не упомянута отдельная проверка пустой строки."
+ },
+ {
+  "task": "opt.s5",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "String? хранит либо строку, либо nil, а \"\" это строка без символов. ! плохая идея: nil с сервера обычное дело, и приложение упадёт. Надо ставить ?? \"Гость\" и проверять isEmpty.",
+  "note": "Не объяснено, когда if let, когда guard let."
+ },
+ {
+  "task": "opt.s5",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "String? хранит строку или nil, а nil — это то же самое, что пустая строка \"\". if let — когда проверяем, guard let — ранний выход, ?? — значение по умолчанию. ! не нужен, у пустой строки и так нет значения.",
+  "note": "Ложь: nil равно пустой строке."
+ },
+ {
+  "task": "opt.s5",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "String? это строка или nil. nil и \"\" разные. if let и guard let — одно и то же, разницы нет. ?? \"Гость\" заменит и nil, и пустую строку, поэтому отдельная проверка не нужна. ! не стоит, потому что медленный.",
+  "note": "Ложь: ?? заменяет пустую строку и guard = if let."
+ },
+ {
+  "task": "opt.s5",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "Это про generic и протоколы: String? наследуется от Equatable, а force unwrap нужен для многопоточности через async await.",
+  "note": "Набор терминов без смысла."
+ },
+ {
+  "task": "opt.s6",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "func cardTitle(for user: User) -> String {\n  let count: Int? = user.name?.count\n  guard let name = user.name, !name.isEmpty else {\n    return \"Гость · 0\"\n  }\n  return \"\\(name) · \\(count ?? 0)\"\n}",
+  "note": "Ключ в другой вёрстке."
+ },
+ {
+  "task": "opt.s6",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "let n: Int? = user.name?.count\nif let n, n > 0, let name = user.name { return \"\\(name) · \\(n)\" }\nreturn \"Гость · 0\"\n\nn — Int?, число если имя есть.",
+  "note": "Условие через n > 0."
+ },
+ {
+  "task": "opt.s6",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func cardTitle(for user: User) -> String {\n    let length: Int? = user.name?.count\n    if let name = user.name, let length = length, length > 0 {\n        return \"\\(name) · \\(length)\"\n    } else {\n        return \"Гость · 0\"\n    }\n}",
+  "note": "if/else и другие имена."
+ },
+ {
+  "task": "opt.s6",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "guard let name = user.name, !name.isEmpty else { return \"Гость · 0\" }\nreturn \"\\(name) · \\(name.count)\"",
+  "note": "Нет optional chaining, нарушено требование."
+ },
+ {
+  "task": "opt.s6",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let count: Int? = user.name?.count\nguard let name = user.name else { return \"Гость · 0\" }\nreturn \"\\(name) · \\(count ?? 0)\"\n\nCount это Int?.",
+  "note": "Пустая строка даёт « · 0» вместо «Гость · 0»."
+ },
+ {
+  "task": "opt.s6",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let count: Int = user.name!.count\nif count == 0 { return \"Гость · 0\" }\nreturn \"\\(user.name!) · \\(count)\"",
+  "note": "Force unwrap: крэш при nil."
+ },
+ {
+  "task": "opt.s6",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let count: Int? = user.name?.count\nif count = 0 { return \"Гость · 0\" }\nreturn \"\\(user.name) · \\(count)\"",
+  "note": "= вместо ==, интерполяция Optional."
+ },
+ {
+  "task": "opt.s6",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "return \"Гость · 0\"",
+  "note": "Всегда одна строка, имя не используется."
+ },
+ {
+  "task": "opt.s7",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "func displayName(_ name: String?) -> String {\n  guard let name, !name.isEmpty else { return \"Гость\" }\n  return name\n}\n\n?? срабатывает только на nil, а \"\" — это значение",
+  "note": "Ключ с кратким пояснением."
+ },
+ {
+  "task": "opt.s7",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func displayName(_ name: String?) -> String {\n    if let name = name, name.count > 0 { return name } else { return \"Гость\" }\n}\n\n?? смотрит только на nil, пустая строка не nil",
+  "note": "if let с count > 0."
+ },
+ {
+  "task": "opt.s7",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func displayName(_ name: String?) -> String {\n    let value = name ?? \"\"\n    return value.isEmpty ? \"Гость\" : value\n}",
+  "note": "?? в пустую строку и тернарный оператор."
+ },
+ {
+  "task": "opt.s7",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "func displayName(_ name: String?) -> String {\n  return name ?? \"Гость\"\n}\n\n?? заменяет nil",
+  "note": "Пустая строка не обрабатывается."
+ },
+ {
+  "task": "opt.s7",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "guard let name, name.isEmpty else { return \"Гость\" }\nreturn name",
+  "note": "Условие isEmpty перевёрнуто."
+ },
+ {
+  "task": "opt.s7",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "guard let name, !name.isEmpty else { return \"Гость\" }\nreturn name!",
+  "note": "Force unwrap уже развёрнутой строки."
+ },
+ {
+  "task": "opt.s7",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "func displayName(_ name: String?) -> String {\n guard let name, !name.isEmpty else {\n  \"Гость\"\n }\n return name\n}",
+  "note": "В else guard нет return."
+ },
+ {
+  "task": "opt.s7",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "func displayName() {\n print(\"Гость\")\n}",
+  "note": "Не решает задачу, нет параметра и результата."
+ },
+ {
+  "task": "opt-b1",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "250 false\n-1 false\n-1 false\n0 true\n\nml — Int?",
+  "note": "Построчно как в ключе."
+ },
+ {
+  "task": "opt-b1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "250 false, -1 false, -1 false, 0 true",
+  "note": "В одну строку через запятую."
+ },
+ {
+  "task": "opt-b1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "1) 250 false 2) -1 false 3) -1 false 4) 0 true. ml это Int?, сравнение с 0 работает, потому что 0 оборачивается в Optional",
+  "note": "Нумерация и пояснение."
+ },
+ {
+  "task": "opt-b1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "250 false\n-1 false\n300 false\n0 true",
+  "note": "Третья строка: « 300» с пробелом не число."
+ },
+ {
+  "task": "opt-b1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "250 false\n-1 false\n-1 false\n0 false",
+  "note": "Последнее сравнение должно быть true."
+ },
+ {
+  "task": "opt-b1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "250 false\n0 true\n300 false\n0 true",
+  "note": "Заблуждение: Int(\"\") даёт 0 и пробел игнорируется."
+ },
+ {
+  "task": "opt-b1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Не скомпилируется: Int? нельзя сравнивать с 0",
+  "note": "Заблуждение: сравнение Optional с литералом запрещено."
+ },
+ {
+  "task": "opt-b1",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "250\n250\n250\n250",
+  "note": "Игнорирует преобразование и ??."
+ },
+ {
+  "task": "opt-b2",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "func deliveryText(for parcel: Parcel) -> String {\n  guard let days = parcel.daysLeft else { return \"Срок уточняется\" }\n  return \"Осталось \\(days) дн.\"\n}\n\nИнтерполяция Optional печатает Optional(3).",
+  "note": "Ключ в другой вёрстке."
+ },
+ {
+  "task": "opt-b2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func deliveryText(for parcel: Parcel) -> String {\n    if let days = parcel.daysLeft {\n        return \"Осталось \\(days) дн.\"\n    }\n    return \"Срок уточняется\"\n}",
+  "note": "if let вместо guard let."
+ },
+ {
+  "task": "opt-b2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "parcel.daysLeft.map { \"Осталось \\($0) дн.\" } ?? \"Срок уточняется\"\n\nOptional.map и ?? для nil.",
+  "note": "map и ?? вместо ветвления."
+ },
+ {
+  "task": "opt-b2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "\"Осталось \\(parcel.daysLeft ?? 0) дн.\"\n\nНету значения — 0.",
+  "note": "Для nil пишет «Осталось 0 дн.», требование нарушено."
+ },
+ {
+  "task": "opt-b2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "guard let days = parcel.daysLeft else { return \"Срок уточняется\" }\nreturn \"Осталось \\(parcel.daysLeft) дн.\"",
+  "note": "Интерполируется всё ещё Optional."
+ },
+ {
+  "task": "opt-b2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "\"Осталось \\(parcel.daysLeft!) дн.\"",
+  "note": "Force unwrap: крэш при nil."
+ },
+ {
+  "task": "opt-b2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "guard let days = parcel.daysLeft { return \"Срок уточняется\" }\nreturn \"Осталось \\(days) дн.\"",
+  "note": "В guard нет else."
+ },
+ {
+  "task": "opt-b2",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "struct Parcel {\n let track: String\n let daysLeft: Int\n}",
+  "note": "Убирает Optional вместо исправления текста."
+ },
+ {
+  "task": "opt-b3",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "У prefersDark три состояния: true — выбрал тёмную, false — выбрал светлую, nil — ещё не выбирал. Optional добавляет к Bool ответ «значения нет», поэтому nil нельзя считать false. if ждёт Bool, а у нас Bool?, Swift сам не решает, что делать при nil. Тему выбираю так: settings.prefersDark ?? systemIsDark, явный выбор главнее, при nil идём за системой.",
+  "note": "Близко к ключу."
+ },
+ {
+  "task": "opt-b3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Смотри, переменная фактически как светофор из трёх положений: да, нет и «не знаем». nil — человек вообще не трогал настройку. if не пускает Bool?, потому что компилятор не знает, как трактовать nil. На экране беру ?? systemIsDark: если выбор есть — он, иначе как в системе. А если нужно только явное «да», то == true.",
+  "note": "Другая подача и порядок."
+ },
+ {
+  "task": "opt-b3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Три варианта. true — тёмная, false — светлая, nil — человек ничего не решал. Закомментированная строка не работает, потому что условию нужен обычный Bool, а тут Optional, и Swift не угадывает за нас. Для экрана — prefersDark ?? systemIsDark: выбор пользователя важнее, а если его нет — смотрим на систему.",
+  "note": "Разговорный полный ответ."
+ },
+ {
+  "task": "opt-b3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Состояний три: true — тёмная, false — светлая, nil — не выбирал. if не компилируется, потому что нужен Bool, а тут Optional.",
+  "note": "Нет способа выбрать тему."
+ },
+ {
+  "task": "opt-b3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Три состояния: тёмная, светлая и nil — пользователь не выбирал. Тему выбираем через settings.prefersDark ?? systemIsDark.",
+  "note": "Не объяснено, почему if не компилируется."
+ },
+ {
+  "task": "opt-b3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Три состояния, но nil при проверке считается как false, поэтому тёмная тема просто не включится. Строка не компилируется, потому что Bool? нельзя в if. Выбираем через ?? systemIsDark.",
+  "note": "Ложь: nil считается false."
+ },
+ {
+  "task": "opt-b3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Состояния true, false и nil. Строка не компилируется потому что prefersDark — var, а нужна константа let. Выбор: settings.prefersDark ?? false, и всё.",
+  "note": "Ложь про var/let и игнор системной темы."
+ },
+ {
+  "task": "opt-b3",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "Это про SwiftUI @State: prefersDark перерисовывает View, а Bool? — это Binding, который хранит тему.",
+  "note": "Ответ не по теме."
+ }
+]

@@ -1,0 +1,562 @@
+[
+ {
+  "task": "table.s1",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "Остров\n62 true\ntrue",
+  "note": "Совпадает с ключом."
+ },
+ {
+  "task": "table.s1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Остров, 62 true, true",
+  "note": "Те же значения в одну строку."
+ },
+ {
+  "task": "table.s1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "\"Остров\"\n62 и true (галочки нет)\ntrue, id обнулился после prepareForReuse",
+  "note": "Те же значения с пояснением."
+ },
+ {
+  "task": "table.s1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Остров\n62 false\ntrue",
+  "note": "Неверно вычислено сравнение accessoryType == .none."
+ },
+ {
+  "task": "table.s1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "62 true\nОстров\ntrue",
+  "note": "Перепутан порядок первых двух строк вывода."
+ },
+ {
+  "task": "table.s1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Маяки\n61 false\ntrue",
+  "note": "Заблуждение: вторая configure ничего не меняет, остаётся первая модель."
+ },
+ {
+  "task": "table.s1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Остров\n-1 true\ntrue",
+  "note": "Считает, что id сбрасывается сразу, до ручного prepareForReuse."
+ },
+ {
+  "task": "table.s1",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "Остров Маяки\n61 62\nfalse",
+  "note": "Набор значений без связи с кодом."
+ },
+ {
+  "task": "table.s2",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "{ games.count }\n\nlet table = UITableView(frame: CGRect(x: 0, y: 0, width: 320, height: 480), style: .plain)\nlet source = GameSource(games: games)\ntable.register(GameCell.self, forCellReuseIdentifier: \"Game\")\ntable.dataSource = source\nassert(source.tableView(table, numberOfRowsInSection: 0) == 2)",
+  "note": "Как в ключе, одной строкой."
+ },
+ {
+  "task": "table.s2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "-> Int { return games.count }\n\nlet table = UITableView(frame: CGRect(x: 0, y: 0, width: 320, height: 480))\nlet src = GameSource(games: games)\ntable.register(GameCell.self, forCellReuseIdentifier: \"Game\")\ntable.dataSource = src\nassert(table.numberOfRows(inSection: 0) == 2)",
+  "note": "Явный return, имя src, проверка через table.numberOfRows."
+ },
+ {
+  "task": "table.s2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func tableView(\n  _ tableView: UITableView, numberOfRowsInSection section: Int\n) -> Int { games.count }\n\nlet table = UITableView(frame: CGRect(x: 0, y: 0, width: 320, height: 480), style: .plain)\nlet source = GameSource(games: games)\ntable.dataSource = source\ntable.register(GameCell.self, forCellReuseIdentifier: \"Game\")\nlet rows = source.tableView(table, numberOfRowsInSection: 0)\nassert(rows == 2)",
+  "note": "dataSource до register (допустимо), результат в переменной."
+ },
+ {
+  "task": "table.s2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "games.count\n\nlet table = UITableView(frame: CGRect(x:0,y:0,width:320,height:480), style: .plain)\nlet source = GameSource(games: games)\ntable.dataSource = source\nassert(source.tableView(table, numberOfRowsInSection: 0) == 2)",
+  "note": "Нет register."
+ },
+ {
+  "task": "table.s2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "games.count\n\nlet table = UITableView(frame: CGRect(x: 0, y: 0, width: 320, height: 480), style: .plain)\nlet source = GameSource(games: games)\ntable.register(GameCell.self, forCellReuseIdentifier: \"GameCell\")\ntable.dataSource = source\nassert(source.tableView(table, numberOfRowsInSection: 0) == 2)\n\nregister нужен перед dequeue.",
+  "note": "Identifier «GameCell» не совпадает с «Game»."
+ },
+ {
+  "task": "table.s2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "games.count()\n\nlet table = UITableView(frame: CGRect(x:0,y:0,width:320,height:480), style: .plain)\ntable.register(GameCell.self, forCellReuseIdentifier: \"Game\")\ntable.dataSource = GameSource(games: games)",
+  "note": "count вызван как функция; источник временный, а dataSource слабый."
+ },
+ {
+  "task": "table.s2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "return 2\n\nlet table = UITableView(frame: CGRect(x: 0, y: 0, width: 320, height: 480), style: .plain)\nlet source = GameSource(games: games)\ntable.register(GameCell.self, forCellReuseIdentifier: \"Game\")\ntable.dataSource = source",
+  "note": "Число-заглушка вместо games.count, нет проверки."
+ },
+ {
+  "task": "table.s2",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "func numberOfSections(in tableView: UITableView) -> Int { games.count }",
+  "note": "Реализован не тот метод, нет регистрации."
+ },
+ {
+  "task": "table.s3",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "final class GameSource: NSObject, UITableViewDataSource {\n  let games: [Game]\n  init(games: [Game]) { self.games = games }\n  func tableView(\n    _ tableView: UITableView, numberOfRowsInSection section: Int\n  ) -> Int { games.count }\n  func tableView(\n    _ tableView: UITableView, cellForRowAt indexPath: IndexPath\n  ) -> UITableViewCell {\n    let cell = tableView.dequeueReusableCell(\n      withIdentifier: \"Game\", for: indexPath\n    ) as! GameCell\n    cell.configure(games[indexPath.row])\n    return cell\n  }\n}\n\nlet table = UITableView(\n    frame: CGRect(x: 0, y: 0, width: 320, height: 480), style: .plain\n)\nlet source = GameSource(games: games)\ntable.register(GameCell.self, forCellReuseIdentifier: \"Game\")\ntable.dataSource = source\nassert(source.tableView(table, numberOfRowsInSection: 0) == 2)\n\nlet row = IndexPath(row: 1, section: 0)\nlet cell = source.tableView(table, cellForRowAt: row) as! GameCell\nassert(cell.textLabel?.text == \"Остров\")\nassert(cell.accessoryType == .none)\nassert(cell.representedID == 62)",
+  "note": "Как в ключе, отступ 2 пробела."
+ },
+ {
+  "task": "table.s3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "final class GameSource: NSObject, UITableViewDataSource {\n    let games: [Game]\n    init(games: [Game]) { self.games = games }\n    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {\n        return games.count\n    }\n    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {\n        let game = games[indexPath.row]\n        guard let cell = tableView.dequeueReusableCell(withIdentifier: \"Game\", for: indexPath) as? GameCell else {\n            return UITableViewCell()\n        }\n        cell.configure(game)\n        return cell\n    }\n}\nlet table = UITableView(frame: CGRect(x: 0, y: 0, width: 320, height: 480))\nlet source = GameSource(games: games)\ntable.register(GameCell.self, forCellReuseIdentifier: \"Game\")\ntable.dataSource = source\nlet cell = source.tableView(table, cellForRowAt: IndexPath(row: 1, section: 0)) as! GameCell\nassert(cell.textLabel?.text == \"Остров\")\nassert(cell.accessoryType == .none)\nassert(cell.representedID == 62)",
+  "note": "guard let ... as? вместо as!, return и локальная game."
+ },
+ {
+  "task": "table.s3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "final class GameSource: NSObject, UITableViewDataSource {\n  private let items: [Game]\n  init(games: [Game]) { items = games }\n  func tableView(_ tv: UITableView, numberOfRowsInSection section: Int) -> Int { items.count }\n  func tableView(_ tv: UITableView, cellForRowAt ip: IndexPath) -> UITableViewCell {\n    let c = tv.dequeueReusableCell(withIdentifier: \"Game\", for: ip) as! GameCell\n    c.configure(items[ip.row])\n    return c\n  }\n}\nlet table = UITableView(frame: CGRect(x: 0, y: 0, width: 320, height: 480))\nlet source = GameSource(games: games)\ntable.register(GameCell.self, forCellReuseIdentifier: \"Game\")\ntable.dataSource = source\nlet ip = IndexPath(row: 1, section: 0)\nlet cell = source.tableView(table, cellForRowAt: ip) as! GameCell\nassert(cell.textLabel?.text == \"Остров\" && cell.accessoryType == .none)\nassert(cell.representedID == 62)\n\nИсточник хранится в source, потому что dataSource слабый.",
+  "note": "Другие имена параметров и свойства, assert через &&."
+ },
+ {
+  "task": "table.s3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "final class GameSource: NSObject, UITableViewDataSource {\n    let games: [Game]\n    init(games: [Game]) { self.games = games }\n    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { games.count }\n    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {\n        let cell = tableView.dequeueReusableCell(withIdentifier: \"Game\", for: indexPath) as! GameCell\n        cell.configure(games[indexPath.section])\n        return cell\n    }\n}\nlet table = UITableView(frame: CGRect(x: 0, y: 0, width: 320, height: 480))\nlet source = GameSource(games: games)\ntable.register(GameCell.self, forCellReuseIdentifier: \"Game\")\ntable.dataSource = source",
+  "note": "Модель берётся по section, а не по row."
+ },
+ {
+  "task": "table.s3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "final class GameSource: NSObject, UITableViewDataSource {\n    let games: [Game]\n    init(games: [Game]) { self.games = games }\n    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { games.count }\n    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {\n        let cell = tableView.dequeueReusableCell(withIdentifier: \"Game\", for: indexPath) as! GameCell\n        cell.configure(games[indexPath.row])\n        return cell\n    }\n}\nlet table = UITableView(frame: CGRect(x: 0, y: 0, width: 320, height: 480))\nlet source = GameSource(games: games)\ntable.dataSource = source\nlet cell = source.tableView(table, cellForRowAt: IndexPath(row: 1, section: 0)) as! GameCell\nassert(cell.representedID == 62)",
+  "note": "Нет register: dequeue с identifier упадёт."
+ },
+ {
+  "task": "table.s3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "final class GameSource: NSObject, UITableViewDataSource {\n  let games: [Game]\n  init(games: [Game]) { self.games = games }\n  func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { games.count }\n  func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {\n    let cell = tableView.dequeueReusableCell(withIdentifier: \"Game\", for: indexPath) as! GameCell\n    cell.configure(games[indexPath.row])\n  }\n}",
+  "note": "Забыт return cell."
+ },
+ {
+  "task": "table.s3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "final class GameSource: UITableViewDataSource {\n  let games: [Game]\n  init(games: [Game]) { self.games = games }\n  func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { games.count }\n  func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {\n    let cell = tableView.dequeueReusableCell(withIdentifier: \"Game\", for: indexPath) as! GameCell\n    cell.configure(games[indexPath.row])\n    return cell\n  }\n}\nlet table = UITableView(frame: CGRect(x: 0, y: 0, width: 320, height: 480))\ntable.register(GameCell.self, forCellReuseIdentifier: \"Game\")\ntable.dataSource = GameSource(games: games)\n\nПроверю строку 1 потом.",
+  "note": "Нет NSObject и временный источник."
+ },
+ {
+  "task": "table.s3",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "final class GameSource {\n    var rows = [\"Маяки\", \"Остров\"]\n    func title(at row: Int) -> String { rows[row] }\n}\nassert(GameSource().title(at: 1) == \"Остров\")",
+  "note": "Не dataSource и без ячеек."
+ },
+ {
+  "task": "table.s4",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "@MainActor\nfunc requestCover(cell: GameCell, id: Int, source: CoverSource) {\n  source.load(id: id) { [weak cell] image in\n    guard let cell, cell.representedID == id else { return }\n    cell.imageView?.image = image\n    cell.setNeedsLayout()\n  }\n}",
+  "note": "Как в ключе, отступ 2 пробела."
+ },
+ {
+  "task": "table.s4",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "source.load(id: id) { [weak cell] image in\n    guard let cell = cell, cell.representedID == id else { return }\n    cell.imageView?.image = image\n    cell.setNeedsLayout()\n}",
+  "note": "guard let cell = cell вместо краткой формы."
+ },
+ {
+  "task": "table.s4",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "source.load(id: id) { [weak cell] image in\n    guard cell?.representedID == id else { return }\n    cell?.imageView?.image = image\n    cell?.setNeedsLayout()\n}\n\nСравниваю с id, который замкнул запрос.",
+  "note": "Сравнение через optional chaining."
+ },
+ {
+  "task": "table.s4",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "source.load(id: id) { [weak cell] image in\n    guard let cell, cell.representedID != nil else { return }\n    cell.imageView?.image = image\n    cell.setNeedsLayout()\n}",
+  "note": "Проверяется только наличие id, а не равенство."
+ },
+ {
+  "task": "table.s4",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "source.load(id: id) { [weak cell] image in\n    guard let cell, cell.representedID != id else { return }\n    cell.imageView?.image = image\n    cell.setNeedsLayout()\n}",
+  "note": "Условие перевёрнуто."
+ },
+ {
+  "task": "table.s4",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "source.load(id: id) { [weak cell] image in\n    guard let cell, cell.representedID = id else { return }\n    cell.imageView?.image = image\n    cell.setNeedsLayout()\n}",
+  "note": "= вместо ==."
+ },
+ {
+  "task": "table.s4",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "source.load(id: id) { [weak cell] image in\n  guard let cell, cell.representedID == id else { return }\n  cell.imageView.image = image\n  cell.setNeedsLayout()\n}\n\nПроверка отсекает чужой id.",
+  "note": "imageView опционален, пропущен ?."
+ },
+ {
+  "task": "table.s4",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "source.finish(id: first.id, image: oldImage)\nsource.finish(id: second.id, image: newImage)",
+  "note": "Поменян порядок в проверке, а не исправлен requestCover."
+ },
+ {
+  "task": "table.s5",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "register говорит таблице, какой класс ячейки создавать, а dequeue отдаёт подходящий экземпляр. Каждый configure должен выставлять весь контент, а prepareForReuse только очищает временное состояние и ресурсы. representedID это текущая модель ячейки, по нему отсекаем чужую картинку, а selectedID хранит выбранную игру независимо от позиции строки.",
+  "note": "Полный ответ близко к ключу."
+ },
+ {
+  "task": "table.s5",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Через register таблица знает, ячейки какого класса делать, а dequeue достаёт готовую (или новую) под строку. Полагаться на prepareForReuse нельзя: он чистит хвосты вроде картинки, а всё актуальное содержимое каждый раз ставит configure. representedID говорит, какую игру ячейка показывает сейчас, чтобы поздняя картинка не села не туда; selectedID это выбор пользователя, он живёт отдельно и не привязан к строке.",
+  "note": "Полный ответ другими словами."
+ },
+ {
+  "task": "table.s5",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Регистрация связывает identifier с классом, dequeue берёт из пула подходящую ячейку. Ячейка переиспользуется, поэтому configure обязан перезаписать всё, а prepareForReuse сбрасывает временное и отменяет ресурсы. representedID это id модели в ячейке прямо сейчас, нужен против устаревших ответов; selectedID запоминает выбранную игру и от прокрутки не зависит.",
+  "note": "Разговорный вариант."
+ },
+ {
+  "task": "table.s5",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "register задаёт класс ячейки, dequeue берёт экземпляр из очереди. configure задаёт весь контент, а prepareForReuse очищает временное. representedID и selectedID оба про выбранную строку.",
+  "note": "Не различены representedID и selectedID."
+ },
+ {
+  "task": "table.s5",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "register привязывает класс к identifier, dequeue отдаёт экземпляр. prepareForReuse чистит состояние. representedID нужен чтобы старая картинка не села на другую модель, selectedID хранит выбор независимо от строки.",
+  "note": "Не сказано, почему prepareForReuse не заменяет configure."
+ },
+ {
+  "task": "table.s5",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "register создаёт ячейки заранее для каждой строки, dequeue просто достаёт её. prepareForReuse сам заново настраивает ячейку, поэтому configure можно не вызывать. representedID нужен для картинки, selectedID для выбора.",
+  "note": "Заблуждение: prepareForReuse настраивает содержимое."
+ },
+ {
+  "task": "table.s5",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "register задаёт класс ячейки, dequeue достаёт экземпляр. configure нужно вызывать только для новых ячеек, у переиспользованных всё остаётся. representedID и selectedID это одно и то же: индекс строки.",
+  "note": "Заблуждения: configure нужен не всегда; ids это индекс."
+ },
+ {
+  "task": "table.s5",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "Это про UICollectionView и Auto Layout: constraints пересчитываются при reloadData, а delegate вызывается на main thread, поэтому weak обязателен.",
+  "note": "Набор терминов не по теме вопроса."
+ },
+ {
+  "task": "table.s6",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "final class GameSource: NSObject, UITableViewDataSource, UITableViewDelegate {\n  let games: [Game]\n  private(set) var selectedID: Int?\n  ...\n  func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {\n    selectedID = games[indexPath.row].id\n    tableView.deselectRow(at: indexPath, animated: false)\n  }\n}\n\ntable.delegate = source\nsource.tableView(table, didSelectRowAt: IndexPath(row: 1, section: 0))\nassert(source.selectedID == 62)",
+  "note": "Как в ключе, 2 пробела."
+ },
+ {
+  "task": "table.s6",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "final class GameSource: NSObject, UITableViewDataSource, UITableViewDelegate {\n    var selectedID: Int?\n    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {\n        let game = games[indexPath.row]\n        selectedID = game.id\n        tableView.deselectRow(at: indexPath, animated: false)\n    }\n}\ntable.delegate = source",
+  "note": "Локальная game, var без private(set)."
+ },
+ {
+  "task": "table.s6",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "// в GameSource: UITableViewDelegate добавил в список протоколов\nprivate(set) var selectedID: Int? = nil\nfunc tableView(\n    _ tableView: UITableView, didSelectRowAt indexPath: IndexPath\n) {\n    self.selectedID = self.games[indexPath.row].id\n    tableView.deselectRow(at: indexPath, animated: false)\n}\n\nlet table = UITableView(frame: CGRect(x: 0, y: 0, width: 320, height: 480))\nlet source = GameSource(games: games)\ntable.register(GameCell.self, forCellReuseIdentifier: \"Game\")\ntable.dataSource = source\ntable.delegate = source\nsource.tableView(table, didSelectRowAt: IndexPath(row: 1, section: 0))\nassert(source.selectedID == 62)",
+  "note": "Явный self и nil по умолчанию, таблица целиком."
+ },
+ {
+  "task": "table.s6",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "var selectedID: Int?\nfunc tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {\n    selectedID = indexPath.row\n    tableView.deselectRow(at: indexPath, animated: false)\n}\ntable.delegate = source",
+  "note": "Сохраняется индекс строки вместо id игры."
+ },
+ {
+  "task": "table.s6",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "var selectedID: Int?\nfunc tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {\n    selectedID = games[indexPath.row].id\n    tableView.deselectRow(at: indexPath, animated: true)\n}\ntable.delegate = source",
+  "note": "deselect с анимацией, а нужен animated: false."
+ },
+ {
+  "task": "table.s6",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "final class GameSource: NSObject, UITableViewDataSource {\n  var selectedID: Int?\n  func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {\n    selectedID = games[indexPath.row].id\n    tableView.deselectRow(at: indexPath, animated: false)\n  }\n}\ntable.delegate = source",
+  "note": "Не добавлен UITableViewDelegate, присвоение delegate не скомпилируется."
+ },
+ {
+  "task": "table.s6",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let selectedID: Int?\nfunc tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {\n  selectedID = games[indexPath.row].id\n  tableView.deselectRow(at: indexPath, animated: false)\n}\ntable.delegate = source\n\nдобавил delegate",
+  "note": "selectedID объявлен let, но изменяется."
+ },
+ {
+  "task": "table.s6",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "table.selectRow(at: IndexPath(row: 1, section: 0), animated: false, scrollPosition: .none)\nassert(table.indexPathForSelectedRow?.row == 1)",
+  "note": "Вместо делегата выбрана строка в таблице, id не сохраняется."
+ },
+ {
+  "task": "table.s7",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "import UIKit\n\n@MainActor\nfinal class CoverSource {\n  private var pending: [Int: (UIImage) -> Void] = [:]\n  func load(id: Int, done: @escaping (UIImage) -> Void) {\n    pending[id] = done\n  }\n  func finish(id: Int, image: UIImage) {\n    pending.removeValue(forKey: id)?(image)\n  }\n}\n\nstruct Game {\n  let id: Int\n  let title: String\n  let saved: Bool\n}\n\nfinal class GameCell: UITableViewCell {\n  var representedID: Int?\n  func configure(_ game: Game) {\n    representedID = game.id\n    textLabel?.text = game.title\n    accessoryType = game.saved ? .checkmark : .none\n    imageView?.image = nil\n  }\n  override func prepareForReuse() {\n    super.prepareForReuse()\n    representedID = nil\n  }\n}\n\n@MainActor\nfunc requestCover(cell: GameCell, id: Int, source: CoverSource) {\n  source.load(id: id) { [weak cell] image in\n    guard let cell, cell.representedID == id else { return }\n    cell.imageView?.image = image\n    cell.setNeedsLayout()\n  }\n}\n\n@MainActor\nfunc checkRememberedCell() {\n  let source = CoverSource()\n  let cell = GameCell(style: .default, reuseIdentifier: \"Game\")\n  cell.configure(Game(id: 61, title: \"Маяки\", saved: true))\n  requestCover(cell: cell, id: 61, source: source)\n  cell.prepareForReuse()\n  cell.configure(Game(id: 63, title: \"Лес\", saved: false))\n  source.finish(id: 61, image: UIImage())\n  assert(cell.representedID == 63)\n  assert(cell.textLabel?.text == \"Лес\")\n  assert(cell.accessoryType == .none)\n  assert(cell.imageView?.image == nil)\n}",
+  "note": "Тот же код, другой порядок объявлений и отступ 2 пробела."
+ },
+ {
+  "task": "table.s7",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "import UIKit\nstruct Game { let id: Int; let title: String; let saved: Bool }\nfinal class GameCell: UITableViewCell {\n    var representedID: Int?\n    func configure(_ game: Game) {\n        representedID = game.id\n        textLabel?.text = game.title\n        if game.saved {\n            accessoryType = .checkmark\n        } else {\n            accessoryType = .none\n        }\n        imageView?.image = nil\n    }\n    override func prepareForReuse() {\n        super.prepareForReuse()\n        representedID = nil\n    }\n}\n\n@MainActor\nfinal class CoverSource {\n    private var pending: [Int: (UIImage) -> Void] = [:]\n    func load(id: Int, done: @escaping (UIImage) -> Void) {\n        pending[id] = done\n    }\n    func finish(id: Int, image: UIImage) {\n        pending.removeValue(forKey: id)?(image)\n    }\n}\n@MainActor\nfunc requestCover(cell: GameCell, id: Int, source: CoverSource) {\n    source.load(id: id) { [weak cell] image in\n        guard let cell = cell, cell.representedID == id else { return }\n        cell.imageView?.image = image\n        cell.setNeedsLayout()\n    }\n}\n\n@MainActor\nfunc checkRememberedCell() {\n    let source = CoverSource()\n    let cell = GameCell(style: .default, reuseIdentifier: \"Game\")\n    cell.configure(Game(id: 61, title: \"Маяки\", saved: true))\n    requestCover(cell: cell, id: 61, source: source)\n    cell.prepareForReuse()\n    cell.configure(Game(id: 63, title: \"Лес\", saved: false))\n    source.finish(id: 61, image: UIImage())\n    assert(cell.representedID == 63)\n    assert(cell.textLabel?.text == \"Лес\")\n    assert(cell.accessoryType == .none)\n    assert(cell.imageView?.image == nil)\n}",
+  "note": "if/else вместо тернарного, guard let cell = cell, Game в одну строку."
+ },
+ {
+  "task": "table.s7",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "import UIKit\n\nstruct Game {\n    let id: Int\n    let title: String\n    let saved: Bool\n}\n\n@MainActor\nfinal class CoverSource {\n    private var pending: [Int: (UIImage) -> Void] = [:]\n    func load(id: Int, done: @escaping (UIImage) -> Void) {\n        pending[id] = done\n    }\n    func finish(id: Int, image: UIImage) {\n        pending.removeValue(forKey: id)?(image)\n    }\n}\nfinal class GameCell: UITableViewCell {\n    var representedID: Int?\n    func configure(_ game: Game) {\n        self.representedID = game.id\n        self.imageView?.image = nil\n        self.textLabel?.text = game.title\n        self.accessoryType = game.saved ? .checkmark : .none\n    }\n    override func prepareForReuse() {\n        super.prepareForReuse()\n        self.representedID = nil\n    }\n}\n@MainActor\nfunc requestCover(cell: GameCell, id: Int, source: CoverSource) {\n    source.load(id: id) { [weak cell] image in\n        guard cell?.representedID == id else { return }\n        cell?.imageView?.image = image\n        cell?.setNeedsLayout()\n    }\n}\n@MainActor\nfunc checkRememberedCell() {\n    let source = CoverSource()\n    let cell = GameCell(style: .default, reuseIdentifier: \"Game\")\n    cell.configure(Game(id: 61, title: \"Маяки\", saved: true))\n    requestCover(cell: cell, id: 61, source: source)\n    cell.prepareForReuse()\n    cell.configure(Game(id: 63, title: \"Лес\", saved: false))\n    source.finish(id: 61, image: UIImage())\n    assert(cell.representedID == 63 && cell.textLabel?.text == \"Лес\")\n    assert(cell.accessoryType == .none)\n    assert(cell.imageView?.image == nil)\n}\n\nПорядок: configure, запрос, reuse, configure, finish.",
+  "note": "Явный self, порядок строк в configure, проверка через optional chaining."
+ },
+ {
+  "task": "table.s7",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "import UIKit\n\nstruct Game {\n    let id: Int\n    let title: String\n    let saved: Bool\n}\n\nfinal class GameCell: UITableViewCell {\n    var representedID: Int?\n    func configure(_ game: Game) {\n        representedID = game.id\n        textLabel?.text = game.title\n        accessoryType = game.saved ? .checkmark : .none\n    }\n    override func prepareForReuse() {\n        super.prepareForReuse()\n        representedID = nil\n    }\n}\n\n@MainActor\nfinal class CoverSource {\n    private var pending: [Int: (UIImage) -> Void] = [:]\n    func load(id: Int, done: @escaping (UIImage) -> Void) {\n        pending[id] = done\n    }\n    func finish(id: Int, image: UIImage) {\n        pending.removeValue(forKey: id)?(image)\n    }\n}\n\n@MainActor\nfunc requestCover(cell: GameCell, id: Int, source: CoverSource) {\n    source.load(id: id) { [weak cell] image in\n        guard let cell, cell.representedID == id else { return }\n        cell.imageView?.image = image\n        cell.setNeedsLayout()\n    }\n}\n\n@MainActor\nfunc checkRememberedCell() {\n    let source = CoverSource()\n    let cell = GameCell(style: .default, reuseIdentifier: \"Game\")\n    cell.configure(Game(id: 61, title: \"Маяки\", saved: true))\n    requestCover(cell: cell, id: 61, source: source)\n    cell.prepareForReuse()\n    cell.configure(Game(id: 63, title: \"Лес\", saved: false))\n    source.finish(id: 61, image: UIImage())\n    assert(cell.representedID == 63)\n    assert(cell.textLabel?.text == \"Лес\")\n    assert(cell.accessoryType == .none)\n    assert(cell.imageView?.image == nil)\n}",
+  "note": "В configure не очищается картинка."
+ },
+ {
+  "task": "table.s7",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "import UIKit\n\nstruct Game {\n    let id: Int\n    let title: String\n    let saved: Bool\n}\n\nfinal class GameCell: UITableViewCell {\n    var representedID: Int?\n    func configure(_ game: Game) {\n        representedID = game.id\n        textLabel?.text = game.title\n        accessoryType = game.saved ? .checkmark : .none\n        imageView?.image = nil\n    }\n    override func prepareForReuse() {\n        super.prepareForReuse()\n        representedID = nil\n    }\n}\n\n@MainActor\nfinal class CoverSource {\n    private var pending: [Int: (UIImage) -> Void] = [:]\n    func load(id: Int, done: @escaping (UIImage) -> Void) {\n        pending[id] = done\n    }\n    func finish(id: Int, image: UIImage) {\n        pending.removeValue(forKey: id)?(image)\n    }\n}\n@MainActor\nfunc requestCover(cell: GameCell, id: Int, source: CoverSource) {\n    source.load(id: id) { [weak cell] image in\n        cell?.imageView?.image = image\n        cell?.setNeedsLayout()\n    }\n}\n\n@MainActor\nfunc checkRememberedCell() {\n    let source = CoverSource()\n    let cell = GameCell(style: .default, reuseIdentifier: \"Game\")\n    cell.configure(Game(id: 61, title: \"Маяки\", saved: true))\n    requestCover(cell: cell, id: 61, source: source)\n    cell.prepareForReuse()\n    cell.configure(Game(id: 63, title: \"Лес\", saved: false))\n    source.finish(id: 61, image: UIImage())\n    assert(cell.representedID == 63)\n    assert(cell.textLabel?.text == \"Лес\")\n    assert(cell.accessoryType == .none)\n    assert(cell.imageView?.image == nil)\n}",
+  "note": "В requestCover нет проверки representedID == id."
+ },
+ {
+  "task": "table.s7",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "import UIKit\n\nstruct Game {\n    let id: Int\n    let title: String\n    let saved: Bool\n}\n\nfinal class GameCell: UITableViewCell {\n    var representedID: Int?\n    func configure(_ game: Game) {\n        representedID = game.id\n        textLabel?.text = game.title\n        accessoryType = game.saved ? .checkmark : .none\n        imageView?.image = nil\n    }\n    override func prepareForReuse() {\n        super.prepareForReuse()\n        representedID = nil\n    }\n}\n\n@MainActor\nfinal class CoverSource {\n    private var pending: [Int: (UIImage) -> Void] = [:]\n    func load(id: Int, done: @escaping (UIImage) -> Void) {\n        pending[id] = done\n    }\n    func finish(id: Int, image: UIImage) {\n        pending.removeValue(forKey: id)?(image)\n    }\n}\n@MainActor\nfunc requestCover(cell: GameCell, id: Int, source: CoverSource) {\n    source.load(id: id) { image in\n        guard cell.representedID == id else { return }\n        cell.imageView?.image = image\n        cell.setNeedsLayout()\n    }\n}\n\n@MainActor\nfunc checkRememberedCell() {\n    let source = CoverSource()\n    let cell = GameCell(style: .default, reuseIdentifier: \"Game\")\n    cell.configure(Game(id: 61, title: \"Маяки\", saved: true))\n    requestCover(cell: cell, id: 61, source: source)\n    cell.prepareForReuse()\n    cell.configure(Game(id: 63, title: \"Лес\", saved: false))\n    source.finish(id: 61, image: UIImage())\n    assert(cell.representedID == 63)\n    assert(cell.textLabel?.text == \"Лес\")\n    assert(cell.accessoryType == .none)\n    assert(cell.imageView?.image == nil)\n}",
+  "note": "Забыт [weak cell], замыкание держит ячейку."
+ },
+ {
+  "task": "table.s7",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "import UIKit\n\nstruct Game {\n    let id: Int\n    let title: String\n    let saved: Bool\n}\nfinal class GameCell: UITableViewCell {\n  let representedID: Int?\n  func configure(_ game: Game) {\n    representedID = game.id\n    textLabel?.text = game.title\n    accessoryType = game.saved ? .checkmark : .none\n    imageView?.image = nil\n  }\n  override func prepareForReuse() {\n    super.prepareForReuse()\n    representedID = nil\n  }\n}\n\nДальше requestCover и CoverSource как обычно.",
+  "note": "representedID объявлен let, но меняется."
+ },
+ {
+  "task": "table.s7",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "let cell = GameCell(style: .default, reuseIdentifier: \"Game\")\ncell.textLabel?.text = \"Лес\"\nassert(cell.textLabel?.text == \"Лес\")",
+  "note": "Нет модели, reuse и проверки id."
+ },
+ {
+  "task": "table-b1",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "let source = ShoppingSource()\ntable.dataSource = source\nsource.items.removeAll()\ntable.reloadData()\nassert(source.tableView(table, numberOfRowsInSection: 0) == 0)\nassert(table.dataSource === source)",
+  "note": "Как в ключе."
+ },
+ {
+  "task": "table-b1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "let source = ShoppingSource()\ntable.dataSource = source\nsource.items = []\ntable.reloadData()\nassert(table.numberOfRows(inSection: 0) == 0)\nassert(table.dataSource === source)",
+  "note": "items = [] и проверка через table.numberOfRows."
+ },
+ {
+  "task": "table-b1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "let owner = ShoppingSource()\ntable.dataSource = owner\nowner.items.removeLast()\ntable.reloadData()\nassert(owner.tableView(table, numberOfRowsInSection: 0) == 0)\nassert(table.dataSource === owner)\n\nowner держит источник, иначе dataSource слабый.",
+  "note": "removeLast и другое имя."
+ },
+ {
+  "task": "table-b1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let source = ShoppingSource()\ntable.dataSource = source\nsource.items.removeAll()\nassert(source.tableView(table, numberOfRowsInSection: 0) == 0)\nassert(table.dataSource === source)",
+  "note": "Нет reloadData."
+ },
+ {
+  "task": "table-b1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let source = ShoppingSource()\ntable.dataSource = source\nsource.items.removeAll()\ntable.reloadData()\nlet cell = source.tableView(table, cellForRowAt: IndexPath(row: 0, section: 0))\nassert(cell.textLabel?.text == nil)",
+  "note": "Вызван cellForRowAt для несуществующей строки, он упадёт."
+ },
+ {
+  "task": "table-b1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let source = ShoppingSource()\ntable.dataSource = source\nsource.items.removeLast\ntable.reloadData()\nassert(table.dataSource === source)",
+  "note": "removeLast без скобок, не вызван; нет проверки количества."
+ },
+ {
+  "task": "table-b1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let source = ShoppingSource()\ntable.dataSource = source\nsource.items.remove(at: 1)\ntable.reloadData()\nassert(source.tableView(table, numberOfRowsInSection: 0) == 0)",
+  "note": "Неверный индекс: в массиве один элемент."
+ },
+ {
+  "task": "table-b1",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "table.dataSource = nil\ntable.removeFromSuperview()\nprint(table.dataSource == nil)",
+  "note": "Убирает таблицу, источник и количество не проверяются."
+ },
+ {
+  "task": "table-b2",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "selectedID = places[indexPath.row].id\n\nfunc selectedName() -> String? {\n  places.first { $0.id == selectedID }?.name\n}",
+  "note": "Как в ключе."
+ },
+ {
+  "task": "table-b2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "selectedID = places[indexPath.row].id\n\nfunc selectedName() -> String? {\n    guard let id = selectedID else { return nil }\n    return places.first(where: { $0.id == id })?.name\n}",
+  "note": "guard let и first(where:) с развёрнутым замыканием."
+ },
+ {
+  "task": "table-b2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "let place = places[indexPath.row]\nselectedID = place.id\n\nfunc selectedName() -> String? {\n    if let place = places.first(where: { $0.id == selectedID }) {\n        return place.name\n    }\n    return nil\n}\n\nХраню id, а не индекс.",
+  "note": "if let вместо опциональной цепочки."
+ },
+ {
+  "task": "table-b2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "selectedID = places[indexPath.row].id\n\nfunc selectedName() -> String? {\n    selectedID.map { places[$0].name }\n}",
+  "note": "Сохраняется id, но поиск всё ещё по индексу."
+ },
+ {
+  "task": "table-b2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "selectedID = places[indexPath.row].id\n\nfunc selectedName() -> String? {\n    places.first { $0.id != selectedID }?.name\n}",
+  "note": "В поиске != вместо ==."
+ },
+ {
+  "task": "table-b2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "selectedID = places[indexPath.row].id\n\nfunc selectedName() -> String? {\n    places.first { $0.id == selectedID }.name\n}",
+  "note": "Пропущен ? после first."
+ },
+ {
+  "task": "table-b2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "selectedID = places[indexPath.row].id\n\nfunc selectedName() -> String? {\n    return places.first { $0.id == selectedID }!.name\n}",
+  "note": "Force unwrap падает, если место удалено."
+ },
+ {
+  "task": "table-b2",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "selectedID = indexPath.row\nplaces.sort { $0.id < $1.id }",
+  "note": "Вместо хранения id пытается сортировать массив."
+ },
+ {
+  "task": "table-b3",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "guard let self, self.representedID == id,\n      self.requestVersion == version else { return }",
+  "note": "Как в ключе."
+ },
+ {
+  "task": "table-b3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "requestVersion == version",
+  "note": "Без явного self, допустимо после guard let self."
+ },
+ {
+  "task": "table-b3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "version == self.requestVersion\n\nСтарый callback имеет прежнюю версию, поэтому его отбросит.",
+  "note": "Операнды в другом порядке."
+ },
+ {
+  "task": "table-b3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "self.requestVersion != version",
+  "note": "Условие перевёрнуто, принимается только устаревший ответ."
+ },
+ {
+  "task": "table-b3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "self.requestVersion > version",
+  "note": "Не то сравнение: пропускает старый, отбрасывает текущий."
+ },
+ {
+  "task": "table-b3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "self.requestVersion = version",
+  "note": "= вместо ==."
+ },
+ {
+  "task": "table-b3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "self.requestVersion == id",
+  "note": "Версия сравнивается с id пользователя, а не с version."
+ },
+ {
+  "task": "table-b3",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "DispatchQueue.main.async {\n    self.imageView?.image = image\n}",
+  "note": "Замена guard на переключение потока, версия не проверяется."
+ }
+]

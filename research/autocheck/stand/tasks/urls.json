@@ -1,0 +1,104 @@
+[
+ {
+  "id": "urls.s1",
+  "kind": "predict",
+  "title": "Ступень 1. Сначала статус",
+  "prompt": "Что напечатает локальная проверка? JSON корректен, но ответ имеет 503.",
+  "code": "import Foundation\nstruct Chapter: Decodable { let id: Int; let title: String }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}\nlet url = URL(string: \"https://api.example.invalid/chapters/12\")!\nlet data = Data(#\"{\"id\":12,\"title\":\"Первый снег\"}\"#.utf8)\nlet response = HTTPURLResponse(url: url, statusCode: 503,\n                               httpVersion: nil, headerFields: nil)!\ndo {\n    let chapter = try decodeChapter(data: data, response: response)\n    print(chapter.title)\n} catch LoadError.status(let code) {\n    print(\"HTTP \\(code)\")\n} catch { print(\"Другая ошибка\") }",
+  "key": "HTTP 503\n\nПроверка статуса срабатывает до JSONDecoder; название не печатается."
+ },
+ {
+  "id": "urls.s2",
+  "kind": "code",
+  "title": "Ступень 2. Заполни сетевой шаг",
+  "prompt": "В loadChapter заполни try await для data(for:) и передачу пары в decodeChapter. Остальные объявления даны.",
+  "code": "import Foundation\nstruct Chapter: Decodable { let id: Int; let title: String }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}\nfunc loadChapter(\n    id: Int, session: URLSession = .shared\n) async throws -> Chapter {\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/chapters/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    var request = URLRequest(url: url)\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    let (data, response) = /* запрос с ожиданием */\n    return /* проверка и декодирование */\n}",
+  "key": "import Foundation\nstruct Chapter: Decodable { let id: Int; let title: String }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}\nfunc loadChapter(\n    id: Int, session: URLSession = .shared\n) async throws -> Chapter {\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/chapters/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    var request = URLRequest(url: url)\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    let (data, response) = try await session.data(for: request)\n    return try decodeChapter(data: data, response: response)\n}\n\nСначала запрос возвращает пару, затем декодер проверяет статус и читает тело. Ошибки не скрыты.",
+  "points": [
+   "`let (data, response) = try await session.data(for: request)` — сессия из параметра, а не `.shared` напрямую.",
+   "`try` без `?` и `!`: сетевая ошибка (`URLError`) уходит наверх, а не глушится.",
+   "`response` не выбрасывается через `_`: пара целиком уходит в `decodeChapter(data: data, response: response)`.",
+   "`return try decodeChapter(...)` без `try?`: `LoadError.status` и `DecodingError` тоже доходят до вызывающего кода."
+  ]
+ },
+ {
+  "id": "urls.s3",
+  "kind": "code",
+  "title": "Ступень 3. Проверь ответ самостоятельно",
+  "prompt": "Даны модель и локальный ответ 200. Напиши decodeChapter: проверь HTTP, затем именно 200, затем JSON. При успехе выведи title.",
+  "code": "import Foundation\nstruct Chapter: Decodable { let id: Int; let title: String }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\n// Напиши decodeChapter(data:response:)\nlet url = URL(string: \"https://api.example.invalid/chapters/12\")!\nlet data = Data(#\"{\"id\":12,\"title\":\"Первый снег\"}\"#.utf8)\nlet response = HTTPURLResponse(url: url, statusCode: 200,\n                               httpVersion: nil, headerFields: nil)!\ndo {\n    let chapter = try decodeChapter(data: data, response: response)\n    print(chapter.title)\n} catch LoadError.status(let code) {\n    print(\"HTTP \\(code)\")\n} catch { print(\"Другая ошибка\") }",
+  "key": "import Foundation\nstruct Chapter: Decodable { let id: Int; let title: String }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}\nlet url = URL(string: \"https://api.example.invalid/chapters/12\")!\nlet data = Data(#\"{\"id\":12,\"title\":\"Первый снег\"}\"#.utf8)\nlet response = HTTPURLResponse(url: url, statusCode: 200,\n                               httpVersion: nil, headerFields: nil)!\ndo {\n    let chapter = try decodeChapter(data: data, response: response)\n    print(chapter.title)\n} catch LoadError.status(let code) {\n    print(\"HTTP \\(code)\")\n} catch { print(\"Другая ошибка\") }\n\nВывод «Первый снег». Только подходящий статус разрешает декодирование."
+ },
+ {
+  "id": "urls.s4",
+  "kind": "code",
+  "title": "Ступень 4. Сервер отказал, глава появилась",
+  "prompt": "Функция показывает главу при 503. Исправь порядок и назови результат до и после.",
+  "code": "import Foundation\nstruct Chapter: Decodable { let id: Int; let title: String }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}\nlet url = URL(string: \"https://api.example.invalid/chapters/12\")!\nlet data = Data(#\"{\"id\":12,\"title\":\"Первый снег\"}\"#.utf8)\nlet response = HTTPURLResponse(url: url, statusCode: 503,\n                               httpVersion: nil, headerFields: nil)!\ndo {\n    let chapter = try decodeChapter(data: data, response: response)\n    print(chapter.title)\n} catch LoadError.status(let code) {\n    print(\"HTTP \\(code)\")\n} catch { print(\"Другая ошибка\") }",
+  "key": "import Foundation\nstruct Chapter: Decodable { let id: Int; let title: String }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}\nlet url = URL(string: \"https://api.example.invalid/chapters/12\")!\nlet data = Data(#\"{\"id\":12,\"title\":\"Первый снег\"}\"#.utf8)\nlet response = HTTPURLResponse(url: url, statusCode: 503,\n                               httpVersion: nil, headerFields: nil)!\ndo {\n    let chapter = try decodeChapter(data: data, response: response)\n    print(chapter.title)\n} catch LoadError.status(let code) {\n    print(\"HTTP \\(code)\")\n} catch { print(\"Другая ошибка\") }\n\nДо правки — «Первый снег», после — «HTTP 503». Правильный JSON не отменяет ошибочный статус."
+ },
+ {
+  "id": "urls.s5",
+  "kind": "oral",
+  "title": "Ступень 5. Объясни загрузку",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Глава 12 загружается через URLSession.\nПочему храним response вместе с data?\nЧем различаются URLError, LoadError.status и DecodingError?\nПочему await не разрешает менять любой UI из любого контекста?",
+  "key": "response несёт HTTP-статус, который проверяем до тела. URLError сообщает об отказе транспорта, status — об HTTP-ответе вне контракта, DecodingError — о неподходящих данных успешного ответа. await приостанавливает задачу, а изменение UI требует нужной изоляции MainActor."
+ },
+ {
+  "id": "urls.s6",
+  "kind": "code",
+  "title": "Ступень 6. Результат отменённой задачи",
+  "prompt": "Добавь checkCancellation до запроса и после await. Остальной контракт прежний: 200 и JSON главы. Отмена не должна превращаться в успешный результат.",
+  "code": "import Foundation\nstruct Chapter: Decodable { let id: Int; let title: String }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}\nfunc loadChapter(\n    id: Int, session: URLSession = .shared\n) async throws -> Chapter {\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/chapters/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    var request = URLRequest(url: url)\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    let (data, response) = try await session.data(for: request)\n    return try decodeChapter(data: data, response: response)\n}",
+  "key": "import Foundation\nstruct Chapter: Decodable { let id: Int; let title: String }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}\nfunc loadChapter(\n    id: Int, session: URLSession = .shared\n) async throws -> Chapter {\n    try Task.checkCancellation()\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/chapters/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    var request = URLRequest(url: url)\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    let (data, response) = try await session.data(for: request)\n    try Task.checkCancellation()\n    return try decodeChapter(data: data, response: response)\n}\n\nОбнаруженная отмена бросает CancellationError. Проверка после await закрывает путь к возврату уже ненужной модели.",
+  "points": [
+   "`try Task.checkCancellation()` стоит первой строкой `loadChapter`, до сборки запроса.",
+   "Вторая `try Task.checkCancellation()` — сразу после `try await session.data(for: request)` и до `decodeChapter`.",
+   "Отмена бросает `CancellationError` наружу: не `return nil`, не пустая глава и не глушение в `catch`.",
+   "Остальной контракт прежний: `HTTPURLResponse`, `statusCode == 200`, затем `decode(Chapter.self, from: data)`."
+  ]
+ },
+ {
+  "id": "urls.s7",
+  "kind": "code",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Без готового кода восстанови загрузку длительности главы: Chapter содержит id: Int и duration: Int. GET /chapters/12 обещает только 200 с {\"id\":12,\"duration\":180}. Передай session параметром, проверь положительный id, HTTP и статус, затем декодируй. Ошибки не скрывай. На 204 JSON читать нельзя.",
+  "key": "import Foundation\nstruct Chapter: Decodable { let id: Int; let duration: Int }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}\nfunc loadChapter(\n    id: Int, session: URLSession = .shared\n) async throws -> Chapter {\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/chapters/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    var request = URLRequest(url: url)\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    let (data, response) = try await session.data(for: request)\n    return try decodeChapter(data: data, response: response)\n}\n\nВернётся duration 180 только из подходящего ответа. 204 и 503 остановятся на проверке статуса, а неверный тип duration даст ошибку декодирования.",
+  "points": [
+   "`struct Chapter: Decodable { let id: Int; let duration: Int }`.",
+   "`guard id > 0` → `LoadError.invalidID`, адрес `/chapters/\\(id)` через `guard let url` → `LoadError.invalidURL`.",
+   "`session: URLSession = .shared` параметром и `let (data, response) = try await session.data(for: request)`.",
+   "`response as? HTTPURLResponse` (иначе `notHTTP`) и `statusCode == 200` (иначе `LoadError.status`) — до `JSONDecoder`.",
+   "Итог: 180 только из ответа 200; 204 и 503 останавливаются на статусе, неверный тип `duration` даёт `DecodingError`."
+  ]
+ },
+ {
+  "id": "urls-b1",
+  "kind": "code",
+  "type": "Допиши",
+  "title": "Велостанция",
+  "prompt": "Заполни сетевой шаг и проверку ответа. GET станции 12 при 200 возвращает {\"id\":12,\"available\":3}; 503 нельзя декодировать как успех.",
+  "code": "import Foundation\nstruct BikeStation: Decodable { let id: Int; let available: Int }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeBikeStation(\n    data: Data, response: URLResponse\n) throws -> BikeStation {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard /* успешный статус */ else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(BikeStation.self, from: data)\n}\nfunc loadBikeStation(\n    id: Int, session: URLSession = .shared\n) async throws -> BikeStation {\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/bike-stations/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    var request = URLRequest(url: url)\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    let (data, response) = /* запрос */\n    return try decodeBikeStation(data: data, response: response)\n}",
+  "key": "import Foundation\nstruct BikeStation: Decodable { let id: Int; let available: Int }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeBikeStation(\n    data: Data, response: URLResponse\n) throws -> BikeStation {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(BikeStation.self, from: data)\n}\nfunc loadBikeStation(\n    id: Int, session: URLSession = .shared\n) async throws -> BikeStation {\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/bike-stations/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    var request = URLRequest(url: url)\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    let (data, response) = try await session.data(for: request)\n    return try decodeBikeStation(data: data, response: response)\n}\n\nЛокальный ответ 200 даёт available 3. Статус проверяется до данных."
+ },
+ {
+  "id": "urls-b2",
+  "kind": "code",
+  "type": "Найди ошибку",
+  "title": "Быстрый выбор главы аудиокниги",
+  "prompt": "Экран уже выбрал 13. Сначала пришёл ответ 13, потом 12. Исправь применение по актуальному selectedID, не меняя порядок ответов. UI и сеть здесь не запускаются.",
+  "code": "struct Chapter { let id: Int; let title: String }\nstruct ChapterScreen {\n    var selectedID = 13\n    private(set) var title = \"Загрузка\"\n    mutating func apply(_ chapter: Chapter) {\n        title = chapter.title\n    }\n}\nvar screen = ChapterScreen()\nscreen.apply(Chapter(id: 13, title: \"Глава 13\"))\nscreen.apply(Chapter(id: 12, title: \"Глава 12\"))\nprint(screen.title)",
+  "key": "struct Chapter { let id: Int; let title: String }\nstruct ChapterScreen {\n    var selectedID = 13\n    private(set) var title = \"Загрузка\"\n    mutating func apply(_ chapter: Chapter) {\n        guard chapter.id == selectedID else { return }\n        title = chapter.title\n    }\n}\nvar screen = ChapterScreen()\nscreen.apply(Chapter(id: 13, title: \"Глава 13\"))\nscreen.apply(Chapter(id: 12, title: \"Глава 12\"))\nprint(screen.title)\n\nДо правки «Глава 12», после — «Глава 13». Сверяем текущий выбор при применении, а не только захваченный id запроса. Повторы запросов того же id потребуют дополнительного номера запроса."
+ },
+ {
+  "id": "urls-b3",
+  "kind": "code",
+  "type": "Допиши",
+  "title": "Свободные стиральные машины",
+  "prompt": "Восстанови проверку HTTP и именно 200 до decode. GET комнаты 12 отдаёт {\"id\":12,\"available\":2}. Для 204 контракт запрещает декодирование.",
+  "code": "import Foundation\nstruct LaundryRoom: Decodable { let id: Int; let available: Int }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeLaundryRoom(\n    data: Data, response: URLResponse\n) throws -> LaundryRoom {\n    // Проверь тип ответа и статус\n    return try JSONDecoder().decode(LaundryRoom.self, from: data)\n}\nfunc loadLaundryRoom(\n    id: Int, session: URLSession = .shared\n) async throws -> LaundryRoom {\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/laundry-rooms/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    var request = URLRequest(url: url)\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    let (data, response) = try await session.data(for: request)\n    return try decodeLaundryRoom(data: data, response: response)\n}",
+  "key": "import Foundation\nstruct LaundryRoom: Decodable { let id: Int; let available: Int }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeLaundryRoom(\n    data: Data, response: URLResponse\n) throws -> LaundryRoom {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(LaundryRoom.self, from: data)\n}\nfunc loadLaundryRoom(\n    id: Int, session: URLSession = .shared\n) async throws -> LaundryRoom {\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/laundry-rooms/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    var request = URLRequest(url: url)\n    request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n    let (data, response) = try await session.data(for: request)\n    return try decodeLaundryRoom(data: data, response: response)\n}\n\navailable равен 2 только после успешного HTTP и декодирования. Для 204 получим LoadError.status(204)."
+ }
+]

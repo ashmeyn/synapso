@@ -1,0 +1,45 @@
+name: Swift
+
+# Real Swift over the autocheck rubrics: keys and verified variants must compile, «предскажи вывод» programs must print
+# what check.outs says. UIKit/SwiftUI tasks are type-checked against the iOS simulator SDK, never run.
+# macOS runner, so it runs only when something it checks has changed.
+on:
+  push:
+    paths:
+      - 'content/steps/**'
+      - 'content/bank/**'
+      - 'engine/check.js'
+      - 'scripts/swift_check.js'
+      - 'scripts/check_rubrics.js'
+      - '.github/workflows/swift.yml'
+  pull_request:
+    paths:
+      - 'content/steps/**'
+      - 'content/bank/**'
+      - 'engine/check.js'
+      - 'scripts/swift_check.js'
+      - 'scripts/check_rubrics.js'
+      - '.github/workflows/swift.yml'
+  workflow_dispatch:
+
+jobs:
+  swift:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Compile keys and variants, run «предскажи вывод»
+        run: node scripts/swift_check.js --report swift-report.json
+
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: swift-report
+          path: swift-report.json
+          if-no-files-found: ignore

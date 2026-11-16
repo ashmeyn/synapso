@@ -1,0 +1,562 @@
+[
+ {
+  "task": "codable.s1",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "Кодовые имена\n4\nБез подзаголовка",
+  "note": "Вывод как в ключе"
+ },
+ {
+  "task": "codable.s1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Кодовые имена, 4, Без подзаголовка. subtitle пришёл null, стал nil, поэтому ?? берёт запасной текст",
+  "note": "Одна строка через запятую с пояснением"
+ },
+ {
+  "task": "codable.s1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "1. \"Кодовые имена\"\n2. 4\n3. \"Без подзаголовка\"\nnull декодируется в nil, а ?? подставляет текст справа",
+  "note": "Нумерация и кавычки"
+ },
+ {
+  "task": "codable.s1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "4\nКодовые имена\nБез подзаголовка",
+  "note": "Перепутан порядок первых двух строк"
+ },
+ {
+  "task": "codable.s1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Кодовые имена\n4\nnil",
+  "note": "Третья строка nil вместо запасного текста"
+ },
+ {
+  "task": "codable.s1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Некорректные данные",
+  "note": "Считает, что null в subtitle ломает декодирование"
+ },
+ {
+  "task": "codable.s1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Кодовые имена\n0\nБез подзаголовка",
+  "note": "Думает, что player_count не сопоставится и будет 0"
+ },
+ {
+  "task": "codable.s1",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "Game(id: 5, title: \"Кодовые имена\", playerCount: 4)",
+  "note": "Печатает структуру, а не три строки"
+ },
+ {
+  "task": "codable.s2",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "import Foundation\nstruct Game: Codable {\n  let id: Int\n  let title: String\n  let playerCount: Int\n  let subtitle: String?   // может быть null\n  enum CodingKeys: String, CodingKey {\n    case id, title, subtitle\n    case playerCount = \"player_count\"\n  }\n}\nlet json = #\"{\"id\":5,\"title\":\"Кодовые имена\",\"player_count\":4,\"subtitle\":null}\"#\nlet data = Data(json.utf8)\ndo {\n  let game = try JSONDecoder().decode(Game.self, from: data)\n  print(game.title)\n  print(game.playerCount)\n  print(game.subtitle ?? \"Без подзаголовка\")\n} catch {\n  print(\"Некорректные данные\")\n}",
+  "note": "Тот же код, другие отступы и комментарий"
+ },
+ {
+  "task": "codable.s2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "let subtitle: Optional<String>\ncase playerCount = \"player_count\"",
+  "note": "Optional<String> вместо String?"
+ },
+ {
+  "task": "codable.s2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "struct Game: Codable {\n  let id: Int\n  let title: String\n  let playerCount: Int\n  let subtitle: String?\n  enum CodingKeys: String, CodingKey {\n    case id, title, subtitle\n    case playerCount=\"player_count\"\n  }\n}\n\nString? нужен, чтобы null не ломал декодирование.",
+  "note": "Только структура, без остального кода"
+ },
+ {
+  "task": "codable.s2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let subtitle: String?\ncase playerCount = \"playerCount\"",
+  "note": "Ключ JSON не изменён, player_count не найдётся"
+ },
+ {
+  "task": "codable.s2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let subtitle: String\ncase playerCount = \"player_count\"",
+  "note": "subtitle не Optional, null вызовет ошибку"
+ },
+ {
+  "task": "codable.s2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let subtitle: String?\ncase playerCount = player_count",
+  "note": "Нет кавычек вокруг строки ключа"
+ },
+ {
+  "task": "codable.s2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let subtitle: ?String\ncase playerCount = \"player_count\"",
+  "note": "Знак ? поставлен перед типом, не после"
+ },
+ {
+  "task": "codable.s2",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "let subtitle = nil\nplayerCount = playerCount",
+  "note": "Не тип и не строковый ключ"
+ },
+ {
+  "task": "codable.s3",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "import Foundation\nstruct Game: Codable {\n    let id: Int\n    let title: String\n    let playerCount: Int\n    let subtitle: String?\n    enum CodingKeys: String, CodingKey {\n        case id, title, subtitle\n        case playerCount = \"player_count\"\n    }\n}\nlet json = #\"{\"id\":5,\"title\":\"Кодовые имена\",\"player_count\":4,\"subtitle\":null}\"#\nlet data = Data(json.utf8)\ndo {\n\n    let game = try JSONDecoder().decode(Game.self, from: data)\n    let encoded = try JSONEncoder().encode(game)\n    // обратно\n    let restored = try JSONDecoder().decode(Game.self, from: encoded)\n    print(restored.id)\n    print(restored.playerCount)\n\n} catch {\n    print(\"Ошибка\")\n}",
+  "note": "Полный код с пустыми строками и комментарием"
+ },
+ {
+  "task": "codable.s3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "let decoder = JSONDecoder()\nlet encoder = JSONEncoder()\ndo {\n  let game = try decoder.decode(Game.self, from: data)\n  let out = try encoder.encode(game)\n  let restored = try decoder.decode(Game.self, from: out)\n  print(restored.id)\n  print(restored.playerCount)\n} catch {\n  print(\"Ошибка: \\(error)\")\n}",
+  "note": "Общие decoder/encoder, другие имена"
+ },
+ {
+  "task": "codable.s3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "do {\n  let game: Game = try JSONDecoder().decode(Game.self, from: data)\n  let encodedData: Data = try JSONEncoder().encode(game)\n  let restored: Game = try JSONDecoder().decode(Game.self, from: encodedData)\n  print(restored.id)\n  print(restored.playerCount)\n} catch let error {\n  print(error.localizedDescription)\n}\n\nПорядок ключей в JSON не сравниваю, смотрю на значения.",
+  "note": "Явные типы, catch let error"
+ },
+ {
+  "task": "codable.s3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "do {\n  let game = try JSONDecoder().decode(Game.self, from: data)\n  let encoded = try JSONEncoder().encode(game)\n  let restored = try JSONDecoder().decode(Game.self, from: encoded)\n  print(game.id)\n  print(game.playerCount)\n} catch { print(\"Ошибка\") }",
+  "note": "Печатает game, а не restored"
+ },
+ {
+  "task": "codable.s3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "do {\n  let game = try JSONDecoder().decode(Game.self, from: data)\n  let encoded = try JSONEncoder().encode(game)\n  let restored = try JSONDecoder().decode(Game.self, from: data)\n  print(restored.id)\n  print(restored.playerCount)\n} catch { print(\"Ошибка\") }",
+  "note": "Повторный decode читает исходные data, а не encoded"
+ },
+ {
+  "task": "codable.s3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let game = try! JSONDecoder().decode(Game.self, from: data)\nlet encoded = try! JSONEncoder().encode(game)\nlet restored = try! JSONDecoder().decode(Game.self, from: encoded)\nprint(restored.id)\nprint(restored.playerCount)",
+  "note": "try! вместо do/catch"
+ },
+ {
+  "task": "codable.s3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "do {\n  let game = try JSONDecoder().decode(Game.self, from: data)\n  let encoded = JSONEncoder().encode(game)\n  let restored = try JSONDecoder().decode(Game.self, from: encoded)\n  print(restored.id)\n  print(restored.playerCount)\n} catch { print(\"Ошибка\") }\n\nencode тоже может бросить, но я забыл.",
+  "note": "Забыт try перед encode"
+ },
+ {
+  "task": "codable.s3",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "let s = String(data: data, encoding: .utf8)\nprint(s == json)",
+  "note": "Сравнивает строки JSON, а не значения модели"
+ },
+ {
+  "task": "codable.s4",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "import Foundation\nstruct Game: Codable {\n  let id: Int\n  let title: String\n  let playerCount: Int\n  let subtitle: String?\n  enum CodingKeys: String, CodingKey {\n    case id, title, subtitle\n    case playerCount = \"player_count\"\n  }\n}\nlet json = #\"\"\"\n{\"id\":5,\"title\":\"Кодовые имена\",\n\"player_count\":4,\"subtitle\":null}\n\"\"\"#\nlet data = Data(json.utf8)\ndo {\n  let game = try JSONDecoder().decode(Game.self, from: data)\n  print(game.title)\n  print(game.playerCount)\n  print(game.subtitle ?? \"Без подзаголовка\")\n} catch {\n  print(\"Некорректные данные\")\n}",
+  "note": "Весь код, в JSON убраны кавычки у 4"
+ },
+ {
+  "task": "codable.s4",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "let json = #\"\"\"\n{ \"id\": 5, \"title\": \"Кодовые имена\",\n  \"player_count\": 4, \"subtitle\": null }\n\"\"\"#",
+  "note": "Тот же JSON с пробелами, число без кавычек"
+ },
+ {
+  "task": "codable.s4",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "let json = #\"{\"id\":5,\"title\":\"Кодовые имена\",\"player_count\":4,\"subtitle\":null}\"#\n\nКонтракт: число, значит в тестовом JSON 4 без кавычек.",
+  "note": "Однострочный литерал вместо многострочного"
+ },
+ {
+  "task": "codable.s4",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let playerCount: String",
+  "note": "Меняет тип свойства на String вопреки условию"
+ },
+ {
+  "task": "codable.s4",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let json = #\"\"\"\n{\"id\":5,\"title\":\"Кодовые имена\",\n\"playerCount\":4,\"subtitle\":null}\n\"\"\"#",
+  "note": "Число исправлено, но ключ переименован и не совпадёт с CodingKeys"
+ },
+ {
+  "task": "codable.s4",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let game = try! JSONDecoder().decode(Game.self, from: data)\nprint(game.playerCount)",
+  "note": "Использует запрещённый try!"
+ },
+ {
+  "task": "codable.s4",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let json = #\"\"\"\n{\"id\":5,\"title\":\"Кодовые имена\",\nplayer_count:4,\"subtitle\":null}\n\"\"\"#",
+  "note": "Убрал кавычки у ключа, а не у значения; невалидный JSON"
+ },
+ {
+  "task": "codable.s4",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "let count = Int(\"4\")\nprint(count)",
+  "note": "Преобразует строку вручную, JSON не исправлен"
+ },
+ {
+  "task": "codable.s5",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "Codable даёт и чтение и запись модели из внешнего формата, а CodingKeys связывает имена свойств с ключами JSON. Если поле Optional, то отсутствие и null допустимы, а у обязательного поля это ошибка; неверный тип Optional не спасает. do/catch нужен, чтобы ошибка данных не роняла приложение, как try!. А round trip проверяют по значениям восстановленной модели, потому что порядок ключей в JSON не важен.",
+  "note": "Близко к ключу"
+ },
+ {
+  "task": "codable.s5",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Смотри, Codable это сразу и decode, и encode. Когда имена в JSON другие, подключаю CodingKeys. Optional-поле спокойно переживёт, что ключа нет или там null, а обычное упадёт с ошибкой. Но если пришла строка вместо числа, Optional не поможет, тип всё равно не тот. Ошибки ловлю в do/catch, чтобы приложение не крашилось, как с try!. После encode и decode сравниваю значения полей: порядок ключей может быть любой, на него смотреть бессмысленно.",
+  "note": "Разговорный пересказ всех пунктов"
+ },
+ {
+  "task": "codable.s5",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Модель умеет и читаться из JSON, и записываться обратно. Ключи кодирования переводят свойство в серверное имя. Пропавшее поле и null нормально для необязательного, для обязательного это провал, а неправильный тип провал в любом случае. Для ошибок нужен do/catch вместо try!, иначе краш. В round trip важны значения у восстановленной модели, а порядок ключей в строке случаен.",
+  "note": "Другой порядок мыслей и синонимы"
+ },
+ {
+  "task": "codable.s5",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Codable умеет читать и писать, CodingKeys связывает свойства с ключами JSON. Optional разрешает отсутствие и null, обязательное поле нет, а неверный тип Optional не спасёт. do/catch нужен, чтобы приложение не падало на плохих данных.",
+  "note": "Нет про round trip и порядок ключей"
+ },
+ {
+  "task": "codable.s5",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Codable это чтение и запись, CodingKeys нужны для других имён ключей. Optional значит что поля может не быть или там null. do/catch ловит ошибки вместо падения, а round trip сравнивают по значениям, не по строке, потому что порядок ключей разный.",
+  "note": "Не сказано, что неверный тип Optional не принимает"
+ },
+ {
+  "task": "codable.s5",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Codable даёт чтение и запись, CodingKeys связывают ключи. Если поле Optional, то и отсутствие, и null, и неверный тип дадут просто nil, ошибки не будет. do/catch нужен от падений, а round trip смотрят по значениям, не по порядку ключей.",
+  "note": "Ложь: Optional принимает неверный тип"
+ },
+ {
+  "task": "codable.s5",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Codable читает и пишет JSON, CodingKeys связывают имена, Optional допускает отсутствие и null, а неверный тип всё равно ошибка. do/catch ловит ошибки. Round trip проверяют так: закодировали обратно и сравнили строку с исходным JSON, она должна совпасть символ в символ, включая порядок ключей.",
+  "note": "Ложь: round trip сравнивают точной строкой"
+ },
+ {
+  "task": "codable.s5",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "Codable это протокол для экрана, CodingKeys шифруют ключи, а do/catch повторяет цикл, пока JSON не станет Optional. Round trip это круглая кнопка.",
+  "note": "Набор терминов без смысла"
+ },
+ {
+  "task": "codable.s6",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "import Foundation\nstruct GameMode: Decodable {\n  let id: Int\n  let isCooperative: Bool\n  enum CodingKeys: String, CodingKey {\n    case id\n    case isCooperative = \"is_cooperative\"\n  }\n}\nlet data = Data(#\"{\"id\":5,\"is_cooperative\":true}\"#.utf8)\ndo {\n  let mode = try JSONDecoder().decode(GameMode.self, from: data)\n  print(mode.isCooperative)\n} catch {\n  print(\"Некорректные данные\")\n}\n\nКлюч is_cooperative переведён в isCooperative, поле Bool.",
+  "note": "Тот же код, другие отступы"
+ },
+ {
+  "task": "codable.s6",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "import Foundation\nstruct GameMode: Decodable {\n    let id: Int\n    let isCooperative: Bool\n    private enum CodingKeys: String, CodingKey {\n        case id\n        case isCooperative = \"is_cooperative\"\n    }\n}\nlet json = #\"{\"id\":5,\"is_cooperative\":true}\"#\ndo {\n    let mode = try JSONDecoder().decode(GameMode.self, from: Data(json.utf8))\n    print(mode.isCooperative)\n} catch {\n    print(error)\n}",
+  "note": "private CodingKeys, JSON в отдельной константе"
+ },
+ {
+  "task": "codable.s6",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "struct GameMode: Decodable {\n  let id: Int\n  let isCooperative: Bool\n  enum CodingKeys: String, CodingKey { case id; case isCooperative = \"is_cooperative\" }\n}\nlet data = \"{\\\"id\\\":5,\\\"is_cooperative\\\":true}\".data(using: .utf8)!\nlet decoder = JSONDecoder()\ndo {\n  let mode: GameMode = try decoder.decode(GameMode.self, from: data)\n  print(mode.isCooperative)\n} catch {\n  print(\"Ошибка декодирования\")\n}",
+  "note": "Данные через data(using:), явный тип, свой decoder"
+ },
+ {
+  "task": "codable.s6",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "import Foundation\nstruct GameMode: Decodable {\n  let id: Int\n  let isCooperative: Bool\n}\nlet data = Data(#\"{\"id\":5,\"is_cooperative\":true}\"#.utf8)\ndo {\n  let mode = try JSONDecoder().decode(GameMode.self, from: data)\n  print(mode.isCooperative)\n} catch { print(\"Некорректные данные\") }",
+  "note": "Нет CodingKeys, ключ is_cooperative не сопоставлен"
+ },
+ {
+  "task": "codable.s6",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "import Foundation\nstruct GameMode: Decodable {\n  let id: Int\n  let isCooperative: Bool\n  enum CodingKeys: String, CodingKey {\n    case id\n    case isCooperative = \"is_cooperative\"\n  }\n}\nlet data = Data(#\"{\"id\":5,\"is_cooperative\":true}\"#.utf8)\ndo {\n  let mode = try JSONDecoder().decode(GameMode.self, from: data)\n  print(mode.id)\n} catch { print(\"Некорректные данные\") }",
+  "note": "Выводит id вместо признака isCooperative"
+ },
+ {
+  "task": "codable.s6",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let data = Data(#\"{\"id\":5,\"is_cooperative\":true}\"#.utf8)\nlet mode = try! JSONDecoder().decode(GameMode.self, from: data)\nprint(mode.isCooperative)",
+  "note": "try! вместо do/catch"
+ },
+ {
+  "task": "codable.s6",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "struct GameMode: Decodable {\n  let id: Int\n  let isCooperative: Bool\n  enum CodingKeys: String, CodingKey {\n    case id\n    case isCooperative = \"is_cooperative\"\n  }\n}\nlet data = Data(#\"{\"id\":5,\"is_cooperative\":true}\"#.utf8)\ndo {\n  let mode = JSONDecoder().decode(GameMode.self, from: data)\n  print(mode.isCooperative)\n} catch { print(\"Ошибка\") }",
+  "note": "Забыт try перед decode"
+ },
+ {
+  "task": "codable.s6",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "let isCooperative = true\nprint(isCooperative)",
+  "note": "Не декодирует JSON, просто печатает true"
+ },
+ {
+  "task": "codable.s7",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "import Foundation\nstruct GameCover: Decodable {\n  let id: Int\n  let title: String\n  let coverPath: String?\n  enum CodingKeys: String, CodingKey {\n    case id, title\n    case coverPath = \"cover_path\"\n  }\n}\nlet data = Data(#\"{\"id\":5,\"title\":\"Кодовые имена\"}\"#.utf8)\ndo {\n  let game = try JSONDecoder().decode(GameCover.self, from: data)\n  print(game.coverPath ?? \"Нет обложки\")\n} catch {\n  print(\"Некорректные данные\")\n}",
+  "note": "Тот же код, отступы по 2 пробела"
+ },
+ {
+  "task": "codable.s7",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "import Foundation\nstruct GameCover: Decodable {\n    let id: Int\n    let title: String\n    let coverPath: String?\n    enum CodingKeys: String, CodingKey { case id, title, coverPath = \"cover_path\" }\n}\nlet data = Data(#\"{\"id\":5,\"title\":\"Кодовые имена\"}\"#.utf8)\ndo {\n    let cover = try JSONDecoder().decode(GameCover.self, from: data)\n    if let path = cover.coverPath { print(path) } else { print(\"Нет обложки\") }\n} catch { print(\"Некорректные данные\") }",
+  "note": "if let вместо ??"
+ },
+ {
+  "task": "codable.s7",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "do {\n  let game = try JSONDecoder().decode(GameCover.self, from: data)\n  switch game.coverPath {\n  case .some(let path): print(path)\n  case .none: print(\"Нет обложки\")\n  }\n} catch {\n  print(\"Некорректные данные\")\n}",
+  "note": "switch по Optional, только тело do/catch"
+ },
+ {
+  "task": "codable.s7",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "struct GameCover: Decodable {\n  let id: Int\n  let title: String\n  let coverPath: String\n  enum CodingKeys: String, CodingKey {\n    case id, title\n    case coverPath = \"cover_path\"\n  }\n}\nlet data = Data(#\"{\"id\":5,\"title\":\"Кодовые имена\"}\"#.utf8)\ndo {\n  let game = try JSONDecoder().decode(GameCover.self, from: data)\n  print(game.coverPath)\n} catch { print(\"Некорректные данные\") }",
+  "note": "coverPath не Optional, будет keyNotFound"
+ },
+ {
+  "task": "codable.s7",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let game = (try? JSONDecoder().decode(GameCover.self, from: data)) ?? GameCover(id: 0, title: \"\", coverPath: nil)\nprint(game.coverPath ?? \"Нет обложки\")",
+  "note": "Подменяет ошибку фиктивным значением вместо do/catch"
+ },
+ {
+  "task": "codable.s7",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "do {\n  let game = try! JSONDecoder().decode(GameCover.self, from: data)\n  print(game.coverPath ?? \"Нет обложки\")\n} catch {\n  print(\"Некорректные данные\")\n}",
+  "note": "try! внутри do, ошибка не ловится"
+ },
+ {
+  "task": "codable.s7",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "do {\n  let game = try JSONDecoder().decode(GameCover.self, from: data)\n  print(game.coverPath)\n} catch { print(\"Некорректные данные\") }\n\nВыведет nil, если обложки нет.",
+  "note": "Печатает Optional напрямую, нет текста «Нет обложки»"
+ },
+ {
+  "task": "codable.s7",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "struct GameCover {\n  var cover = \"Нет обложки\"\n}\nprint(GameCover().cover)",
+  "note": "Не Decodable, ничего не декодирует"
+ },
+ {
+  "task": "codable-b1",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "Фикус\ntrue",
+  "note": "Вывод как в ключе"
+ },
+ {
+  "task": "codable-b1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Фикус, true (height_cm: null стал nil, сравнение с nil даёт true)",
+  "note": "Через запятую с пояснением"
+ },
+ {
+  "task": "codable-b1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "\"Фикус\" и потом true. display_name попал в displayName, а null в heightCm это nil",
+  "note": "Кавычки и пояснение"
+ },
+ {
+  "task": "codable-b1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "true\nФикус",
+  "note": "Строки поменяны местами"
+ },
+ {
+  "task": "codable-b1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Фикус\nfalse",
+  "note": "Вторая строка false вместо true"
+ },
+ {
+  "task": "codable-b1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Фикус\nnil",
+  "note": "Думает, что печатается сам nil, а не результат сравнения"
+ },
+ {
+  "task": "codable-b1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Некорректные данные",
+  "note": "Считает, что null нельзя прочитать в Int?"
+ },
+ {
+  "task": "codable-b1",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "7\nФикус",
+  "note": "Печатает id и имя, не то"
+ },
+ {
+  "task": "codable-b2",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "} catch DecodingError.keyNotFound(let field, _) {\n    print(\"Нет ключа: \\(field.stringValue)\")\n} catch DecodingError.typeMismatch(_, let context) {\n    let field = context.codingPath.last?.stringValue ?? \"<корень>\"\n    print(\"Неверный тип: \\(field)\")\n} catch {\n    print(\"Другая ошибка\")\n}",
+  "note": "Как в ключе"
+ },
+ {
+  "task": "codable-b2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "  catch DecodingError.keyNotFound(let key, _) {\n    print(\"Нет ключа: \\(key.stringValue)\")\n  } catch DecodingError.typeMismatch(_, let ctx) {\n    print(\"Неверный тип: \\(ctx.codingPath.last!.stringValue)\")\n  } catch {\n    print(\"Другая ошибка\")\n  }",
+  "note": "Другие имена, last! вместо ?? "
+ },
+ {
+  "task": "codable-b2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "} catch let DecodingError.keyNotFound(key, _) {\n    print(\"Нет ключа: \" + key.stringValue)\n} catch let DecodingError.typeMismatch(_, context) {\n    print(\"Неверный тип: \" + context.codingPath.map { $0.stringValue }.joined(separator: \".\"))\n} catch {\n    print(\"Другая ошибка\")\n}\n\nПуть собираю из codingPath целиком.",
+  "note": "catch let и путь через joined"
+ },
+ {
+  "task": "codable-b2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "} catch DecodingError.keyNotFound {\n    print(\"Нет ключа\")\n} catch DecodingError.typeMismatch(_, let context) {\n    print(\"Неверный тип: \\(context.codingPath.last!.stringValue)\")\n} catch { print(\"Другая ошибка\") }",
+  "note": "Для отсутствующего ключа не показано имя поля"
+ },
+ {
+  "task": "codable-b2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "} catch DecodingError.keyNotFound(let field, _) {\n    print(\"Нет ключа: \\(field.stringValue)\")\n} catch DecodingError.typeMismatch(_, let context) {\n    print(\"Неверный тип: \\(context.codingPath.last!.stringValue)\")\n}",
+  "note": "Нет общего catch для других ошибок"
+ },
+ {
+  "task": "codable-b2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "} catch DecodingError.keyNotFound {\n    print(\"Нет ключа: \\(field)\")\n} catch DecodingError.typeMismatch {\n    print(\"Неверный тип: \\(field)\")\n} catch { print(\"Другая ошибка\") }",
+  "note": "field нигде не объявлен, значение не извлечено"
+ },
+ {
+  "task": "codable-b2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "} catch keyNotFound(let field, _) {\n    print(\"Нет ключа: \\(field.stringValue)\")\n} catch typeMismatch(_, let context) {\n    print(\"Неверный тип: \\(context.codingPath.last!.stringValue)\")\n} catch { print(\"Другая ошибка\") }",
+  "note": "Забыт префикс DecodingError."
+ },
+ {
+  "task": "codable-b2",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "struct Firmware: Decodable { let id: Int; let build: Int? }\n\nСделаю build необязательным, тогда ошибок не будет.",
+  "note": "Меняет модель вместо добавления catch"
+ },
+ {
+  "task": "codable-b3",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "struct VoteSummary: Decodable { let id: Int; let winner: String? }  // winner может не прийти",
+  "note": "Строка с комментарием"
+ },
+ {
+  "task": "codable-b3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Optional<String>",
+  "note": "Явная запись Optional<String>"
+ },
+ {
+  "task": "codable-b3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "struct VoteSummary: Decodable {\n    let id: Int\n    let winner: String?\n}\n\nКлюча нет, поэтому winner станет nil.",
+  "note": "Структура в несколько строк"
+ },
+ {
+  "task": "codable-b3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "struct VoteSummary: Decodable { let id: Int; let winner: String }",
+  "note": "winner без Optional, ключа нет и будет ошибка"
+ },
+ {
+  "task": "codable-b3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "struct VoteSummary: Decodable { let id: Int?; let winner: String? }",
+  "note": "id тоже сделан Optional вопреки условию"
+ },
+ {
+  "task": "codable-b3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "struct VoteSummary: Decodable { let id: Int; let winner: ?String }",
+  "note": "? поставлен перед типом"
+ },
+ {
+  "task": "codable-b3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "struct VoteSummary: Decodable { let id: Int; let winner: Optional }",
+  "note": "Optional без указания типа"
+ },
+ {
+  "task": "codable-b3",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "struct VoteSummary: Decodable { let id: Int; let winner = nil }",
+  "note": "Тип не указан, nil не определяет тип"
+ }
+]

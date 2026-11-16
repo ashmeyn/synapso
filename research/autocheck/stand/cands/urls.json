@@ -1,0 +1,562 @@
+[
+ {
+  "task": "urls.s1",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "HTTP 503",
+  "note": "Вывод как в ключе"
+ },
+ {
+  "task": "urls.s1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "HTTP 503 (статус проверяется до декодирования JSON)",
+  "note": "Тот же вывод с пояснением"
+ },
+ {
+  "task": "urls.s1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "\"HTTP 503\"",
+  "note": "Тот же вывод в кавычках"
+ },
+ {
+  "task": "urls.s1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "HTTP 200",
+  "note": "Неверное число в строке статуса"
+ },
+ {
+  "task": "urls.s1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "HTTP 503\nДругая ошибка",
+  "note": "Лишняя вторая строка"
+ },
+ {
+  "task": "urls.s1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Первый снег",
+  "note": "Считает, что корректный JSON декодируется независимо от статуса"
+ },
+ {
+  "task": "urls.s1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Другая ошибка",
+  "note": "Думает, что status(503) попадёт в общий catch"
+ },
+ {
+  "task": "urls.s1",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "Chapter(id: 12, title: \"Первый снег\")",
+  "note": "Печатает модель вместо результата проверки"
+ },
+ {
+  "task": "urls.s2",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "let (data, response) = try await session.data(for: request)\nreturn try decodeChapter(data: data, response: response)",
+  "note": "Как в ключе"
+ },
+ {
+  "task": "urls.s2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "    let (data, response) = try await session.data(for: request, delegate: nil)\n    return try decodeChapter(data: data, response: response)",
+  "note": "Вызов data(for:delegate:) с nil"
+ },
+ {
+  "task": "urls.s2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "let result = try await session.data(for: request)\nreturn try decodeChapter(data: result.0, response: result.1)\n\nЗапрос возвращает пару, беру её части по индексам.",
+  "note": "Кортеж без деструктуризации"
+ },
+ {
+  "task": "urls.s2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let (data, response) = try await session.data(from: url)\nreturn try decodeChapter(data: data, response: response)",
+  "note": "data(from: url) игнорирует request с заголовком Accept"
+ },
+ {
+  "task": "urls.s2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let (data, response) = try await session.data(for: request)\nreturn try JSONDecoder().decode(Chapter.self, from: data)\n\nЖдём ответ и декодируем тело.",
+  "note": "Пропущена проверка статуса через decodeChapter"
+ },
+ {
+  "task": "urls.s2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let (data, response) = try session.data(for: request)\nreturn try decodeChapter(data: data, response: response)",
+  "note": "Забыл await"
+ },
+ {
+  "task": "urls.s2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let (data, response) = try await session.data(for: request)\nreturn decodeChapter(data: data, response: response)",
+  "note": "Забыл try перед decodeChapter"
+ },
+ {
+  "task": "urls.s2",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "let (data, response) = (Data(), URLResponse())\nreturn Chapter(id: id, title: \"Первый снег\")",
+  "note": "Заглушка вместо запроса"
+ },
+ {
+  "task": "urls.s3",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "func decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n  guard let http = response as? HTTPURLResponse else {\n    throw LoadError.notHTTP\n  }\n  guard http.statusCode == 200 else {\n    throw LoadError.status(http.statusCode)\n  }\n\n  return try JSONDecoder().decode(Chapter.self, from: data)\n}",
+  "note": "Как в ключе, другие переносы"
+ },
+ {
+  "task": "urls.s3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    guard let http = response as? HTTPURLResponse else { throw LoadError.notHTTP }\n    if http.statusCode != 200 { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}\n\nСначала HTTP, потом статус, потом JSON.",
+  "note": "if вместо второго guard"
+ },
+ {
+  "task": "urls.s3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    guard let http = response as? HTTPURLResponse else {\n        throw LoadError.notHTTP\n    }\n    switch http.statusCode {\n    case 200:\n        let chapter = try JSONDecoder().decode(Chapter.self, from: data)\n        return chapter\n    default:\n        throw LoadError.status(http.statusCode)\n    }\n}",
+  "note": "switch по статусу"
+ },
+ {
+  "task": "urls.s3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "guard let http = response as? HTTPURLResponse else { throw LoadError.notHTTP }\nguard (200..<300).contains(http.statusCode) else { throw LoadError.status(http.statusCode) }\nreturn try JSONDecoder().decode(Chapter.self, from: data)",
+  "note": "Принимает любой 2xx, а нужно именно 200"
+ },
+ {
+  "task": "urls.s3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "guard let http = response as? HTTPURLResponse else { throw LoadError.notHTTP }\nguard http.statusCode == 200 else { throw LoadError.notHTTP }\nreturn try JSONDecoder().decode(Chapter.self, from: data)\n\nЕсли статус не 200 — бросаем ошибку.",
+  "note": "Для статуса бросает notHTTP вместо status(code)"
+ },
+ {
+  "task": "urls.s3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "func decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n  let http = response as! HTTPURLResponse\n  guard http.statusCode == 200 else { throw LoadError.status(http.statusCode) }\n  return try JSONDecoder().decode(Chapter.self, from: data)\n}",
+  "note": "Force cast вместо проверки типа"
+ },
+ {
+  "task": "urls.s3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "guard let http = response as? HTTPURLResponse else { throw LoadError.notHTTP }\nguard http.statusCode = 200 else { throw LoadError.status(http.statusCode) }\nreturn try JSONDecoder().decode(Chapter.self, from: data)",
+  "note": "= вместо =="
+ },
+ {
+  "task": "urls.s3",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "func decodeChapter(data: Data, response: URLResponse) {\n  print(\"Первый снег\")\n}",
+  "note": "Заглушка без проверок и decode"
+ },
+ {
+  "task": "urls.s4",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "func decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n  guard let http = response as? HTTPURLResponse\n  else { throw LoadError.notHTTP }\n  guard http.statusCode == 200\n  else { throw LoadError.status(http.statusCode) }\n  return try JSONDecoder().decode(Chapter.self, from: data)\n}",
+  "note": "Как в ключе"
+ },
+ {
+  "task": "urls.s4",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "guard let http = response as? HTTPURLResponse else { throw LoadError.notHTTP }\nif http.statusCode != 200 { throw LoadError.status(http.statusCode) }\nreturn try JSONDecoder().decode(Chapter.self, from: data)\n\nДо правки выводило «Первый снег», после — «HTTP 503».",
+  "note": "if вместо guard; до/после названы"
+ },
+ {
+  "task": "urls.s4",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    if let http = response as? HTTPURLResponse {\n        guard http.statusCode == 200 else { throw LoadError.status(http.statusCode) }\n    } else {\n        throw LoadError.notHTTP\n    }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}",
+  "note": "Проверка в if let / else"
+ },
+ {
+  "task": "urls.s4",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let http = response as? HTTPURLResponse\nguard http?.statusCode == 200 else { throw LoadError.notHTTP }\nreturn try JSONDecoder().decode(Chapter.self, from: data)",
+  "note": "Нет различия notHTTP/status: на 503 выводится «Другая ошибка»"
+ },
+ {
+  "task": "urls.s4",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "guard let http = response as? HTTPURLResponse else { throw LoadError.notHTTP }\nguard http.statusCode == 200 else { throw LoadError.status(200) }\nreturn try JSONDecoder().decode(Chapter.self, from: data)\n\nДо — «Первый снег», после — «HTTP 200».",
+  "note": "В status передан 200, а не фактический код"
+ },
+ {
+  "task": "urls.s4",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "guard let http = response as? HTTPURLResponse else { throw LoadError.notHTTP }\nguard http.statusCode = 200 else { throw LoadError.status(http.statusCode) }\nreturn try JSONDecoder().decode(Chapter.self, from: data)",
+  "note": "= вместо =="
+ },
+ {
+  "task": "urls.s4",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "guard let http = response as? HTTPURLResponse else { throw LoadError.notHTTP }\nguard http.statusCode == 200 else { LoadError.status(http.statusCode) }\nreturn try JSONDecoder().decode(Chapter.self, from: data)",
+  "note": "Забыл throw в else"
+ },
+ {
+  "task": "urls.s4",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "let response = HTTPURLResponse(url: url, statusCode: 200,\n                               httpVersion: nil, headerFields: nil)!",
+  "note": "Подменил входные данные вместо исправления функции"
+ },
+ {
+  "task": "urls.s5",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "response нужен потому что в нём HTTP-статус, и его надо проверить раньше, чем читать тело. URLError — это сбой самого транспорта, например нет сети. LoadError.status — сервер ответил, но не тем, что обещал контракт. DecodingError — ответ успешный, но JSON не подходит под модель. А await только приостанавливает задачу, UI менять можно лишь в изоляции MainActor.",
+  "note": "Полный ответ"
+ },
+ {
+  "task": "urls.s5",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Data без response — это просто байты, не знаешь, был ли это успех. Поэтому берём пару: сначала смотрим код ответа, и только потом лезем в тело. Ошибки три разные: URLError, когда запрос вообще не дошёл (таймаут, офлайн), status — когда дошёл, но сервер вернул не 200, и DecodingError, когда 200, а JSON кривой. await не переносит код на главный поток, он лишь ждёт, так что UI из любого места менять нельзя — нужен MainActor.",
+  "note": "Полный ответ другими словами"
+ },
+ {
+  "task": "urls.s5",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Статус лежит в response, поэтому он едет вместе с data: проверяем его до разбора тела, иначе можно декодировать страницу с ошибкой. По ошибкам: URLError — проблемы с сетью, status — наша собственная ошибка на неожиданный HTTP-код, DecodingError — данные пришли, но не такие, как в модели. Ну а await — это просто пауза; где выполнится код после неё, она не гарантирует, и для UI это решает MainActor.",
+  "note": "Полный ответ с другим порядком"
+ },
+ {
+  "task": "urls.s5",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "response хранится рядом с data, потому что в нём статус, и его проверяют до тела. URLError — отказ транспорта, status — HTTP-ответ не 200, DecodingError — когда данные успешного ответа не подходят под модель.",
+  "note": "Нет ответа про await и MainActor"
+ },
+ {
+  "task": "urls.s5",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "URLError — когда нет сети или таймаут, LoadError.status — когда сервер ответил кодом не 200, DecodingError — когда JSON не подошёл. А await не даёт менять UI откуда угодно, потому что UI живёт на MainActor, и код после await может оказаться в другом контексте.",
+  "note": "Не объяснено, зачем хранить response вместе с data"
+ },
+ {
+  "task": "urls.s5",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "response храним на всякий случай, для логов. URLError, status и DecodingError по сути одно и то же — всё это ошибки загрузки. А после await код уже выполняется на главном потоке, поэтому UI менять можно откуда угодно.",
+  "note": "Ложь: await возвращает на главный поток"
+ },
+ {
+  "task": "urls.s5",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "response нужен, чтобы проверить статус перед телом. URLError — это когда JSON не разобрался, а DecodingError — когда пропал интернет. Статус — это ошибка сервера. await ставит задачу на паузу, и MainActor для UI нужен только в старых версиях.",
+  "note": "Перепутаны URLError и DecodingError, MainActor не нужен"
+ },
+ {
+  "task": "urls.s5",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "URLSession — это синглтон, у которого есть delegate и Codable. Глава загружается асинхронно через completion handler, а Decodable превращает response в Data, поэтому MainActor не нужен.",
+  "note": "Набор терминов без смысла"
+ },
+ {
+  "task": "urls.s6",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "    try Task.checkCancellation()\n    guard id > 0 else { throw LoadError.invalidID }\n    // ...\n    let (data, response) = try await session.data(for: request)\n    try Task.checkCancellation()\n    return try decodeChapter(data: data, response: response)",
+  "note": "Две проверки отмены как в ключе"
+ },
+ {
+  "task": "urls.s6",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "guard id > 0 else { throw LoadError.invalidID }\ntry Task.checkCancellation()\nlet address = \"https://api.example.invalid/chapters/\\(id)\"\n// ...\nvar request = URLRequest(url: url)\nrequest.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\nlet (data, response) = try await session.data(for: request)\ntry Task.checkCancellation()\nreturn try decodeChapter(data: data, response: response)",
+  "note": "Первая проверка после guard id, но до запроса"
+ },
+ {
+  "task": "urls.s6",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "    if Task.isCancelled { throw CancellationError() }\n    // ... всё как было\n    let (data, response) = try await session.data(for: request)\n    if Task.isCancelled { throw CancellationError() }\n    return try decodeChapter(data: data, response: response)\n\nОтмену бросаем как CancellationError вручную.",
+  "note": "isCancelled + CancellationError вместо checkCancellation"
+ },
+ {
+  "task": "urls.s6",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "try Task.checkCancellation()\nlet (data, response) = try await session.data(for: request)\nreturn try decodeChapter(data: data, response: response)",
+  "note": "Нет проверки после await"
+ },
+ {
+  "task": "urls.s6",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "try Task.checkCancellation()\nlet (data, response) = try await session.data(for: request)\nif Task.isCancelled { return Chapter(id: id, title: \"\") }\nreturn try decodeChapter(data: data, response: response)\n\nПосле await при отмене возвращаем пустую главу.",
+  "note": "После await отмена превращается в успешный результат"
+ },
+ {
+  "task": "urls.s6",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Task.checkCancellation()\nlet (data, response) = try await session.data(for: request)\nTask.checkCancellation()\nreturn try decodeChapter(data: data, response: response)",
+  "note": "Забыл try перед checkCancellation"
+ },
+ {
+  "task": "urls.s6",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "guard !Task.isCancelled else { return }\nlet (data, response) = try await session.data(for: request)\nguard !Task.isCancelled else { return }\nreturn try decodeChapter(data: data, response: response)",
+  "note": "return без значения в функции, возвращающей Chapter; отмена не бросается"
+ },
+ {
+  "task": "urls.s6",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "try await Task.sleep(nanoseconds: 1_000_000_000)\nsession.invalidateAndCancel()",
+  "note": "Не проверка отмены, а ожидание и закрытие сессии"
+ },
+ {
+  "task": "urls.s7",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "import Foundation\nstruct Chapter: Decodable { let id: Int; let duration: Int }\nenum LoadError: Error {\n  case invalidID, invalidURL, notHTTP\n  case status(Int)\n}\nfunc decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n  guard let http = response as? HTTPURLResponse else { throw LoadError.notHTTP }\n  guard http.statusCode == 200 else { throw LoadError.status(http.statusCode) }\n  return try JSONDecoder().decode(Chapter.self, from: data)\n}\nfunc loadChapter(id: Int, session: URLSession = .shared) async throws -> Chapter {\n  guard id > 0 else { throw LoadError.invalidID }\n  guard let url = URL(string: \"https://api.example.invalid/chapters/\\(id)\") else {\n    throw LoadError.invalidURL\n  }\n  var request = URLRequest(url: url)\n  request.setValue(\"application/json\", forHTTPHeaderField: \"Accept\")\n  let (data, response) = try await session.data(for: request)\n  return try decodeChapter(data: data, response: response)\n}",
+  "note": "Решение как в ключе"
+ },
+ {
+  "task": "urls.s7",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "struct Chapter: Decodable { let id: Int; let duration: Int }\nenum LoadError: Error { case invalidID, invalidURL, notHTTP, status(Int) }\nfunc loadChapter(id: Int, session: URLSession = .shared) async throws -> Chapter {\n    guard id > 0 else { throw LoadError.invalidID }\n    guard let url = URL(string: \"https://api.example.invalid/chapters/\\(id)\") else { throw LoadError.invalidURL }\n    let (data, response) = try await session.data(from: url)\n    guard let http = response as? HTTPURLResponse else { throw LoadError.notHTTP }\n    guard http.statusCode == 200 else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}",
+  "note": "Всё в одной функции, data(from:)"
+ },
+ {
+  "task": "urls.s7",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func loadChapter(id: Int, session: URLSession = .shared) async throws -> Chapter {\n    if id <= 0 { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/chapters/\\(id)\"\n    guard let url = URL(string: address) else { throw LoadError.invalidURL }\n    let result = try await session.data(for: URLRequest(url: url))\n    guard let http = result.1 as? HTTPURLResponse else { throw LoadError.notHTTP }\n    if http.statusCode != 200 { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(Chapter.self, from: result.0)\n}\n\nМодель и enum LoadError объявлены как обычно.",
+  "note": "Только функция, if вместо guard, кортеж по индексам"
+ },
+ {
+  "task": "urls.s7",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "func loadChapter(id: Int, session: URLSession = .shared) async throws -> Chapter {\n    guard id > 0 else { throw LoadError.invalidID }\n    guard let url = URL(string: \"https://api.example.invalid/chapters/\\(id)\") else { throw LoadError.invalidURL }\n    let (data, response) = try await session.data(from: url)\n    guard response is HTTPURLResponse else { throw LoadError.notHTTP }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}",
+  "note": "Проверен только тип ответа, статус не проверяется"
+ },
+ {
+  "task": "urls.s7",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "func loadChapter(id: Int, session: URLSession = .shared) async throws -> Chapter {\n    guard id > 0 else { throw LoadError.invalidID }\n    guard let url = URL(string: \"https://api.example.invalid/chapters/\\(id)\") else { throw LoadError.invalidURL }\n    let (data, response) = try await session.data(from: url)\n    guard let http = response as? HTTPURLResponse else { throw LoadError.notHTTP }\n    guard (200...299).contains(http.statusCode) else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}\n\nЛюбой успешный статус можно декодировать.",
+  "note": "Пропускает 204, а контракт запрещает читать JSON"
+ },
+ {
+  "task": "urls.s7",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "func loadChapter(id: Int, session: URLSession = .shared) async throws -> Chapter {\n  guard id > 0 else { throw LoadError.invalidID }\n  let url = URL(string: \"https://api.example.invalid/chapters/\\(id)\")!\n  let (data, response) = try await session.data(from: url)\n  let http = response as! HTTPURLResponse\n  guard http.statusCode == 200 else { throw LoadError.status(http.statusCode) }\n  return try JSONDecoder().decode(Chapter.self, from: data)\n}",
+  "note": "Force unwrap URL и force cast"
+ },
+ {
+  "task": "urls.s7",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "func loadChapter(id: Int, session: URLSession = .shared) async throws -> Chapter {\n  guard id > 0 else { throw LoadError.invalidID }\n  guard let url = URL(string: \"https://api.example.invalid/chapters/\\(id)\") else { throw LoadError.invalidURL }\n  let (data, response) = try session.data(from: url)\n  guard let http = response as? HTTPURLResponse else { throw LoadError.notHTTP }\n  guard http.statusCode == 200 else { throw LoadError.status(http.statusCode) }\n  return try JSONDecoder().decode(Chapter.self, from: data)\n}",
+  "note": "Забыл await"
+ },
+ {
+  "task": "urls.s7",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "func loadChapter(id: Int, session: URLSession = .shared) async throws -> Chapter {\n  return Chapter(id: 12, duration: 180)\n}",
+  "note": "Возвращает захардкоженное значение"
+ },
+ {
+  "task": "urls-b1",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "guard http.statusCode == 200\nelse { throw LoadError.status(http.statusCode) }\n// ...\nlet (data, response) = try await session.data(for: request)",
+  "note": "Как в ключе"
+ },
+ {
+  "task": "urls-b1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "if http.statusCode != 200 { throw LoadError.status(http.statusCode) }\n// ...\nlet (data, response) = try await session.data(for: request, delegate: nil)\n\nСтатус не 200 — бросаем.",
+  "note": "if вместо guard, delegate: nil"
+ },
+ {
+  "task": "urls-b1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "guard 200 == http.statusCode else { throw LoadError.status(http.statusCode) }\n// ...\nlet result = try await session.data(for: request)\nlet (data, response) = result",
+  "note": "Перевёрнутое сравнение и промежуточная константа"
+ },
+ {
+  "task": "urls-b1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "guard http.statusCode >= 200 else { throw LoadError.status(http.statusCode) }\nlet (data, response) = try await session.data(for: request)",
+  "note": "Условие пропускает 503"
+ },
+ {
+  "task": "urls-b1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "guard http.statusCode == 200 else { throw LoadError.notHTTP }\nlet (data, response) = try await session.data(for: request)",
+  "note": "Для плохого статуса бросает notHTTP"
+ },
+ {
+  "task": "urls-b1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "guard http.statusCode == 200 else { throw LoadError.status(http.statusCode) }\nlet (data, response) = try session.data(for: request)",
+  "note": "Забыл await"
+ },
+ {
+  "task": "urls-b1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "guard http.statusCode = 200 else { throw LoadError.status(http.statusCode) }\nlet (data, response) = try await session.data(for: request)\n\nСтатус должен быть 200, иначе ошибка.",
+  "note": "= вместо =="
+ },
+ {
+  "task": "urls-b1",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "let (data, response) = (Data(), URLResponse())\nguard true else { throw LoadError.invalidURL }",
+  "note": "Заглушки вместо запроса и проверки"
+ },
+ {
+  "task": "urls-b2",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "struct ChapterScreen {\n  var selectedID = 13\n  private(set) var title = \"Загрузка\"\n\n  mutating func apply(_ chapter: Chapter) {\n    guard chapter.id == selectedID else { return }\n    title = chapter.title\n  }\n}",
+  "note": "Guard по selectedID как в ключе"
+ },
+ {
+  "task": "urls-b2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "mutating func apply(_ chapter: Chapter) {\n    if chapter.id == selectedID {\n        title = chapter.title\n    }\n}",
+  "note": "if вместо guard"
+ },
+ {
+  "task": "urls-b2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "struct ChapterScreen {\n    var selectedID = 13\n    private(set) var title = \"Загрузка\"\n    mutating func apply(_ chapter: Chapter) {\n        title = chapter.id == selectedID ? chapter.title : title\n    }\n}\nvar screen = ChapterScreen()\nscreen.apply(Chapter(id: 13, title: \"Глава 13\"))\nscreen.apply(Chapter(id: 12, title: \"Глава 12\"))\nprint(screen.title)",
+  "note": "Тернарный оператор"
+ },
+ {
+  "task": "urls-b2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "mutating func apply(_ chapter: Chapter) {\n    guard chapter.id != selectedID else { return }\n    title = chapter.title\n}",
+  "note": "Перевёрнутое условие"
+ },
+ {
+  "task": "urls-b2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "mutating func apply(_ chapter: Chapter) {\n    if chapter.id == 13 {\n        title = chapter.title\n    }\n}\n\nПрименяем только главу 13.",
+  "note": "Захардкожено 13 вместо selectedID"
+ },
+ {
+  "task": "urls-b2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "mutating func apply(_ chapter: Chapter) {\n    if chapter.id = selectedID {\n        title = chapter.title\n    }\n}",
+  "note": "= вместо =="
+ },
+ {
+  "task": "urls-b2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "mutating func apply(_ chapter: Chapter) {\n    guard chapter.id == selectedID { return }\n    title = chapter.title\n}",
+  "note": "Забыл else в guard"
+ },
+ {
+  "task": "urls-b2",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "mutating func apply(_ chapter: Chapter) {\n    selectedID = chapter.id\n    title = chapter.title\n}",
+  "note": "Меняет selectedID, поздний ответ перезаписывает экран"
+ },
+ {
+  "task": "urls-b3",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "guard let http = response as? HTTPURLResponse\nelse { throw LoadError.notHTTP }\nguard http.statusCode == 200\nelse { throw LoadError.status(http.statusCode) }",
+  "note": "Как в ключе"
+ },
+ {
+  "task": "urls-b3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func decodeLaundryRoom(data: Data, response: URLResponse) throws -> LaundryRoom {\n    if let http = response as? HTTPURLResponse {\n        if http.statusCode == 200 {\n            return try JSONDecoder().decode(LaundryRoom.self, from: data)\n        }\n        throw LoadError.status(http.statusCode)\n    }\n    throw LoadError.notHTTP\n}",
+  "note": "Вложенные if let"
+ },
+ {
+  "task": "urls-b3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "guard let http = response as? HTTPURLResponse else { throw LoadError.notHTTP }\nlet code = http.statusCode\nif code != 200 { throw LoadError.status(code) }",
+  "note": "Локальная переменная code и if"
+ },
+ {
+  "task": "urls-b3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "guard let http = response as? HTTPURLResponse else { throw LoadError.notHTTP }\nguard http.statusCode != 204 else { throw LoadError.status(204) }",
+  "note": "Блокирует только 204, другие статусы проходят"
+ },
+ {
+  "task": "urls-b3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "let http = response as? HTTPURLResponse\nguard http?.statusCode == 200 else { throw LoadError.status(http?.statusCode ?? 0) }\n\nПроверяем статус перед decode.",
+  "note": "Нет проверки типа ответа и notHTTP"
+ },
+ {
+  "task": "urls-b3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "let http = response as! HTTPURLResponse\nguard http.statusCode == 200 else { throw LoadError.status(http.statusCode) }",
+  "note": "Force cast"
+ },
+ {
+  "task": "urls-b3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "guard let http = response as? HTTPURLResponse else { throw LoadError.notHTTP }\nguard http.statusCode == \"200\" else { throw LoadError.status(http.statusCode) }\n\nСначала тип, потом статус.",
+  "note": "Сравнение Int со строкой"
+ },
+ {
+  "task": "urls-b3",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "if data.isEmpty { throw LoadError.invalidURL }",
+  "note": "Проверка тела вместо HTTP и статуса"
+ }
+]

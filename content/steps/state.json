@@ -4,48 +4,483 @@
   "title": "Ступень 1. Предскажи экран",
   "prompt": "Заметка 41 открыта. Пользователь заменил весь текст поля на «Заказать билеты». Что покажут номер, верхний заголовок и поле после обновления интерфейса? Укажи, какое значение изменилось. Здесь нет print: предскажи именно содержимое экрана.",
   "code": "import SwiftUI\nstruct Note { let id: Int; var title: String }\nstruct NoteScreen: View {\n    @State private var note = Note(id: 41, title: \"Купить билеты\")\n    var body: some View {\n        VStack {\n            Text(\"Заметка \\(note.id)\")\n            Text(note.title)\n            TitleEditor(title: $note.title)\n        }\n    }\n}\nstruct TitleEditor: View {\n    @Binding var title: String\n    var body: some View {\n        TextField(\"Заголовок\", text: $title)\n    }\n}",
-  "key": "Номер: «Заметка 41». Верхний заголовок: «Заказать билеты». Поле: «Заказать билеты». Изменилось note.title в состоянии NoteScreen. TextField записал строку через Binding к этому заголовку."
+  "key": "Номер: «Заметка 41». Верхний заголовок: «Заказать билеты». Поле: «Заказать билеты». Изменилось note.title в состоянии NoteScreen. TextField записал строку через Binding к этому заголовку.",
+  "check": {
+   "for": "d1b5b1d62d",
+   "outs": [
+    [
+     "Заметка 41",
+     "Заказать билеты",
+     "Заказать билеты"
+    ]
+   ],
+   "why": [
+    "id у заметки не менялся: let id остаётся 41.",
+    "TextField записал строку в note.title через Binding, верхний Text читает то же свойство.",
+    "Поле показывает текущее значение того же note.title, то есть новую строку."
+   ],
+   "wrong": [
+    {
+     "out": [
+      "Заметка 41",
+      "Купить билеты",
+      "Заказать билеты"
+     ],
+     "msg": "Ты решил, что верхняя надпись не обновится. Но поле пишет через Binding в тот же note.title, поэтому после обновления экрана Text читает новую строку."
+    },
+    {
+     "out": [
+      "Заметка 41",
+      "Купить билеты",
+      "Купить билеты"
+     ],
+     "msg": "Состояние при вводе меняется: TextField записывает строку в note.title, и обновление интерфейса показывает её и в надписи, и в поле."
+    },
+    {
+     "out": [
+      "Заметка Заказать билеты",
+      "Заказать билеты",
+      "Заказать билеты"
+     ],
+     "msg": "Номер берётся из note.id, а редактируется только title. Номер остаётся 41."
+    }
+   ]
+  }
  },
  {
   "id": "s2",
   "title": "Ступень 2. Дай полю состояние",
   "prompt": "Замени два комментария рабочим кодом. Экран должен владеть черновиком; ввод в поле должен менять надпись сверху. Начальный заголовок — «Купить билеты».",
   "code": "import SwiftUI\nstruct Note { let id: Int; var title: String }\nstruct NoteScreen: View {\n    /* обёртка */ private var note = Note(id: 41, title: \"Купить билеты\")\n    var body: some View {\n        VStack {\n            Text(\"Заметка \\(note.id)\")\n            Text(note.title)\n            TextField(\"Заголовок\", text: /* связь к заголовку */)\n        }\n    }\n}",
-  "key": "import SwiftUI\nstruct Note { let id: Int; var title: String }\nstruct NoteScreen: View {\n    @State private var note = Note(id: 41, title: \"Купить билеты\")\n    var body: some View {\n        VStack {\n            Text(\"Заметка \\(note.id)\")\n            Text(note.title)\n            TextField(\"Заголовок\", text: $note.title)\n        }\n    }\n}\n\n@State даёт экрану хранилище черновика. $note.title передаёт полю связь для чтения и записи заголовка."
+  "key": "import SwiftUI\nstruct Note { let id: Int; var title: String }\nstruct NoteScreen: View {\n    @State private var note = Note(id: 41, title: \"Купить билеты\")\n    var body: some View {\n        VStack {\n            Text(\"Заметка \\(note.id)\")\n            Text(note.title)\n            TextField(\"Заголовок\", text: $note.title)\n        }\n    }\n}\n\n@State даёт экрану хранилище черновика. $note.title передаёт полю связь для чтения и записи заголовка.",
+  "check": {
+   "for": "dea97abb25",
+   "must": [
+    {
+     "pat": [
+      "@State private var note",
+      "@State var note",
+      "@State fileprivate var note"
+     ],
+     "miss": "Нет обёртки @State у note. Без неё экран не владеет черновиком: значение нельзя менять, а интерфейс не обновится.",
+     "ask": "Объявлено ли у тебя состояние заметки с обёрткой, чтобы экран владел черновиком?"
+    },
+    {
+     "pat": [
+      "text: $a.title",
+      "text: Binding(get: { ... }, set: { ... })"
+     ],
+     "miss": "В TextField нет связи с заголовком. Полю нужна запись в note.title, а не копия строки: берётся связь через $ у состояния.",
+     "ask": "Передаёшь ли ты в TextField связь с заголовком, а не просто копию строки?"
+    },
+    {
+     "pat": [
+      "Note(id: 41, title: \"Купить билеты\")"
+     ],
+     "miss": "Не вижу начального значения Note с id 41 и заголовком «Купить билеты». Состояние должно стартовать с него.",
+     "ask": "Задаёшь ли ты начальное значение заметки с номером 41 и заголовком «Купить билеты»?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "text: note.title"
+     ],
+     "msg": "Без $ в поле уходит просто строка: TextField не сможет её менять, и код не соберётся. Нужна связь для записи."
+    },
+    {
+     "pat": [
+      "text: .constant(...)",
+      "text: Binding.constant(...)"
+     ],
+     "msg": ".constant создаёт неизменяемую связь: ввод не попадёт в note, и надпись сверху не обновится."
+    },
+    {
+     "pat": [
+      "@Binding var note",
+      "@Binding private var note",
+      "@StateObject private var note",
+      "@StateObject var note"
+     ],
+     "msg": "Здесь экран сам владеет черновиком, а значит, нужна обёртка владельца состояния — @State. @Binding — для получения чужого значения."
+    }
+   ]
+  }
  },
  {
   "id": "s3",
   "title": "Ступень 3. Вынеси редактор",
   "prompt": "Допиши два места. TitleEditor не должен хранить отдельную копию строки: редактор и Text на родительском экране работают с одним заголовком.",
   "code": "import SwiftUI\nstruct Note { let id: Int; var title: String }\nstruct NoteScreen: View {\n    @State private var note = Note(id: 41, title: \"Купить билеты\")\n    var body: some View {\n        VStack {\n            Text(\"Заметка \\(note.id)\")\n            Text(note.title)\n            // Вызови дочерний редактор с нужной связью.\n        }\n    }\n}\nstruct TitleEditor: View {\n    // Объяви доступ к чужому заголовку.\n    var body: some View {\n        TextField(\"Заголовок\", text: $title)\n    }\n}",
-  "key": "import SwiftUI\nstruct Note { let id: Int; var title: String }\nstruct NoteScreen: View {\n    @State private var note = Note(id: 41, title: \"Купить билеты\")\n    var body: some View {\n        VStack {\n            Text(\"Заметка \\(note.id)\")\n            Text(note.title)\n            TitleEditor(title: $note.title)\n        }\n    }\n}\nstruct TitleEditor: View {\n    @Binding var title: String\n    var body: some View {\n        TextField(\"Заголовок\", text: $title)\n    }\n}\n\nРодитель владеет note, дочерний TitleEditor получает Binding<String>. Внутри него $title передаёт связь в TextField."
+  "key": "import SwiftUI\nstruct Note { let id: Int; var title: String }\nstruct NoteScreen: View {\n    @State private var note = Note(id: 41, title: \"Купить билеты\")\n    var body: some View {\n        VStack {\n            Text(\"Заметка \\(note.id)\")\n            Text(note.title)\n            TitleEditor(title: $note.title)\n        }\n    }\n}\nstruct TitleEditor: View {\n    @Binding var title: String\n    var body: some View {\n        TextField(\"Заголовок\", text: $title)\n    }\n}\n\nРодитель владеет note, дочерний TitleEditor получает Binding<String>. Внутри него $title передаёт связь в TextField.",
+  "check": {
+   "for": "d0efdd57ad",
+   "must": [
+    {
+     "pat": [
+      "TitleEditor(title: $a.title)",
+      "TitleEditor(title: Binding(get: { ... }, set: { ... }))"
+     ],
+     "miss": "Не вижу вызова TitleEditor со связью к заголовку. Дочернему экрану нужен доступ на запись к note.title, а не копия.",
+     "ask": "Передаёшь ли ты в TitleEditor связь с заголовком заметки, а не копию строки?"
+    },
+    {
+     "pat": [
+      "@Binding var title: String",
+      "@Binding private var title: String"
+     ],
+     "miss": "У TitleEditor нет @Binding для title. Без него редактор не получит чужой заголовок и не сможет менять его.",
+     "ask": "Есть ли у TitleEditor свойство-связь для заголовка, а не собственное состояние?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "TitleEditor(title: note.title)"
+     ],
+     "msg": "Без $ ребёнку уходит лишь копия строки: он сможет её показать, но не изменить, и родительская надпись не обновится."
+    },
+    {
+     "pat": [
+      "@State var title",
+      "@State private var title"
+     ],
+     "msg": "@State в дочернем редакторе создаст отдельную строку. Задание требует одну общую: нужна обёртка для чужого значения."
+    },
+    {
+     "pat": [
+      "let title: String"
+     ],
+     "msg": "let только читает значение: TextField не сможет записать в него. Редактору нужна связь с правом записи."
+    }
+   ]
+  }
  },
  {
   "id": "s4",
   "title": "Ступень 4. Найди второй черновик",
   "prompt": "Введи мысленно «Заказать билеты». Поле показывает новую строку, верхняя надпись остаётся «Купить билеты». Найди причину и исправь обе стороны передачи, сохранив дочерний редактор.",
   "code": "import SwiftUI\nstruct Note { let id: Int; var title: String }\nstruct NoteScreen: View {\n    @State private var note = Note(id: 41, title: \"Купить билеты\")\n    var body: some View {\n        VStack {\n            Text(\"Заметка \\(note.id)\")\n            Text(note.title)\n            TitleEditor()\n        }\n    }\n}\nstruct TitleEditor: View {\n    @State private var title = \"Купить билеты\"\n    var body: some View {\n        TextField(\"Заголовок\", text: $title)\n    }\n}",
-  "key": "import SwiftUI\nstruct Note { let id: Int; var title: String }\nstruct NoteScreen: View {\n    @State private var note = Note(id: 41, title: \"Купить билеты\")\n    var body: some View {\n        VStack {\n            Text(\"Заметка \\(note.id)\")\n            Text(note.title)\n            TitleEditor(title: $note.title)\n        }\n    }\n}\nstruct TitleEditor: View {\n    @Binding var title: String\n    var body: some View {\n        TextField(\"Заголовок\", text: $title)\n    }\n}\n\nВ ошибочном варианте дочерний @State менял собственную строку. Исправлены и свойство ребёнка, и вызов родителя: @Binding плюс $note.title."
+  "key": "import SwiftUI\nstruct Note { let id: Int; var title: String }\nstruct NoteScreen: View {\n    @State private var note = Note(id: 41, title: \"Купить билеты\")\n    var body: some View {\n        VStack {\n            Text(\"Заметка \\(note.id)\")\n            Text(note.title)\n            TitleEditor(title: $note.title)\n        }\n    }\n}\nstruct TitleEditor: View {\n    @Binding var title: String\n    var body: some View {\n        TextField(\"Заголовок\", text: $title)\n    }\n}\n\nВ ошибочном варианте дочерний @State менял собственную строку. Исправлены и свойство ребёнка, и вызов родителя: @Binding плюс $note.title.",
+  "check": {
+   "for": "a4053914bf",
+   "must": [
+    {
+     "pat": [
+      "@Binding var title: String",
+      "@Binding private var title: String"
+     ],
+     "miss": "В TitleEditor всё ещё нет связи с родителем. Пока там отдельный @State, у ребёнка своя строка. Замени свойство.",
+     "ask": "Заменил ли ты в TitleEditor собственное состояние на свойство-связь?"
+    },
+    {
+     "pat": [
+      "TitleEditor(title: $a.title)",
+      "TitleEditor(title: Binding(get: { ... }, set: { ... }))"
+     ],
+     "miss": "Родитель не передаёт связь к заголовку. Исправляй обе стороны: свойство у ребёнка и вызов TitleEditor у родителя.",
+     "ask": "Передаёт ли родитель в TitleEditor связь с заголовком, а не значение?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "TitleEditor(title: note.title)"
+     ],
+     "msg": "Без $ передаётся копия строки, а не связь: поле не сможет менять заголовок родителя."
+    },
+    {
+     "pat": [
+      "@State var title: String",
+      "@State private var title: String"
+     ],
+     "msg": "Параметр с @State всё равно создаёт отдельную строку у ребёнка. Здесь нужна связь с родительским значением."
+    },
+    {
+     "pat": [
+      "@Binding private var title"
+     ],
+     "msg": "private скрывает свойство от инициализатора: родитель не сможет передать связь. Оставь доступ открытым."
+    }
+   ]
+  }
  },
  {
   "id": "s5",
   "title": "Ступень 5. Объясни напарнику (устно)",
   "prompt": "Своими словами, как на собесе: что → почему → последствия.",
   "code": "Заметка 41 «Купить билеты». NoteScreen показывает заголовок, TitleEditor редактирует его.\n- Кто владеет черновиком и почему?\n- Чем note.title отличается от $note.title?\n- Что сломается, если заменить дочерний @Binding отдельным @State?",
-  "key": "Черновиком владеет NoteScreen: это общий источник для надписи и редактора, поэтому note объявлен @State. note.title — String для чтения; $note.title — Binding<String> к тому же свойству для чтения и записи. Отдельный дочерний @State создаст независимую строку: поле изменится, а родительская надпись останется прежней. Через @Binding ребёнок редактирует родительский заголовок, поэтому надпись и поле всегда показывают одно и то же."
+  "key": "Черновиком владеет NoteScreen: это общий источник для надписи и редактора, поэтому note объявлен @State. note.title — String для чтения; $note.title — Binding<String> к тому же свойству для чтения и записи. Отдельный дочерний @State создаст независимую строку: поле изменится, а родительская надпись останется прежней. Через @Binding ребёнок редактирует родительский заголовок, поэтому надпись и поле всегда показывают одно и то же.",
+  "check": {
+   "for": "7e2b95e2b3",
+   "concepts": [
+    {
+     "label": "владелец — NoteScreen (@State)",
+     "groups": [
+      [
+       "notescreen",
+       "родител",
+       "экран",
+       "parent"
+      ],
+      [
+       "@state",
+       "state",
+       "владе",
+       "хранит",
+       "источник",
+       "хозяин"
+      ]
+     ],
+     "miss": "Не сказано, кто владеет черновиком: NoteScreen, и note объявлен @State там, где живут и надпись, и редактор.",
+     "ask": "Сказал ли ты, что черновиком владеет NoteScreen, где объявлено состояние?"
+    },
+    {
+     "label": "note.title — значение, $note.title — Binding",
+     "groups": [
+      [
+       "$note.title",
+       "binding",
+       "связь",
+       "ссылк",
+       "доступ"
+      ],
+      [
+       "чтени",
+       "запис",
+       "изменя",
+       "читать",
+       "писать",
+       "менять"
+      ]
+     ],
+     "miss": "Не объяснено различие: note.title — просто строка для чтения, а $note.title — связь, через которую можно читать и записывать.",
+     "ask": "Объяснил ли ты разницу между обычным значением и связью, через которую можно читать и записывать?"
+    },
+    {
+     "label": "@Binding — один общий источник",
+     "groups": [
+      [
+       "binding"
+      ],
+      [
+       "один",
+       "общ",
+       "тот же",
+       "тому же",
+       "source of truth",
+       "источник",
+       "одну и ту же"
+      ]
+     ],
+     "miss": "Не сказано, что @Binding даёт ребёнку доступ к тому же значению родителя, без собственной копии.",
+     "ask": "Сказал ли ты, что @Binding даёт ребёнку то же значение родителя, без собственной копии?"
+    },
+    {
+     "label": "отдельный @State — независимая копия",
+     "groups": [
+      [
+       "копи",
+       "отдельн",
+       "независим",
+       "своя",
+       "два источник",
+       "второй",
+       "свой"
+      ],
+      [
+       "state",
+       "строк",
+       "черновик",
+       "заголов"
+      ]
+     ],
+     "miss": "Не объяснено, что дочерний @State создаст независимую строку, не связанную с родителем.",
+     "ask": "Объяснил ли ты, что отдельный @State у ребёнка создаёт независимую строку?"
+    },
+    {
+     "label": "последствие — надпись родителя не обновится",
+     "groups": [
+      [
+       "надпис",
+       "text",
+       "родител",
+       "верхн",
+       "заголов"
+      ],
+      [
+       "не обнов",
+       "не меняет",
+       "не изменит",
+       "остан",
+       "прежн",
+       "рассинхрон",
+       "разъед",
+       "не измен"
+      ]
+     ],
+     "miss": "Не названо последствие: поле изменится, а родительская надпись останется прежней.",
+     "ask": "Назвал ли ты последствие: поле меняется, а родительская надпись остаётся прежней?"
+    }
+   ],
+   "false": [
+    {
+     "groups": [
+      [
+       "state"
+      ],
+      [
+       "тоже изменится",
+       "обновится и надпись",
+       "оба изменятся",
+       "всё равно обновит",
+       "все равно обновит",
+       "ничего не сломается",
+       "ничего не сломаетс"
+      ]
+     ],
+     "msg": "С отдельным @State у ребёнка родитель не узнает об изменении: у каждого будет своя строка, и они разойдутся.",
+     "ask": "Ты имел в виду, что с отдельным @State у ребёнка надпись родителя всё равно обновится?"
+    }
+   ]
+  }
  },
  {
   "id": "s6",
   "title": "Ступень 6. Передай отметку закрепления",
   "prompt": "Теперь редактируем не строку: у заметки есть isPinned: Bool. Допиши передачу связи и дочернее свойство. Переключение «Закрепить» должно менять родительскую надпись «Закреплена: false» на «Закреплена: true» и обратно. Отдельную копию отметки не создавай.",
   "code": "import SwiftUI\nstruct Note { let id: Int; let title: String; var isPinned: Bool }\nstruct NoteScreen: View {\n    @State private var note = Note(id: 41, title: \"Купить билеты\",\n                                   isPinned: false)\n    var body: some View {\n        VStack {\n            Text(note.title)\n            Text(\"Закреплена: \\(note.isPinned)\")\n            // Вызови PinEditor со связью к отметке.\n        }\n    }\n}\nstruct PinEditor: View {\n    // Объяви доступ к чужой отметке.\n    var body: some View {\n        Toggle(\"Закрепить\", isOn: $isPinned)\n    }\n}",
-  "key": "import SwiftUI\nstruct Note { let id: Int; let title: String; var isPinned: Bool }\nstruct NoteScreen: View {\n    @State private var note = Note(id: 41, title: \"Купить билеты\",\n                                   isPinned: false)\n    var body: some View {\n        VStack {\n            Text(note.title)\n            Text(\"Закреплена: \\(note.isPinned)\")\n            PinEditor(isPinned: $note.isPinned)\n        }\n    }\n}\nstruct PinEditor: View {\n    @Binding var isPinned: Bool\n    var body: some View {\n        Toggle(\"Закрепить\", isOn: $isPinned)\n    }\n}\n\nУ NoteScreen одно состояние note. PinEditor получает Binding<Bool> к note.isPinned; Toggle записывает через $isPinned. После включения родитель читает true, после выключения — false."
+  "key": "import SwiftUI\nstruct Note { let id: Int; let title: String; var isPinned: Bool }\nstruct NoteScreen: View {\n    @State private var note = Note(id: 41, title: \"Купить билеты\",\n                                   isPinned: false)\n    var body: some View {\n        VStack {\n            Text(note.title)\n            Text(\"Закреплена: \\(note.isPinned)\")\n            PinEditor(isPinned: $note.isPinned)\n        }\n    }\n}\nstruct PinEditor: View {\n    @Binding var isPinned: Bool\n    var body: some View {\n        Toggle(\"Закрепить\", isOn: $isPinned)\n    }\n}\n\nУ NoteScreen одно состояние note. PinEditor получает Binding<Bool> к note.isPinned; Toggle записывает через $isPinned. После включения родитель читает true, после выключения — false.",
+  "check": {
+   "for": "e0414ad962",
+   "must": [
+    {
+     "pat": [
+      "PinEditor(isPinned: $a.isPinned)",
+      "PinEditor(isPinned: Binding(get: { ... }, set: { ... }))"
+     ],
+     "miss": "Не вижу вызова PinEditor со связью к isPinned. Дочернему переключателю нужен доступ на запись к отметке заметки.",
+     "ask": "Передаёшь ли ты в PinEditor связь с isPinned, а не копию значения?"
+    },
+    {
+     "pat": [
+      "@Binding var isPinned: Bool",
+      "@Binding private var isPinned: Bool"
+     ],
+     "miss": "У PinEditor нет @Binding для isPinned. Без него переключатель работает не с родительской отметкой.",
+     "ask": "Есть ли у PinEditor свойство-связь для isPinned, а не отдельное состояние?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "PinEditor(isPinned: note.isPinned)"
+     ],
+     "msg": "Без $ ребёнку уходит копия значения: Toggle не сможет изменить отметку, и надпись родителя не поменяется."
+    },
+    {
+     "pat": [
+      "@State var isPinned",
+      "@State private var isPinned"
+     ],
+     "msg": "Отдельный @State у ребёнка — это вторая копия отметки. Задание просит её не создавать."
+    },
+    {
+     "pat": [
+      "let isPinned: Bool"
+     ],
+     "msg": "let только читает значение: Toggle не сможет в него записать. Нужна связь с правом записи."
+    },
+    {
+     "pat": [
+      "PinEditor(isPinned: .constant(...))",
+      "PinEditor(isPinned: Binding.constant(...))"
+     ],
+     "msg": ".constant даёт неизменяемую связь: переключатель не повлияет на note."
+    }
+   ]
+  }
  },
  {
   "id": "s7",
   "title": "Проверка по памяти",
   "prompt": "Без подсказок и без урока. Верно — отметь тему.",
   "code": "С нуля создай Note: id и title неизменяемые, text — изменяемая строка.\nОткрой заметку 45 с заголовком «Поездка» и текстом «Проверить даты».\nРодитель хранит черновик и показывает заголовок и текст. Отдельный NoteTextEditor редактирует text через TextField.\nПосле ввода «Купить билеты» родительский текст должен измениться; заголовок «Поездка» не меняется. Пустой text разрешён.",
-  "key": "import SwiftUI\nstruct Note { let id: Int; let title: String; var text: String }\nstruct NoteScreen: View {\n    @State private var note = Note(id: 45, title: \"Поездка\",\n                                   text: \"Проверить даты\")\n    var body: some View {\n        VStack {\n            Text(note.title)\n            Text(note.text)\n            NoteTextEditor(text: $note.text)\n        }\n    }\n}\nstruct NoteTextEditor: View {\n    @Binding var text: String\n    var body: some View {\n        TextField(\"Текст заметки\", text: $text)\n    }\n}\n\nВ начале родитель и поле показывают «Проверить даты». После ввода — «Купить билеты», после стирания — пустую строку. Заголовок «Поездка» читается отдельно. Владелец черновика — NoteScreen, редактор получает Binding к text."
+  "key": "import SwiftUI\nstruct Note { let id: Int; let title: String; var text: String }\nstruct NoteScreen: View {\n    @State private var note = Note(id: 45, title: \"Поездка\",\n                                   text: \"Проверить даты\")\n    var body: some View {\n        VStack {\n            Text(note.title)\n            Text(note.text)\n            NoteTextEditor(text: $note.text)\n        }\n    }\n}\nstruct NoteTextEditor: View {\n    @Binding var text: String\n    var body: some View {\n        TextField(\"Текст заметки\", text: $text)\n    }\n}\n\nВ начале родитель и поле показывают «Проверить даты». После ввода — «Купить билеты», после стирания — пустую строку. Заголовок «Поездка» читается отдельно. Владелец черновика — NoteScreen, редактор получает Binding к text.",
+  "check": {
+   "for": "e806ffb803",
+   "must": [
+    {
+     "pat": [
+      "struct Note { ... let title: String ... var text: String ... }",
+      "struct Note { ... var text: String ... let title: String ... }"
+     ],
+     "miss": "Модель Note собрана не по условию: title нужен неизменяемым (let), а text изменяемым (var), иначе редактор не сможет менять текст, а заголовок защищён.",
+     "ask": "Сделал ли ты title неизменяемым, а text изменяемым в модели Note?"
+    },
+    {
+     "pat": [
+      "@State private var $a = Note(id: 45, title: \"Поездка\", text: \"Проверить даты\")",
+      "@State var $a = Note(id: 45, title: \"Поездка\", text: \"Проверить даты\")",
+      "@State private var $a: Note = Note(id: 45, title: \"Поездка\", text: \"Проверить даты\")",
+      "@State var $a: Note = Note(id: 45, title: \"Поездка\", text: \"Проверить даты\")"
+     ],
+     "miss": "Не вижу, что родитель хранит заметку 45 в @State с заголовком «Поездка» и текстом «Проверить даты». Владелец черновика — родительский экран.",
+     "ask": "Хранит ли родитель заметку 45 в состоянии с заголовком «Поездка» и текстом «Проверить даты»?"
+    },
+    {
+     "pat": [
+      "struct NoteTextEditor: View { ... @Binding var $a: String ... }",
+      "struct NoteTextEditor: View { ... @Binding private var $a: String ... }"
+     ],
+     "miss": "В NoteTextEditor нет @Binding на строку. Чтобы редактировать text родителя, а не свою копию, нужна связь.",
+     "ask": "Есть ли у NoteTextEditor свойство-связь на строку текста?"
+    },
+    {
+     "pat": [
+      "NoteTextEditor($a: $b.text)",
+      "NoteTextEditor(... Binding(get: { ... }, set: { ... }))"
+     ],
+     "miss": "Родитель не передаёт редактору связь к text. Нужен доступ на запись к свойству заметки, а не копия строки.",
+     "ask": "Передаёт ли родитель редактору связь с text, а не копию строки?"
+    },
+    {
+     "pat": [
+      "TextField(... text: $a)",
+      "TextField(... text: Binding(get: { ... }, set: { ... }))"
+     ],
+     "miss": "В редакторе нет TextField, привязанного к связи. Без него ввод не дойдёт до родительского text.",
+     "ask": "Есть ли в редакторе TextField, привязанный к этой связи?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "@State private var text",
+      "@State var text"
+     ],
+     "msg": "Отдельный @State в редакторе — это своя копия строки: родительский текст не изменится. Редактору нужна связь с родителем."
+    },
+    {
+     "pat": [
+      "NoteTextEditor(text: note.text)"
+     ],
+     "msg": "Без $ редактору уходит лишь копия строки. Он не сможет её записать, и родительский текст не изменится."
+    },
+    {
+     "pat": [
+      "struct Note { ... var title ... }",
+      "struct Note { ... var id ... }"
+     ],
+     "msg": "По условию id и title неизменяемые: объявляй их через let. Изменяемым должен быть только text."
+    },
+    {
+     "pat": [
+      "struct Note { ... let text ... }"
+     ],
+     "msg": "text должен быть изменяемым (var): иначе редактор не сможет записать в него новую строку."
+    }
+   ]
+  }
  }
 ]

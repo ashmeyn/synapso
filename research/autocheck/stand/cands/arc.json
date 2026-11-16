@@ -1,0 +1,562 @@
+[
+ {
+  "task": "arc.s1",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "Первую ссылку убрали\n31\nОсвобождена сессия 31\nВторую ссылку убрали",
+  "note": "Вывод как в ключе"
+ },
+ {
+  "task": "arc.s1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Первую ссылку убрали, 31, Освобождена сессия 31, Вторую ссылку убрали. deinit срабатывает после second = nil, пока second держал объект",
+  "note": "В одну строку с пояснением"
+ },
+ {
+  "task": "arc.s1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "1) \"Первую ссылку убрали\"\n2) \"31\"\n3) \"Освобождена сессия 31\"\n4) \"Вторую ссылку убрали\"\nпосле first = nil остаётся владелец second",
+  "note": "Нумерация и кавычки"
+ },
+ {
+  "task": "arc.s1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Первую ссылку убрали\n31\nВторую ссылку убрали\nОсвобождена сессия 31",
+  "note": "deinit поставлен после последнего сообщения"
+ },
+ {
+  "task": "arc.s1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Первую ссылку убрали\n31\nОсвобождена сессия 32\nВторую ссылку убрали",
+  "note": "В deinit другой id"
+ },
+ {
+  "task": "arc.s1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Освобождена сессия 31\nПервую ссылку убрали\n31\nВторую ссылку убрали",
+  "note": "Думает, что deinit сразу после first = nil"
+ },
+ {
+  "task": "arc.s1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Первую ссылку убрали\n31\nВторую ссылку убрали",
+  "note": "Считает, что deinit не печатается вовсе"
+ },
+ {
+  "task": "arc.s1",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "31\n31\n31",
+  "note": "Не понял, что нужно вывести"
+ },
+ {
+  "task": "arc.s2",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "second = nil // убрал владельца second\nsaved = nil // убрал замыкание",
+  "note": "Две строки с комментариями"
+ },
+ {
+  "task": "arc.s2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "first = nil\nsecond = nil\nprint(\"Осталось замыкание\")\nsaved?()\nsaved = nil\nprint(\"Все владельцы убраны\")",
+  "note": "Хвост кода с обеими строками"
+ },
+ {
+  "task": "arc.s2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "final class RecordingSession {\n    let id: Int\n    init(id: Int) { self.id = id }\n    deinit { print(\"Освобождена сессия \\(id)\") }\n}\nvar first: RecordingSession? = RecordingSession(id: 31)\nvar second = first\nvar saved: (() -> Void)? = { [session = first!] in\n    print(session.id)\n}\nfirst = nil\nsecond = nil\nprint(\"Осталось замыкание\")\nsaved?()\nsaved = nil\nprint(\"Все владельцы убраны\")\n\nsaved держит захват, поэтому его чищу после вызова.",
+  "note": "Весь код целиком"
+ },
+ {
+  "task": "arc.s2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "first = nil\nsaved = nil",
+  "note": "Чистит first вместо second, владелец остаётся"
+ },
+ {
+  "task": "arc.s2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "saved = nil // перед вызовом\nsecond = nil // после",
+  "note": "Строки поставлены в обратном порядке"
+ },
+ {
+  "task": "arc.s2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "second == nil\nsaved == nil",
+  "note": "== вместо =, ничего не присваивается"
+ },
+ {
+  "task": "arc.s2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "var second = nil\nsaved = nil",
+  "note": "Повторное объявление second с var"
+ },
+ {
+  "task": "arc.s2",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "deinit()\nsaved.deinit()",
+  "note": "Вызывает deinit вручную"
+ },
+ {
+  "task": "arc.s3",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "final class RecordingSession {\n  let id: Int\n  init(id: Int) { self.id = id }\n  deinit { print(\"Освобождена сессия \\(id)\") }\n}\nvar first: RecordingSession? = RecordingSession(id: 31) // владельцев: 1\nvar second = first // 2\nvar saved: (() -> Void)? = { [session = first!] in // 3\n  print(session.id)\n}\nfirst = nil // 2\nsecond = nil // 1\nsaved?() // 1\nsaved = nil // 0, deinit\nprint(\"Готово\")",
+  "note": "Полный код, свои отступы"
+ },
+ {
+  "task": "arc.s3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "deinit {\n  print(\"Освобождена сессия \\(self.id)\")\n}\n// после создания: 1 (first)\n// после second: 2 (first, second)\n// захват: 3 (first, second, saved)\n// first = nil: 2\n// second = nil: 1 (saved)\n// saved?(): 1\n// saved = nil: 0",
+  "note": "deinit с self и список счётчиков"
+ },
+ {
+  "task": "arc.s3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "deinit { print(\"Освобождена сессия \" + String(id)) }\n\nvar first: RecordingSession? = RecordingSession(id: 31) // 1 владелец\nvar second = first // 2\nvar saved: (() -> Void)? = { [session = first!] in // 3\n    print(session.id)\n}\nfirst = nil // 2\nsecond = nil // 1\nsaved?() // 1\nsaved = nil // 0\nprint(\"Готово\")\n\nВызов saved?() владельцев не меняет.",
+  "note": "String(id) и свои подписи"
+ },
+ {
+  "task": "arc.s3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "deinit { print(\"Освобождена сессия \\(id)\") }\n// first 1, second 2, saved 3\nfirst = nil // 2\nsecond = nil // 1\nsaved?() // 0\nsaved = nil // 0",
+  "note": "После вызова замыкания считает 0 владельцев"
+ },
+ {
+  "task": "arc.s3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "deinit { print(\"Освобождена сессия \\(id)\") }",
+  "note": "Нет подписей с числом владельцев"
+ },
+ {
+  "task": "arc.s3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "func deinit() { print(\"Освобождена сессия \\(id)\") }",
+  "note": "deinit объявлен как обычная функция"
+ },
+ {
+  "task": "arc.s3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "deinit { print(\"Освобождена сессия \\(session.id)\") }\nvar first: RecordingSession? = RecordingSession(id: 31) // 1\nvar second = first // 2",
+  "note": "В deinit обращение к session, которой там нет"
+ },
+ {
+  "task": "arc.s3",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "saved = nil\nsecond = nil\ndeinit(self) // 0",
+  "note": "Вызывает deinit вручную"
+ },
+ {
+  "task": "arc.s4",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "final class RecordingSession {\n    let id: Int\n    init(id: Int) { self.id = id }\n    deinit { print(\"Освобождена сессия \\(id)\") }\n}\nvar first: RecordingSession? = RecordingSession(id: 31)\nvar second = first\nvar saved: (() -> Void)? = { [session = first!] in\n  print(session.id)\n}\nfirst = nil\nsecond = nil\nprint(\"Осталось замыкание\")\nsaved?()\nsaved = nil  // действие больше не нужно\nprint(\"Все владельцы убраны\")",
+  "note": "Весь код, одна строка добавлена"
+ },
+ {
+  "task": "arc.s4",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "saved = .none",
+  "note": "Явный .none вместо nil"
+ },
+ {
+  "task": "arc.s4",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "saved?()\nsaved = nil // отпустили замыкание",
+  "note": "Вместе с вызовом и комментарием"
+ },
+ {
+  "task": "arc.s4",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "second = nil",
+  "note": "second уже nil, замыкание всё ещё держит сессию"
+ },
+ {
+  "task": "arc.s4",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "print(\"Все владельцы убраны\")\nsaved = nil",
+  "note": "Очистка поставлена после сообщения"
+ },
+ {
+  "task": "arc.s4",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "saved?() = nil",
+  "note": "Присваивание результату вызова"
+ },
+ {
+  "task": "arc.s4",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "session = nil",
+  "note": "Переменная session снаружи замыкания не существует"
+ },
+ {
+  "task": "arc.s4",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "print(\"Освобождена сессия 31\")",
+  "note": "Печатает сообщение вручную вместо освобождения"
+ },
+ {
+  "task": "arc.s5",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "ARC сам считает сильные владения экземплярами классов. Объект держат переменная, элемент массива и захват в замыкании. Когда владельцев не остаётся, объект освобождается и вызывается deinit. Вызов замыкания не удаляет захват, его надо очистить. Число владельцев в схеме это не внутренний счётчик runtime. Завершение работы делают явно, потому что объект может ещё жить.",
+  "note": "Близко к ключу"
+ },
+ {
+  "task": "arc.s5",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Пока на объект кто-то сильно ссылается, он жив: переменная, массив, замыкание, всё считается. Как только последняя ссылка пропала, срабатывает deinit. Просто вызвать замыкание мало, оно остаётся в saved и держит сессию, надо обнулить saved. Цифры в комментариях это мои подписи, а не настоящий счётчик ARC. А завершить работу нужно руками, deinit это не сигнал конца работы.",
+  "note": "Разговорная версия"
+ },
+ {
+  "task": "arc.s5",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "Каждая сильная связь, будь то var, элемент контейнера или захваченное значение, не даёт объекту умереть. Последняя отпущена, значит deinit. Замыкание после запуска всё равно хранится в переменной и держит объект, пока его не обнулишь. Счётчик из схемы условный, не показание рантайма. Поэтому конец работы я делаю явным действием, а не жду deinit.",
+  "note": "Другой порядок мыслей"
+ },
+ {
+  "task": "arc.s5",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "ARC считает сильных владельцев: переменная, элемент массива, захват замыкания. Когда последний убран, вызывается deinit. Число владельцев на схеме условное, это не показание счётчика. Завершение работы делают явно, потому что объект может жить.",
+  "note": "Нет мысли, что вызов замыкания не снимает захват"
+ },
+ {
+  "task": "arc.s5",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "Сессию держат переменная, элемент массива и захват, и пока кто-то держит, объект жив. Когда никого нет, будет deinit. Вызов замыкания не освобождает захват, надо присвоить nil. Это всё и есть счётчик ARC.",
+  "note": "Нет различия между завершением работы и deinit"
+ },
+ {
+  "task": "arc.s5",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Сессию держат переменная, элемент массива и захват. Когда замыкание вызвали и оно отработало, захват пропадает и сразу срабатывает deinit, потому что работа закончена. Поэтому deinit и есть завершение работы.",
+  "note": "Ложь: вызов замыкания снимает захват"
+ },
+ {
+  "task": "arc.s5",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "Сильно держат только переменная и элемент массива. Замыкание захватывает слабо по умолчанию, поэтому сессию не держит. deinit срабатывает, когда обнулили все переменные, а работу завершают в deinit.",
+  "note": "Ложь: захват замыкания слабый по умолчанию"
+ },
+ {
+  "task": "arc.s5",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "ARC это автоматический запуск замыканий. Захват это когда deinit ловит переменную в массиве, а владельцы работают на собесе.",
+  "note": "Набор терминов без смысла"
+ },
+ {
+  "task": "arc.s6",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "session = nil // 1 владелец: элемент pending\nprint(pending[0].id)\npending.removeAll()\nprint(\"Очередь очищена\")",
+  "note": "Как в ключе, с подписью"
+ },
+ {
+  "task": "arc.s6",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "session = nil // видимых владельцев: 1\nprint(pending[0].id)\npending = []\nprint(\"Очередь очищена\")",
+  "note": "pending = [] вместо removeAll()"
+ },
+ {
+  "task": "arc.s6",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "final class RecordingSession {\n    let id: Int\n    init(id: Int) { self.id = id }\n    deinit { print(\"Освобождена сессия \\(id)\") }\n}\nvar session: RecordingSession? = RecordingSession(id: 32)\nvar pending: [RecordingSession] = [session!]\nsession = nil // 1 (pending)\nprint(pending[0].id)\npending.removeAll(keepingCapacity: false)\nprint(\"Очередь очищена\")\n\nТеперь владельцев нет, срабатывает deinit.",
+  "note": "Весь код и removeAll(keepingCapacity:)"
+ },
+ {
+  "task": "arc.s6",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "pending.removeAll()",
+  "note": "Нет подписи числа владельцев после session = nil"
+ },
+ {
+  "task": "arc.s6",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "session = nil // 1\npending.removeAll()\nprint(pending[0].id)",
+  "note": "Очистка перед print, обращение к пустому массиву"
+ },
+ {
+  "task": "arc.s6",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "pending = nil",
+  "note": "Массив не Optional, присвоить nil нельзя"
+ },
+ {
+  "task": "arc.s6",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "session = nil // 1\npending.removeAll",
+  "note": "Скобки не поставлены, вызова нет"
+ },
+ {
+  "task": "arc.s6",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "session = nil // 0\nprint(session!.id)",
+  "note": "Обращается к уже обнулённой session"
+ },
+ {
+  "task": "arc.s7",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "final class RecordingBuffer {\n  let sampleCount: Int\n  init(sampleCount: Int) { self.sampleCount = sampleCount }\n  deinit { print(\"Буфер освобождён\") }\n}\nfunc makeReader(sampleCount: Int) -> () -> Void {\n  let buffer = RecordingBuffer(sampleCount: sampleCount)\n  return { print(buffer.sampleCount) }\n}\n// вызов\nvar reader: (() -> Void)? = makeReader(sampleCount: 128)\nreader?()\nreader = nil\nprint(\"Чтение завершено\")",
+  "note": "Тот же код, отступы по 2"
+ },
+ {
+  "task": "arc.s7",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "final class RecordingBuffer {\n    let sampleCount: Int\n    init(sampleCount: Int) {\n        self.sampleCount = sampleCount\n    }\n    deinit {\n        print(\"Буфер освобождён\")\n    }\n}\n\nfunc makeReader(sampleCount: Int) -> () -> Void {\n    let buffer = RecordingBuffer(sampleCount: sampleCount)\n    return {\n        print(buffer.sampleCount)\n    }\n}\nvar reader: (() -> Void)? = makeReader(sampleCount: 128)\nreader!()\nreader = nil\nprint(\"Чтение завершено\")",
+  "note": "Развёрнутая запись, reader!()"
+ },
+ {
+  "task": "arc.s7",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "func makeReader(sampleCount: Int) -> () -> Void {\n  let buf: RecordingBuffer = RecordingBuffer(sampleCount: sampleCount)\n  return { [buf] in print(buf.sampleCount) }\n}\nvar reader: (() -> Void)? = makeReader(sampleCount: 128)\nif let r = reader { r() }\nreader = nil\nprint(\"Чтение завершено\")\n\nЗамыкание держит buf, пока лежит в reader.",
+  "note": "Список захвата, if let, только функция и вызов"
+ },
+ {
+  "task": "arc.s7",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "func makeReader(sampleCount: Int) -> () -> Void {\n  let buffer = RecordingBuffer(sampleCount: sampleCount)\n  return { [weak buffer] in print(buffer?.sampleCount ?? 0) }\n}\nvar reader: (() -> Void)? = makeReader(sampleCount: 128)\nreader?()\nreader = nil\nprint(\"Чтение завершено\")",
+  "note": "Слабый захват: буфер освободится сразу после возврата функции"
+ },
+ {
+  "task": "arc.s7",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "var reader: (() -> Void)? = makeReader(sampleCount: 128)\nreader?()\nprint(\"Чтение завершено\")",
+  "note": "Забыл очистить reader, deinit не сработает"
+ },
+ {
+  "task": "arc.s7",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "var reader = makeReader(sampleCount: 128)\nreader()\nreader = nil\nprint(\"Чтение завершено\")",
+  "note": "reader не Optional, nil присвоить нельзя"
+ },
+ {
+  "task": "arc.s7",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "func makeReader(sampleCount: Int) -> () -> Void {\n  let buffer = RecordingBuffer(sampleCount: sampleCount)\n  return { print(sampleCount) }\n}",
+  "note": "Замыкание использует параметр, а не buffer, буфер умрёт при возврате"
+ },
+ {
+  "task": "arc.s7",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "let buffer = RecordingBuffer(sampleCount: 128)\nprint(buffer.sampleCount)",
+  "note": "Нет makeReader и замыкания"
+ },
+ {
+  "task": "arc-b1",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "true\nСтраница освобождена\ntrue",
+  "note": "Вывод как в ключе"
+ },
+ {
+  "task": "arc-b1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "true, Страница освобождена, true. После observer один сильный владелец page, weak не держит объект",
+  "note": "Одна строка с пояснением"
+ },
+ {
+  "task": "arc-b1",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "1) true\n2) \"Страница освобождена\"\n3) true\nweak не увеличивает число владельцев, поэтому после page = nil observer стал nil",
+  "note": "Нумерация и кавычки"
+ },
+ {
+  "task": "arc-b1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "true\ntrue\nСтраница освобождена",
+  "note": "deinit напечатан после последнего print"
+ },
+ {
+  "task": "arc-b1",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "true\nСтраница освобождена\nfalse",
+  "note": "Последняя строка false вместо true"
+ },
+ {
+  "task": "arc-b1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "false\nСтраница освобождена\ntrue",
+  "note": "Считает, что weak сразу nil"
+ },
+ {
+  "task": "arc-b1",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "true\nfalse",
+  "note": "Думает, что weak держит страницу, deinit нет"
+ },
+ {
+  "task": "arc-b1",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "Страница освобождена\nnil\ntrue",
+  "note": "Печатает nil и не в том порядке"
+ },
+ {
+  "task": "arc-b2",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "final class GesturePreview {\n  private(set) var isRunning = true\n  func stop() { isRunning = false }\n  deinit { print(\"Превью освобождено\") }\n}\nvar preview: GesturePreview? = GesturePreview()\nvar inspector = preview\npreview = nil\ninspector!.stop()\nprint(inspector!.isRunning)\ninspector = nil\nprint(\"Инспектор закрыт\")",
+  "note": "Весь код с отступами по 2"
+ },
+ {
+  "task": "arc-b2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "inspector?.stop()",
+  "note": "Опциональный вызов вместо !"
+ },
+ {
+  "task": "arc-b2",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "var preview: GesturePreview? = GesturePreview()\nvar inspector = preview\npreview = nil\nif let live = inspector { live.stop() }\nprint(inspector!.isRunning)\ninspector = nil\nprint(\"Инспектор закрыт\")",
+  "note": "if let и свой фрагмент кода"
+ },
+ {
+  "task": "arc-b2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "preview?.stop()",
+  "note": "preview уже nil, вызов ничего не делает"
+ },
+ {
+  "task": "arc-b2",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "print(inspector!.isRunning)\ninspector!.stop()",
+  "note": "stop вызван после print, выведет true"
+ },
+ {
+  "task": "arc-b2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "inspector.stop()",
+  "note": "Нет разворачивания Optional"
+ },
+ {
+  "task": "arc-b2",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "inspector!.isRunning = false",
+  "note": "isRunning private(set), присвоить снаружи нельзя"
+ },
+ {
+  "task": "arc-b2",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "inspector!.deinit()",
+  "note": "Ручной вызов deinit"
+ },
+ {
+  "task": "arc-b3",
+  "cls": "same",
+  "truth": "ok",
+  "answer": "picker!.onApply = nil // разорвали цикл",
+  "note": "Одна строка с комментарием"
+ },
+ {
+  "task": "arc-b3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "picker?.onApply = nil",
+  "note": "Опциональная цепочка"
+ },
+ {
+  "task": "arc-b3",
+  "cls": "alt",
+  "truth": "ok",
+  "answer": "var picker: AlarmSoundPicker? = AlarmSoundPicker()\npicker!.install()\npicker!.onApply?()\npicker!.onApply = .none\npicker = nil\nprint(\"Выбор закрыт\")\n\nЗамыкание держало picker, а picker замыкание.",
+  "note": "Весь хвост кода и .none"
+ },
+ {
+  "task": "arc-b3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "picker!.selected = \"\"",
+  "note": "Меняет не то свойство, цикл остаётся"
+ },
+ {
+  "task": "arc-b3",
+  "cls": "near",
+  "truth": "bad",
+  "answer": "picker = nil\npicker?.onApply = nil",
+  "note": "Очистка после picker = nil, объект уже не освободится"
+ },
+ {
+  "task": "arc-b3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "picker.onApply = nil",
+  "note": "Нет разворачивания Optional"
+ },
+ {
+  "task": "arc-b3",
+  "cls": "novice",
+  "truth": "bad",
+  "answer": "onApply = { [weak self] in print(self!.selected) }",
+  "note": "Использует weak, который запрещён условием"
+ },
+ {
+  "task": "arc-b3",
+  "cls": "wrong",
+  "truth": "bad",
+  "answer": "print(\"Выбор звука освобождён\")",
+  "note": "Печатает сообщение вручную"
+ }
+]

@@ -4,7 +4,38 @@
   "title": "Ступень 1. Сначала статус",
   "prompt": "Что напечатает локальная проверка? JSON корректен, но ответ имеет 503.",
   "code": "import Foundation\nstruct Chapter: Decodable { let id: Int; let title: String }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}\nlet url = URL(string: \"https://api.example.invalid/chapters/12\")!\nlet data = Data(#\"{\"id\":12,\"title\":\"Первый снег\"}\"#.utf8)\nlet response = HTTPURLResponse(url: url, statusCode: 503,\n                               httpVersion: nil, headerFields: nil)!\ndo {\n    let chapter = try decodeChapter(data: data, response: response)\n    print(chapter.title)\n} catch LoadError.status(let code) {\n    print(\"HTTP \\(code)\")\n} catch { print(\"Другая ошибка\") }",
-  "key": "HTTP 503\n\nПроверка статуса срабатывает до JSONDecoder; название не печатается."
+  "key": "HTTP 503\n\nПроверка статуса срабатывает до JSONDecoder; название не печатается.",
+  "check": {
+   "for": "61ae68fc5b",
+   "outs": [
+    [
+     "HTTP 503"
+    ]
+   ],
+   "why": [
+    "Статус 503 не равен 200, поэтому decodeChapter бросает LoadError.status(503) до JSONDecoder; catch печатает код."
+   ],
+   "wrong": [
+    {
+     "out": [
+      "Первый снег"
+     ],
+     "msg": "Ты решил, что раз JSON корректен, глава декодируется. Но статус проверяется раньше тела: при 503 до декодирования дело не доходит."
+    },
+    {
+     "out": [
+      "Другая ошибка"
+     ],
+     "msg": "LoadError.status(Int) ловится отдельным catch с шаблоном, он срабатывает раньше общего catch. Общий catch берёт только остальное."
+    },
+    {
+     "out": [
+      "HTTP 200"
+     ],
+     "msg": "В ошибку кладётся http.statusCode самого ответа, а он здесь 503, а не 200."
+    }
+   ]
+  }
  },
  {
   "id": "s2",
@@ -17,28 +48,370 @@
    "`try` без `?` и `!`: сетевая ошибка (`URLError`) уходит наверх, а не глушится.",
    "`response` не выбрасывается через `_`: пара целиком уходит в `decodeChapter(data: data, response: response)`.",
    "`return try decodeChapter(...)` без `try?`: `LoadError.status` и `DecodingError` тоже доходят до вызывающего кода."
-  ]
+  ],
+  "check": {
+   "for": "d8e1469d8e",
+   "must": [
+    {
+     "pat": [
+      "try await session.data(for: request ...)"
+     ],
+     "miss": "Не вижу самого запроса: он идёт через переданную сессию с готовым URLRequest, и перед ним обязателен await.",
+     "ask": "Выполняешь ли ты запрос через переданную сессию с ожиданием await?"
+    },
+    {
+     "pat": [
+      "let ($a, $b) = try await session.data(for: request ...)",
+      "let $a = try await session.data(for: request ...)"
+     ],
+     "miss": "Результат запроса надо сохранить: это пара из тела и ответа. Без response статус потом не проверить.",
+     "ask": "Сохраняешь ли ты и тело, и ответ из результата запроса?"
+    },
+    {
+     "pat": [
+      "return try decodeChapter(data: ..., response: ...)"
+     ],
+     "miss": "Не вижу возврата результата декодера: пару из запроса надо целиком передать в decodeChapter, он проверит статус и разберёт тело.",
+     "ask": "Передаёшь ли ты пару из тела и ответа целиком в decodeChapter?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "let ($a, _) = try await",
+      "let (_, $a) = try await"
+     ],
+     "msg": "Одна половина пары выброшена. Без response не проверить статус, без data нечего декодировать: нужны обе."
+    },
+    {
+     "pat": [
+      "try?",
+      "try!"
+     ],
+     "msg": "try? прячет ошибку, try! роняет приложение. Здесь ошибки должны уходить наверх через простой try."
+    },
+    {
+     "pat": [
+      "URLSession.shared.data(...)"
+     ],
+     "msg": "Сессия приходит параметром session. Если брать .shared напрямую, подменить её в тесте не получится."
+    },
+    {
+     "pat": [
+      "catch"
+     ],
+     "msg": "catch здесь прячет ошибку. Функция помечена throws, пусть вызывающий код решает, что делать с ней."
+    }
+   ]
+  }
  },
  {
   "id": "s3",
   "title": "Ступень 3. Проверь ответ самостоятельно",
   "prompt": "Даны модель и локальный ответ 200. Напиши decodeChapter: проверь HTTP, затем именно 200, затем JSON. При успехе выведи title.",
   "code": "import Foundation\nstruct Chapter: Decodable { let id: Int; let title: String }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\n// Напиши decodeChapter(data:response:)\nlet url = URL(string: \"https://api.example.invalid/chapters/12\")!\nlet data = Data(#\"{\"id\":12,\"title\":\"Первый снег\"}\"#.utf8)\nlet response = HTTPURLResponse(url: url, statusCode: 200,\n                               httpVersion: nil, headerFields: nil)!\ndo {\n    let chapter = try decodeChapter(data: data, response: response)\n    print(chapter.title)\n} catch LoadError.status(let code) {\n    print(\"HTTP \\(code)\")\n} catch { print(\"Другая ошибка\") }",
-  "key": "import Foundation\nstruct Chapter: Decodable { let id: Int; let title: String }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}\nlet url = URL(string: \"https://api.example.invalid/chapters/12\")!\nlet data = Data(#\"{\"id\":12,\"title\":\"Первый снег\"}\"#.utf8)\nlet response = HTTPURLResponse(url: url, statusCode: 200,\n                               httpVersion: nil, headerFields: nil)!\ndo {\n    let chapter = try decodeChapter(data: data, response: response)\n    print(chapter.title)\n} catch LoadError.status(let code) {\n    print(\"HTTP \\(code)\")\n} catch { print(\"Другая ошибка\") }\n\nВывод «Первый снег». Только подходящий статус разрешает декодирование."
+  "key": "import Foundation\nstruct Chapter: Decodable { let id: Int; let title: String }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}\nlet url = URL(string: \"https://api.example.invalid/chapters/12\")!\nlet data = Data(#\"{\"id\":12,\"title\":\"Первый снег\"}\"#.utf8)\nlet response = HTTPURLResponse(url: url, statusCode: 200,\n                               httpVersion: nil, headerFields: nil)!\ndo {\n    let chapter = try decodeChapter(data: data, response: response)\n    print(chapter.title)\n} catch LoadError.status(let code) {\n    print(\"HTTP \\(code)\")\n} catch { print(\"Другая ошибка\") }\n\nВывод «Первый снег». Только подходящий статус разрешает декодирование.",
+  "check": {
+   "for": "aac2a79794",
+   "accept": [
+    "func decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    if http.statusCode != 200 {\n        throw LoadError.status(http.statusCode)\n    }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}",
+    "func decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    let decoder = JSONDecoder()\n    return try decoder.decode(Chapter.self, from: data)\n}",
+    "func decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    let chapter = try JSONDecoder().decode(Chapter.self, from: data)\n    return chapter\n}"
+   ],
+   "must": [
+    {
+     "pat": [
+      "response as? HTTPURLResponse"
+     ],
+     "miss": "Не вижу приведения response к HTTPURLResponse: у общего URLResponse нет statusCode, без приведения статус не прочитать.",
+     "ask": "Приводишь ли ты response к HTTP-ответу, чтобы прочитать статус?"
+    },
+    {
+     "pat": [
+      "throw LoadError.notHTTP"
+     ],
+     "miss": "Если ответ не HTTP, нужна своя ошибка: бросай notHTTP, а не продолжай и не молчи.",
+     "ask": "Есть ли у тебя отдельная ошибка для ответа, который не HTTP?"
+    },
+    {
+     "pat": [
+      "$a.statusCode == 200",
+      "$a.statusCode != 200",
+      "200 == $a.statusCode",
+      "200 != $a.statusCode"
+     ],
+     "miss": "Не вижу проверки статуса именно на 200. Контракт обещает успех только с ним, остальные коды в декодер попадать не должны.",
+     "ask": "Проверяешь ли ты, что статус ответа именно 200?"
+    },
+    {
+     "pat": [
+      "throw LoadError.status($a.statusCode)"
+     ],
+     "miss": "При чужом статусе надо бросить ошибку status с самим кодом: по нему catch в конце печатает «HTTP код».",
+     "ask": "Бросаешь ли ты ошибку статуса вместе с самим кодом ответа?"
+    },
+    {
+     "pat": [
+      "decode(Chapter.self, from: $a)"
+     ],
+     "miss": "Не вижу декодирования Chapter из data через JSONDecoder. После проверок функция должна вернуть модель.",
+     "ask": "Декодируешь ли ты данные в Chapter через JSONDecoder после проверок?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "decode(Chapter.self, from: ...) ... statusCode == 200",
+      "decode(Chapter.self, from: ...) ... statusCode != 200"
+     ],
+     "msg": "Тело декодируется раньше проверки статуса. Ошибочный ответ с правильным JSON тогда пройдёт как успех: сначала статус, потом JSON."
+    },
+    {
+     "pat": [
+      "..< 300",
+      "contains($a.statusCode)"
+     ],
+     "msg": "Диапазон 2xx пропустит, например, 204, а контракт обещает только 200 с телом. По заданию проверяй именно 200."
+    },
+    {
+     "pat": [
+      "try?",
+      "try!",
+      "as! HTTPURLResponse"
+     ],
+     "msg": "try? прячет ошибку, try! и as! роняют приложение. Нужна простая проверка с throw на каждом шаге."
+    },
+    {
+     "pat": [
+      "guard $a.statusCode != 200",
+      "if $a.statusCode == 200 { throw"
+     ],
+     "msg": "Условие перевёрнуто: ошибку надо бросать при статусе не 200, а пропускать дальше только 200."
+    }
+   ]
+  }
  },
  {
   "id": "s4",
   "title": "Ступень 4. Сервер отказал, глава появилась",
   "prompt": "Функция показывает главу при 503. Исправь порядок и назови результат до и после.",
   "code": "import Foundation\nstruct Chapter: Decodable { let id: Int; let title: String }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}\nlet url = URL(string: \"https://api.example.invalid/chapters/12\")!\nlet data = Data(#\"{\"id\":12,\"title\":\"Первый снег\"}\"#.utf8)\nlet response = HTTPURLResponse(url: url, statusCode: 503,\n                               httpVersion: nil, headerFields: nil)!\ndo {\n    let chapter = try decodeChapter(data: data, response: response)\n    print(chapter.title)\n} catch LoadError.status(let code) {\n    print(\"HTTP \\(code)\")\n} catch { print(\"Другая ошибка\") }",
-  "key": "import Foundation\nstruct Chapter: Decodable { let id: Int; let title: String }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}\nlet url = URL(string: \"https://api.example.invalid/chapters/12\")!\nlet data = Data(#\"{\"id\":12,\"title\":\"Первый снег\"}\"#.utf8)\nlet response = HTTPURLResponse(url: url, statusCode: 503,\n                               httpVersion: nil, headerFields: nil)!\ndo {\n    let chapter = try decodeChapter(data: data, response: response)\n    print(chapter.title)\n} catch LoadError.status(let code) {\n    print(\"HTTP \\(code)\")\n} catch { print(\"Другая ошибка\") }\n\nДо правки — «Первый снег», после — «HTTP 503». Правильный JSON не отменяет ошибочный статус."
+  "key": "import Foundation\nstruct Chapter: Decodable { let id: Int; let title: String }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc decodeChapter(data: Data, response: URLResponse) throws -> Chapter {\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}\nlet url = URL(string: \"https://api.example.invalid/chapters/12\")!\nlet data = Data(#\"{\"id\":12,\"title\":\"Первый снег\"}\"#.utf8)\nlet response = HTTPURLResponse(url: url, statusCode: 503,\n                               httpVersion: nil, headerFields: nil)!\ndo {\n    let chapter = try decodeChapter(data: data, response: response)\n    print(chapter.title)\n} catch LoadError.status(let code) {\n    print(\"HTTP \\(code)\")\n} catch { print(\"Другая ошибка\") }\n\nДо правки — «Первый снег», после — «HTTP 503». Правильный JSON не отменяет ошибочный статус.",
+  "check": {
+   "for": "94a4fe66c8",
+   "accept": [
+    "guard let http = response as? HTTPURLResponse\nelse { throw LoadError.notHTTP }\nif http.statusCode != 200 {\n    throw LoadError.status(http.statusCode)\n}\nreturn try JSONDecoder().decode(Chapter.self, from: data)"
+   ],
+   "must": [
+    {
+     "pat": [
+      "response as? HTTPURLResponse"
+     ],
+     "miss": "Не вижу приведения response к HTTPURLResponse: без него statusCode недоступен, и проверять нечего.",
+     "ask": "Приводишь ли ты response к HTTP-ответу, чтобы был доступен статус?"
+    },
+    {
+     "pat": [
+      "throw LoadError.notHTTP"
+     ],
+     "miss": "Для ответа не-HTTP нужна своя ошибка notHTTP. Без неё функция либо падает, либо идёт дальше вслепую.",
+     "ask": "Есть ли у тебя отдельная ошибка для ответа, который не HTTP?"
+    },
+    {
+     "pat": [
+      "$a.statusCode == 200",
+      "$a.statusCode != 200",
+      "200 == $a.statusCode",
+      "200 != $a.statusCode"
+     ],
+     "miss": "Не вижу проверки на 200. Именно её не хватало: при 503 глава показывалась, потому что статус не смотрели.",
+     "ask": "Проверяешь ли ты статус ответа на 200 до декодирования?"
+    },
+    {
+     "pat": [
+      "throw LoadError.status($a.statusCode)"
+     ],
+     "miss": "При чужом статусе нужно бросить status с кодом ответа: catch в конце напечатает «HTTP» и номер.",
+     "ask": "Бросаешь ли ты ошибку статуса вместе с кодом ответа?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "decode(Chapter.self, from: ...) ... statusCode == 200",
+      "decode(Chapter.self, from: ...) ... statusCode != 200"
+     ],
+     "msg": "Проверка статуса стоит после декодирования: к этому моменту глава уже прочитана. Статус надо проверять до JSONDecoder."
+    },
+    {
+     "pat": [
+      "..< 300",
+      "contains($a.statusCode)"
+     ],
+     "msg": "Диапазон 2xx шире контракта: тот обещает только 200. Проверяй именно 200."
+    },
+    {
+     "pat": [
+      "try?",
+      "try!",
+      "as! HTTPURLResponse"
+     ],
+     "msg": "try? глотает ошибку, try! и as! роняют программу. Здесь нужен throw с понятной ошибкой."
+    },
+    {
+     "pat": [
+      "guard $a.statusCode != 200",
+      "if $a.statusCode == 200 { throw"
+     ],
+     "msg": "Условие перевёрнуто: бросать надо при статусе не 200, а на 200 идти дальше к декодированию."
+    }
+   ]
+  }
  },
  {
   "id": "s5",
   "title": "Ступень 5. Объясни загрузку",
   "prompt": "Своими словами, как на собесе: что → почему → последствия.",
   "code": "Глава 12 загружается через URLSession.\nПочему храним response вместе с data?\nЧем различаются URLError, LoadError.status и DecodingError?\nПочему await не разрешает менять любой UI из любого контекста?",
-  "key": "response несёт HTTP-статус, который проверяем до тела. URLError сообщает об отказе транспорта, status — об HTTP-ответе вне контракта, DecodingError — о неподходящих данных успешного ответа. await приостанавливает задачу, а изменение UI требует нужной изоляции MainActor."
+  "key": "response несёт HTTP-статус, который проверяем до тела. URLError сообщает об отказе транспорта, status — об HTTP-ответе вне контракта, DecodingError — о неподходящих данных успешного ответа. await приостанавливает задачу, а изменение UI требует нужной изоляции MainActor.",
+  "check": {
+   "for": "943be1b087",
+   "concepts": [
+    {
+     "label": "response хранится рядом с data, чтобы проверить HTTP-статус до декодирования",
+     "groups": [
+      [
+       "статус",
+       "status",
+       "код ответ"
+      ],
+      [
+       "до декод",
+       "до тел",
+       "до разбор",
+       "перед декод",
+       "перед тел",
+       "перед разбор",
+       "сначала",
+       "прежде"
+      ]
+     ],
+     "miss": "Не сказано, зачем нужен response: в нём HTTP-статус, и его проверяют до разбора тела.",
+     "ask": "Сказал ли ты, что response нужен ради HTTP-статуса, который проверяют до разбора тела?"
+    },
+    {
+     "label": "URLError: отказ транспорта (сеть, соединение)",
+     "groups": [
+      [
+       "urlerror"
+      ],
+      [
+       "сет",
+       "транспорт",
+       "соедин",
+       "интернет",
+       "доступ",
+       "таймаут",
+       "timeout",
+       "не дошл",
+       "не удалось"
+      ]
+     ],
+     "miss": "Про URLError не сказано главное: это отказ на уровне транспорта, ответ вообще не получен (сети нет, соединение оборвалось).",
+     "ask": "Объяснил ли ты, что URLError — это отказ транспорта, когда ответа нет вообще?"
+    },
+    {
+     "label": "LoadError.status: ответ получен, но статус вне контракта",
+     "groups": [
+      [
+       "status",
+       "статус"
+      ],
+      [
+       "не 200",
+       "не подходящ",
+       "неподходящ",
+       "503",
+       "404",
+       "сервер",
+       "вне контракт",
+       "неуспеш",
+       "ошибочн",
+       "http-ответ",
+       "http ответ",
+       "ответ есть",
+       "ответ пришёл",
+       "ответ пришел"
+      ]
+     ],
+     "miss": "Про LoadError.status не сказано: ответ пришёл, но с неподходящим кодом (не 200), и сервер сам сообщил об ошибке.",
+     "ask": "Сказал ли ты, что ошибка статуса означает: ответ пришёл, но код не подходит?"
+    },
+    {
+     "label": "DecodingError: успешный ответ с данными неподходящей формы",
+     "groups": [
+      [
+       "decodingerror",
+       "decoding"
+      ],
+      [
+       "данн",
+       "json",
+       "формат",
+       "структур",
+       "модел",
+       "тип",
+       "не соответств",
+       "не подход",
+       "тел"
+      ]
+     ],
+     "miss": "Про DecodingError не сказано: статус подошёл, но тело не совпало с моделью, например другой тип или нет поля.",
+     "ask": "Объяснил ли ты, что DecodingError — это успешный ответ с данными неподходящей формы?"
+    },
+    {
+     "label": "await приостанавливает задачу; UI меняют только в нужной изоляции (MainActor)",
+     "groups": [
+      [
+       "mainactor",
+       "main actor",
+       "главн",
+       "основн",
+       "изоляц",
+       "main thread"
+      ],
+      [
+       "await",
+       "приостанав",
+       "возобнов",
+       "задач",
+       "контекст"
+      ]
+     ],
+     "miss": "Не сказано про UI: await лишь приостанавливает задачу и не выбирает контекст. Менять интерфейс нужно в MainActor-изоляции.",
+     "ask": "Сказал ли ты, что await лишь приостанавливает задачу, а UI меняют в изоляции MainActor?"
+    }
+   ],
+   "false": [
+    {
+     "groups": [
+      [
+       "await разрешает",
+       "await позволяет",
+       "await делает"
+      ],
+      [
+       "ui",
+       "главн",
+       "интерфейс",
+       "main"
+      ]
+     ],
+     "msg": "Похоже, ты говоришь, что await сам делает безопасным изменение UI. Нет: он только приостанавливает задачу, а изоляцию задаёт MainActor.",
+     "ask": "Ты имел в виду, что await сам делает безопасным изменение интерфейса?"
+    }
+   ]
+  }
  },
  {
   "id": "s6",
@@ -51,7 +424,68 @@
    "Вторая `try Task.checkCancellation()` — сразу после `try await session.data(for: request)` и до `decodeChapter`.",
    "Отмена бросает `CancellationError` наружу: не `return nil`, не пустая глава и не глушение в `catch`.",
    "Остальной контракт прежний: `HTTPURLResponse`, `statusCode == 200`, затем `decode(Chapter.self, from: data)`."
-  ]
+  ],
+  "check": {
+   "for": "5ab14b8cff",
+   "accept": [
+    {
+     "code": "guard !Task.isCancelled else { throw CancellationError() }",
+     "hunk": 0
+    },
+    {
+     "code": "guard !Task.isCancelled else { throw CancellationError() }",
+     "hunk": 1
+    }
+   ],
+   "must": [
+    {
+     "pat": [
+      "Task.checkCancellation() ... session.data(for: request ...)",
+      "Task.isCancelled ... session.data(for: request ...)"
+     ],
+     "miss": "Нет проверки отмены до запроса. Если задачу отменили заранее, незачем начинать сетевой вызов.",
+     "ask": "Проверяешь ли ты отмену задачи до сетевого запроса?"
+    },
+    {
+     "pat": [
+      "session.data(for: request ...) ... Task.checkCancellation() ... decodeChapter(data: ..., response: ...)",
+      "session.data(for: request ...) ... Task.isCancelled ... decodeChapter(data: ..., response: ...)"
+     ],
+     "miss": "Нет проверки отмены после await и до decodeChapter. Пока ждали ответ, задачу могли отменить: без проверки вернётся уже ненужная модель.",
+     "ask": "Проверяешь ли ты отмену задачи после await, до декодирования?"
+    },
+    {
+     "pat": [
+      "Task.checkCancellation()",
+      "throw CancellationError()"
+     ],
+     "miss": "Отмена должна выбрасывать CancellationError наверх: через checkCancellation или явный throw, а не превращаться в обычный результат.",
+     "ask": "Выбрасывается ли у тебя отмена как ошибка наверх, а не превращается в обычный результат?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "try? Task.checkCancellation()"
+     ],
+     "msg": "try? гасит CancellationError, и проверка ничего не останавливает. Нужен обычный try, чтобы ошибка ушла наверх."
+    },
+    {
+     "pat": [
+      "if Task.isCancelled { return ... }",
+      "guard !Task.isCancelled else { return ... }"
+     ],
+     "msg": "Возврат вместо ошибки превращает отмену в «успех» или не компилируется. Отмена должна быть брошена как ошибка."
+    },
+    {
+     "pat": [
+      "catch is CancellationError",
+      "catch let $a as CancellationError"
+     ],
+     "msg": "Ловить CancellationError внутри и глушить его нельзя: вызывающий код не узнает об отмене. Пусть ошибка идёт наверх."
+    }
+   ]
+  }
  },
  {
   "id": "s7",
@@ -65,6 +499,77 @@
    "`session: URLSession = .shared` параметром и `let (data, response) = try await session.data(for: request)`.",
    "`response as? HTTPURLResponse` (иначе `notHTTP`) и `statusCode == 200` (иначе `LoadError.status`) — до `JSONDecoder`.",
    "Итог: 180 только из ответа 200; 204 и 503 останавливаются на статусе, неверный тип `duration` даёт `DecodingError`."
-  ]
+  ],
+  "check": {
+   "for": "e7f0dd7fae",
+   "accept": [
+    "import Foundation\nstruct Chapter: Decodable { let id: Int; let duration: Int }\nenum LoadError: Error {\n    case invalidID, invalidURL, notHTTP\n    case status(Int)\n}\nfunc loadChapter(\n    id: Int, session: URLSession = .shared\n) async throws -> Chapter {\n    guard id > 0 else { throw LoadError.invalidID }\n    let address = \"https://api.example.invalid/chapters/\\(id)\"\n    guard let url = URL(string: address) else {\n        throw LoadError.invalidURL\n    }\n    let (data, response) = try await session.data(from: url)\n    guard let http = response as? HTTPURLResponse\n    else { throw LoadError.notHTTP }\n    guard http.statusCode == 200\n    else { throw LoadError.status(http.statusCode) }\n    return try JSONDecoder().decode(Chapter.self, from: data)\n}"
+   ],
+   "must": [
+    {
+     "pat": [
+      "struct Chapter: Decodable ... { ... duration: Int ... }",
+      "struct Chapter: Codable ... { ... duration: Int ... }"
+     ],
+     "miss": "Не вижу модели Chapter с полем duration типа Int и протоколом Decodable. Без неё декодировать ответ не во что.",
+     "ask": "Есть ли у тебя модель Chapter с полем duration типа Int и протоколом Decodable?"
+    },
+    {
+     "pat": [
+      "guard id > 0 else { throw ... } ... guard let $a = URL(string: ...) else { throw ... }",
+      "guard id >= 1 else { throw ... } ... guard let $a = URL(string: ...) else { throw ... }",
+      "if id <= 0 { throw ... } ... guard let $a = URL(string: ...) else { throw ... }",
+      "if id < 1 { throw ... } ... guard let $a = URL(string: ...) else { throw ... }"
+     ],
+     "miss": "Нужны две ранние проверки с throw: id должен быть положительным, а адрес собран через guard let URL(string:). Иначе плохой вход молча уйдёт в сеть.",
+     "ask": "Есть ли у тебя две ранние проверки: положительный id и успешное создание адреса?"
+    },
+    {
+     "pat": [
+      "as? HTTPURLResponse ... statusCode == 200",
+      "as? HTTPURLResponse ... statusCode != 200"
+     ],
+     "miss": "Не вижу порядка «приведение к HTTPURLResponse, затем статус именно 200». Без них 204 и 503 пройдут к декодеру.",
+     "ask": "Приводишь ли ты ответ к HTTP-типу и затем проверяешь статус именно на 200?"
+    },
+    {
+     "pat": [
+      "decode(Chapter.self, from: $a)"
+     ],
+     "miss": "Не вижу декодирования данных в Chapter через JSONDecoder: после проверок ответ надо превратить в модель.",
+     "ask": "Декодируешь ли ты данные в Chapter после всех проверок?"
+    }
+   ],
+   "not": [
+    {
+     "pat": [
+      "try?",
+      "try!"
+     ],
+     "msg": "try? прячет ошибки, try! роняет приложение. По условию ошибки не скрываются: простой try и throw."
+    },
+    {
+     "pat": [
+      "as! HTTPURLResponse",
+      "URL(string: ...)!"
+     ],
+     "msg": "Принудительное приведение или ! роняют приложение при плохих данных. Разворачивай через guard let и бросай ошибку."
+    },
+    {
+     "pat": [
+      "..< 300",
+      "contains($a.statusCode)"
+     ],
+     "msg": "Диапазон 2xx пропустит 204, а там тела нет, и декодер упадёт. По контракту нужен именно 200."
+    },
+    {
+     "pat": [
+      "decode(Chapter.self, from: ...) ... statusCode == 200",
+      "decode(Chapter.self, from: ...) ... statusCode != 200"
+     ],
+     "msg": "Декодирование идёт раньше проверки статуса. Тело ошибочного ответа читать нельзя: сначала статус, потом JSON."
+    }
+   ]
+  }
  }
 ]

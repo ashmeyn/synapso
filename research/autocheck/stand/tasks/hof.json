@@ -1,0 +1,85 @@
+[
+ {
+  "id": "hof.s1",
+  "kind": "predict",
+  "title": "Ступень 1. Предскажи сводку",
+  "prompt": "Что окажется в recipients и amounts? Что вернёт reduce?",
+  "code": "struct Transfer {\n    let recipient: String\n    let amountText: String\n    let posted: Bool\n}\nlet transfers = [Transfer(recipient: \"Анна\", amountText: \"180\", posted: true),\n             Transfer(recipient: \"Олег\", amountText: \"abc\", posted: true),\n             Transfer(recipient: \"Мария\", amountText: \"90\", posted: false)]\nlet posted = transfers.filter { $0.posted }\nlet recipients = posted.map { $0.recipient }\nlet amounts = posted.compactMap { Int($0.amountText) }\nprint(recipients, amounts, amounts.reduce(0, +))",
+  "key": "recipients = [\"Анна\", \"Олег\"], amounts = [180], сумма = 180. compactMap выбросил плохую сумму; для истории операций это опасная потеря проведённого перевода."
+ },
+ {
+  "id": "hof.s2",
+  "kind": "code",
+  "title": "Ступень 2. Собери по каркасу",
+  "prompt": "Заполни: оставь проведённые переводы, получи имена получателей и числовые суммы.",
+  "code": "func pieces(_ transfers: [Transfer]) -> ([String], [Int]) {\n    // 1. filter проведённые\n    // 2. map имена\n    // 3. compactMap суммы\n}",
+  "key": "func pieces(_ transfers: [Transfer]) -> ([String], [Int]) {\n    let posted = transfers.filter { $0.posted }\n    let recipients = posted.map { $0.recipient }\n    let amounts = posted.compactMap { Int($0.amountText) }\n    return (recipients, amounts)\n}\n\nfilter выбирает записи, map сохраняет по одной подписи на запись, compactMap убирает nil после Int(text). Пока это только технические части, не безопасный денежный отчёт."
+ },
+ {
+  "id": "hof.s3",
+  "kind": "code",
+  "title": "Ступень 3. Проверь пропажу суммы",
+  "prompt": "Напиши summary: если хотя бы одна проведённая сумма не разобралась, верни nil; иначе сложи суммы.",
+  "code": "func totalAmount(_ transfers: [Transfer]) -> Int? {\n    // posted → amounts → проверка count → reduce\n}",
+  "key": "func totalAmount(_ transfers: [Transfer]) -> Int? {\n    let posted = transfers.filter { $0.posted }\n    let amounts = posted.compactMap { Int($0.amountText) }\n    guard amounts.count == posted.count else { return nil }\n    return amounts.reduce(0, +)\n}\n\nРазница количеств показывает, что compactMap потерял запись. Возвращаем nil вместо правдоподобной неправильной суммы."
+ },
+ {
+  "id": "hof.s4",
+  "kind": "code",
+  "title": "Ступень 4. Найди ошибку",
+  "prompt": "Почему код сообщает 180 вместо ошибки? Исправь его, не выбрасывая проведённый перевод молча.",
+  "code": "let posted = transfers.filter { $0.posted }\nlet totalAmount = posted.compactMap { Int($0.amountText) }.reduce(0, +)\nprint(totalAmount)",
+  "key": "struct Transfer {\n    let recipient: String\n    let amountText: String\n    let posted: Bool\n}\nlet transfers = [Transfer(recipient: \"Анна\", amountText: \"180\", posted: true),\n             Transfer(recipient: \"Олег\", amountText: \"abc\", posted: true)]\nlet posted = transfers.filter { $0.posted }\nlet amounts = posted.compactMap { Int($0.amountText) }\nlet totalAmount: Int? = amounts.count == posted.count\n    ? amounts.reduce(0, +) : nil\n\ncompactMap удалил nil от строки \"abc\"; без проверки отчёт занижен. Optional результата заставляет экран показать проблему."
+ },
+ {
+  "id": "hof.s5",
+  "kind": "oral",
+  "title": "Ступень 5. Объясни напарнику (устно)",
+  "prompt": "Своими словами, как на собесе: что → почему → последствия.",
+  "code": "Сводка проведённых переводов.\n1. Чем filter отличается от map?\n2. Почему compactMap может быть опасен?\n3. Что сворачивает reduce?",
+  "key": "filter оставляет часть переводов, map преобразует каждый оставшийся, compactMap удаляет nil после неудачного преобразования. В отчёте это может скрыть ошибку суммы. reduce складывает полученные числа в один итог."
+ },
+ {
+  "id": "hof.s6",
+  "kind": "code",
+  "title": "Ступень 6. Частоты через reduce(into:)",
+  "prompt": "Из имён проведённых получателей собери словарь частот через reduce(into:).",
+  "code": "let recipients = [\"Анна\", \"Олег\", \"Анна\"]\n// Получи [\"Анна\": 2, \"Олег\": 1].",
+  "key": "let recipients = [\"Анна\", \"Олег\", \"Анна\"]\nlet counts = recipients.reduce(into: [String: Int]()) { result, name in\n    result[name, default: 0] += 1\n}\n\nreduce(into:) изменяет один аккумулятор-словарь по ходу обхода. Это уместно, когда результат сам изменяемая коллекция."
+ },
+ {
+  "id": "hof.s7",
+  "kind": "code",
+  "title": "Проверка по памяти",
+  "prompt": "Без подсказок и без урока. Верно — отметь тему.",
+  "code": "Напиши функцию суммы переводов: только проведённые записи; плохая сумма делает итог недоступным. Объясни четыре операции.",
+  "key": "func totalAmount(_ transfers: [Transfer]) -> Int? {\n    let posted = transfers.filter { $0.posted }\n    let amounts = posted.compactMap { Int($0.amountText) }\n    guard posted.count == amounts.count else { return nil }\n    return amounts.reduce(0, +)\n}\n\nfilter отбирает, map преобразует каждый, compactMap убирает nil, reduce объединяет. Проверь код на пустом списке и некорректной сумме."
+ },
+ {
+  "id": "hof-b1",
+  "kind": "code",
+  "type": "Перепиши",
+  "title": "Чек-лист в поездку",
+  "prompt": "Перепиши оба цикла без var и ручного аккумулятора. Каждая строка должна отвечать на вопрос экрана: какие тяжёлые вещи ещё не упакованы и всё ли уже упаковано.",
+  "code": "struct PackItem {\n    let name: String\n    let grams: Int\n    let packed: Bool\n}\nlet items = [PackItem(name: \"Ботинки\", grams: 900, packed: false),\n             PackItem(name: \"Зарядка\", grams: 120, packed: false),\n             PackItem(name: \"Куртка\", grams: 700, packed: true)]\nvar heavyLeft: [String] = []\nfor item in items {\n    if !item.packed && item.grams >= 500 {\n        heavyLeft.append(item.name.uppercased())\n    }\n}\nvar allPacked = true\nfor item in items where !item.packed { allPacked = false }",
+  "key": "let heavyLeft = items\n    .filter { !$0.packed && $0.grams >= 500 }\n    .map { $0.name.uppercased() }\nlet allPacked = items.allSatisfy { $0.packed }\nprint(heavyLeft, allPacked)\n\nfilter отвечает «какие вещи оставить», map — «что показать». Сначала фильтр, потом map: заглавные строки строим только для нужных вещей. allSatisfy даёт true, только если условие верно для всех элементов, а на пустом списке — true: упаковывать нечего. Вывод: [\"БОТИНКИ\"] false."
+ },
+ {
+  "id": "hof-b2",
+  "kind": "predict",
+  "type": "Предскажи вывод",
+  "title": "Ближайшая аптека",
+  "prompt": "Что напечатают четыре строки? Почему вторая и третья строки отвечают на разные вопросы?",
+  "code": "struct Pharmacy {\n    let name: String\n    let meters: Int\n    let isOpen: Bool\n}\nlet list = [Pharmacy(name: \"Вита\", meters: 900, isOpen: true),\n            Pharmacy(name: \"Здоровье\", meters: 300, isOpen: false),\n            Pharmacy(name: \"Ригла\", meters: 450, isOpen: true)]\nlet nearest = list.min { $0.meters < $1.meters }\nlet nearestOpen = list.filter { $0.isOpen }.min { $0.meters < $1.meters }\nlet firstOpen = list.first { $0.isOpen }\nlet nextDoor = list.filter { $0.meters < 100 }.min { $0.meters < $1.meters }\nprint(nearest?.name ?? \"—\")\nprint(nearestOpen?.name ?? \"—\")\nprint(firstOpen?.name ?? \"—\")\nprint(nextDoor?.name ?? \"—\")",
+  "key": "Здоровье\nРигла\nВита\n—\n\nmin(by:) ищет наименьший элемент по правилу сравнения: ближе всех «Здоровье», хотя она закрыта. Сначала filter открытых, потом min — «Ригла». first(where:) берёт первую подходящую в порядке массива, а не ближайшую — «Вита». После пустого фильтра min возвращает nil, и ?? показывает «—». Все три функции возвращают Optional: подходящего элемента может не быть."
+ },
+ {
+  "id": "hof-b3",
+  "kind": "oral",
+  "type": "Устно",
+  "title": "map и flatMap в плеере",
+  "prompt": "Объясни как на собеседовании разницу между map и flatMap: что вернёт каждая строка, какой у неё тип и когда нужен flatMap.",
+  "code": "let albums = [[\"Intro\", \"Rain\"], [\"Sun\"]]\n// a) albums.map { $0.map { $0.uppercased() } }\n// b) albums.flatMap { $0 }\n// c) Array(albums.joined())\nlet raw: String? = \"42\"\n// d) raw.map { Int($0) }\n// e) raw.flatMap { Int($0) }",
+  "key": "map превращает каждый элемент в одно значение и сохраняет форму: a) [[\"INTRO\", \"RAIN\"], [\"SUN\"]] — по-прежнему массив альбомов. flatMap ждёт от замыкания коллекцию и склеивает результаты в один уровень: b) [\"Intro\", \"Rain\", \"Sun\"]. c) даёт то же: flatMap — это map плюс «расплющить», а joined() расплющивает уже готовые вложенные массивы. У Optional то же правило: d) замыкание возвращает Int?, и map заворачивает его ещё раз — Int?? (Optional(Optional(42))); e) flatMap не добавляет второй слой — Int? со значением 42. Убрать nil из массива — уже задача compactMap, а не flatMap."
+ }
+]
